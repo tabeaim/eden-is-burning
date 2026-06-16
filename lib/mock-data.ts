@@ -1,0 +1,175 @@
+import type { Character, Player, Post, Scene } from "./types";
+
+// "Seed"-Daten — entspricht dem Beispieldaten-Abschnitt der Spezifikation.
+// Diese Funktion liefert frische Kopien, damit der In-Memory-Store sie
+// gefahrlos mutieren kann.
+
+export function seedPlayers(): Player[] {
+  return [
+    {
+      id: "p_tabs",
+      username: "tabs",
+      email: "tabeaim@gmail.com",
+      avatar_url: "https://picsum.photos/seed/tabsavatar/200/200",
+      bio: "Spielt Elliot und Nigel. Liebt langsame Szenen und nasse Cafés.",
+      created_at: "2021-10-01T10:00:00Z",
+    },
+    {
+      id: "p_vera",
+      username: "Vera",
+      email: "vera@example.com",
+      avatar_url: "https://picsum.photos/seed/veraavatar/200/200",
+      bio: "Spielt Julius und Alexander.",
+      created_at: "2021-10-03T10:00:00Z",
+    },
+  ];
+}
+
+export function seedCharacters(): Character[] {
+  return [
+    {
+      id: "c_elliot",
+      player_id: "p_tabs",
+      name: "Elliot Simmons",
+      faceclaim: "Austin Butler",
+      faceclaim_image_url: "https://picsum.photos/seed/austinb44/400/600",
+      tagline: "brand new moral code",
+      role: "student & future ceo",
+      age: 23,
+      area: "belle_view",
+      bio: "Einst Golden Boy der Sutton Academy. Jetzt zurück in Eden mit einem pathologischen Hunger nach Macht, dem jeglicher Skrupel so nahrhaft erscheint wie eine einzige labbrige Gurkenscheibe.",
+      pinterest_url: "https://pinterest.com/elliotsimmons",
+      created_at: "2021-10-05T10:00:00Z",
+    },
+    {
+      id: "c_nigel",
+      player_id: "p_tabs",
+      name: "Nigel Sinclair",
+      faceclaim: null,
+      faceclaim_image_url: "https://picsum.photos/seed/nigelsinc/400/600",
+      tagline: null,
+      role: "journalist",
+      age: 28,
+      area: "rivers_edge",
+      bio: "Investigativer Journalist mit zu vielen offenen Akten und zu wenig Schlaf.",
+      pinterest_url: null,
+      created_at: "2021-10-06T10:00:00Z",
+    },
+    {
+      id: "c_julius",
+      player_id: "p_vera",
+      name: "Julius Andrade",
+      faceclaim: "Oscar Isaac",
+      faceclaim_image_url: "https://picsum.photos/seed/oscarisc/400/600",
+      tagline: "see your shape in the dark",
+      role: "musikproduzent",
+      age: 29,
+      area: "rivers_edge",
+      bio: "Schreibt Musik für andere, nie für sich. Lebt in einem stillen Apartment über dem Record Store in Rivers Edge.",
+      pinterest_url: "https://pinterest.com/juliusandrade",
+      created_at: "2021-10-07T10:00:00Z",
+    },
+    {
+      id: "c_alexander",
+      player_id: "p_vera",
+      name: "Alexander Voss",
+      faceclaim: null,
+      faceclaim_image_url: "https://picsum.photos/seed/alexvoss/400/600",
+      tagline: null,
+      role: "anwalt",
+      age: 35,
+      area: "orchid_valley",
+      bio: "Strafverteidiger aus altem Geld. Verliert selten — vor Gericht wie privat.",
+      pinterest_url: null,
+      created_at: "2021-10-08T10:00:00Z",
+    },
+  ];
+}
+
+export function seedScenes(): Scene[] {
+  return [
+    {
+      id: "s_cafe",
+      title: "Das Café und die Stille dazwischen",
+      location_area: "rivers_edge",
+      location_name: "Café Marlowe",
+      inplay_date: "2021-11-22",
+      inplay_time: "Nachmittag",
+      status: "active",
+      trigger_warning: false,
+      created_at: "2021-11-22T14:00:00Z",
+      participant_ids: ["c_elliot", "c_julius"],
+    },
+    {
+      id: "s_shades",
+      title: "shades of yesterday",
+      location_area: "orchid_valley",
+      location_name: "Simmons Anwesen",
+      inplay_date: "2021-11-15",
+      inplay_time: "Abend",
+      status: "closed",
+      trigger_warning: false,
+      created_at: "2021-11-15T19:00:00Z",
+      participant_ids: ["c_elliot", "c_nigel"],
+    },
+  ];
+}
+
+export function seedPosts(): Post[] {
+  return [
+    {
+      id: "post_1",
+      scene_id: "s_cafe",
+      character_id: "c_elliot",
+      content:
+        "Das Café roch nach nassem Mantel und Zimt. Elliot schüttelte den Regen von seiner Jacke, bevor er die Tür hinter sich zuzog — zu fest, der Glöckner schepperte schrill — und dann sah er ihn. Julius. An dem kleinen Tisch am Fenster, die Hände um eine Tasse, den Blick nach draußen gerichtet, als wäre er allein auf der Welt.",
+      post_number: 1,
+      created_at: "2021-11-22T14:05:00Z",
+    },
+    {
+      id: "post_2",
+      scene_id: "s_cafe",
+      character_id: "c_julius",
+      content:
+        "Das Glöckchen. Julius verstand, warum er diesem Laden nie traute — die Tür ließ keine Stille zu. Er hob die Tasse, um einen Schluck zu nehmen, und tat dabei sein Bestes, den Eingangsbereich nicht anzusehen. *Irgendjemand.* Immer irgendwer. Seine Augen blieben draußen, auf den Tropfen, die sich am Glas entlangtasteten wie Finger auf einer Klaviertastatur.",
+      post_number: 2,
+      created_at: "2021-11-22T14:12:00Z",
+    },
+    {
+      id: "post_3",
+      scene_id: "s_cafe",
+      character_id: "c_elliot",
+      content:
+        "Elliot blieb zwei Sekunden zu lang stehen. Genug, dass es auffallen würde, wenn Julius hingesehen hätte. Er sah nicht hin. Das sagte alles. Elliot kaufte sich seinen Kaffee, zahlte bar, bekam zu wenig Wechselgeld — er sagte nichts — und setzte sich an den Tisch daneben. Nicht gegenüber. Daneben. Nah genug, um zufällig zu sein. Weit genug, um es abstreiten zu können.",
+      post_number: 3,
+      created_at: "2021-11-22T14:20:00Z",
+    },
+    {
+      id: "post_4",
+      scene_id: "s_cafe",
+      character_id: "c_julius",
+      content:
+        "Das Stuhlbein schabte. Julius schloss kurz die Augen. *Daneben.* Er hatte die ganze Reihe freier Tische gesehen. Die ganze Reihe. Er trank, ohne sich zu bewegen, und wartete darauf, dass Elliot etwas sagen würde — obwohl er wusste, dass er selbst der war, der als Letztes gesprochen hatte, damals, vor drei Wochen. Regentropfen. Klaviertastatur. Er sah nach draußen.",
+      post_number: 4,
+      created_at: "2021-11-22T14:28:00Z",
+    },
+    {
+      id: "post_5",
+      scene_id: "s_shades",
+      character_id: "c_elliot",
+      content:
+        "Das Haus seiner Kindheit empfing ihn wie ein Fremder, der seinen Namen kannte. Elliot legte den Mantel ab und lauschte dem Echo der eigenen Schritte über den Marmor.",
+      post_number: 1,
+      created_at: "2021-11-15T19:05:00Z",
+    },
+    {
+      id: "post_6",
+      scene_id: "s_shades",
+      character_id: "c_nigel",
+      content:
+        "Nigel wartete im Arbeitszimmer, das Diktiergerät längst aus. Manche Gespräche wollte man nicht aufgezeichnet wissen. Er hörte die Tür, die Schritte, und wusste: jetzt.",
+      post_number: 2,
+      created_at: "2021-11-15T19:18:00Z",
+    },
+  ];
+}
