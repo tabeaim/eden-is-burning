@@ -34,8 +34,55 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <Sidebar pathname={pathname} />
-      <main className="flex-1 min-w-0">{children}</main>
+      <div className="flex-1 min-w-0 flex flex-col">
+        <SiteHeader />
+        <main className="flex-1 min-w-0">{children}</main>
+      </div>
     </div>
+  );
+}
+
+// Große, moody Header-Area mit Blackletter-Wortmarke + Icon-Reihe (wie im Forum)
+function SiteHeader() {
+  const { currentPlayer, logout } = useStore();
+  return (
+    <header className="relative overflow-hidden border-b border-border-subtle">
+      {/* Rauch-/Glut-Hintergrund */}
+      <div
+        className="absolute inset-0 opacity-90"
+        style={{
+          backgroundImage:
+            "radial-gradient(120% 140% at 20% -40%, rgba(232,154,60,0.16), transparent 55%), radial-gradient(80% 120% at 100% 0%, rgba(120,130,90,0.10), transparent 60%), linear-gradient(180deg, #0e0e10, #0a0a0b)",
+        }}
+      />
+      <div className="relative px-8 pt-9 pb-6 flex items-end justify-between gap-6">
+        <Link href="/dashboard" className="group">
+          <h1 className="font-display text-5xl sm:text-6xl leading-none tracking-tight text-text-primary">
+            eden is burning<span className="text-accent">.</span>
+          </h1>
+        </Link>
+        <div className="flex items-center gap-3.5 text-text-tertiary pb-1.5">
+          <Link href="/szenen/neu" title="Neue Szene" className="hover:text-accent">
+            <Icon name="message" size={19} />
+          </Link>
+          <Link href="/einstellungen" title="Einstellungen" className="hover:text-accent">
+            <Icon name="settings" size={19} />
+          </Link>
+          {currentPlayer && (
+            <Link
+              href={`/spieler/${currentPlayer.username}`}
+              title={currentPlayer.username}
+              className="hover:text-accent"
+            >
+              <Icon name="users" size={19} />
+            </Link>
+          )}
+          <button onClick={logout} title="Abmelden" className="hover:text-accent">
+            <Icon name="logout" size={19} />
+          </button>
+        </div>
+      </div>
+    </header>
   );
 }
 
@@ -47,52 +94,62 @@ function Sidebar({ pathname }: { pathname: string }) {
     pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <aside className="w-[180px] shrink-0 bg-bg-sidebar border-r border-border-subtle flex flex-col sticky top-0 h-screen">
-      <div className="px-4 pt-5 pb-4">
-        <Link href="/dashboard" className="block leading-tight">
-          <div className="font-serif text-[15px] text-text-primary">
-            Eden Is Burning
+    <aside className="w-[190px] shrink-0 bg-bg-sidebar border-r border-border-subtle flex flex-col sticky top-0 h-screen">
+      <div className="px-4 pt-5 pb-5 border-b border-border-subtle">
+        <Link href="/dashboard" className="block leading-none">
+          <div className="font-display text-[19px] text-text-primary">
+            eden is burning<span className="text-accent">.</span>
           </div>
-          <div className="text-[10px] uppercase tracking-[0.18em] text-text-tertiary">
+          <div className="mt-1 text-[9px] uppercase tracking-[0.22em] text-text-tertiary">
             Eden, Virginia
           </div>
         </Link>
       </div>
 
-      <nav className="px-2 flex-1 flex flex-col gap-0.5">
-        {NAV.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
-              isActive(item.href)
-                ? "bg-white/[0.05] text-text-primary"
-                : "text-text-secondary hover:text-text-primary hover:bg-white/[0.03]"
-            }`}
-          >
-            <Icon name={item.icon} size={17} />
-            {item.label}
-          </Link>
-        ))}
+      <nav className="px-2 pt-3 flex-1 flex flex-col gap-0.5">
+        {NAV.map((item) => {
+          const active = isActive(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
+                active
+                  ? "bg-white/[0.04] text-text-primary"
+                  : "text-text-secondary hover:text-text-primary hover:bg-white/[0.025]"
+              }`}
+            >
+              {active && (
+                <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full bg-accent" />
+              )}
+              <span className={active ? "text-accent" : ""}>
+                <Icon name={item.icon} size={17} />
+              </span>
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
 
       <div className="px-2 pb-2">
         <Link
           href="/einstellungen"
-          className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
+          className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
             isActive("/einstellungen")
-              ? "bg-white/[0.05] text-text-primary"
-              : "text-text-secondary hover:text-text-primary hover:bg-white/[0.03]"
+              ? "bg-white/[0.04] text-text-primary"
+              : "text-text-secondary hover:text-text-primary hover:bg-white/[0.025]"
           }`}
         >
-          <Icon name="settings" size={17} />
+          <span className={isActive("/einstellungen") ? "text-accent" : ""}>
+            <Icon name="settings" size={17} />
+          </span>
           Einstellungen
         </Link>
       </div>
 
       {/* Meine Charaktere */}
       <div className="px-3 py-3 border-t border-border-subtle">
-        <div className="text-[10px] uppercase tracking-[0.16em] text-text-tertiary mb-2">
+        <div className="text-[9px] uppercase tracking-[0.2em] text-text-tertiary mb-2">
           Meine Charaktere
         </div>
         <div className="flex flex-col gap-1.5">
@@ -106,7 +163,7 @@ function Sidebar({ pathname }: { pathname: string }) {
               <img
                 src={c.faceclaim_image_url ?? placeholder(c.name)}
                 alt={c.name}
-                className="w-6 h-6 rounded-full object-cover bg-bg-surface"
+                className="w-6 h-6 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
               />
               <span className="text-[12px] text-text-secondary group-hover:text-text-primary truncate">
                 {c.name}
@@ -124,7 +181,7 @@ function Sidebar({ pathname }: { pathname: string }) {
             <img
               src={currentPlayer.avatar_url ?? placeholder(currentPlayer.username)}
               alt={currentPlayer.username}
-              className="w-8 h-8 rounded-full object-cover bg-bg-surface"
+              className="w-8 h-8 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle"
             />
           </Link>
           <div className="flex-1 min-w-0">
@@ -135,7 +192,7 @@ function Sidebar({ pathname }: { pathname: string }) {
           <button
             onClick={logout}
             title="Abmelden"
-            className="text-text-tertiary hover:text-text-primary"
+            className="text-text-tertiary hover:text-accent"
           >
             <Icon name="logout" size={16} />
           </button>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Grenze_Gotisch } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
@@ -7,6 +7,13 @@ import { AppShell } from "@/components/AppShell";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+});
+
+// Blackletter-Display-Font für Logo, Profilnamen, Sektionstitel
+const display = Grenze_Gotisch({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "900"],
 });
 
 export const metadata: Metadata = {
@@ -20,7 +27,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de" className={`${inter.variable} h-full`}>
+    <html
+      lang="de"
+      className={`${inter.variable} ${display.variable} h-full`}
+    >
       <body className="min-h-full">
         <StoreProvider>
           <AppShell>{children}</AppShell>

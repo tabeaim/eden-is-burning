@@ -24,12 +24,19 @@ export function LoginScreen() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          backgroundImage:
+            "radial-gradient(80% 60% at 50% 0%, rgba(232,154,60,0.10), transparent 60%), radial-gradient(60% 50% at 80% 100%, rgba(120,130,90,0.08), transparent 60%)",
+        }}
+      />
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="font-serif text-2xl text-text-primary">
-            Eden Is Burning
+          <h1 className="font-display text-4xl text-text-primary leading-none">
+            eden is burning<span className="text-accent">.</span>
           </h1>
-          <p className="text-[12px] uppercase tracking-[0.18em] text-text-tertiary mt-1">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary mt-2">
             Eden, Virginia
           </p>
         </div>
@@ -63,7 +70,7 @@ export function LoginScreen() {
 
           <button
             type="submit"
-            className="mt-1 bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle rounded-md py-2 text-[14px] text-text-primary transition-colors"
+            className="mt-1 bg-accent/90 hover:bg-accent text-black font-medium border border-accent rounded-md py-2 text-[14px] transition-colors"
           >
             Anmelden
           </button>

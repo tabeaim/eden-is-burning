@@ -17,7 +17,9 @@ type IconName =
   | "arrow-right"
   | "logout"
   | "plus"
-  | "upload";
+  | "upload"
+  | "flame"
+  | "search";
 
 const paths: Record<IconName, React.ReactNode> = {
   dashboard: (
@@ -103,6 +105,15 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
       <path d="M12 16V4m-5 5 5-5 5 5" />
+    </>
+  ),
+  flame: (
+    <path d="M12 3c.5 3-1.5 4-2.8 5.5C8 10 7 11.4 7 13.5A5 5 0 0 0 17 13.5c0-2-1-3.2-2-4.5-.8 1-1.5 1.5-2.4 1.6.7-2 .4-5-.6-7.6Z" />
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
     </>
   ),
 };
