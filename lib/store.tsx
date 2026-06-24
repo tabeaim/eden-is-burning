@@ -17,7 +17,7 @@ import {
   seedScenes,
 } from "./mock-data";
 
-const STORAGE_KEY = "eden-is-burning-v2";
+const STORAGE_KEY = "eden-is-burning-v3";
 const SESSION_KEY = "eden-is-burning-session";
 
 interface PersistedState {

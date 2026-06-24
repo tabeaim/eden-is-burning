@@ -119,6 +119,19 @@ export function seedScenes(): Scene[] {
       created_at: "2021-11-15T19:00:00Z",
       participant_ids: ["c_elliot", "c_nigel"],
     },
+    {
+      id: "s_river",
+      title: "Ein Umschlag, kein Absender",
+      location_area: "rivers_edge",
+      location_name: "Ron's Diner",
+      inplay_date: "2021-11-20",
+      inplay_time: "Vormittag",
+      status: "active",
+      trigger_warning: false,
+      created_at: hoursAgo(34),
+      // Nigel (tabs) ist hier zuletzt dran gewesen -> es wartet auf Alexander (Vera)
+      participant_ids: ["c_nigel", "c_alexander"],
+    },
   ];
 }
 
@@ -177,6 +190,15 @@ export function seedPosts(): Post[] {
         "Nigel wartete im Arbeitszimmer, das Diktiergerät längst aus. Manche Gespräche wollte man nicht aufgezeichnet wissen. Er hörte die Tür, die Schritte, und wusste: jetzt.",
       post_number: 2,
       created_at: "2021-11-15T19:18:00Z",
+    },
+    {
+      id: "post_7",
+      scene_id: "s_river",
+      character_id: "c_nigel",
+      content:
+        "Nigel schob den Umschlag über den resopalbeschichteten Tisch, ohne den Blick zu heben. Kein Absender, keine Briefmarke — nur sein Name, in einer Handschrift, die er zu kennen glaubte und doch nicht zuordnen konnte. Der Kaffee dampfte längst nicht mehr.",
+      post_number: 1,
+      created_at: hoursAgo(34),
     },
   ];
 }
