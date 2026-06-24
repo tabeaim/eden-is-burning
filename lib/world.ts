@@ -9,7 +9,8 @@ export type AreaKey =
   | "byron"
   | "sutton"
   | "washington"
-  | "umland";
+  | "umland"
+  | "downtown";
 
 export interface AreaInfo {
   key: AreaKey;
@@ -102,6 +103,15 @@ export const AREAS: Record<AreaKey, AreaInfo> = {
     residents: "Wenige, weit verstreut",
     onMap: true,
   },
+  downtown: {
+    key: "downtown",
+    name: "Downtown",
+    character:
+      "Das pulsierende Herz Edens: Verwaltung, Theater, Hochhäuser und der zentrale Bahnhof. Tagsüber Anzüge, nachts Neon.",
+    priceLevel: "$$$",
+    residents: "Berufstätige, Pendler*innen",
+    onMap: true,
+  },
 };
 
 export const LOCATION_SUGGESTIONS: Record<AreaKey, string[]> = {
@@ -127,6 +137,7 @@ export const LOCATION_SUGGESTIONS: Record<AreaKey, string[]> = {
   sutton: ["Sutton Internat", "Sutton Schulhof", "Sutton Bibliothek"],
   washington: ["The Mall", "Georgetown", "Dupont Circle", "Capitol Hill"],
   umland: ["Highway 95", "Der alte See", "Verlassene Scheune", "Waldlichtung"],
+  downtown: ["Stadtbibliothek", "City Hall", "Theater am Platz", "Eden Central Station"],
 };
 
 // Reihenfolge für Selects
@@ -134,6 +145,7 @@ export const AREA_ORDER: AreaKey[] = [
   "rivers_edge",
   "belle_view",
   "oak_hill",
+  "downtown",
   "westridge",
   "orchid_valley",
   "umland",

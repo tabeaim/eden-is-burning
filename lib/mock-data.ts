@@ -1,4 +1,12 @@
-import type { Character, Player, Post, Scene, SceneQuote } from "./types";
+import type {
+  Character,
+  Location,
+  Player,
+  Post,
+  Scene,
+  SceneQuote,
+} from "./types";
+import { LOCATION_SUGGESTIONS } from "./world";
 
 // Hilfsfunktion: ISO-Zeitstempel vor N Stunden (für realistische last_seen / Post-Zeiten)
 function hoursAgo(h: number): string {
@@ -253,6 +261,43 @@ export function seedPosts(): Post[] {
       created_at: hoursAgo(34),
     },
   ];
+}
+
+// Kurzbeschreibungen für einige Orte (Rest bleibt vorerst ohne)
+const LOCATION_DESCRIPTIONS: Record<string, string> = {
+  "Café Marlowe":
+    "Ein enges, immer beschlagenes Café mit schlechtem Licht und gutem Kaffee. Der Glöckner an der Tür lässt keine Stille zu.",
+  "Ron's Diner":
+    "Resopal, Neonröhren und Pancakes rund um die Uhr. Hier treffen sich die, die nicht gesehen werden wollen.",
+  "The Record Store":
+    "Plattenladen in Rivers Edge, über dem Julius wohnt. Vinyl, Staub und ein Plattenspieler, der nie ausgeht.",
+  "Simmons Anwesen":
+    "Kalter Marmor, hohe Decken, zu viele Zimmer. Das Elternhaus der Simmons — schön wie ein Mausoleum.",
+  "Glass Tower Bar":
+    "Bar in der Spitze eines der Glass Tower. Der beste Ausblick der Stadt, die teuersten Drinks.",
+};
+
+function slug(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+}
+
+export function seedLocations(): Location[] {
+  const out: Location[] = [];
+  for (const [area, names] of Object.entries(LOCATION_SUGGESTIONS)) {
+    for (const name of names) {
+      out.push({
+        id: `loc_${area}_${slug(name)}`,
+        area,
+        name,
+        description: LOCATION_DESCRIPTIONS[name] ?? null,
+        created_at: "2021-10-01T10:00:00Z",
+      });
+    }
+  }
+  return out;
 }
 
 export function seedQuotes(): SceneQuote[] {

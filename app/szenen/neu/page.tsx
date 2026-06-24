@@ -13,7 +13,7 @@ import { PageHeader } from "@/components/PageHeader";
 
 export default function NewScenePage() {
   const router = useRouter();
-  const { addScene, characters, character, currentPlayer, charactersOf } =
+  const { addScene, addLocation, characters, character, currentPlayer, charactersOf } =
     useStore();
 
   const [title, setTitle] = useState("");
@@ -35,10 +35,13 @@ export default function NewScenePage() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || selected.length === 0) return;
+    const loc = locationName.trim() || LOCATION_SUGGESTIONS[area][0];
+    // Ort anlegen, falls neu — wird durch diese Szene direkt "bespielt"
+    addLocation(area, loc);
     const id = addScene({
       title: title.trim(),
       location_area: area,
-      location_name: locationName.trim() || LOCATION_SUGGESTIONS[area][0],
+      location_name: loc,
       inplay_date: date,
       inplay_time: time,
       status: "active",

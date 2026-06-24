@@ -8,16 +8,24 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { Character, Player, Post, Scene, SceneQuote } from "./types";
+import type {
+  Character,
+  Location,
+  Player,
+  Post,
+  Scene,
+  SceneQuote,
+} from "./types";
 import {
   seedCharacters,
+  seedLocations,
   seedPlayers,
   seedPosts,
   seedQuotes,
   seedScenes,
 } from "./mock-data";
 
-const STORAGE_KEY = "eden-is-burning-v4";
+const STORAGE_KEY = "eden-is-burning-v5";
 const SESSION_KEY = "eden-is-burning-session";
 
 interface PersistedState {
@@ -26,6 +34,7 @@ interface PersistedState {
   scenes: Scene[];
   posts: Post[];
   quotes: SceneQuote[];
+  locations: Location[];
 }
 
 interface StoreValue extends PersistedState {
@@ -41,11 +50,14 @@ interface StoreValue extends PersistedState {
   player: (id: string) => Player | undefined;
   playerByUsername: (username: string) => Player | undefined;
   quotesOf: (sceneId: string) => SceneQuote[];
+  locationsOf: (area: string) => Location[];
   // mutations
   addPost: (sceneId: string, characterId: string, content: string) => void;
   addQuote: (postId: string, text: string) => void;
   removeQuote: (quoteId: string) => void;
   touchPresence: (playerId: string) => void;
+  // legt einen Ort an, falls in dieser Area noch nicht vorhanden; gibt Name zurück
+  addLocation: (area: string, name: string, description?: string | null) => void;
   updateCharacter: (id: string, patch: Partial<Character>) => void;
   addCharacter: (playerId: string) => string;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
@@ -62,6 +74,7 @@ function freshState(): PersistedState {
     scenes: seedScenes(),
     posts: seedPosts(),
     quotes: seedQuotes(),
+    locations: seedLocations(),
   };
 }
 
@@ -86,6 +99,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           scenes: parsed.scenes ?? seedScenes(),
           posts: parsed.posts ?? seedPosts(),
           quotes: parsed.quotes ?? seedQuotes(),
+          locations: parsed.locations ?? seedLocations(),
         });
       }
       const session = localStorage.getItem(SESSION_KEY);
@@ -183,6 +197,44 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           created_at: new Date().toISOString(),
         };
         return { ...s, quotes: [...s.quotes, quote] };
+      });
+    },
+    [],
+  );
+
+  const locationsOf = useCallback(
+    (area: string) => state.locations.filter((l) => l.area === area),
+    [state.locations],
+  );
+
+  const addLocation = useCallback(
+    (area: string, name: string, description: string | null = null) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      setState((s) => {
+        // Schon vorhanden (gleiche Area + Name)? Dann nichts/ggf. Beschreibung ergänzen.
+        const existing = s.locations.find(
+          (l) => l.area === area && l.name.toLowerCase() === trimmed.toLowerCase(),
+        );
+        if (existing) {
+          if (description && !existing.description) {
+            return {
+              ...s,
+              locations: s.locations.map((l) =>
+                l.id === existing.id ? { ...l, description } : l,
+              ),
+            };
+          }
+          return s;
+        }
+        const loc: Location = {
+          id: uid("loc"),
+          area,
+          name: trimmed,
+          description: description ?? null,
+          created_at: new Date().toISOString(),
+        };
+        return { ...s, locations: [...s.locations, loc] };
       });
     },
     [],
@@ -312,10 +364,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       player,
       playerByUsername,
       quotesOf,
+      locationsOf,
       addPost,
       addQuote,
       removeQuote,
       touchPresence,
+      addLocation,
       updateCharacter,
       addCharacter,
       updatePlayer,
@@ -334,10 +388,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       player,
       playerByUsername,
       quotesOf,
+      locationsOf,
       addPost,
       addQuote,
       removeQuote,
       touchPresence,
+      addLocation,
       updateCharacter,
       addCharacter,
       updatePlayer,

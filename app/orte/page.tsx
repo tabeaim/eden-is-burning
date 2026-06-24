@@ -3,17 +3,13 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
-import {
-  AREAS,
-  LOCATION_SUGGESTIONS,
-  areaName,
-  type AreaKey,
-} from "@/lib/world";
+import { AREAS, areaName, type AreaKey } from "@/lib/world";
 import { formatInplayDate } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { EdenMap } from "@/components/EdenMap";
+import { Icon } from "@/components/Icon";
+import type { Location } from "@/lib/types";
 
-// Zusatz-Info für externe Orte, die nicht in AREAS stehen
 const EXTRA: Record<string, { name: string; character: string }> = {
   rest: {
     name: "Rest der Welt",
@@ -23,10 +19,11 @@ const EXTRA: Record<string, { name: string; character: string }> = {
 };
 
 export default function PlacesPage() {
-  const { scenes, postsOf, character } = useStore();
+  const { scenes, postsOf, character, locationsOf, addLocation } = useStore();
   const [selected, setSelected] = useState<string>("rivers_edge");
+  const [openLoc, setOpenLoc] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
-  // Statistik pro Bereich (aktive + gesamt = "bespielt")
   const areaStats = useMemo(() => {
     const stats: Record<string, { active: number; total: number }> = {};
     for (const s of scenes) {
@@ -39,19 +36,27 @@ export default function PlacesPage() {
   }, [scenes]);
 
   const scenesHere = scenes.filter((s) => s.location_area === selected);
+  const playedNames = useMemo(
+    () => new Set(scenesHere.map((s) => s.location_name)),
+    [scenesHere],
+  );
 
-  // Bespielte Orte (location_name) in diesem Bereich
-  const playedNames = new Set(scenesHere.map((s) => s.location_name));
-  const suggestions = LOCATION_SUGGESTIONS[selected as AreaKey] ?? [];
-  // Alle Chips: Vorschläge + tatsächlich bespielte, die nicht in den Vorschlägen sind
-  const ideaChips = suggestions.filter((l) => !playedNames.has(l));
-  const playedChips = [
-    ...suggestions.filter((l) => playedNames.has(l)),
-    ...Array.from(playedNames).filter((l) => !suggestions.includes(l)),
-  ];
+  const locations = locationsOf(selected);
+  const playedLocs: Location[] = locations.filter((l) => playedNames.has(l.name));
+  const ideaLocs: Location[] = locations.filter((l) => !playedNames.has(l.name));
+  // Szenen-Orte ohne Location-Eintrag (Altbestand) ergänzen
+  const orphanPlayed = Array.from(playedNames).filter(
+    (n) => !locations.some((l) => l.name === n),
+  );
 
   const info = AREAS[selected as AreaKey];
   const extra = EXTRA[selected];
+  const stat = areaStats[selected] ?? { active: 0, total: 0 };
+
+  function createLocation(name: string, description: string) {
+    addLocation(selected, name, description || null);
+    setAdding(false);
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-8 py-8">
@@ -62,18 +67,14 @@ export default function PlacesPage() {
 
       <div className="grid lg:grid-cols-[1.7fr_1fr] gap-8 items-start">
         <div className="rounded-xl border border-border-subtle bg-bg-surface p-3">
-          <EdenMap
-            selected={selected}
-            onSelect={setSelected}
-            areaStats={areaStats}
-          />
-          <div className="px-2 pt-2 pb-1 flex items-center gap-4 text-[10px] text-text-tertiary">
+          <EdenMap selected={selected} onSelect={(k) => { setSelected(k); setOpenLoc(null); setAdding(false); }} areaStats={areaStats} />
+          <div className="px-2 pt-2 pb-1 flex flex-wrap items-center gap-4 text-[10px] text-text-tertiary">
             <span className="flex items-center gap-1.5">
-              <span className="inline-block w-3 h-3 rounded-sm border border-olive/40 bg-[rgba(163,163,128,0.12)]" />
+              <span className="inline-block w-3 h-3 rounded-sm border border-olive/50 bg-[rgba(163,163,128,0.14)]" />
               bespielt
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block w-3 h-3 rounded-sm border border-border-subtle" />
+              <span className="inline-block w-3 h-3 rounded-sm border border-border-strong" />
               noch frei
             </span>
             <span className="flex items-center gap-1.5">
@@ -96,7 +97,18 @@ export default function PlacesPage() {
                   </span>
                 )}
               </div>
-              <p className="text-[13px] text-text-secondary mt-2 leading-relaxed">
+
+              {/* Szenen-Zähler je Area */}
+              <div className="mt-1.5 flex items-center gap-2 text-[11px]">
+                <span className="rounded-full bg-accent-soft text-accent px-2 py-0.5">
+                  {stat.active} aktiv
+                </span>
+                <span className="rounded-full bg-white/[0.05] text-text-secondary px-2 py-0.5">
+                  {stat.total} {stat.total === 1 ? "Szene" : "Szenen"} gesamt
+                </span>
+              </div>
+
+              <p className="text-[13px] text-text-secondary mt-3 leading-relaxed">
                 {info?.character ?? extra?.character}
               </p>
               {info && info.residents !== "—" && (
@@ -106,41 +118,32 @@ export default function PlacesPage() {
               )}
 
               {/* Bespielte Orte */}
-              {playedChips.length > 0 && (
-                <div className="mt-5">
-                  <div className="text-[10px] uppercase tracking-wider text-text-tertiary mb-2">
-                    Bespielte Orte
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {playedChips.map((loc) => (
-                      <span
-                        key={loc}
-                        className="rounded-full bg-accent-soft border border-accent/40 px-2.5 py-1 text-[11px] text-text-primary"
-                      >
-                        {loc}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <LocationSection
+                title="Bespielte Orte"
+                locs={playedLocs}
+                orphans={orphanPlayed}
+                played
+                openLoc={openLoc}
+                setOpenLoc={setOpenLoc}
+                onAdd={() => setAdding(true)}
+              />
 
-              {/* Weitere / Ortsideen */}
-              {ideaChips.length > 0 && (
-                <div className="mt-4">
-                  <div className="text-[10px] uppercase tracking-wider text-text-tertiary mb-2">
-                    Ortsideen (noch nicht bespielt)
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {ideaChips.map((loc) => (
-                      <span
-                        key={loc}
-                        className="rounded-full bg-white/[0.03] border border-border-subtle px-2.5 py-1 text-[11px] text-text-tertiary"
-                      >
-                        {loc}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+              {/* Ortsideen */}
+              <LocationSection
+                title="Ortsideen (noch nicht bespielt)"
+                locs={ideaLocs}
+                openLoc={openLoc}
+                setOpenLoc={setOpenLoc}
+                onAdd={() => setAdding(true)}
+              />
+
+              {/* Formular: neuen Ort anlegen */}
+              {adding && (
+                <AddLocationForm
+                  area={selected}
+                  onCancel={() => setAdding(false)}
+                  onCreate={createLocation}
+                />
               )}
 
               {/* Szenen hier */}
@@ -168,17 +171,14 @@ export default function PlacesPage() {
                             </span>
                             <span
                               className={`text-[10px] uppercase tracking-wider ${
-                                s.status === "active"
-                                  ? "text-accent"
-                                  : "text-text-tertiary"
+                                s.status === "active" ? "text-accent" : "text-text-tertiary"
                               }`}
                             >
                               {s.status === "active" ? "aktiv" : "archiv"}
                             </span>
                           </div>
                           <div className="text-[11px] text-text-tertiary">
-                            {s.location_name} ·{" "}
-                            {formatInplayDate(s.inplay_date)}
+                            {s.location_name} · {formatInplayDate(s.inplay_date)}
                             {s.status === "active" && turnId && (
                               <> · {character(turnId)?.name.split(" ")[0]} ist dran</>
                             )}
@@ -197,6 +197,143 @@ export default function PlacesPage() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function LocationSection({
+  title,
+  locs,
+  orphans = [],
+  played = false,
+  openLoc,
+  setOpenLoc,
+  onAdd,
+}: {
+  title: string;
+  locs: Location[];
+  orphans?: string[];
+  played?: boolean;
+  openLoc: string | null;
+  setOpenLoc: (id: string | null) => void;
+  onAdd: () => void;
+}) {
+  const open = locs.find((l) => l.id === openLoc);
+  return (
+    <div className="mt-5">
+      <div className="text-[10px] uppercase tracking-wider text-text-tertiary mb-2">
+        {title}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {locs.map((l) => {
+          const isOpen = openLoc === l.id;
+          return (
+            <button
+              key={l.id}
+              onClick={() => setOpenLoc(isOpen ? null : l.id)}
+              className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+                played
+                  ? "bg-accent-soft border-accent/40 text-text-primary"
+                  : "bg-white/[0.03] border-border-subtle text-text-tertiary hover:text-text-secondary"
+              } ${isOpen ? "ring-1 ring-accent/60" : ""}`}
+            >
+              {l.name}
+            </button>
+          );
+        })}
+        {/* Orphans (bespielt, ohne Eintrag) */}
+        {orphans.map((n) => (
+          <span
+            key={n}
+            className="rounded-full bg-accent-soft border border-accent/40 px-2.5 py-1 text-[11px] text-text-primary"
+          >
+            {n}
+          </span>
+        ))}
+        {/* + neuen Ort */}
+        <button
+          onClick={onAdd}
+          title="Neuen Ort erstellen"
+          className="rounded-full border border-dashed border-border-strong px-2 py-1 text-[11px] text-text-tertiary hover:text-accent hover:border-accent/50"
+        >
+          <Icon name="plus" size={12} />
+        </button>
+      </div>
+
+      {/* Popup mit Beschreibung des angeklickten Orts */}
+      {open && (
+        <div className="mt-2 rounded-lg border border-accent/40 bg-bg-surface-2 px-3 py-2.5">
+          <div className="flex items-start justify-between gap-2">
+            <div className="font-serif text-[14px] text-text-primary">
+              {open.name}
+            </div>
+            <button
+              onClick={() => setOpenLoc(null)}
+              className="text-text-tertiary hover:text-text-primary text-[12px]"
+            >
+              ✕
+            </button>
+          </div>
+          <p className="text-[12px] text-text-secondary mt-1 leading-relaxed">
+            {open.description ?? "Noch keine Beschreibung hinterlegt."}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddLocationForm({
+  area,
+  onCancel,
+  onCreate,
+}: {
+  area: string;
+  onCancel: () => void;
+  onCreate: (name: string, description: string) => void;
+}) {
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const field =
+    "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[13px] text-text-primary outline-none focus:border-white/20";
+
+  return (
+    <div className="mt-4 rounded-lg border border-border-subtle bg-bg-primary p-3 flex flex-col gap-2">
+      <div className="text-[11px] text-text-secondary">
+        Neuer Ort in <span className="text-text-primary">{areaName(area)}</span>
+      </div>
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Titel des Orts"
+        className={field}
+        autoFocus
+      />
+      <textarea
+        value={desc}
+        onChange={(e) => setDesc(e.target.value)}
+        placeholder="Beschreibung (optional)"
+        rows={3}
+        className={`${field} resize-y`}
+      />
+      <div className="flex items-center justify-end gap-2">
+        <button
+          onClick={onCancel}
+          className="text-[12px] text-text-tertiary hover:text-text-primary px-2"
+        >
+          Abbrechen
+        </button>
+        <button
+          onClick={() => name.trim() && onCreate(name, desc)}
+          disabled={!name.trim()}
+          className="rounded-md bg-accent/90 hover:bg-accent text-black text-[12px] font-medium px-3 py-1.5 disabled:opacity-40"
+        >
+          Ort anlegen
+        </button>
+      </div>
+      <p className="text-[10px] text-text-tertiary">
+        Bleibt unter „Ortsideen", bis eine Szene hier spielt.
+      </p>
     </div>
   );
 }

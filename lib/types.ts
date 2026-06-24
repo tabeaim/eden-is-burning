@@ -63,6 +63,16 @@ export interface Post {
   created_at: string;
 }
 
+// Ein benannter Ort innerhalb einer Area (z.B. "Café Marlowe").
+// "bespielt" wird daraus abgeleitet, ob eine Szene diesen Ort referenziert.
+export interface Location {
+  id: string;
+  area: AreaKey | string;
+  name: string;
+  description: string | null;
+  created_at: string;
+}
+
 // Ein aus einem Post markiertes Zitat — speist die rotierenden Dashboard-Zitate
 export interface SceneQuote {
   id: string;
