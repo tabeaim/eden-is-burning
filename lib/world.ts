@@ -8,7 +8,8 @@ export type AreaKey =
   | "orchid_valley"
   | "byron"
   | "sutton"
-  | "washington";
+  | "washington"
+  | "umland";
 
 export interface AreaInfo {
   key: AreaKey;
@@ -86,10 +87,20 @@ export const AREAS: Record<AreaKey, AreaInfo> = {
   washington: {
     key: "washington",
     name: "Washington D.C.",
-    character: "Die Hauptstadt, ~50 km nördlich. Ebenfalls bespielbar.",
+    character:
+      "Die Hauptstadt, ~50 km nördlich — die nächstgrößere Stadt. Macht, Geld, Geheimnisse. Ebenfalls bespielbar.",
     priceLevel: "—",
     residents: "—",
     onMap: false,
+  },
+  umland: {
+    key: "umland",
+    name: "Umland",
+    character:
+      "Wälder, Felder und einsame Landstraßen rund um Eden. Verlassene Scheunen, ein stiller See, der Highway Richtung D.C. — wo die Stadt in die Natur ausläuft.",
+    priceLevel: "$",
+    residents: "Wenige, weit verstreut",
+    onMap: true,
   },
 };
 
@@ -115,6 +126,7 @@ export const LOCATION_SUGGESTIONS: Record<AreaKey, string[]> = {
   byron: ["Byron Locker Room", "Byron Library", "Football Field", "Byron Cafeteria"],
   sutton: ["Sutton Internat", "Sutton Schulhof", "Sutton Bibliothek"],
   washington: ["The Mall", "Georgetown", "Dupont Circle", "Capitol Hill"],
+  umland: ["Highway 95", "Der alte See", "Verlassene Scheune", "Waldlichtung"],
 };
 
 // Reihenfolge für Selects
@@ -124,6 +136,7 @@ export const AREA_ORDER: AreaKey[] = [
   "oak_hill",
   "westridge",
   "orchid_valley",
+  "umland",
   "byron",
   "sutton",
   "washington",
