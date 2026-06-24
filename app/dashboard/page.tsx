@@ -7,7 +7,7 @@ import { formatInplayDate, timeAgo, withinHours } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { QuoteRotator } from "@/components/QuoteRotator";
-import type { Character, Scene } from "@/lib/types";
+import type { Character, Player, Scene } from "@/lib/types";
 
 export default function DashboardPage() {
   const store = useStore();
@@ -50,13 +50,17 @@ export default function DashboardPage() {
         new Date(a.last!.created_at).getTime(),
     );
 
-  // Wer war in den letzten 24h online
-  const onlinePlayers = players
-    .filter((p) => withinHours(p.last_seen, 24))
-    .sort(
-      (a, b) =>
-        new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime(),
-    );
+  // Anwesenheit: "jetzt" (letzte 15 Min) vs. "letzte 24h" (ohne die jetzt-Online)
+  const byLastSeen = (a: (typeof players)[number], b: (typeof players)[number]) =>
+    new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime();
+
+  const onlineNow = players
+    .filter((p) => withinHours(p.last_seen, 0.25))
+    .sort(byLastSeen);
+
+  const onlineRecent = players
+    .filter((p) => withinHours(p.last_seen, 24) && !withinHours(p.last_seen, 0.25))
+    .sort(byLastSeen);
 
   return (
     <div className="max-w-6xl mx-auto px-8 py-8">
@@ -167,44 +171,65 @@ export default function DashboardPage() {
 
           <section>
             <h2 className="section-bar text-[12px] text-text-secondary mb-3">
-              In den letzten 24h online
+              Spieler online · jetzt
             </h2>
-            {onlinePlayers.length === 0 ? (
-              <Empty>Niemand war zuletzt online.</Empty>
+            {onlineNow.length === 0 ? (
+              <Empty>Gerade ist niemand online.</Empty>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {onlinePlayers.map((p) => (
-                  <Link
-                    key={p.id}
-                    href={`/spieler/${p.username}`}
-                    className="flex items-center gap-2.5 rounded-full border border-border-subtle bg-bg-surface pl-1.5 pr-3.5 py-1.5 hover:bg-white/[0.03] transition-colors"
-                  >
-                    <span className="relative">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={p.avatar_url ?? ""}
-                        alt={p.username}
-                        className="w-7 h-7 rounded-full object-cover bg-bg-primary"
-                      />
-                      {withinHours(p.last_seen, 1) && (
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-bg-surface" />
-                      )}
-                    </span>
-                    <div className="leading-tight">
-                      <div className="text-[12px] text-text-primary">
-                        {p.username}
-                      </div>
-                      <div className="text-[10px] text-text-tertiary">
-                        {timeAgo(p.last_seen)}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              <PlayerPresenceList players={onlineNow} now />
+            )}
+          </section>
+
+          <section>
+            <h2 className="section-bar text-[12px] text-text-secondary mb-3">
+              Spieler online · letzte 24h
+            </h2>
+            {onlineRecent.length === 0 ? (
+              <Empty>Niemand sonst war in den letzten 24h online.</Empty>
+            ) : (
+              <PlayerPresenceList players={onlineRecent} />
             )}
           </section>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PlayerPresenceList({
+  players,
+  now = false,
+}: {
+  players: Player[];
+  now?: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {players.map((p) => (
+        <Link
+          key={p.id}
+          href={`/spieler/${p.username}`}
+          className="flex items-center gap-2.5 rounded-full border border-border-subtle bg-bg-surface pl-1.5 pr-3.5 py-1.5 hover:bg-white/[0.03] transition-colors"
+        >
+          <span className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={p.avatar_url ?? ""}
+              alt={p.username}
+              className="w-7 h-7 rounded-full object-cover bg-bg-primary"
+            />
+            {now && (
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-bg-surface" />
+            )}
+          </span>
+          <div className="leading-tight">
+            <div className="text-[12px] text-text-primary">{p.username}</div>
+            <div className="text-[10px] text-text-tertiary">
+              {now ? "online" : timeAgo(p.last_seen)}
+            </div>
+          </div>
+        </Link>
+      ))}
     </div>
   );
 }
