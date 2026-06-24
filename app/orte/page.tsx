@@ -19,10 +19,12 @@ const EXTRA: Record<string, { name: string; character: string }> = {
 };
 
 export default function PlacesPage() {
-  const { scenes, postsOf, character, locationsOf, addLocation } = useStore();
+  const { scenes, characters, postsOf, character, player, locationsOf, addLocation } =
+    useStore();
   const [selected, setSelected] = useState<string>("rivers_edge");
   const [openLoc, setOpenLoc] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [sceneFilter, setSceneFilter] = useState<"all" | "active">("all");
 
   const areaStats = useMemo(() => {
     const stats: Record<string, { active: number; total: number }> = {};
@@ -36,6 +38,12 @@ export default function PlacesPage() {
   }, [scenes]);
 
   const scenesHere = scenes.filter((s) => s.location_area === selected);
+  const visibleScenes =
+    sceneFilter === "active"
+      ? scenesHere.filter((s) => s.status === "active")
+      : scenesHere;
+  const activeCount = scenesHere.filter((s) => s.status === "active").length;
+  const residents = characters.filter((c) => c.area === selected);
   const playedNames = useMemo(
     () => new Set(scenesHere.map((s) => s.location_name)),
     [scenesHere],
@@ -51,7 +59,6 @@ export default function PlacesPage() {
 
   const info = AREAS[selected as AreaKey];
   const extra = EXTRA[selected];
-  const stat = areaStats[selected] ?? { active: 0, total: 0 };
 
   function createLocation(name: string, description: string) {
     addLocation(selected, name, description || null);
@@ -75,10 +82,10 @@ export default function PlacesPage() {
             </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block w-3 h-3 rounded-sm border border-border-strong" />
-              noch frei
+              noch unbespielt
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="text-accent">▲</span> aktive Szene
+              <span className="text-accent">▲</span> aktive Szene(n)
             </span>
           </div>
         </div>
@@ -98,16 +105,6 @@ export default function PlacesPage() {
                 )}
               </div>
 
-              {/* Szenen-Zähler je Area */}
-              <div className="mt-1.5 flex items-center gap-2 text-[11px]">
-                <span className="rounded-full bg-accent-soft text-accent px-2 py-0.5">
-                  {stat.active} aktiv
-                </span>
-                <span className="rounded-full bg-white/[0.05] text-text-secondary px-2 py-0.5">
-                  {stat.total} {stat.total === 1 ? "Szene" : "Szenen"} gesamt
-                </span>
-              </div>
-
               <p className="text-[13px] text-text-secondary mt-3 leading-relaxed">
                 {info?.character ?? extra?.character}
               </p>
@@ -115,6 +112,32 @@ export default function PlacesPage() {
                 <p className="text-[11px] text-text-tertiary mt-2">
                   Wer wohnt hier: {info.residents}
                 </p>
+              )}
+
+              {/* Bewohner*innen (echte Charaktere) */}
+              {residents.length > 0 && (
+                <div className="mt-4">
+                  <div className="text-[10px] uppercase tracking-wider text-text-tertiary mb-2">
+                    Bewohner*innen
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {residents.map((c) => (
+                      <Link
+                        key={c.id}
+                        href={`/charaktere/${c.id}`}
+                        className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[11px] text-text-secondary hover:text-text-primary"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={c.faceclaim_image_url ?? ""}
+                          alt={c.name}
+                          className="w-4 h-4 rounded-full object-cover"
+                        />
+                        {c.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Bespielte Orte */}
@@ -148,16 +171,40 @@ export default function PlacesPage() {
 
               {/* Szenen hier */}
               <div className="mt-5">
-                <div className="text-[10px] uppercase tracking-wider text-text-tertiary mb-2">
-                  Szenen hier ({scenesHere.length})
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="text-[10px] uppercase tracking-wider text-text-tertiary">
+                    Szenen hier
+                  </div>
+                  <div className="flex gap-1">
+                    {(
+                      [
+                        ["all", `Alle (${scenesHere.length})`],
+                        ["active", `Aktiv (${activeCount})`],
+                      ] as ["all" | "active", string][]
+                    ).map(([key, label]) => (
+                      <button
+                        key={key}
+                        onClick={() => setSceneFilter(key)}
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] transition-colors ${
+                          sceneFilter === key
+                            ? "bg-accent text-black font-medium"
+                            : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                {scenesHere.length === 0 ? (
+                {visibleScenes.length === 0 ? (
                   <p className="text-[12px] text-text-tertiary">
-                    Noch keine Szenen an diesem Ort.
+                    {sceneFilter === "active"
+                      ? "Keine aktive Szene an diesem Ort."
+                      : "Noch keine Szenen an diesem Ort."}
                   </p>
                 ) : (
                   <div className="flex flex-col gap-1.5">
-                    {scenesHere.map((s) => {
+                    {visibleScenes.map((s) => {
                       const turnId = whoseTurn(s, postsOf(s.id));
                       return (
                         <Link

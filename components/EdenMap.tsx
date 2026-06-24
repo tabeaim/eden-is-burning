@@ -65,8 +65,8 @@ interface Marker {
 }
 
 const EXTERNAL: Marker[] = [
-  { key: "washington", label: "Washington D.C.", x: 232, y: 42 },
-  { key: "rest", label: "Rest der Welt", x: 100, y: 522 },
+  { key: "washington", label: "Washington D.C.", x: 232, y: 40 },
+  { key: "rest", label: "Rest der Welt", x: 96, y: 474 },
 ];
 
 const CITY_OUTLINE =
@@ -98,49 +98,50 @@ export function EdenMap({
   );
 
   return (
-    <svg viewBox="0 0 680 560" className="w-full h-auto select-none" style={{ maxHeight: 660 }}>
-      <rect x="0" y="0" width="680" height="560" rx="10" fill="var(--bg-surface)" />
+    <svg viewBox="0 0 580 500" className="w-full h-auto select-none" style={{ maxHeight: 640 }}>
+      <rect x="0" y="0" width="580" height="500" rx="10" fill="var(--bg-surface)" />
 
-      {/* Umland (Natur) — klickbarer Hintergrund */}
+      {/* Umland (Natur) — klickbarer Hintergrund, nur rund um die Stadt */}
       <g onClick={() => onSelect("umland")} className="cursor-pointer">
         <rect
           x="6"
           y="6"
-          width="668"
-          height="548"
+          width="568"
+          height="488"
           rx="8"
-          fill={selected === "umland" ? "rgba(232,154,60,0.06)" : "rgba(120,135,90,0.06)"}
+          fill={selected === "umland" ? "rgba(232,154,60,0.06)" : "rgba(120,135,90,0.07)"}
         />
-        <text x="40" y="90" fill="var(--text-tertiary)" fontSize="13" fontFamily="var(--font-display), serif" transform="rotate(-14 40 90)">
+        <text x="34" y="80" fill="var(--text-tertiary)" fontSize="13" fontFamily="var(--font-display), serif" transform="rotate(-14 34 80)">
           Umland
         </text>
       </g>
 
-      {/* Potomac -> Chesapeake Bay (nur angedeutet) */}
+      {/* Potomac -> Chesapeake Bay (schmal, nur angedeutet) */}
       <path
-        d="M452,90 L470,160 486,262 460,348 416,422 372,470 380,560 680,560 680,90 Z"
+        d="M468,60 L470,160 486,262 460,348 420,420 404,500 580,500 580,60 Z"
         fill="rgba(80,120,160,0.16)"
         stroke="rgba(120,160,200,0.22)"
         strokeWidth="1"
         style={{ pointerEvents: "none" }}
       />
       <text
-        x="540"
-        y="210"
+        x="528"
+        y="180"
         fill="var(--text-tertiary)"
-        fontSize="10.5"
+        fontSize="10"
         textAnchor="middle"
-        transform="rotate(62 540 210)"
+        transform="rotate(74 528 180)"
         style={{ letterSpacing: "2px", pointerEvents: "none" }}
       >
         POTOMAC
       </text>
-      <text x="560" y="500" fill="rgba(120,160,200,0.75)" fontSize="13" fontFamily="var(--font-display), serif" textAnchor="middle" style={{ pointerEvents: "none" }}>
+      <text x="510" y="450" fill="rgba(120,160,200,0.75)" fontSize="12" fontFamily="var(--font-display), serif" textAnchor="middle" style={{ pointerEvents: "none" }}>
         Chesapeake Bay
       </text>
 
-      {/* Stadtumriss */}
-      <polygon points={CITY_OUTLINE} fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="2" style={{ pointerEvents: "none" }} />
+      {/* Stadt-Silhouette: deckt das Umland unter der Stadt ab, sodass Lücken
+          zwischen Bezirken dunkel statt grün erscheinen */}
+      <polygon points={CITY_OUTLINE} fill="var(--bg-primary)" stroke="rgba(255,255,255,0.16)" strokeWidth="2" strokeLinejoin="round" style={{ pointerEvents: "none" }} />
 
       {/* Bezirke (deckend, leicht überlappend) */}
       {ordered.map((d) => {
