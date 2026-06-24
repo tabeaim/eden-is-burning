@@ -14,15 +14,31 @@ export interface Character {
   id: string;
   player_id: string;
   name: string;
-  faceclaim: string | null;
+  faceclaim: string | null; // "FACE" — Schauspieler/Model
   faceclaim_image_url: string | null;
   tagline: string | null;
   role: string | null;
   age: number | null;
-  area: AreaKey | string;
+  area: AreaKey | string; // "RESIDENCE"
   bio: string | null;
   pinterest_url: string | null;
-  created_at: string;
+  created_at: string; // "registered on"
+  // --- LOOKS ---
+  height: string | null; // z.B. "183cm"
+  figure: string | null; // z.B. "lean"
+  hair: string | null;
+  eyes: string | null;
+  // --- FACTS ---
+  full_name: string | null; // z.B. 'Nikolai "Kolya" Petrow'
+  sexuality: string | null;
+  status: string | null; // z.B. "cat dad"
+  origin: string | null;
+  // --- OCCUPATION ---
+  job: string | null;
+  company: string | null;
+  // --- sonstiges ---
+  quote: string | null; // Zitat unter dem Bild
+  personality: string | null; // CHARACTER-Tab
 }
 
 export interface Scene {

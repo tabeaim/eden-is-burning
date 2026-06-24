@@ -29,7 +29,7 @@ export default function ScenesPage() {
   const { scenes, characters, players, character, postsOf, currentPlayer, charactersOf } =
     store;
 
-  const [tab, setTab] = useState<Tab>("active");
+  const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [areas, setAreas] = useState<string[]>([]); // AreaKey | "rest"
@@ -147,8 +147,8 @@ export default function ScenesPage() {
       <div className="flex gap-1.5 mb-4">
         {(
           [
-            ["active", "Aktive"],
             ["all", "Alle"],
+            ["active", "Aktive"],
             ["mine", "Meine"],
             ["archive", "Archiv"],
           ] as [Tab, string][]

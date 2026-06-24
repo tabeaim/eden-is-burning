@@ -17,7 +17,7 @@ import {
   seedScenes,
 } from "./mock-data";
 
-const STORAGE_KEY = "eden-is-burning-v3";
+const STORAGE_KEY = "eden-is-burning-v4";
 const SESSION_KEY = "eden-is-burning-session";
 
 interface PersistedState {
@@ -255,6 +255,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           bio: null,
           pinterest_url: null,
           created_at: new Date().toISOString(),
+          height: null,
+          figure: null,
+          hair: null,
+          eyes: null,
+          full_name: null,
+          sexuality: null,
+          status: null,
+          origin: null,
+          job: null,
+          company: null,
+          quote: null,
+          personality: null,
         },
       ],
     }));
