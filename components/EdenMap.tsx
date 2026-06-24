@@ -1,9 +1,10 @@
 "use client";
 
-// Handgezeichnete (statische) SVG-Karte von Eden, Virginia.
-// Eckige, unregelmäßige Bezirke (an echten Stadtvierteln orientiert), die sich
-// leicht überlappen -> keine Lücken. Deckende Füllungen. Der Potomac kommt von
-// oben und weitet sich unten zur angedeuteten Chesapeake Bay.
+// Statische SVG-Karte von Eden, Virginia — 1:1 aus der Figma-Vorlage
+// "Stadtbezirks-Karte" (Frame 608×560) übernommen: exakte Vektorpfade, Farben und
+// Beschriftungen. Byron University als abgesetzter Campus (gestricheltes Orange),
+// rechts der Potomac, der sich unten zur Chesapeake Bay weitet. Die Auswahl-,
+// Bespielt- und Aktive-Szenen-Logik der App liegt darüber.
 
 interface Shape {
   key: string;
@@ -16,71 +17,77 @@ const DISTRICTS: Shape[] = [
   {
     key: "orchid_valley",
     label: "Orchid Valley",
-    points: "95,150 200,95 300,100 308,200 250,238 150,232 100,250",
-    anchor: [196, 168],
+    points:
+      "-8.5,139.5 12.5,20.0 111.0,-10.5 311.0,-18.0 355.0,75.0 320.0,133.0 261.0,161.0 140.0,187.5 78.0,177.0",
+    anchor: [98, 112],
   },
   {
     key: "oak_hill",
     label: "Oak Hill",
-    points: "300,100 395,110 470,160 458,228 360,238 305,200",
-    anchor: [378, 174],
+    points:
+      "355.1,75.0 387.6,89.5 355.1,260.0 275.1,280.0 214.6,268.5 104.1,229.5 82.1,178.5 179.6,168.5",
+    anchor: [244, 215],
   },
   {
     key: "belle_view",
     label: "Belle View",
-    points: "458,224 470,160 486,262 460,348 410,360 398,268 412,222",
-    anchor: [438, 268],
-  },
-  {
-    key: "byron",
-    label: "Byron",
-    points: "300,250 312,205 362,232 408,288 360,322 310,300",
-    anchor: [344, 266],
+    points:
+      "386.5,88.1 453.0,98.6 515.0,139.6 515.0,255.1 515.0,381.6 430.5,381.6 420.0,338.6 356.0,260.6",
+    anchor: [409, 253],
   },
   {
     key: "downtown",
     label: "Downtown",
-    points: "270,348 300,255 312,300 362,322 410,360 365,402 300,398",
-    anchor: [336, 344],
-  },
-  {
-    key: "westridge",
-    label: "Westridge",
-    points: "98,262 100,248 150,232 250,238 300,252 270,348 300,398 252,430 150,418 126,360",
-    anchor: [186, 330],
+    points: "272.4,281.0 357.4,260.5 421.4,339.0 430.9,383.5 284.9,377.0",
+    anchor: [315, 319],
   },
   {
     key: "rivers_edge",
     label: "Rivers Edge",
-    points: "268,442 270,346 300,398 365,402 412,360 460,348 416,422 360,458",
-    anchor: [352, 412],
+    points:
+      "283.0,377.1 425.5,383.6 514.0,383.6 514.0,464.6 402.5,490.1 287.5,470.6 201.0,406.6 190.0,358.1 201.0,323.1 216.0,268.1 274.0,282.1",
+    anchor: [312, 430],
+  },
+  {
+    key: "westridge",
+    label: "Westridge",
+    points:
+      "188.4,360.0 200.4,404.0 399.4,489.0 264.4,537.5 161.9,544.5 14.4,480.5 6.9,404.0 65.4,334.5",
+    anchor: [98, 461],
   },
 ];
+
+// Byron University — abgesetzter Campus (gestricheltes Rechteck, keine Füllung)
+const BYRON_POINTS = "104.0,232.1 214.0,272.1 201.0,315.6 188.0,355.6 70.0,332.2";
+const BYRON_LABEL: [number, number] = [108, 294]; // zweizeilig: 294 / 307
 
 interface Marker {
   key: string;
   label: string;
   x: number;
   y: number;
+  w: number;
+  h: number;
 }
 
 const EXTERNAL: Marker[] = [
-  { key: "washington", label: "Washington D.C.", x: 232, y: 40 },
-  { key: "rest", label: "Rest der Welt", x: 96, y: 474 },
+  { key: "washington", label: "Washington D.C.", x: 179, y: 27, w: 192, h: 32 },
+  { key: "rest", label: "Rest der Welt", x: 436, y: 513, w: 158, h: 32 },
 ];
 
-const CITY_OUTLINE =
-  "95,150 200,95 300,100 395,110 470,160 486,262 460,348 416,422 360,458 268,442 150,418 126,360 98,262";
+// Wasser: Potomac (oben) und Chesapeake Bay (unten), beide #192438
+const POTOMAC = "515.0,0.0 558.0,0.0 588.0,244.0 515.0,290.0";
+const BAY = "515.0,290.0 564.5,136.0 648.5,189.0 672.0,275.0 690.0,571.0 515.0,560.0 515.0,430.0";
 
 function fillFor(isSel: boolean, played: boolean) {
-  if (isSel) return "#241a10";
-  if (played) return "#1c1d17";
-  return "#15151c";
+  if (isSel) return "#2e2411";
+  if (played) return "#26301b";
+  return "#1e2415";
 }
 function strokeFor(isSel: boolean, played: boolean) {
   if (isSel) return "var(--accent)";
-  if (played) return "rgba(163,163,128,0.5)";
-  return "rgba(255,255,255,0.14)";
+  if (played) return "rgba(163,163,128,0.55)";
+  return "#445130";
 }
 
 export function EdenMap({
@@ -96,54 +103,48 @@ export function EdenMap({
   const ordered = [...DISTRICTS].sort((a, b) =>
     a.key === selected ? 1 : b.key === selected ? -1 : 0,
   );
+  const byronSel = selected === "byron";
+  const byronStat = areaStats["byron"] ?? { active: 0, total: 0 };
 
   return (
-    <svg viewBox="0 0 580 500" className="w-full h-auto select-none" style={{ maxHeight: 640 }}>
-      <rect x="0" y="0" width="580" height="500" rx="10" fill="var(--bg-surface)" />
-
-      {/* Umland (Natur) — klickbarer Hintergrund, nur rund um die Stadt */}
+    <svg viewBox="0 0 608 560" className="w-full h-auto select-none" style={{ maxHeight: 640 }}>
+      {/* Frame-Hintergrund — zugleich klickbares "Umland" (deckt die dunklen Ränder) */}
       <g onClick={() => onSelect("umland")} className="cursor-pointer">
-        <rect
-          x="6"
-          y="6"
-          width="568"
-          height="488"
-          rx="8"
-          fill={selected === "umland" ? "rgba(232,154,60,0.06)" : "rgba(120,135,90,0.07)"}
-        />
-        <text x="34" y="80" fill="var(--text-tertiary)" fontSize="13" fontFamily="var(--font-display), serif" transform="rotate(-14 34 80)">
-          Umland
-        </text>
+        <rect x="0" y="0" width="608" height="560" rx="10" fill="#18181b" />
       </g>
 
-      {/* Potomac -> Chesapeake Bay (schmal, nur angedeutet) */}
-      <path
-        d="M468,60 L470,160 486,262 460,348 420,420 404,500 580,500 580,60 Z"
-        fill="rgba(80,120,160,0.16)"
-        stroke="rgba(120,160,200,0.22)"
-        strokeWidth="1"
-        style={{ pointerEvents: "none" }}
-      />
+      {/* Wasser: Potomac → Chesapeake Bay */}
+      <polygon points={POTOMAC} fill="#192438" style={{ pointerEvents: "none" }} />
+      <polygon points={BAY} fill="#192438" style={{ pointerEvents: "none" }} />
       <text
-        x="528"
-        y="180"
-        fill="var(--text-tertiary)"
+        x="546"
+        y="129.5"
+        fill="#4a6080"
         fontSize="10"
         textAnchor="middle"
-        transform="rotate(74 528 180)"
-        style={{ letterSpacing: "2px", pointerEvents: "none" }}
+        transform="rotate(-90 546 129.5)"
+        style={{ letterSpacing: "2.5px", pointerEvents: "none" }}
       >
-        POTOMAC
+        POTOMAC RIVER
       </text>
-      <text x="510" y="450" fill="rgba(120,160,200,0.75)" fontSize="12" fontFamily="var(--font-display), serif" textAnchor="middle" style={{ pointerEvents: "none" }}>
-        Chesapeake Bay
+      <text
+        x="571"
+        y="398"
+        fill="#4a6080"
+        fontSize="10"
+        textAnchor="middle"
+        transform="rotate(-90 571 398)"
+        style={{ letterSpacing: "2.5px", pointerEvents: "none" }}
+      >
+        CHESAPEAKE BAY
       </text>
 
-      {/* Stadt-Silhouette: deckt das Umland unter der Stadt ab, sodass Lücken
-          zwischen Bezirken dunkel statt grün erscheinen */}
-      <polygon points={CITY_OUTLINE} fill="var(--bg-primary)" stroke="rgba(255,255,255,0.16)" strokeWidth="2" strokeLinejoin="round" style={{ pointerEvents: "none" }} />
+      {/* Umland-Label (Bereich = Frame-Hintergrund) */}
+      <text x="16" y="257" fill="#808080" fontSize="10" className="pointer-events-none">
+        Umland
+      </text>
 
-      {/* Bezirke (deckend, leicht überlappend) */}
+      {/* Bezirke */}
       {ordered.map((d) => {
         const isSel = selected === d.key;
         const stat = areaStats[d.key] ?? { active: 0, total: 0 };
@@ -154,15 +155,21 @@ export function EdenMap({
               points={d.points}
               fill={fillFor(isSel, played)}
               stroke={strokeFor(isSel, played)}
-              strokeWidth={isSel ? 2 : 1.2}
+              strokeWidth={isSel ? 2 : 1.5}
               strokeLinejoin="round"
               className="transition-all duration-150"
             />
-            <text x={d.anchor[0]} y={d.anchor[1]} fill="var(--text-primary)" fontSize="13" fontFamily="var(--font-display), serif" textAnchor="middle" className="pointer-events-none">
+            <text
+              x={d.anchor[0]}
+              y={d.anchor[1]}
+              fill={isSel ? "var(--text-primary)" : "#b8c4a0"}
+              fontSize="11"
+              className="pointer-events-none"
+            >
               {d.label}
             </text>
             {stat.active > 0 && (
-              <text x={d.anchor[0]} y={d.anchor[1] + 16} fill="var(--accent)" fontSize="10" textAnchor="middle" className="pointer-events-none">
+              <text x={d.anchor[0]} y={d.anchor[1] + 14} fill="var(--accent)" fontSize="10" className="pointer-events-none">
                 ▲ {stat.active}
               </text>
             )}
@@ -170,10 +177,34 @@ export function EdenMap({
         );
       })}
 
-      {/* Washington D.C. — Nordpfeil + präsenter Marker */}
+      {/* Byron University — gestrichelter Campus */}
+      <g onClick={() => onSelect("byron")} className="cursor-pointer">
+        <polygon
+          points={BYRON_POINTS}
+          fill={byronSel ? "rgba(232,117,32,0.12)" : "transparent"}
+          stroke="#e87520"
+          strokeWidth={byronSel ? 2.6 : 2}
+          strokeDasharray="7 4"
+          strokeLinejoin="round"
+          className="transition-all duration-150"
+        />
+        <text x={BYRON_LABEL[0]} y={BYRON_LABEL[1]} fill="#b8c4a0" fontSize="11" className="pointer-events-none">
+          Byron
+        </text>
+        <text x={BYRON_LABEL[0]} y={BYRON_LABEL[1] + 13} fill="#b8c4a0" fontSize="11" className="pointer-events-none">
+          University
+        </text>
+        {byronStat.active > 0 && (
+          <text x={BYRON_LABEL[0]} y={BYRON_LABEL[1] + 28} fill="var(--accent)" fontSize="10" className="pointer-events-none">
+            ▲ {byronStat.active}
+          </text>
+        )}
+      </g>
+
+      {/* Washington D.C. — Nordpfeil + Pille */}
       <g onClick={() => onSelect("washington")} className="cursor-pointer">
-        <line x1={EXTERNAL[0].x} y1="28" x2={EXTERNAL[0].x} y2="8" stroke="var(--text-secondary)" strokeWidth="1.6" />
-        <path d={`M${EXTERNAL[0].x},3 L${EXTERNAL[0].x - 5},14 L${EXTERNAL[0].x + 5},14 Z`} fill="var(--text-secondary)" />
+        <line x1="275" y1="23" x2="275" y2="9" stroke="#dedede" strokeWidth="1.5" />
+        <path d="M275,4 L270.5,13 L279.5,13 Z" fill="#dedede" />
         <ExternalPill m={EXTERNAL[0]} selected={selected === "washington"} active={(areaStats["washington"]?.active ?? 0) > 0} />
       </g>
 
@@ -186,22 +217,21 @@ export function EdenMap({
 }
 
 function ExternalPill({ m, selected, active }: { m: Marker; selected: boolean; active: boolean }) {
-  const w = m.label.length * 8 + 38;
   return (
     <>
       <rect
-        x={m.x - w / 2}
-        y={m.y - 16}
-        width={w}
-        height={32}
-        rx={9}
-        fill={selected ? "rgba(232,154,60,0.22)" : "rgba(12,12,16,0.82)"}
-        stroke={selected ? "var(--accent)" : "var(--border-strong)"}
-        strokeWidth="1.5"
+        x={m.x}
+        y={m.y}
+        width={m.w}
+        height={m.h}
+        rx={16}
+        fill={selected ? "rgba(232,154,60,0.18)" : "#1e1e23"}
+        stroke={selected ? "var(--accent)" : "#4f4f54"}
+        strokeWidth="1"
         className="transition-all hover:stroke-white/60"
       />
-      <circle cx={m.x - w / 2 + 16} cy={m.y} r="3.5" fill={active ? "var(--accent)" : "var(--text-secondary)"} />
-      <text x={m.x + 9} y={m.y + 4.5} fill={selected ? "var(--accent)" : "var(--text-primary)"} fontSize="13.5" textAnchor="middle" className="pointer-events-none">
+      <circle cx={m.x + 16} cy={m.y + m.h / 2} r="3" fill={active ? "var(--accent)" : "#dedede"} />
+      <text x={m.x + 27} y={m.y + m.h / 2 + 4} fill={selected ? "var(--accent)" : "#dedede"} fontSize="12" className="pointer-events-none">
         {m.label}
       </text>
     </>
