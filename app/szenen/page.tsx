@@ -1,33 +1,114 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
-import { areaName } from "@/lib/world";
+import { AREA_ORDER, AREAS, areaName, type AreaKey } from "@/lib/world";
 import { formatInplayDate } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 
-type Filter = "all" | "active" | "mine";
+type Tab = "active" | "all" | "mine" | "archive";
+
+const MONTHS_DE = [
+  "Januar",
+  "Februar",
+  "März",
+  "April",
+  "Mai",
+  "Juni",
+  "Juli",
+  "August",
+  "September",
+  "Oktober",
+  "November",
+  "Dezember",
+];
 
 export default function ScenesPage() {
   const store = useStore();
-  const { scenes, character, postsOf, currentPlayer, charactersOf } = store;
-  const [filter, setFilter] = useState<Filter>("all");
+  const { scenes, characters, players, character, postsOf, currentPlayer, charactersOf } =
+    store;
 
-  const myCharIds = new Set(
-    currentPlayer ? charactersOf(currentPlayer.id).map((c) => c.id) : [],
+  const [tab, setTab] = useState<Tab>("active");
+  const [search, setSearch] = useState("");
+  const [selectedChars, setSelectedChars] = useState<string[]>([]);
+  const [area, setArea] = useState<AreaKey | "rest" | "all">("all");
+  const [period, setPeriod] = useState<string>("all"); // "YYYY-MM"
+  const [playerId, setPlayerId] = useState<string>("all");
+
+  const myCharIds = useMemo(
+    () =>
+      new Set(currentPlayer ? charactersOf(currentPlayer.id).map((c) => c.id) : []),
+    [currentPlayer, charactersOf],
   );
 
+  // Verfügbare Monat/Jahr-Optionen aus den Szenen
+  const periods = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of scenes) set.add(s.inplay_date.slice(0, 7));
+    return Array.from(set).sort().reverse();
+  }, [scenes]);
+
+  function toggleChar(id: string) {
+    setSelectedChars((s) =>
+      s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
+    );
+  }
+
   const filtered = scenes.filter((s) => {
-    if (filter === "active") return s.status === "active";
-    if (filter === "mine")
-      return s.participant_ids.some((id) => myCharIds.has(id));
+    // Tab
+    if (tab === "active" && s.status !== "active") return false;
+    if (tab === "archive" && s.status !== "closed") return false;
+    if (tab === "mine" && !s.participant_ids.some((id) => myCharIds.has(id)))
+      return false;
+    // Suche (Titel)
+    if (search.trim() && !s.title.toLowerCase().includes(search.trim().toLowerCase()))
+      return false;
+    // Charakter-Kombination: Szene muss ALLE gewählten Charaktere enthalten
+    if (
+      selectedChars.length > 0 &&
+      !selectedChars.every((id) => s.participant_ids.includes(id))
+    )
+      return false;
+    // Bezirk
+    if (area !== "all") {
+      if (area === "rest") {
+        if (AREA_ORDER.includes(s.location_area as AreaKey)) return false;
+      } else if (s.location_area !== area) return false;
+    }
+    // Monat/Jahr
+    if (period !== "all" && s.inplay_date.slice(0, 7) !== period) return false;
+    // Spieler
+    if (playerId !== "all") {
+      const ofPlayer = s.participant_ids.some(
+        (id) => character(id)?.player_id === playerId,
+      );
+      if (!ofPlayer) return false;
+    }
     return true;
   });
 
+  const activeFilters =
+    (search.trim() ? 1 : 0) +
+    selectedChars.length +
+    (area !== "all" ? 1 : 0) +
+    (period !== "all" ? 1 : 0) +
+    (playerId !== "all" ? 1 : 0);
+
+  function resetFilters() {
+    setSearch("");
+    setSelectedChars([]);
+    setArea("all");
+    setPeriod("all");
+    setPlayerId("all");
+  }
+
+  const selectCls =
+    "bg-bg-primary border border-border-subtle rounded-md px-2.5 py-1.5 text-[12px] text-text-primary outline-none focus:border-white/20";
+
   return (
-    <div className="max-w-4xl mx-auto px-8 py-8">
+    <div className="max-w-5xl mx-auto px-8 py-8">
       <PageHeader title="Szenen" subtitle="Alle Threads in Eden.">
         <Link
           href="/szenen/neu"
@@ -37,26 +118,142 @@ export default function ScenesPage() {
         </Link>
       </PageHeader>
 
-      <div className="flex gap-1.5 mb-5">
+      {/* Primäre Tabs */}
+      <div className="flex gap-1.5 mb-4">
         {(
           [
-            ["all", "Alle"],
             ["active", "Aktive"],
+            ["all", "Alle"],
             ["mine", "Meine"],
-          ] as [Filter, string][]
+            ["archive", "Archiv"],
+          ] as [Tab, string][]
         ).map(([key, label]) => (
           <button
             key={key}
-            onClick={() => setFilter(key)}
-            className={`rounded-full px-3 py-1 text-[12px] transition-colors ${
-              filter === key
-                ? "bg-white/[0.1] text-text-primary"
+            onClick={() => setTab(key)}
+            className={`rounded-full px-3.5 py-1.5 text-[12px] transition-colors ${
+              tab === key
+                ? "bg-accent text-black font-medium"
                 : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
             }`}
           >
             {label}
           </button>
         ))}
+      </div>
+
+      {/* Filterleiste */}
+      <div className="rounded-xl border border-border-subtle bg-bg-surface p-4 mb-6 flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Suche */}
+          <div className="relative flex-1 min-w-[180px]">
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary">
+              <Icon name="search" size={14} />
+            </span>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Titel durchsuchen…"
+              className="w-full bg-bg-primary border border-border-subtle rounded-md pl-8 pr-3 py-1.5 text-[12px] text-text-primary outline-none focus:border-white/20"
+            />
+          </div>
+
+          {/* Bezirk */}
+          <select
+            value={area}
+            onChange={(e) => setArea(e.target.value as AreaKey | "rest" | "all")}
+            className={selectCls}
+          >
+            <option value="all">Alle Bezirke</option>
+            {AREA_ORDER.map((k) => (
+              <option key={k} value={k} className="bg-bg-surface">
+                {AREAS[k].name}
+              </option>
+            ))}
+            <option value="rest" className="bg-bg-surface">
+              Rest der Welt
+            </option>
+          </select>
+
+          {/* Monat/Jahr */}
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className={selectCls}
+          >
+            <option value="all">Alle Zeiträume</option>
+            {periods.map((p) => {
+              const [y, m] = p.split("-");
+              return (
+                <option key={p} value={p} className="bg-bg-surface">
+                  {MONTHS_DE[parseInt(m, 10) - 1]} {y}
+                </option>
+              );
+            })}
+          </select>
+
+          {/* Spieler */}
+          <select
+            value={playerId}
+            onChange={(e) => setPlayerId(e.target.value)}
+            className={selectCls}
+          >
+            <option value="all">Alle Spieler</option>
+            {players.map((p) => (
+              <option key={p.id} value={p.id} className="bg-bg-surface">
+                {p.username}
+              </option>
+            ))}
+          </select>
+
+          {activeFilters > 0 && (
+            <button
+              onClick={resetFilters}
+              className="text-[11px] text-text-tertiary hover:text-text-primary underline"
+            >
+              zurücksetzen ({activeFilters})
+            </button>
+          )}
+        </div>
+
+        {/* Charakter-Kombination */}
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-text-tertiary mb-1.5">
+            Charaktere{" "}
+            <span className="normal-case tracking-normal">
+              (Szene enthält alle gewählten)
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {characters.map((c) => {
+              const on = selectedChars.includes(c.id);
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => toggleChar(c.id)}
+                  className={`flex items-center gap-1.5 rounded-full border pl-1 pr-2.5 py-0.5 text-[11px] transition-colors ${
+                    on
+                      ? "border-accent/60 bg-accent-soft text-text-primary"
+                      : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={c.faceclaim_image_url ?? ""}
+                    alt={c.name}
+                    className="w-4 h-4 rounded-full object-cover"
+                  />
+                  {c.name.split(" ")[0]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Ergebnis */}
+      <div className="text-[11px] text-text-tertiary mb-3">
+        {filtered.length} {filtered.length === 1 ? "Szene" : "Szenen"}
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -125,7 +322,7 @@ export default function ScenesPage() {
 
       {filtered.length === 0 && (
         <div className="text-[13px] text-text-tertiary">
-          Keine Szenen für diesen Filter.
+          Keine Szenen für diese Filter.
         </div>
       )}
     </div>
