@@ -112,6 +112,17 @@ body {
   color: var(--text-secondary);
 }
 
+@keyframes fadein {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Markierte Zitat-Stelle in Prosa */
 .prose-serif mark {
   background: var(--accent-soft);

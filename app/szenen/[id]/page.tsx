@@ -4,10 +4,10 @@ import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
-import { formatInplayDate, renderProse } from "@/lib/format";
+import { formatInplayDate, renderProseWithHighlights } from "@/lib/format";
 import { SceneCharacterCard } from "@/components/SceneCharacterCard";
 import { Icon } from "@/components/Icon";
-import type { Character, Post } from "@/lib/types";
+import type { Character, Post, SceneQuote } from "@/lib/types";
 
 export default function ScenePage({
   params,
@@ -111,6 +111,7 @@ export default function ScenePage({
               character={c}
               player={player(c.player_id)}
               side={side}
+              quotes={store.quotesOf(scene.id).filter((q) => q.post_id === post.id)}
             />
           );
         })}
@@ -138,17 +139,46 @@ function PostRow({
   character,
   player,
   side,
+  quotes,
 }: {
   post: Post;
   character: Character;
   player?: ReturnType<typeof useStore>["players"][number];
   side: "left" | "right";
+  quotes: SceneQuote[];
 }) {
+  const { addQuote, removeQuote } = useStore();
   const [hover, setHover] = useState(false);
+  const [hint, setHint] = useState<string | null>(null);
+  const proseRef = useRef<HTMLDivElement>(null);
 
-  const card = (
-    <SceneCharacterCard character={character} player={player} />
-  );
+  // Markierten Text aus diesem Post als Zitat speichern (oder Hinweis zeigen)
+  function highlightSelection() {
+    const sel = window.getSelection();
+    const text = sel?.toString().trim() ?? "";
+    if (!text) {
+      setHint("Markiere zuerst eine Textstelle im Post.");
+      setTimeout(() => setHint(null), 2500);
+      return;
+    }
+    // Liegt die Auswahl innerhalb dieses Posts?
+    if (
+      proseRef.current &&
+      sel &&
+      sel.anchorNode &&
+      !proseRef.current.contains(sel.anchorNode)
+    ) {
+      setHint("Markierung liegt außerhalb dieses Posts.");
+      setTimeout(() => setHint(null), 2500);
+      return;
+    }
+    addQuote(post.id, text);
+    sel?.removeAllRanges();
+    setHint("Als Zitat gespeichert ✓");
+    setTimeout(() => setHint(null), 2000);
+  }
+
+  const card = <SceneCharacterCard character={character} player={player} />;
   const prose = (
     <div
       className="flex-1 min-w-0 group relative"
@@ -156,16 +186,30 @@ function PostRow({
       onMouseLeave={() => setHover(false)}
     >
       <div
+        ref={proseRef}
         className="prose-serif text-text-primary"
-        dangerouslySetInnerHTML={{ __html: renderProse(post.content) }}
+        dangerouslySetInnerHTML={{
+          __html: renderProseWithHighlights(
+            post.content,
+            quotes.map((q) => q.text),
+          ),
+        }}
       />
+
       {/* Action-Buttons bei Hover */}
       <div
         className={`absolute -top-2 right-0 flex items-center gap-1 transition-opacity ${
           hover ? "opacity-100" : "opacity-0"
         }`}
       >
-        {(["star", "quote", "heart"] as const).map((n) => (
+        <button
+          onClick={highlightSelection}
+          className="rounded-md bg-bg-surface border border-border-subtle p-1.5 text-text-tertiary hover:text-accent"
+          title="Markierte Stelle als Zitat highlighten"
+        >
+          <Icon name="quote" size={13} />
+        </button>
+        {(["star", "heart"] as const).map((n) => (
           <button
             key={n}
             className="rounded-md bg-bg-surface border border-border-subtle p-1.5 text-text-tertiary hover:text-text-primary"
@@ -175,6 +219,36 @@ function PostRow({
           </button>
         ))}
       </div>
+
+      {hint && (
+        <div className="absolute -top-2 right-24 rounded-md bg-bg-surface-2 border border-border-subtle px-2 py-1 text-[11px] text-text-secondary whitespace-nowrap">
+          {hint}
+        </div>
+      )}
+
+      {/* Bereits gespeicherte Zitate dieses Posts */}
+      {quotes.length > 0 && (
+        <div className="mt-2 flex flex-col gap-1">
+          {quotes.map((q) => (
+            <div
+              key={q.id}
+              className="flex items-start gap-1.5 text-[11px] text-text-tertiary"
+            >
+              <span className="text-accent mt-px">
+                <Icon name="quote" size={11} />
+              </span>
+              <span className="italic line-clamp-1 flex-1">{q.text}</span>
+              <button
+                onClick={() => removeQuote(q.id)}
+                title="Zitat entfernen"
+                className="opacity-0 group-hover:opacity-100 hover:text-text-secondary transition-opacity"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 

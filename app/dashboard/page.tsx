@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
-import { formatInplayDate } from "@/lib/format";
+import { formatInplayDate, timeAgo, withinHours } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
+import { QuoteRotator } from "@/components/QuoteRotator";
 import type { Scene } from "@/lib/types";
 
 export default function DashboardPage() {
   const store = useStore();
-  const { currentPlayer, scenes, charactersOf, postsOf, character } = store;
+  const { currentPlayer, scenes, players, charactersOf, postsOf, character } =
+    store;
   if (!currentPlayer) return null;
 
   const myCharIds = new Set(charactersOf(currentPlayer.id).map((c) => c.id));
@@ -29,12 +31,39 @@ export default function DashboardPage() {
     else waiting.push(s);
   }
 
+  // Allgemein aktive Szenen der letzten 24h (über alle Spieler)
+  const recentScenes = scenes
+    .map((s) => {
+      const posts = postsOf(s.id);
+      const last = posts[posts.length - 1];
+      return { scene: s, last };
+    })
+    .filter((x) => x.last && withinHours(x.last.created_at, 24))
+    .sort(
+      (a, b) =>
+        new Date(b.last!.created_at).getTime() -
+        new Date(a.last!.created_at).getTime(),
+    );
+
+  // Wer war in den letzten 24h online
+  const onlinePlayers = players
+    .filter((p) => withinHours(p.last_seen, 24))
+    .sort(
+      (a, b) =>
+        new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime(),
+    );
+
   return (
     <div className="max-w-3xl mx-auto px-8 py-8">
       <PageHeader
         title={`Hallo, ${currentPlayer.username}`}
         subtitle="Dein Inplaytracker — offene Szenen, in denen du mitspielst."
       />
+
+      {/* Wechselnde Szenenzitate */}
+      <div className="mb-10">
+        <QuoteRotator />
+      </div>
 
       <section className="mb-10">
         <h2 className="text-[12px] uppercase tracking-[0.16em] text-text-secondary mb-3">
@@ -61,6 +90,91 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-2">
             {waiting.map((s) => (
               <SceneRow key={s.id} scene={s} store={store} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Aktive Szenen der letzten 24h (allgemein) */}
+      <section className="mt-12">
+        <h2 className="section-bar text-[13px] text-text-primary mb-3">
+          Aktive Szenen · letzte 24h
+        </h2>
+        {recentScenes.length === 0 ? (
+          <Empty>In den letzten 24 Stunden wurde nichts geschrieben.</Empty>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {recentScenes.map(({ scene, last }) => {
+              const lastChar = last ? character(last.character_id) : undefined;
+              return (
+                <Link
+                  key={scene.id}
+                  href={`/szenen/${scene.id}`}
+                  className="flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-surface px-4 py-3 hover:bg-white/[0.03] transition-colors"
+                >
+                  <span className="text-accent shrink-0">
+                    <Icon name="flame" size={18} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-serif text-[14px] text-text-primary truncate">
+                      {scene.title}
+                    </div>
+                    <div className="text-[11px] text-text-tertiary truncate">
+                      {scene.location_name} · {areaName(scene.location_area)}
+                    </div>
+                  </div>
+                  {last && lastChar && (
+                    <div className="text-right shrink-0">
+                      <div className="text-[11px] text-text-secondary">
+                        {lastChar.name.split(" ")[0]}
+                      </div>
+                      <div className="text-[10px] text-text-tertiary">
+                        {timeAgo(last.created_at)}
+                      </div>
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Wer war online */}
+      <section className="mt-10">
+        <h2 className="section-bar text-[13px] text-text-primary mb-3">
+          In den letzten 24h online
+        </h2>
+        {onlinePlayers.length === 0 ? (
+          <Empty>Niemand war zuletzt online.</Empty>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {onlinePlayers.map((p) => (
+              <Link
+                key={p.id}
+                href={`/spieler/${p.username}`}
+                className="flex items-center gap-2.5 rounded-full border border-border-subtle bg-bg-surface pl-1.5 pr-3.5 py-1.5 hover:bg-white/[0.03] transition-colors"
+              >
+                <span className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={p.avatar_url ?? ""}
+                    alt={p.username}
+                    className="w-7 h-7 rounded-full object-cover bg-bg-primary"
+                  />
+                  {withinHours(p.last_seen, 1) && (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-bg-surface" />
+                  )}
+                </span>
+                <div className="leading-tight">
+                  <div className="text-[12px] text-text-primary">
+                    {p.username}
+                  </div>
+                  <div className="text-[10px] text-text-tertiary">
+                    {timeAgo(p.last_seen)}
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         )}

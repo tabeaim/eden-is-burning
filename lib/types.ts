@@ -7,6 +7,7 @@ export interface Player {
   avatar_url: string | null;
   bio: string | null;
   created_at: string;
+  last_seen: string; // ISO timestamp — "zuletzt online"
 }
 
 export interface Character {
@@ -43,5 +44,15 @@ export interface Post {
   character_id: string;
   content: string;
   post_number: number;
+  created_at: string;
+}
+
+// Ein aus einem Post markiertes Zitat — speist die rotierenden Dashboard-Zitate
+export interface SceneQuote {
+  id: string;
+  scene_id: string;
+  post_id: string;
+  character_id: string;
+  text: string;
   created_at: string;
 }

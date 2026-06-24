@@ -1,4 +1,9 @@
-import type { Character, Player, Post, Scene } from "./types";
+import type { Character, Player, Post, Scene, SceneQuote } from "./types";
+
+// Hilfsfunktion: ISO-Zeitstempel vor N Stunden (für realistische last_seen / Post-Zeiten)
+function hoursAgo(h: number): string {
+  return new Date(Date.now() - h * 3600 * 1000).toISOString();
+}
 
 // "Seed"-Daten — entspricht dem Beispieldaten-Abschnitt der Spezifikation.
 // Diese Funktion liefert frische Kopien, damit der In-Memory-Store sie
@@ -13,6 +18,7 @@ export function seedPlayers(): Player[] {
       avatar_url: "https://picsum.photos/seed/tabsavatar/200/200",
       bio: "Spielt Elliot und Nigel. Liebt langsame Szenen und nasse Cafés.",
       created_at: "2021-10-01T10:00:00Z",
+      last_seen: hoursAgo(1),
     },
     {
       id: "p_vera",
@@ -21,6 +27,7 @@ export function seedPlayers(): Player[] {
       avatar_url: "https://picsum.photos/seed/veraavatar/200/200",
       bio: "Spielt Julius und Alexander.",
       created_at: "2021-10-03T10:00:00Z",
+      last_seen: hoursAgo(5),
     },
   ];
 }
@@ -124,7 +131,7 @@ export function seedPosts(): Post[] {
       content:
         "Das Café roch nach nassem Mantel und Zimt. Elliot schüttelte den Regen von seiner Jacke, bevor er die Tür hinter sich zuzog — zu fest, der Glöckner schepperte schrill — und dann sah er ihn. Julius. An dem kleinen Tisch am Fenster, die Hände um eine Tasse, den Blick nach draußen gerichtet, als wäre er allein auf der Welt.",
       post_number: 1,
-      created_at: "2021-11-22T14:05:00Z",
+      created_at: hoursAgo(20),
     },
     {
       id: "post_2",
@@ -133,7 +140,7 @@ export function seedPosts(): Post[] {
       content:
         "Das Glöckchen. Julius verstand, warum er diesem Laden nie traute — die Tür ließ keine Stille zu. Er hob die Tasse, um einen Schluck zu nehmen, und tat dabei sein Bestes, den Eingangsbereich nicht anzusehen. *Irgendjemand.* Immer irgendwer. Seine Augen blieben draußen, auf den Tropfen, die sich am Glas entlangtasteten wie Finger auf einer Klaviertastatur.",
       post_number: 2,
-      created_at: "2021-11-22T14:12:00Z",
+      created_at: hoursAgo(14),
     },
     {
       id: "post_3",
@@ -142,7 +149,7 @@ export function seedPosts(): Post[] {
       content:
         "Elliot blieb zwei Sekunden zu lang stehen. Genug, dass es auffallen würde, wenn Julius hingesehen hätte. Er sah nicht hin. Das sagte alles. Elliot kaufte sich seinen Kaffee, zahlte bar, bekam zu wenig Wechselgeld — er sagte nichts — und setzte sich an den Tisch daneben. Nicht gegenüber. Daneben. Nah genug, um zufällig zu sein. Weit genug, um es abstreiten zu können.",
       post_number: 3,
-      created_at: "2021-11-22T14:20:00Z",
+      created_at: hoursAgo(6),
     },
     {
       id: "post_4",
@@ -151,7 +158,7 @@ export function seedPosts(): Post[] {
       content:
         "Das Stuhlbein schabte. Julius schloss kurz die Augen. *Daneben.* Er hatte die ganze Reihe freier Tische gesehen. Die ganze Reihe. Er trank, ohne sich zu bewegen, und wartete darauf, dass Elliot etwas sagen würde — obwohl er wusste, dass er selbst der war, der als Letztes gesprochen hatte, damals, vor drei Wochen. Regentropfen. Klaviertastatur. Er sah nach draußen.",
       post_number: 4,
-      created_at: "2021-11-22T14:28:00Z",
+      created_at: hoursAgo(2),
     },
     {
       id: "post_5",
@@ -170,6 +177,35 @@ export function seedPosts(): Post[] {
         "Nigel wartete im Arbeitszimmer, das Diktiergerät längst aus. Manche Gespräche wollte man nicht aufgezeichnet wissen. Er hörte die Tür, die Schritte, und wusste: jetzt.",
       post_number: 2,
       created_at: "2021-11-15T19:18:00Z",
+    },
+  ];
+}
+
+export function seedQuotes(): SceneQuote[] {
+  return [
+    {
+      id: "q_1",
+      scene_id: "s_cafe",
+      post_id: "post_2",
+      character_id: "c_julius",
+      text: "Immer irgendwer. Seine Augen blieben draußen, auf den Tropfen, die sich am Glas entlangtasteten wie Finger auf einer Klaviertastatur.",
+      created_at: hoursAgo(13),
+    },
+    {
+      id: "q_2",
+      scene_id: "s_cafe",
+      post_id: "post_3",
+      character_id: "c_elliot",
+      text: "Nah genug, um zufällig zu sein. Weit genug, um es abstreiten zu können.",
+      created_at: hoursAgo(6),
+    },
+    {
+      id: "q_3",
+      scene_id: "s_shades",
+      post_id: "post_6",
+      character_id: "c_nigel",
+      text: "Manche Gespräche wollte man nicht aufgezeichnet wissen.",
+      created_at: hoursAgo(40),
     },
   ];
 }

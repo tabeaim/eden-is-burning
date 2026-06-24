@@ -8,15 +8,16 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { Character, Player, Post, Scene } from "./types";
+import type { Character, Player, Post, Scene, SceneQuote } from "./types";
 import {
   seedCharacters,
   seedPlayers,
   seedPosts,
+  seedQuotes,
   seedScenes,
 } from "./mock-data";
 
-const STORAGE_KEY = "eden-is-burning-v1";
+const STORAGE_KEY = "eden-is-burning-v2";
 const SESSION_KEY = "eden-is-burning-session";
 
 interface PersistedState {
@@ -24,6 +25,7 @@ interface PersistedState {
   characters: Character[];
   scenes: Scene[];
   posts: Post[];
+  quotes: SceneQuote[];
 }
 
 interface StoreValue extends PersistedState {
@@ -38,8 +40,12 @@ interface StoreValue extends PersistedState {
   character: (id: string) => Character | undefined;
   player: (id: string) => Player | undefined;
   playerByUsername: (username: string) => Player | undefined;
+  quotesOf: (sceneId: string) => SceneQuote[];
   // mutations
   addPost: (sceneId: string, characterId: string, content: string) => void;
+  addQuote: (postId: string, text: string) => void;
+  removeQuote: (quoteId: string) => void;
+  touchPresence: (playerId: string) => void;
   updateCharacter: (id: string, patch: Partial<Character>) => void;
   addCharacter: (playerId: string) => string;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
@@ -55,6 +61,7 @@ function freshState(): PersistedState {
     characters: seedCharacters(),
     scenes: seedScenes(),
     posts: seedPosts(),
+    quotes: seedQuotes(),
   };
 }
 
@@ -71,7 +78,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setState(JSON.parse(raw));
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<PersistedState>;
+        setState({
+          players: parsed.players ?? seedPlayers(),
+          characters: parsed.characters ?? seedCharacters(),
+          scenes: parsed.scenes ?? seedScenes(),
+          posts: parsed.posts ?? seedPosts(),
+          quotes: parsed.quotes ?? seedQuotes(),
+        });
+      }
       const session = localStorage.getItem(SESSION_KEY);
       if (session) setCurrentPlayerId(session);
     } catch {
@@ -100,7 +116,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentPlayerId, ready]);
 
-  const login = useCallback((playerId: string) => setCurrentPlayerId(playerId), []);
+  const login = useCallback((playerId: string) => {
+    setCurrentPlayerId(playerId);
+    // Anwesenheit aktualisieren
+    setState((s) => ({
+      ...s,
+      players: s.players.map((p) =>
+        p.id === playerId ? { ...p, last_seen: new Date().toISOString() } : p,
+      ),
+    }));
+  }, []);
   const logout = useCallback(() => setCurrentPlayerId(null), []);
 
   const charactersOf = useCallback(
@@ -131,6 +156,53 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ),
     [state.players],
   );
+
+  const quotesOf = useCallback(
+    (sceneId: string) => state.quotes.filter((q) => q.scene_id === sceneId),
+    [state.quotes],
+  );
+
+  const addQuote = useCallback(
+    (postId: string, text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      setState((s) => {
+        const post = s.posts.find((p) => p.id === postId);
+        if (!post) return s;
+        // Doppelte (gleicher Post + Text) vermeiden
+        if (
+          s.quotes.some((q) => q.post_id === postId && q.text === trimmed)
+        )
+          return s;
+        const quote: SceneQuote = {
+          id: uid("q"),
+          scene_id: post.scene_id,
+          post_id: postId,
+          character_id: post.character_id,
+          text: trimmed,
+          created_at: new Date().toISOString(),
+        };
+        return { ...s, quotes: [...s.quotes, quote] };
+      });
+    },
+    [],
+  );
+
+  const removeQuote = useCallback((quoteId: string) => {
+    setState((s) => ({
+      ...s,
+      quotes: s.quotes.filter((q) => q.id !== quoteId),
+    }));
+  }, []);
+
+  const touchPresence = useCallback((playerId: string) => {
+    setState((s) => ({
+      ...s,
+      players: s.players.map((p) =>
+        p.id === playerId ? { ...p, last_seen: new Date().toISOString() } : p,
+      ),
+    }));
+  }, []);
 
   const addPost = useCallback(
     (sceneId: string, characterId: string, content: string) => {
@@ -227,7 +299,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       character,
       player,
       playerByUsername,
+      quotesOf,
       addPost,
+      addQuote,
+      removeQuote,
+      touchPresence,
       updateCharacter,
       addCharacter,
       updatePlayer,
@@ -245,7 +321,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       character,
       player,
       playerByUsername,
+      quotesOf,
       addPost,
+      addQuote,
+      removeQuote,
+      touchPresence,
       updateCharacter,
       addCharacter,
       updatePlayer,
