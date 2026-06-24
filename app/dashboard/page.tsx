@@ -69,7 +69,7 @@ export default function DashboardPage() {
         subtitle="Dein Inplaytracker — offene Szenen, in denen du mitspielst."
       />
 
-      <div className="grid lg:grid-cols-[1.6fr_1fr] gap-8 items-start">
+      <div className="grid lg:grid-cols-[1.6fr_1fr] gap-14 items-start">
         {/* LINKS: Szenenübersicht, nach Charakteren gruppiert */}
         <div className="flex flex-col gap-10">
           <section>
