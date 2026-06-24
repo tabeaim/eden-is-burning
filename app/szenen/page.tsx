@@ -9,6 +9,14 @@ import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 
 type Tab = "active" | "all" | "mine" | "archive";
+type SortKey = "active" | "inplay" | "created" | "title";
+
+const SORT_LABELS: Record<SortKey, string> = {
+  active: "Zuletzt aktiv",
+  inplay: "In-Game-Datum",
+  created: "Erstellungsdatum",
+  title: "Titel A–Z",
+};
 
 const MONTHS_DE = [
   "Januar",
@@ -36,6 +44,15 @@ export default function ScenesPage() {
   const [area, setArea] = useState<AreaKey | "rest" | "all">("all");
   const [period, setPeriod] = useState<string>("all"); // "YYYY-MM"
   const [playerId, setPlayerId] = useState<string>("all");
+  const [charsOpen, setCharsOpen] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>("active");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  // Zeitpunkt der letzten Aktivität einer Szene (jüngster Post, sonst Erstellung)
+  const lastActivity = (sceneId: string, fallback: string) => {
+    const posts = postsOf(sceneId);
+    return posts.length ? posts[posts.length - 1].created_at : fallback;
+  };
 
   const myCharIds = useMemo(
     () =>
@@ -88,6 +105,36 @@ export default function ScenesPage() {
     }
     return true;
   });
+
+  // Sortierung
+  const sorted = [...filtered].sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case "active":
+        cmp =
+          new Date(lastActivity(a.id, a.created_at)).getTime() -
+          new Date(lastActivity(b.id, b.created_at)).getTime();
+        break;
+      case "inplay":
+        cmp = a.inplay_date < b.inplay_date ? -1 : a.inplay_date > b.inplay_date ? 1 : 0;
+        break;
+      case "created":
+        cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        break;
+      case "title":
+        cmp = a.title.localeCompare(b.title, "de");
+        break;
+    }
+    return sortDir === "asc" ? cmp : -cmp;
+  });
+
+  // Charaktere nach Spieler gruppiert (für das Filter-Panel)
+  const charsByPlayer = players
+    .map((p) => ({
+      player: p,
+      chars: characters.filter((c) => c.player_id === p.id),
+    }))
+    .filter((g) => g.chars.length > 0);
 
   const activeFilters =
     (search.trim() ? 1 : 0) +
@@ -206,6 +253,31 @@ export default function ScenesPage() {
             ))}
           </select>
 
+          {/* Sortierung */}
+          <div className="flex items-center gap-1.5 ml-auto">
+            <span className="text-[10px] uppercase tracking-wider text-text-tertiary">
+              Sortieren
+            </span>
+            <select
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as SortKey)}
+              className={selectCls}
+            >
+              {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+                <option key={k} value={k} className="bg-bg-surface">
+                  {SORT_LABELS[k]}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+              title={sortDir === "asc" ? "Aufsteigend" : "Absteigend"}
+              className="rounded-md border border-border-subtle bg-bg-primary px-2 py-1.5 text-[12px] text-text-secondary hover:text-text-primary"
+            >
+              {sortDir === "asc" ? "↑" : "↓"}
+            </button>
+          </div>
+
           {activeFilters > 0 && (
             <button
               onClick={resetFilters}
@@ -216,48 +288,76 @@ export default function ScenesPage() {
           )}
         </div>
 
-        {/* Charakter-Kombination */}
+        {/* Charakter-Kombination (nach Spieler gruppiert, aufklappbar) */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-text-tertiary mb-1.5">
-            Charaktere{" "}
+          <button
+            onClick={() => setCharsOpen((o) => !o)}
+            className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-text-tertiary hover:text-text-secondary"
+          >
+            <span
+              className={`inline-flex transition-transform ${
+                charsOpen ? "rotate-90" : ""
+              }`}
+            >
+              <Icon name="arrow-right" size={12} />
+            </span>
+            Charaktere
             <span className="normal-case tracking-normal">
               (Szene enthält alle gewählten)
             </span>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {characters.map((c) => {
-              const on = selectedChars.includes(c.id);
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => toggleChar(c.id)}
-                  className={`flex items-center gap-1.5 rounded-full border pl-1 pr-2.5 py-0.5 text-[11px] transition-colors ${
-                    on
-                      ? "border-accent/60 bg-accent-soft text-text-primary"
-                      : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
-                  }`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={c.faceclaim_image_url ?? ""}
-                    alt={c.name}
-                    className="w-4 h-4 rounded-full object-cover"
-                  />
-                  {c.name.split(" ")[0]}
-                </button>
-              );
-            })}
-          </div>
+            {selectedChars.length > 0 && (
+              <span className="rounded-full bg-accent text-black px-1.5 py-px text-[10px] font-medium">
+                {selectedChars.length}
+              </span>
+            )}
+          </button>
+
+          {charsOpen && (
+            <div className="mt-2.5 flex flex-col gap-2.5">
+              {charsByPlayer.map(({ player, chars }) => (
+                <div key={player.id}>
+                  <div className="text-[10px] text-text-tertiary mb-1">
+                    {player.username}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {chars.map((c) => {
+                      const on = selectedChars.includes(c.id);
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => toggleChar(c.id)}
+                          className={`flex items-center gap-1.5 rounded-full border pl-1 pr-2.5 py-0.5 text-[11px] transition-colors ${
+                            on
+                              ? "border-accent/60 bg-accent-soft text-text-primary"
+                              : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
+                          }`}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={c.faceclaim_image_url ?? ""}
+                            alt={c.name}
+                            className="w-4 h-4 rounded-full object-cover"
+                          />
+                          {c.name.split(" ")[0]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Ergebnis */}
       <div className="text-[11px] text-text-tertiary mb-3">
-        {filtered.length} {filtered.length === 1 ? "Szene" : "Szenen"}
+        {sorted.length} {sorted.length === 1 ? "Szene" : "Szenen"} ·{" "}
+        {SORT_LABELS[sortKey]} {sortDir === "asc" ? "↑" : "↓"}
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
-        {filtered.map((s) => {
+        {sorted.map((s) => {
           const posts = postsOf(s.id);
           const turnId = whoseTurn(s, posts);
           const participants = s.participant_ids
@@ -320,7 +420,7 @@ export default function ScenesPage() {
         })}
       </div>
 
-      {filtered.length === 0 && (
+      {sorted.length === 0 && (
         <div className="text-[13px] text-text-tertiary">
           Keine Szenen für diese Filter.
         </div>
