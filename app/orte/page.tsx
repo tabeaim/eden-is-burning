@@ -24,7 +24,6 @@ export default function PlacesPage() {
   const [selected, setSelected] = useState<string>("rivers_edge");
   const [openLoc, setOpenLoc] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [sceneFilter, setSceneFilter] = useState<"all" | "active">("all");
 
   const areaStats = useMemo(() => {
     const stats: Record<string, { active: number; total: number }> = {};
@@ -38,11 +37,7 @@ export default function PlacesPage() {
   }, [scenes]);
 
   const scenesHere = scenes.filter((s) => s.location_area === selected);
-  const visibleScenes =
-    sceneFilter === "active"
-      ? scenesHere.filter((s) => s.status === "active")
-      : scenesHere;
-  const activeCount = scenesHere.filter((s) => s.status === "active").length;
+  const activeScenes = scenesHere.filter((s) => s.status === "active");
   const residents = characters.filter((c) => c.area === selected);
   const playedNames = useMemo(
     () => new Set(scenesHere.map((s) => s.location_name)),
@@ -75,19 +70,6 @@ export default function PlacesPage() {
       <div className="grid lg:grid-cols-[1.7fr_1fr] gap-8 items-start">
         <div className="rounded-xl border border-border-subtle bg-bg-surface p-3">
           <EdenMap selected={selected} onSelect={(k) => { setSelected(k); setOpenLoc(null); setAdding(false); }} areaStats={areaStats} />
-          <div className="px-2 pt-2 pb-1 flex flex-wrap items-center gap-4 text-[10px] text-text-tertiary">
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-3 h-3 rounded-sm border border-olive/50 bg-[rgba(163,163,128,0.14)]" />
-              bespielt
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-3 h-3 rounded-sm border border-border-strong" />
-              noch unbespielt
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-accent">▲</span> aktive Szene(n)
-            </span>
-          </div>
         </div>
 
         {/* Detail-Panel */}
@@ -158,6 +140,7 @@ export default function PlacesPage() {
                 openLoc={openLoc}
                 setOpenLoc={setOpenLoc}
                 onAdd={() => setAdding(true)}
+                showAdd
               />
 
               {/* Formular: neuen Ort anlegen */}
@@ -169,42 +152,18 @@ export default function PlacesPage() {
                 />
               )}
 
-              {/* Szenen hier */}
+              {/* Aktive Szenen hier */}
               <div className="mt-5">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="text-[10px] uppercase tracking-wider text-text-tertiary">
-                    Szenen hier
-                  </div>
-                  <div className="flex gap-1">
-                    {(
-                      [
-                        ["all", `Alle (${scenesHere.length})`],
-                        ["active", `Aktiv (${activeCount})`],
-                      ] as ["all" | "active", string][]
-                    ).map(([key, label]) => (
-                      <button
-                        key={key}
-                        onClick={() => setSceneFilter(key)}
-                        className={`rounded-full px-2.5 py-0.5 text-[10px] transition-colors ${
-                          sceneFilter === key
-                            ? "bg-accent text-black font-medium"
-                            : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
+                <div className="text-[10px] uppercase tracking-wider text-text-tertiary mb-2">
+                  Aktive Szenen hier
                 </div>
-                {visibleScenes.length === 0 ? (
+                {activeScenes.length === 0 ? (
                   <p className="text-[12px] text-text-tertiary">
-                    {sceneFilter === "active"
-                      ? "Keine aktive Szene an diesem Ort."
-                      : "Noch keine Szenen an diesem Ort."}
+                    Keine aktive Szene an diesem Ort.
                   </p>
                 ) : (
                   <div className="flex flex-col gap-1.5">
-                    {visibleScenes.map((s) => {
+                    {activeScenes.map((s) => {
                       const turnId = whoseTurn(s, postsOf(s.id));
                       return (
                         <Link
@@ -216,17 +175,13 @@ export default function PlacesPage() {
                             <span className="text-[13px] text-text-primary font-serif">
                               {s.title}
                             </span>
-                            <span
-                              className={`text-[10px] uppercase tracking-wider ${
-                                s.status === "active" ? "text-accent" : "text-text-tertiary"
-                              }`}
-                            >
-                              {s.status === "active" ? "aktiv" : "archiv"}
+                            <span className="text-[10px] uppercase tracking-wider text-accent">
+                              aktiv
                             </span>
                           </div>
                           <div className="text-[11px] text-text-tertiary">
                             {s.location_name} · {formatInplayDate(s.inplay_date)}
-                            {s.status === "active" && turnId && (
+                            {turnId && (
                               <> · {character(turnId)?.name.split(" ")[0]} ist dran</>
                             )}
                           </div>
@@ -234,6 +189,17 @@ export default function PlacesPage() {
                       );
                     })}
                   </div>
+                )}
+
+                {/* Alle Szenen → gefilterte Szenensuche */}
+                {scenesHere.length > 0 && (
+                  <Link
+                    href={`/szenen?area=${selected}`}
+                    className="mt-2.5 inline-flex items-center gap-1 text-[12px] text-text-secondary hover:text-accent transition-colors"
+                  >
+                    Alle {scenesHere.length} {scenesHere.length === 1 ? "Szene" : "Szenen"} an diesem Ort
+                    <Icon name="arrow-right" size={12} />
+                  </Link>
                 )}
               </div>
             </>
@@ -256,6 +222,7 @@ function LocationSection({
   openLoc,
   setOpenLoc,
   onAdd,
+  showAdd = false,
 }: {
   title: string;
   locs: Location[];
@@ -264,6 +231,7 @@ function LocationSection({
   openLoc: string | null;
   setOpenLoc: (id: string | null) => void;
   onAdd: () => void;
+  showAdd?: boolean;
 }) {
   const open = locs.find((l) => l.id === openLoc);
   return (
@@ -297,14 +265,16 @@ function LocationSection({
             {n}
           </span>
         ))}
-        {/* + neuen Ort */}
-        <button
-          onClick={onAdd}
-          title="Neuen Ort erstellen"
-          className="rounded-full border border-dashed border-border-strong px-2 py-1 text-[11px] text-text-tertiary hover:text-accent hover:border-accent/50"
-        >
-          <Icon name="plus" size={12} />
-        </button>
+        {/* + neuen Ort (nur bei Ortsideen) */}
+        {showAdd && (
+          <button
+            onClick={onAdd}
+            title="Neuen Ort erstellen"
+            className="inline-flex items-center gap-1 rounded-full border border-accent/50 bg-accent-soft px-2.5 py-1 text-[11px] font-medium text-text-primary hover:bg-accent hover:text-black hover:border-accent transition-colors"
+          >
+            <Icon name="plus" size={12} /> Ort hinzufügen
+          </button>
+        )}
       </div>
 
       {/* Popup mit Beschreibung des angeklickten Orts */}

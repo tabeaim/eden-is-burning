@@ -79,15 +79,11 @@ const EXTERNAL: Marker[] = [
 const POTOMAC = "515.0,0.0 558.0,0.0 588.0,244.0 515.0,290.0";
 const BAY = "515.0,290.0 564.5,136.0 648.5,189.0 672.0,275.0 690.0,571.0 515.0,560.0 515.0,430.0";
 
-function fillFor(isSel: boolean, played: boolean) {
-  if (isSel) return "#2e2411";
-  if (played) return "#26301b";
-  return "#1e2415";
+function fillFor(isSel: boolean) {
+  return isSel ? "#2e2411" : "#1e2415";
 }
-function strokeFor(isSel: boolean, played: boolean) {
-  if (isSel) return "var(--accent)";
-  if (played) return "rgba(163,163,128,0.55)";
-  return "#445130";
+function strokeFor(isSel: boolean) {
+  return isSel ? "var(--accent)" : "#445130";
 }
 
 export function EdenMap({
@@ -104,7 +100,6 @@ export function EdenMap({
     a.key === selected ? 1 : b.key === selected ? -1 : 0,
   );
   const byronSel = selected === "byron";
-  const byronStat = areaStats["byron"] ?? { active: 0, total: 0 };
 
   return (
     <svg viewBox="0 0 608 560" className="w-full h-auto select-none" style={{ maxHeight: 640 }}>
@@ -147,14 +142,12 @@ export function EdenMap({
       {/* Bezirke */}
       {ordered.map((d) => {
         const isSel = selected === d.key;
-        const stat = areaStats[d.key] ?? { active: 0, total: 0 };
-        const played = stat.total > 0;
         return (
           <g key={d.key} onClick={() => onSelect(d.key)} className="cursor-pointer">
             <polygon
               points={d.points}
-              fill={fillFor(isSel, played)}
-              stroke={strokeFor(isSel, played)}
+              fill={fillFor(isSel)}
+              stroke={strokeFor(isSel)}
               strokeWidth={isSel ? 2 : 1.5}
               strokeLinejoin="round"
               className="transition-all duration-150"
@@ -168,11 +161,6 @@ export function EdenMap({
             >
               {d.label}
             </text>
-            {stat.active > 0 && (
-              <text x={d.anchor[0]} y={d.anchor[1] + 14} fill="var(--accent)" fontSize="10" className="pointer-events-none">
-                ▲ {stat.active}
-              </text>
-            )}
           </g>
         );
       })}
@@ -194,11 +182,6 @@ export function EdenMap({
         <text x={BYRON_LABEL[0]} y={BYRON_LABEL[1] + 13} fill="#b8c4a0" fontSize="11" className="pointer-events-none">
           University
         </text>
-        {byronStat.active > 0 && (
-          <text x={BYRON_LABEL[0]} y={BYRON_LABEL[1] + 28} fill="var(--accent)" fontSize="10" className="pointer-events-none">
-            ▲ {byronStat.active}
-          </text>
-        )}
       </g>
 
       {/* Washington D.C. — Nordpfeil + Pille */}

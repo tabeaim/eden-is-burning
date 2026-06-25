@@ -37,6 +37,12 @@ export default function ScenesPage() {
   const [sortKey, setSortKey] = useState<SortKey>("active");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  // Bezirksfilter aus der URL übernehmen (Verlinkung von „Orte")
+  useEffect(() => {
+    const area = new URLSearchParams(window.location.search).get("area");
+    if (area) setAreas([area]);
+  }, []);
+
   const myCharIds = useMemo(
     () =>
       new Set(currentPlayer ? charactersOf(currentPlayer.id).map((c) => c.id) : []),
