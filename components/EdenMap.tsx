@@ -72,12 +72,12 @@ interface Marker {
 
 const EXTERNAL: Marker[] = [
   { key: "washington", label: "Washington D.C.", x: 179, y: 27, w: 192, h: 32 },
-  { key: "rest", label: "Rest der Welt", x: 436, y: 513, w: 158, h: 32 },
+  { key: "rest", label: "Rest der Welt", x: 436, y: 613, w: 158, h: 32 },
 ];
 
 // Wasser: Potomac (oben) und Chesapeake Bay (unten), beide #192438
 const POTOMAC = "515.0,0.0 558.0,0.0 588.0,244.0 515.0,290.0";
-const BAY = "515.0,290.0 564.5,136.0 648.5,189.0 672.0,275.0 690.0,571.0 515.0,560.0 515.0,430.0";
+const BAY = "515.0,290.0 564.5,136.0 648.5,189.0 672.0,275.0 690.0,671.0 515.0,660.0 515.0,430.0";
 
 function fillFor(isSel: boolean) {
   return isSel ? "#2e2411" : "#1e2415";
@@ -102,10 +102,10 @@ export function EdenMap({
   const byronSel = selected === "byron";
 
   return (
-    <svg viewBox="0 0 608 560" className="w-full h-auto select-none" style={{ maxHeight: 640 }}>
+    <svg viewBox="0 0 608 660" className="w-full h-auto select-none" style={{ maxHeight: 760 }}>
       {/* Frame-Hintergrund — zugleich klickbares "Umland" (deckt die dunklen Ränder) */}
       <g onClick={() => onSelect("umland")} className="cursor-pointer">
-        <rect x="0" y="0" width="608" height="560" rx="10" fill="#18181b" />
+        <rect x="0" y="0" width="608" height="660" rx="10" fill="#18181b" />
       </g>
 
       {/* Wasser: Potomac → Chesapeake Bay */}

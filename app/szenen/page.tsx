@@ -37,9 +37,11 @@ export default function ScenesPage() {
   const [sortKey, setSortKey] = useState<SortKey>("active");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // Bezirksfilter aus der URL übernehmen (Verlinkung von „Orte")
+  // Bezirksfilter aus der URL übernehmen (Verlinkung von „Orte").
+  // Bewusst im Effect (nach Hydration), da window.location erst clientseitig vorliegt.
   useEffect(() => {
     const area = new URLSearchParams(window.location.search).get("area");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (area) setAreas([area]);
   }, []);
 
@@ -140,14 +142,7 @@ export default function ScenesPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-8">
-      <PageHeader title="Szenen" subtitle="Alle Threads in Eden.">
-        <Link
-          href="/szenen/neu"
-          className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-3 py-2 text-[13px] text-text-primary"
-        >
-          <Icon name="plus" size={15} /> Neue Szene
-        </Link>
-      </PageHeader>
+      <PageHeader title="Szenen" subtitle="Alle Threads in Eden." />
 
       {/* Primäre Tabs */}
       <div className="flex gap-1.5 mb-4">

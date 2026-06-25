@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
 import { AREAS, areaName, type AreaKey } from "@/lib/world";
-import { formatInplayDate } from "@/lib/format";
+import { formatInplayDate, placeholderImg } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { EdenMap } from "@/components/EdenMap";
 import { Icon } from "@/components/Icon";
@@ -67,33 +67,51 @@ export default function PlacesPage() {
         subtitle="Eden, Virginia — fünf Bezirke, ein Fluss, und alles dahinter."
       />
 
-      <div className="grid lg:grid-cols-[1.7fr_1fr] gap-8 items-start">
+      <div className="grid lg:grid-cols-[1.7fr_1fr] gap-10 items-start">
         <div className="rounded-xl border border-border-subtle bg-bg-surface p-3">
           <EdenMap selected={selected} onSelect={(k) => { setSelected(k); setOpenLoc(null); setAdding(false); }} areaStats={areaStats} />
         </div>
 
         {/* Detail-Panel */}
-        <div className="rounded-xl border border-border-subtle bg-bg-surface p-5 min-h-[320px]">
+        <div className="rounded-xl border border-border-subtle bg-bg-surface min-h-[320px] overflow-hidden">
           {info || extra ? (
             <>
-              <div className="flex items-baseline justify-between gap-2">
-                <h2 className="font-display text-2xl text-text-primary">
+              {/* Titelbild-Banner mit Namen */}
+              <div className="relative h-32 w-full bg-bg-surface-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={info?.image ?? placeholderImg(`area-${selected}`, 800, 240)}
+                  alt={info?.name ?? extra?.name ?? ""}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-bg-surface via-bg-surface/30 to-transparent" />
+                <h2 className="absolute bottom-3 left-5 right-5 font-display text-2xl text-text-primary">
                   {info?.name ?? extra?.name}
                 </h2>
-                {info && (
-                  <span className="text-[12px] text-text-secondary">
-                    {info.priceLevel}
-                  </span>
-                )}
               </div>
 
-              <p className="text-[13px] text-text-secondary mt-3 leading-relaxed">
+              <div className="p-5">
+              {/* Kurzbeschreibung */}
+              <p className="text-[13px] text-text-secondary leading-relaxed">
                 {info?.character ?? extra?.character}
               </p>
-              {info && info.residents !== "—" && (
-                <p className="text-[11px] text-text-tertiary mt-2">
-                  Wer wohnt hier: {info.residents}
-                </p>
+
+              {/* Steckbrief */}
+              {info && (info.priceLevel !== "—" || info.residents !== "—") && (
+                <dl className="mt-4 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-[12px]">
+                  {info.priceLevel !== "—" && (
+                    <>
+                      <dt className="text-text-tertiary">Preislevel:</dt>
+                      <dd className="text-text-secondary">{info.priceLevel}</dd>
+                    </>
+                  )}
+                  {info.residents !== "—" && (
+                    <>
+                      <dt className="text-text-tertiary">Hier wohnen:</dt>
+                      <dd className="text-text-secondary">{info.residents}</dd>
+                    </>
+                  )}
+                </dl>
               )}
 
               {/* Bewohner*innen (echte Charaktere) */}
@@ -202,9 +220,10 @@ export default function PlacesPage() {
                   </Link>
                 )}
               </div>
+              </div>
             </>
           ) : (
-            <p className="text-[13px] text-text-tertiary">
+            <p className="p-5 text-[13px] text-text-tertiary">
               Klicke einen Ort auf der Karte.
             </p>
           )}

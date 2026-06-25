@@ -1,3 +1,10 @@
+"use client";
+
+import { useSetPageMeta } from "@/lib/page-meta";
+
+// Titel + Untertitel werden im globalen Banner-Header (AppShell) angezeigt.
+// PageHeader meldet sie nur an den Context und rendert ggf. seitenspezifische
+// Action-Buttons (children) rechtsbündig über dem Seiteninhalt.
 export function PageHeader({
   title,
   subtitle,
@@ -7,17 +14,7 @@ export function PageHeader({
   subtitle?: string;
   children?: React.ReactNode;
 }) {
-  return (
-    <div className="flex items-end justify-between gap-4 mb-6">
-      <div>
-        <h1 className="font-serif text-2xl text-text-primary leading-tight">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="text-[13px] text-text-secondary mt-1">{subtitle}</p>
-        )}
-      </div>
-      {children}
-    </div>
-  );
+  useSetPageMeta(title, subtitle);
+  if (!children) return null;
+  return <div className="flex justify-end -mt-1 mb-5">{children}</div>;
 }

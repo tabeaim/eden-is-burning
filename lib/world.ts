@@ -19,6 +19,8 @@ export interface AreaInfo {
   priceLevel: string;
   residents: string;
   onMap: boolean;
+  /** Optionales Titelbild (Banner). Fällt sonst auf einen Seed-Platzhalter zurück. */
+  image?: string;
 }
 
 export const AREAS: Record<AreaKey, AreaInfo> = {
