@@ -7,7 +7,7 @@ import { areaName } from "@/lib/world";
 import { formatInplayDate, renderProseWithHighlights } from "@/lib/format";
 import { SceneCharacterCard } from "@/components/SceneCharacterCard";
 import { Icon } from "@/components/Icon";
-import type { Character, Post, SceneQuote } from "@/lib/types";
+import type { Character, Post, Scene, SceneQuote } from "@/lib/types";
 
 export default function ScenePage({
   params,
@@ -98,6 +98,9 @@ export default function ScenePage({
         </div>
       </header>
 
+      {/* Zusammenfassung + Schließen */}
+      <SceneAdminBar scene={scene} />
+
       {/* Posts (Ping-Pong) */}
       <div className="flex flex-col gap-7">
         {posts.map((post) => {
@@ -129,6 +132,91 @@ export default function ScenePage({
           }
           lastPost={posts[posts.length - 1]}
         />
+      )}
+    </div>
+  );
+}
+
+// Zusammenfassung anzeigen/bearbeiten und Szene schließen
+function SceneAdminBar({ scene }: { scene: Scene }) {
+  const { updateScene } = useStore();
+  const [mode, setMode] = useState<"none" | "close" | "edit">("none");
+  const [draft, setDraft] = useState("");
+
+  function open(m: "close" | "edit") {
+    setDraft(scene.summary ?? "");
+    setMode(m);
+  }
+  function save() {
+    const summary = draft.trim() || null;
+    updateScene(
+      scene.id,
+      mode === "close" ? { status: "closed", summary } : { summary },
+    );
+    setMode("none");
+  }
+
+  if (mode !== "none") {
+    return (
+      <div className="-mt-4 mb-8 rounded-xl border border-border-subtle bg-bg-surface p-4">
+        <div className="text-[11px] uppercase tracking-wider text-text-tertiary mb-2">
+          {mode === "close"
+            ? "Szene schließen — Zusammenfassung (ein Satz)"
+            : "Zusammenfassung bearbeiten"}
+        </div>
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && save()}
+          placeholder="Worum ging es in dieser Szene?"
+          autoFocus
+          className="w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[14px] text-text-primary outline-none focus:border-white/20"
+        />
+        <div className="mt-3 flex items-center justify-end gap-3">
+          <button
+            onClick={() => setMode("none")}
+            className="text-[12px] text-text-tertiary hover:text-text-primary px-2"
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={save}
+            className="rounded-md bg-accent/90 hover:bg-accent text-black text-[13px] font-medium px-4 py-2"
+          >
+            {mode === "close" ? "Szene schließen" : "Speichern"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="-mt-4 mb-8 flex items-start justify-between gap-4">
+      {scene.summary ? (
+        <p className="flex-1 text-[13px] italic text-text-secondary leading-relaxed">
+          {scene.summary}{" "}
+          <button
+            onClick={() => open("edit")}
+            className="not-italic text-[12px] text-text-tertiary hover:text-accent underline"
+          >
+            bearbeiten
+          </button>
+        </p>
+      ) : (
+        <button
+          onClick={() => open("edit")}
+          className="text-[12px] text-text-tertiary hover:text-accent"
+        >
+          + Zusammenfassung hinzufügen
+        </button>
+      )}
+      {scene.status === "active" && (
+        <button
+          onClick={() => open("close")}
+          className="shrink-0 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[12px] text-text-secondary hover:text-text-primary"
+        >
+          Szene schließen
+        </button>
       )}
     </div>
   );
@@ -288,6 +376,7 @@ function ReplyBox({
   const taRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveCharId(suggestedCharId);
   }, [suggestedCharId]);
 

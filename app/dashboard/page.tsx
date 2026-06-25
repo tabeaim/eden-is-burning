@@ -62,6 +62,15 @@ export default function DashboardPage() {
     .filter((p) => withinHours(p.last_seen, 24) && !withinHours(p.last_seen, 0.25))
     .sort(byLastSeen);
 
+  // "Wer ist wo?" — kürzlich aktive Spieler mit bekanntem Aufenthaltsort
+  const whereabouts = players
+    .filter((p) => p.current_location && withinHours(p.last_seen, 24))
+    .sort(
+      (a, b) =>
+        new Date(b.current_location!.at).getTime() -
+        new Date(a.current_location!.at).getTime(),
+    );
+
   return (
     <div className="max-w-6xl mx-auto px-8 py-8">
       <PageHeader
@@ -121,6 +130,48 @@ export default function DashboardPage() {
         {/* RECHTS: Zitate, 24h-Aktivität, Online */}
         <div className="flex flex-col gap-8 lg:sticky lg:top-6">
           <QuoteRotator />
+
+          <section>
+            <h2 className="section-bar text-[12px] text-text-secondary mb-3">
+              Wer ist wo?
+            </h2>
+            {whereabouts.length === 0 ? (
+              <Empty>Gerade ist niemand unterwegs.</Empty>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {whereabouts.map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/spieler/${p.username}`}
+                    className="flex items-center gap-2.5 rounded-lg border border-border-subtle bg-bg-surface px-3 py-2 hover:bg-white/[0.03] transition-colors"
+                  >
+                    <span className="relative shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={p.avatar_url ?? ""}
+                        alt={p.username}
+                        className="w-7 h-7 rounded-full object-cover bg-bg-primary"
+                      />
+                      {withinHours(p.last_seen, 0.25) && (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-bg-surface" />
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[12px] text-text-primary truncate">
+                        {p.username}
+                      </div>
+                      <div className="text-[10px] text-text-tertiary truncate">
+                        {p.current_location!.label}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-text-tertiary shrink-0">
+                      {timeAgo(p.current_location!.at)}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
 
           <section>
             <h2 className="section-bar text-[12px] text-text-secondary mb-3">

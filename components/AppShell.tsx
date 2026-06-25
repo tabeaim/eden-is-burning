@@ -1,11 +1,53 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { PageMetaProvider, usePageMeta } from "@/lib/page-meta";
 import { Icon, type IconName } from "./Icon";
 import { LoginScreen } from "./LoginScreen";
+
+// Route → lesbares Label für "Wer ist wo?"
+function routeLabel(
+  pathname: string,
+  scenes: { id: string; title: string }[],
+  characterFn: (id: string) => { name: string } | undefined,
+): string {
+  const seg = pathname.split("/").filter(Boolean);
+  switch (seg[0]) {
+    case undefined:
+    case "dashboard":
+      return "Dashboard";
+    case "orte":
+      return "Orte";
+    case "kalender":
+      return "Kalender";
+    case "einwohnerinnen":
+      return "Einwohner*innen";
+    case "info":
+      return "Info";
+    case "einstellungen":
+      return "Einstellungen";
+    case "szenen":
+      if (seg[1] === "neu") return "Neue Szene";
+      if (seg[1]) {
+        const s = scenes.find((x) => x.id === seg[1]);
+        return s ? `Szene: ${s.title}` : "Szene";
+      }
+      return "Szenen";
+    case "charaktere":
+      if (seg[1]) {
+        const c = characterFn(seg[1]);
+        return c ? `Charakter: ${c.name}` : "Charakter";
+      }
+      return "Charaktere";
+    case "spieler":
+      return seg[1] ? `Profil: ${seg[1]}` : "Profil";
+    default:
+      return "unterwegs";
+  }
+}
 
 const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
@@ -17,8 +59,22 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { ready, currentPlayer } = useStore();
+  const store = useStore();
+  const { ready, currentPlayer } = store;
   const pathname = usePathname();
+
+  // "Wer ist wo?" — Aufenthaltsort des eingeloggten Spielers bei jedem
+  // Seitenwechsel festhalten. Prototyp: lokal. Mit Backend würde hier ein
+  // Heartbeat an den Server gehen, statt nur den lokalen Store zu aktualisieren.
+  useEffect(() => {
+    if (!currentPlayer) return;
+    store.setLocation(
+      currentPlayer.id,
+      pathname,
+      routeLabel(pathname, store.scenes, store.character),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, currentPlayer?.id]);
 
   if (!ready) {
     return (

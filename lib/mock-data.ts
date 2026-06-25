@@ -27,6 +27,11 @@ export function seedPlayers(): Player[] {
       bio: "Spielt Elliot und Nigel. Liebt langsame Szenen und nasse Cafés.",
       created_at: "2021-10-01T10:00:00Z",
       last_seen: hoursAgo(1),
+      current_location: {
+        path: "/dashboard",
+        label: "Dashboard",
+        at: hoursAgo(1),
+      },
     },
     {
       id: "p_vera",
@@ -35,7 +40,12 @@ export function seedPlayers(): Player[] {
       avatar_url: "https://picsum.photos/seed/veraavatar/200/200",
       bio: "Spielt Julius und Alexander.",
       created_at: "2021-10-03T10:00:00Z",
-      last_seen: hoursAgo(5),
+      last_seen: hoursAgo(0.15),
+      current_location: {
+        path: "/szenen/s_cafe",
+        label: "Szene: Das Café und die Stille dazwischen",
+        at: hoursAgo(0.15),
+      },
     },
   ];
 }
@@ -166,6 +176,8 @@ export function seedScenes(): Scene[] {
       trigger_warning: false,
       created_at: "2021-11-22T14:00:00Z",
       participant_ids: ["c_elliot", "c_julius"],
+      summary:
+        "Zwei, die sich nicht ansehen, sitzen im verregneten Café nebeneinander.",
     },
     {
       id: "s_shades",
@@ -178,6 +190,8 @@ export function seedScenes(): Scene[] {
       trigger_warning: false,
       created_at: "2021-11-15T19:00:00Z",
       participant_ids: ["c_elliot", "c_nigel"],
+      summary:
+        "Ein altes Geheimnis kommt auf dem Simmons-Anwesen wieder hoch — und endet im Streit.",
     },
     {
       id: "s_river",
@@ -191,6 +205,7 @@ export function seedScenes(): Scene[] {
       created_at: hoursAgo(34),
       // Nigel (tabs) ist hier zuletzt dran gewesen -> es wartet auf Alexander (Vera)
       participant_ids: ["c_nigel", "c_alexander"],
+      summary: "Ein anonymer Umschlag zwingt zwei Fremde zu einem heiklen Deal.",
     },
   ];
 }

@@ -1,5 +1,14 @@
 import type { AreaKey } from "./world";
 
+// Aktueller Aufenthaltsort eines Spielers in der App ("Wer ist wo?").
+// Im Prototyp simuliert/lokal; mit Backend würde dies per Heartbeat serverseitig
+// gepflegt und für alle sichtbar.
+export interface PlayerLocation {
+  path: string; // Route, z.B. "/szenen/s_cafe"
+  label: string; // lesbar, z.B. "Szene: Das Café…"
+  at: string; // ISO timestamp des letzten Seitenwechsels
+}
+
 export interface Player {
   id: string;
   username: string;
@@ -8,6 +17,7 @@ export interface Player {
   bio: string | null;
   created_at: string;
   last_seen: string; // ISO timestamp — "zuletzt online"
+  current_location?: PlayerLocation | null;
 }
 
 export interface Character {
@@ -52,6 +62,8 @@ export interface Scene {
   trigger_warning: boolean;
   created_at: string;
   participant_ids: string[]; // character ids, in turn order
+  // Ein-Satz-Zusammenfassung — bei Erstellung oder beim Schließen ergänzbar
+  summary?: string | null;
 }
 
 export interface Post {

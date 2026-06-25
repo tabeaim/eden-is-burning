@@ -56,12 +56,15 @@ interface StoreValue extends PersistedState {
   addQuote: (postId: string, text: string) => void;
   removeQuote: (quoteId: string) => void;
   touchPresence: (playerId: string) => void;
+  // Aktuellen Aufenthaltsort setzen ("Wer ist wo?"). Prototyp: lokal/simuliert.
+  setLocation: (playerId: string, path: string, label: string) => void;
   // legt einen Ort an, falls in dieser Area noch nicht vorhanden; gibt Name zurück
   addLocation: (area: string, name: string, description?: string | null) => void;
   updateCharacter: (id: string, patch: Partial<Character>) => void;
   addCharacter: (playerId: string) => string;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
   addScene: (scene: Omit<Scene, "id" | "created_at">) => string;
+  updateScene: (id: string, patch: Partial<Scene>) => void;
   resetData: () => void;
 }
 
@@ -93,6 +96,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<PersistedState>;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setState({
           players: parsed.players ?? seedPlayers(),
           characters: parsed.characters ?? seedCharacters(),
@@ -256,6 +260,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const setLocation = useCallback(
+    (playerId: string, path: string, label: string) => {
+      const now = new Date().toISOString();
+      setState((s) => ({
+        ...s,
+        players: s.players.map((p) =>
+          p.id === playerId
+            ? { ...p, last_seen: now, current_location: { path, label, at: now } }
+            : p,
+        ),
+      }));
+    },
+    [],
+  );
+
   const addPost = useCallback(
     (sceneId: string, characterId: string, content: string) => {
       setState((s) => {
@@ -344,6 +363,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return id;
   }, []);
 
+  const updateScene = useCallback((id: string, patch: Partial<Scene>) => {
+    setState((s) => ({
+      ...s,
+      scenes: s.scenes.map((sc) => (sc.id === id ? { ...sc, ...patch } : sc)),
+    }));
+  }, []);
+
   const resetData = useCallback(() => {
     setState(freshState());
   }, []);
@@ -369,11 +395,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addQuote,
       removeQuote,
       touchPresence,
+      setLocation,
       addLocation,
       updateCharacter,
       addCharacter,
       updatePlayer,
       addScene,
+      updateScene,
       resetData,
     }),
     [
@@ -393,11 +421,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addQuote,
       removeQuote,
       touchPresence,
+      setLocation,
       addLocation,
       updateCharacter,
       addCharacter,
       updatePlayer,
       addScene,
+      updateScene,
       resetData,
     ],
   );

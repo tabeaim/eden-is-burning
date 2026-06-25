@@ -13,7 +13,7 @@ import { PageHeader } from "@/components/PageHeader";
 
 export default function NewScenePage() {
   const router = useRouter();
-  const { addScene, addLocation, characters, character, currentPlayer, charactersOf } =
+  const { addScene, addLocation, characters, currentPlayer, charactersOf } =
     useStore();
 
   const [title, setTitle] = useState("");
@@ -22,6 +22,7 @@ export default function NewScenePage() {
   const [date, setDate] = useState("2021-11-23");
   const [time, setTime] = useState("Nachmittag");
   const [tw, setTw] = useState(false);
+  const [summary, setSummary] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
 
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
@@ -47,6 +48,7 @@ export default function NewScenePage() {
       status: "active",
       trigger_warning: tw,
       participant_ids: selected,
+      summary: summary.trim() || null,
     });
     router.push(`/szenen/${id}`);
   }
@@ -65,6 +67,16 @@ export default function NewScenePage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="z.B. Das Café und die Stille dazwischen"
+            className={`mt-1 ${field}`}
+          />
+        </label>
+
+        <label className="text-[12px] text-text-secondary">
+          Zusammenfassung <span className="text-text-tertiary">(optional, ein Satz — kann auch später beim Schließen ergänzt werden)</span>
+          <input
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            placeholder="Worum geht es in dieser Szene?"
             className={`mt-1 ${field}`}
           />
         </label>
