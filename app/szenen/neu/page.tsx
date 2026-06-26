@@ -58,7 +58,7 @@ export default function NewScenePage() {
 
   return (
     <div className="max-w-2xl mx-auto px-8 py-8">
-      <PageHeader title="Neue Szene" subtitle="Eröffne einen neuen Thread." />
+      <PageHeader title="Neue Szene" subtitle="Eröffne einen neuen Thread." width="max-w-2xl" />
 
       <form onSubmit={submit} className="flex flex-col gap-5">
         <label className="text-[12px] text-text-secondary">

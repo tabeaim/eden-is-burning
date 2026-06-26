@@ -19,8 +19,7 @@ export default function ResidentsPage() {
     <div className="max-w-4xl mx-auto px-8 py-8">
       <PageHeader
         title="Einwohner*innen"
-        subtitle="Das Charakterverzeichnis von Eden."
-      />
+        subtitle="Das Charakterverzeichnis von Eden." width="max-w-4xl" />
 
       <div className="flex flex-wrap gap-1.5 mb-6">
         <Chip active={area === "all"} onClick={() => setArea("all")}>

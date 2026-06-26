@@ -5,7 +5,8 @@ import { useState } from "react";
 import type { Character, Player } from "@/lib/types";
 import { Icon } from "./Icon";
 
-// Charakterkarte für die Ping-Pong-Ansicht (130px breit).
+// Große Charakterkarte für die Szenenansicht. Bildformat 600×502; die
+// Beschreibung (Bio) erscheint als Overlay beim Hovern über das Bild.
 export function SceneCharacterCard({
   character,
   player,
@@ -13,85 +14,94 @@ export function SceneCharacterCard({
   character: Character;
   player?: Player;
 }) {
-  const [hover, setHover] = useState(false);
+  const [showBio, setShowBio] = useState(false);
 
   return (
-    <div
-      className="relative w-[130px] shrink-0"
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-    >
-      <Link href={`/charaktere/${character.id}`} className="block">
-        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-bg-surface border border-border-subtle">
+    <div className="w-[260px] max-w-full shrink-0">
+      <div
+        className="group relative aspect-[600/502] w-full overflow-hidden rounded-lg border border-border-subtle bg-bg-surface"
+        onMouseEnter={() => setShowBio(true)}
+        onMouseLeave={() => setShowBio(false)}
+      >
+        <Link href={`/charaktere/${character.id}`} className="block h-full w-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={character.faceclaim_image_url ?? ""}
             alt={character.name}
             className="absolute inset-0 h-full w-full object-cover"
           />
-          {/* Gradient + Name-Overlay */}
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent pt-8 pb-1.5 px-2">
-            <div className="font-serif text-[13px] leading-tight text-white drop-shadow">
-              {character.name}
-            </div>
-          </div>
-        </div>
-      </Link>
+        </Link>
 
+        {/* Bio-Overlay beim Hover */}
+        {character.bio && (
+          <div
+            className={`pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/80 px-5 py-4 text-center transition-opacity duration-200 ${
+              showBio ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <div className="mb-2 text-[11px] uppercase tracking-wider text-text-tertiary">
+              {[character.role, character.age ? `${character.age}` : null]
+                .filter(Boolean)
+                .join(" · ")}
+            </div>
+            <p className="text-[12.5px] leading-relaxed text-text-secondary line-clamp-[9]">
+              {character.bio}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Name (mit Aufklapp-Marker für die Bio) */}
+      <button
+        onClick={() => setShowBio((v) => !v)}
+        className="mt-3 flex w-full items-center justify-center gap-1.5 font-serif text-[18px] uppercase tracking-wide text-text-primary hover:text-accent"
+        title="Beschreibung ein-/ausblenden"
+      >
+        {character.name}
+        <span className={`text-[11px] transition-transform ${showBio ? "rotate-180" : ""}`}>
+          ▾
+        </span>
+      </button>
+
+      {/* Tagline */}
       {character.tagline && (
-        <div className="mt-1.5 inline-block rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] text-text-secondary">
-          {character.tagline}
+        <div className="mt-1.5 flex justify-center">
+          <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
+            {character.tagline}
+          </span>
         </div>
       )}
 
-      <div className="mt-1.5 flex items-center gap-2 text-text-tertiary">
+      {/* Social-Icons */}
+      <div className="mt-2.5 flex items-center justify-center gap-3 text-text-tertiary">
         {character.pinterest_url && (
           <a
             href={character.pinterest_url}
             target="_blank"
             rel="noreferrer"
-            className="hover:text-text-primary"
+            className="hover:text-accent"
             title="Pinterest"
           >
-            <Icon name="pinterest" size={14} />
+            <Icon name="pinterest" size={16} />
           </a>
         )}
-        <span title="Faceclaim-Foto" className="opacity-70">
-          <Icon name="photo" size={14} />
+        <span title="Social Media (folgt)" className="hover:text-accent cursor-pointer">
+          <Icon name="camera" size={16} />
         </span>
-        <span title="Nachricht" className="opacity-70">
-          <Icon name="message" size={14} />
+        <span title="Spotify (folgt)" className="hover:text-accent cursor-pointer">
+          <Icon name="spotify" size={16} />
         </span>
       </div>
 
+      {/* by player */}
       {player && (
-        <div className="mt-1 text-[10px] italic text-text-tertiary">
+        <div className="mt-1.5 text-center text-[11px] italic text-text-tertiary">
           by{" "}
           <Link
             href={`/spieler/${player.username}`}
             className="hover:text-text-secondary"
           >
             {player.username}
-          </Link>
-        </div>
-      )}
-
-      {/* Hover Mini-Steckbrief */}
-      {hover && character.bio && (
-        <div className="absolute left-0 top-full z-20 mt-1 w-56 rounded-lg border border-border-subtle bg-bg-surface p-3 shadow-xl">
-          <div className="text-[11px] text-text-tertiary mb-1">
-            {[character.role, character.age ? `${character.age}` : null]
-              .filter(Boolean)
-              .join(" · ")}
-          </div>
-          <p className="text-[12px] leading-relaxed text-text-secondary line-clamp-4">
-            {character.bio}
-          </p>
-          <Link
-            href={`/charaktere/${character.id}`}
-            className="mt-2 inline-flex items-center gap-1 text-[11px] text-text-primary"
-          >
-            Zum Profil <Icon name="arrow-right" size={12} />
           </Link>
         </div>
       )}

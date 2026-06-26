@@ -13,10 +13,13 @@ type IconName =
   | "heart"
   | "pinterest"
   | "photo"
+  | "camera"
+  | "spotify"
   | "message"
   | "arrow-right"
   | "logout"
   | "plus"
+  | "edit"
   | "upload"
   | "flame"
   | "search";
@@ -90,6 +93,18 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="m4 17 5-4 4 3 3-2 4 3" />
     </>
   ),
+  camera: (
+    <>
+      <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
+      <circle cx="12" cy="13" r="3.2" />
+    </>
+  ),
+  spotify: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M7.5 10.5c3-1 6-.8 8.5.7M8 14c2.3-.7 4.6-.5 6.5.6M8.5 16.8c1.7-.5 3.4-.4 4.9.4" />
+    </>
+  ),
   message: (
     <path d="M4 5h16v11H9l-4 3v-3H4V5Z" />
   ),
@@ -101,6 +116,12 @@ const paths: Record<IconName, React.ReactNode> = {
     </>
   ),
   plus: <path d="M12 5v14M5 12h14" />,
+  edit: (
+    <>
+      <path d="M4 20h4l10-10a2 2 0 0 0-3-3L5 17v3Z" />
+      <path d="m13.5 6.5 3 3" />
+    </>
+  ),
   upload: (
     <>
       <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />

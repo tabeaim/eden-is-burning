@@ -57,6 +57,12 @@ export function renderProseWithHighlights(
   return html;
 }
 
+// Post-Inhalt rendern: HTML wird durchgelassen (der Editor speichert HTML),
+// und das alte Italic-Markdown (*wort*) der Seed-Posts wird zu <em> konvertiert.
+export function renderPost(content: string): string {
+  return content.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+}
+
 export { escapeHtml };
 
 export function placeholderImg(seed: string, w = 400, h = 600) {

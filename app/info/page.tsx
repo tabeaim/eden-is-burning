@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 export default function InfoPage() {
   return (
     <div className="max-w-2xl mx-auto px-8 py-8">
-      <PageHeader title="Info" subtitle="Die Welt von Eden" />
+      <PageHeader title="Info" subtitle="Die Welt von Eden" width="max-w-2xl" />
 
       <div className="prose-serif !text-left text-text-secondary space-y-3">
         <p>
@@ -54,7 +54,7 @@ export default function InfoPage() {
         <p>
           <strong className="text-text-primary">Sutton Academy</strong> —
           Privatschule mit Internat und Schuluniform. Früher „Abercrombie
-          Academy", 2019 umbenannt nach einem Amoklauf durch Nathan Abercrombie.
+          Academy“, 2019 umbenannt nach einem Amoklauf durch Nathan Abercrombie.
         </p>
         <p>
           <strong className="text-text-primary">Eden High School</strong> —

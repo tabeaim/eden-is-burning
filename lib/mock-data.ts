@@ -217,7 +217,7 @@ export function seedPosts(): Post[] {
       scene_id: "s_cafe",
       character_id: "c_elliot",
       content:
-        "Das Café roch nach nassem Mantel und Zimt. Elliot schüttelte den Regen von seiner Jacke, bevor er die Tür hinter sich zuzog — zu fest, der Glöckner schepperte schrill — und dann sah er ihn. Julius. An dem kleinen Tisch am Fenster, die Hände um eine Tasse, den Blick nach draußen gerichtet, als wäre er allein auf der Welt.",
+        "Das Café roch nach nassem Mantel und Zimt. Elliot schüttelte den Regen von seiner Jacke, bevor er die Tür hinter sich zuzog — zu fest, der Glöckner schepperte schrill — und dann sah er ihn. Julius. An dem kleinen Tisch am Fenster, die Hände um eine Tasse, den Blick nach draußen gerichtet, als wäre er allein auf der Welt.<br><br>Drei Wochen. Genau drei Wochen war es her, dass sie zuletzt im selben Raum gestanden hatten, und Elliot hatte in jeder einzelnen Nacht davon eine Variante durchgespielt: was er sagen würde, was er <i>nicht</i> sagen würde, in welchem Winkel er den Kopf halten müsste, damit es nach Gleichgültigkeit aussah. Keine dieser Varianten hatte den Regen einkalkuliert, der ihm jetzt vom Kragen in den Nacken lief, oder die Art, wie sein Puls gegen die Rippen schlug, als hätte er etwas zu verbergen — was er hatte, natürlich, das hatte er immer.<br><br>Er trat an die Theke. Bestellte. Hörte die eigene Stimme zu fest klingen, zu kontrolliert, und hasste sie dafür. Hinter ihm, am Fenster, rührte sich nichts. <b>Gut.</b> Soll er ruhig glauben, ich hätte ihn nicht bemerkt.",
       post_number: 1,
       created_at: hoursAgo(20),
     },
@@ -226,7 +226,7 @@ export function seedPosts(): Post[] {
       scene_id: "s_cafe",
       character_id: "c_julius",
       content:
-        "Das Glöckchen. Julius verstand, warum er diesem Laden nie traute — die Tür ließ keine Stille zu. Er hob die Tasse, um einen Schluck zu nehmen, und tat dabei sein Bestes, den Eingangsbereich nicht anzusehen. *Irgendjemand.* Immer irgendwer. Seine Augen blieben draußen, auf den Tropfen, die sich am Glas entlangtasteten wie Finger auf einer Klaviertastatur.",
+        "Das Glöckchen. Julius verstand, warum er diesem Laden nie traute — die Tür ließ keine Stille zu. Er hob die Tasse, um einen Schluck zu nehmen, und tat dabei sein Bestes, den Eingangsbereich nicht anzusehen. *Irgendjemand.* Immer irgendwer. Seine Augen blieben draußen, auf den Tropfen, die sich am Glas entlangtasteten wie Finger auf einer Klaviertastatur.<br><br>Er kannte den Schritt. Das war das Lächerliche daran — er kannte ihn aus tausend Fluren, aus Treppenhäusern, aus dem Nachhall einer Tür, die zu fest ins Schloss fiel. Er hätte ihn unter hundert anderen herausgehört, mit verbundenen Augen, in einem vollen Raum. Und genau das machte ihn so wütend: dass sein Körper Elliot erkannte, bevor sein Verstand entscheiden konnte, ob er das überhaupt wollte.<br><br>Die Tasse war längst leer. Er hielt sie trotzdem fest, beide Hände darum gelegt, als gäbe es da noch Wärme abzuholen. Draußen wurde der Regen dichter. <i>Bleib sitzen</i>, dachte er. <i>Sieh nicht hin. Du hast das letzte Mal gesprochen. Diesmal ist er dran.</i>",
       post_number: 2,
       created_at: hoursAgo(14),
     },

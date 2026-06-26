@@ -142,7 +142,7 @@ export default function ScenesPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-8">
-      <PageHeader title="Szenen" subtitle="Alle Threads in Eden." />
+      <PageHeader title="Szenen" subtitle="Alle Threads in Eden." width="max-w-5xl" />
 
       {/* Primäre Tabs */}
       <div className="flex gap-1.5 mb-4">

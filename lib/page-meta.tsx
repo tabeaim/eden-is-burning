@@ -7,7 +7,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
-export type PageMeta = { title: string; subtitle?: string; path?: string };
+export type PageMeta = {
+  title: string;
+  subtitle?: string;
+  path?: string;
+  bannerImage?: string; // überschreibt den Seed-Banner (z.B. Szenen-Header)
+  width?: string; // Tailwind max-w-Klasse der Seite — Banner-Titel nutzt dieselbe
+};
 
 type Ctx = { meta: PageMeta; setMeta: (m: PageMeta) => void };
 const PageMetaCtx = createContext<Ctx | null>(null);
@@ -21,10 +27,15 @@ export function usePageMeta(): PageMeta {
   return useContext(PageMetaCtx)?.meta ?? { title: "" };
 }
 
-export function useSetPageMeta(title: string, subtitle?: string) {
+export function useSetPageMeta(
+  title: string,
+  subtitle?: string,
+  bannerImage?: string,
+  width?: string,
+) {
   const setMeta = useContext(PageMetaCtx)?.setMeta;
   const pathname = usePathname();
   useEffect(() => {
-    setMeta?.({ title, subtitle, path: pathname });
-  }, [setMeta, title, subtitle, pathname]);
+    setMeta?.({ title, subtitle, path: pathname, bannerImage, width });
+  }, [setMeta, title, subtitle, bannerImage, width, pathname]);
 }

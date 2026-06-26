@@ -130,3 +130,10 @@ body {
   padding: 0 2px;
   border-radius: 2px;
 }
+
+/* Platzhalter im Antwort-Editor (contentEditable) */
+.reply-editor:empty:before {
+  content: attr(data-placeholder);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}

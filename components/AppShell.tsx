@@ -117,8 +117,15 @@ function BannerHeader({ pathname }: { pathname: string }) {
   const onThisPage = meta.path === pathname;
   const title = (onThisPage && meta.title) || navMatch?.label || "Eden is burning";
   const subtitle = onThisPage ? meta.subtitle : undefined;
+  const width = (onThisPage && meta.width) || "max-w-6xl";
   const showActions = pathname === "/dashboard";
-  const banner = `https://picsum.photos/seed/${encodeURIComponent(`eden-banner${pathname}`)}/1600/360`;
+  // Szenen-Detailseiten zeichnen ihre eigene Trennlinie (unter dem Satz),
+  // damit Charaktere/Zusammenfassung noch über der Linie stehen.
+  const isSceneDetail =
+    /^\/szenen\/[^/]+$/.test(pathname) && pathname !== "/szenen/neu";
+  const banner =
+    (onThisPage && meta.bannerImage) ||
+    `https://picsum.photos/seed/${encodeURIComponent(`eden-banner${pathname}`)}/1600/360`;
 
   return (
     <header className="relative">
@@ -132,8 +139,9 @@ function BannerHeader({ pathname }: { pathname: string }) {
         <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/35 to-transparent" />
       </div>
 
-      {/* Titel — ragt halb über die Banner-Unterkante in die Seite (nicht beschnitten) */}
-      <div className="relative max-w-6xl mx-auto px-8">
+      {/* Titel — ragt halb über die Banner-Unterkante in die Seite (nicht beschnitten).
+          Container in der Seitenbreite zentriert → Titel startet bündig mit dem Inhalt. */}
+      <div className={`relative ${width} mx-auto px-8`}>
         <h1 className="inline-block -mt-7 font-display text-4xl sm:text-5xl leading-none tracking-tight text-text-primary">
           {title}
           <span className="text-accent">.</span>
@@ -166,7 +174,7 @@ function BannerHeader({ pathname }: { pathname: string }) {
         </div>
       </div>
 
-      <div className="border-b border-border-subtle mt-2" />
+      {!isSceneDetail && <div className="border-b border-border-subtle mt-2" />}
     </header>
   );
 }

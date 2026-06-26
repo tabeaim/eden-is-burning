@@ -31,7 +31,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-8 py-8">
-      <PageHeader title="Einstellungen" />
+      <PageHeader title="Einstellungen" width="max-w-2xl" />
 
       <div className="flex gap-1.5 mb-6 border-b border-border-subtle">
         {(

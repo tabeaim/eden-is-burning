@@ -96,12 +96,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<PersistedState>;
+        // Neue Felder (summary/header_url) für bereits gespeicherte Seed-Szenen
+        // aus den aktuellen Seeds nachfüllen, ohne eigene Werte zu überschreiben.
+        const seedSceneById = new Map(seedScenes().map((s) => [s.id, s]));
+        const scenes = (parsed.scenes ?? seedScenes()).map((s) => {
+          const seed = seedSceneById.get(s.id);
+          return seed ? { summary: seed.summary, header_url: seed.header_url, ...s } : s;
+        });
+        // Seed-Posts (nicht editierbar) inhaltlich aus den aktuellen Seeds
+        // übernehmen, damit Seed-Änderungen auch bei bestehenden Daten greifen.
+        const seedPostById = new Map(seedPosts().map((p) => [p.id, p]));
+        const posts = (parsed.posts ?? seedPosts()).map((p) => {
+          const seed = seedPostById.get(p.id);
+          return seed ? { ...p, content: seed.content } : p;
+        });
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setState({
           players: parsed.players ?? seedPlayers(),
           characters: parsed.characters ?? seedCharacters(),
-          scenes: parsed.scenes ?? seedScenes(),
-          posts: parsed.posts ?? seedPosts(),
+          scenes,
+          posts,
           quotes: parsed.quotes ?? seedQuotes(),
           locations: parsed.locations ?? seedLocations(),
         });

@@ -64,6 +64,8 @@ export interface Scene {
   participant_ids: string[]; // character ids, in turn order
   // Ein-Satz-Zusammenfassung — bei Erstellung oder beim Schließen ergänzbar
   summary?: string | null;
+  // Gewähltes Header-/Titelbild der Szene (sonst Seed-Platzhalter)
+  header_url?: string | null;
 }
 
 export interface Post {
