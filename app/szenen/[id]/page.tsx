@@ -43,6 +43,7 @@ export default function ScenePage({
     factsLine,
     scene?.header_url ?? undefined,
     "max-w-5xl",
+    scene?.status,
   );
 
   if (!scene) {
@@ -146,15 +147,6 @@ function SceneFacts({
     <div className="mb-6">
       {/* Charaktere — der Charakter, der am Zug ist, wird markiert */}
       <div className="flex flex-wrap items-center gap-1.5">
-        <span
-          className={`inline-block rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider ${
-            scene.status === "active"
-              ? "bg-white/[0.06] text-text-secondary"
-              : "bg-white/[0.03] text-text-tertiary"
-          }`}
-        >
-          {scene.status === "active" ? "aktiv" : "geschlossen"}
-        </span>
         {scene.trigger_warning && (
           <span className="rounded-full bg-red-500/15 text-red-300/90 text-[10px] uppercase tracking-wider px-2 py-0.5">
             Triggerwarnung
@@ -245,12 +237,15 @@ function SceneAdminBar({ scene }: { scene: Scene }) {
 
   return (
     <div className="mb-8 flex items-center justify-between gap-4">
-      <button
-        onClick={() => {}}
-        className="flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[12px] text-text-secondary hover:text-text-primary"
-      >
-        <Icon name="edit" size={13} /> Details bearbeiten
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => {}}
+          className="flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[12px] text-text-secondary hover:text-text-primary"
+        >
+          <Icon name="edit" size={13} /> Details bearbeiten
+        </button>
+        <DownloadMenu />
+      </div>
       {scene.status === "active" && (
         <div className="flex items-center gap-2">
           <button
@@ -265,6 +260,56 @@ function SceneAdminBar({ scene }: { scene: Scene }) {
           >
             Beenden
           </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Download-Menü (Platzhalter — Export ist noch nicht implementiert)
+function DownloadMenu() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  const formats: { label: string; key: string }[] = [
+    { label: "Als PDF", key: "pdf" },
+    { label: "Als Word (DOCX)", key: "docx" },
+    { label: "Als Text (TXT)", key: "txt" },
+  ];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[12px] text-text-secondary hover:text-text-primary"
+      >
+        <Icon name="download" size={13} /> Herunterladen
+        <span className={`inline-flex transition-transform ${open ? "rotate-90" : ""}`}>
+          <Icon name="arrow-right" size={11} />
+        </span>
+      </button>
+      {open && (
+        <div className="absolute left-0 z-20 mt-1 w-44 rounded-lg border border-border-subtle bg-bg-surface-2 p-1 shadow-xl">
+          {formats.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setOpen(false)}
+              className="w-full rounded-md px-2.5 py-1.5 text-left text-[12px] text-text-secondary hover:bg-white/[0.04] hover:text-text-primary"
+            >
+              {f.label}
+            </button>
+          ))}
+          <p className="px-2.5 pt-1 pb-0.5 text-[10px] text-text-tertiary">
+            (noch ohne Funktion)
+          </p>
         </div>
       )}
     </div>

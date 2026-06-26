@@ -35,16 +35,16 @@ export function SceneCharacterCard({
         {/* Bio-Overlay beim Hover */}
         {character.bio && (
           <div
-            className={`pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/80 px-5 py-4 text-center transition-opacity duration-200 ${
+            className={`pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 text-center transition-opacity duration-200 ${
               showBio ? "opacity-100" : "opacity-0"
             }`}
           >
-            <div className="mb-2 text-[11px] uppercase tracking-wider text-text-tertiary">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-primary">
               {[character.role, character.age ? `${character.age}` : null]
                 .filter(Boolean)
                 .join(" · ")}
             </div>
-            <p className="text-[12.5px] leading-relaxed text-text-secondary line-clamp-[9]">
+            <p className="text-[12.5px] leading-relaxed text-text-primary/90 line-clamp-[9]">
               {character.bio}
             </p>
           </div>

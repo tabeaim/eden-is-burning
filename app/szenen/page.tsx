@@ -8,6 +8,7 @@ import { formatInplayDate } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
+import { StatusBadge } from "@/components/StatusBadge";
 
 type Tab = "active" | "all" | "mine" | "archive";
 type SortKey = "active" | "inplay" | "created" | "title";
@@ -266,15 +267,7 @@ export default function ScenesPage() {
               className="rounded-xl border border-border-subtle bg-bg-surface p-5 hover:bg-white/[0.03] transition-colors flex flex-col"
             >
               <div className="flex items-center justify-between gap-2">
-                <span
-                  className={`inline-block rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider ${
-                    s.status === "active"
-                      ? "bg-white/[0.06] text-text-secondary"
-                      : "bg-white/[0.03] text-text-tertiary"
-                  }`}
-                >
-                  {s.status === "active" ? "aktiv" : "geschlossen"}
-                </span>
+                <StatusBadge status={s.status} />
                 {s.trigger_warning && (
                   <span className="text-[10px] uppercase tracking-wider text-red-300/80">
                     TW

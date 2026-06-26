@@ -21,6 +21,7 @@ type IconName =
   | "plus"
   | "edit"
   | "upload"
+  | "download"
   | "flame"
   | "search";
 
@@ -126,6 +127,12 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
       <path d="M12 16V4m-5 5 5-5 5 5" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+      <path d="M12 4v12m-5-5 5 5 5-5" />
     </>
   ),
   flame: (

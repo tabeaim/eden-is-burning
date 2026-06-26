@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 export type PageMeta = {
   title: string;
   subtitle?: string;
+  statusBadge?: "active" | "closed"; // optionaler Status-Badge hinter dem Untertitel
   path?: string;
   bannerImage?: string; // überschreibt den Seed-Banner (z.B. Szenen-Header)
   width?: string; // Tailwind max-w-Klasse der Seite — Banner-Titel nutzt dieselbe
@@ -32,10 +33,11 @@ export function useSetPageMeta(
   subtitle?: string,
   bannerImage?: string,
   width?: string,
+  statusBadge?: "active" | "closed",
 ) {
   const setMeta = useContext(PageMetaCtx)?.setMeta;
   const pathname = usePathname();
   useEffect(() => {
-    setMeta?.({ title, subtitle, path: pathname, bannerImage, width });
-  }, [setMeta, title, subtitle, bannerImage, width, pathname]);
+    setMeta?.({ title, subtitle, statusBadge, path: pathname, bannerImage, width });
+  }, [setMeta, title, subtitle, statusBadge, bannerImage, width, pathname]);
 }

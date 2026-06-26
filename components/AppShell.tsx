@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { PageMetaProvider, usePageMeta } from "@/lib/page-meta";
 import { Icon, type IconName } from "./Icon";
+import { StatusBadge } from "./StatusBadge";
 import { LoginScreen } from "./LoginScreen";
 
 // Route → lesbares Label für "Wer ist wo?"
@@ -117,15 +118,15 @@ function BannerHeader({ pathname }: { pathname: string }) {
   const onThisPage = meta.path === pathname;
   const title = (onThisPage && meta.title) || navMatch?.label || "Eden is burning";
   const subtitle = onThisPage ? meta.subtitle : undefined;
+  const statusBadge = onThisPage ? meta.statusBadge : undefined;
   const width = (onThisPage && meta.width) || "max-w-6xl";
   const showActions = pathname === "/dashboard";
   // Szenen-Detailseiten zeichnen ihre eigene Trennlinie (unter dem Satz),
   // damit Charaktere/Zusammenfassung noch über der Linie stehen.
   const isSceneDetail =
     /^\/szenen\/[^/]+$/.test(pathname) && pathname !== "/szenen/neu";
-  const banner =
-    (onThisPage && meta.bannerImage) ||
-    `https://picsum.photos/seed/${encodeURIComponent(`eden-banner${pathname}`)}/1600/360`;
+  // Beispiel-Banner (lokal, lädt zuverlässig); pro Szene per header_url überschreibbar.
+  const banner = (onThisPage && meta.bannerImage) || "/banner-eden.svg";
 
   return (
     <header className="relative">
@@ -149,7 +150,10 @@ function BannerHeader({ pathname }: { pathname: string }) {
 
         {/* Untertitel + Aktions-Leiste direkt unter dem Banner */}
         <div className="mt-2.5 flex items-center justify-between gap-4 pb-1">
-          <p className="text-[13px] text-text-secondary">{subtitle ?? ""}</p>
+          <div className="flex flex-wrap items-center gap-2 text-[13px] text-text-secondary">
+            {subtitle}
+            {statusBadge && <StatusBadge status={statusBadge} />}
+          </div>
           {showActions && (
             <nav className="flex items-center gap-1.5 shrink-0">
               <HeaderAction href="/szenen/neu" icon="message" label="Neue Szene" />
