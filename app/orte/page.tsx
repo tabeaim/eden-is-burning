@@ -16,6 +16,11 @@ const EXTRA: Record<string, { name: string; character: string }> = {
     character:
       "Alles jenseits von Eden und D.C. — Reisen, Rückblenden, ferne Orte. Für Szenen, die nirgendwo sonst hingehören.",
   },
+  industrial: {
+    name: "Industrial District & Eden Port",
+    character:
+      "Hafen und Industriegürtel im Südosten — Lagerhallen, Docks, alte Fabriken. Wo Fracht umgeschlagen wird und die Stadt ihre raue Seite zeigt.",
+  },
 };
 
 export default function PlacesPage() {

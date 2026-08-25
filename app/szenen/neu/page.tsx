@@ -10,6 +10,7 @@ import {
   type AreaKey,
 } from "@/lib/world";
 import { PageHeader } from "@/components/PageHeader";
+import { sceneHeader } from "@/lib/headers";
 
 export default function NewScenePage() {
   const router = useRouter();
@@ -61,6 +62,24 @@ export default function NewScenePage() {
       <PageHeader title="Neue Szene" subtitle="Eröffne einen neuen Thread." width="max-w-2xl" />
 
       <form onSubmit={submit} className="flex flex-col gap-5">
+        {/* Header-Andeutung — jede Szene hat einen eigenen Header. Die Auswahl
+            folgt später; hier nur eine Vorschau (verändert sich mit dem Titel). */}
+        <div>
+          <div className="flex items-center justify-between text-[12px] text-text-secondary mb-1">
+            <span>Szenen-Header</span>
+            <span className="text-[10px] text-text-tertiary">Auswahl folgt · Vorschau</span>
+          </div>
+          <div
+            className="relative h-24 w-full rounded-md overflow-hidden border border-border-subtle bg-center bg-cover opacity-90"
+            style={{ backgroundImage: `url("${sceneHeader(title.trim() || "neue-szene")}")` }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
+            <span className="absolute bottom-2 left-3 text-[10px] text-text-tertiary">
+              Automatisch generiert · bald selbst einstellbar
+            </span>
+          </div>
+        </div>
+
         <label className="text-[12px] text-text-secondary">
           Titel
           <input

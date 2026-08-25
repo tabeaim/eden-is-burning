@@ -8,6 +8,7 @@ import { PageMetaProvider, usePageMeta } from "@/lib/page-meta";
 import { Icon, type IconName } from "./Icon";
 import { StatusBadge } from "./StatusBadge";
 import { LoginScreen } from "./LoginScreen";
+import { pageHeader, sceneHeader } from "@/lib/headers";
 
 // Route → lesbares Label für "Wer ist wo?"
 function routeLabel(
@@ -106,6 +107,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 const EMBER_BG =
   "radial-gradient(120% 140% at 20% -40%, rgba(232,154,60,0.22), transparent 55%), radial-gradient(80% 120% at 100% 0%, rgba(120,130,90,0.14), transparent 60%), linear-gradient(180deg, #16130f, #0a0a0b)";
 
+// Wählt den generierten Header passend zur Route. Szenen-Detailseiten bekommen
+// einen pro Szene variierenden Header, alle anderen Seiten ihren eigenen.
+function bannerForPath(pathname: string): string {
+  const seg = pathname.split("/").filter(Boolean);
+  if (seg[0] === "szenen" && seg[1] && seg[1] !== "neu") {
+    return sceneHeader(seg[1]);
+  }
+  return pageHeader(seg[0] ?? "dashboard");
+}
+
 // Banner-Header: Titelbild pro Seite (Foto über Glut-Verlauf). Der Seitentitel
 // ragt halb über die Banner-Unterkante in die Seite; darunter die Aktions-Leiste.
 function BannerHeader({ pathname }: { pathname: string }) {
@@ -126,8 +137,10 @@ function BannerHeader({ pathname }: { pathname: string }) {
   const ownsDivider =
     (/^\/szenen\/[^/]+$/.test(pathname) && pathname !== "/szenen/neu") ||
     /^\/charaktere\/[^/]+$/.test(pathname);
-  // Beispiel-Banner (lokal, lädt zuverlässig); pro Szene per header_url überschreibbar.
-  const banner = (onThisPage && meta.bannerImage) || "/banner-eden.svg";
+  // Jede Seite bekommt einen eigenen, generierten Header (dunkle Skyline-Optik).
+  // Szenen-Detailseiten variieren zusätzlich pro Szene; ein echtes header_url der
+  // Szene (falls gesetzt) überschreibt die Vorlage.
+  const banner = (onThisPage && meta.bannerImage) || bannerForPath(pathname);
 
   return (
     <header className="relative">
@@ -136,7 +149,7 @@ function BannerHeader({ pathname }: { pathname: string }) {
       <div className="relative h-40 w-full overflow-hidden" style={{ backgroundImage: EMBER_BG }}>
         <div
           className="absolute inset-0 bg-center bg-cover"
-          style={{ backgroundImage: `url(${banner})` }}
+          style={{ backgroundImage: `url("${banner}")` }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/35 to-transparent" />
       </div>
