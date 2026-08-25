@@ -47,6 +47,20 @@ export function seedPlayers(): Player[] {
         at: hoursAgo(0.15),
       },
     },
+    {
+      id: "p_liz",
+      username: "liz",
+      email: "liz@example.com",
+      avatar_url: "https://picsum.photos/seed/lizavatar/200/200",
+      bio: "Spielt Riley und Roach. Neu in Eden.",
+      created_at: "2021-11-10T10:00:00Z",
+      last_seen: hoursAgo(3),
+      current_location: {
+        path: "/orte",
+        label: "Orte",
+        at: hoursAgo(3),
+      },
+    },
   ];
 }
 
@@ -160,6 +174,60 @@ export function seedCharacters(): Character[] {
       personality:
         "Kontrolliert, eloquent, eiskalt unter Druck. Behandelt das Leben wie einen Prozess, den er zu gewinnen gedenkt — koste es, wen es wolle.",
     },
+    {
+      id: "c_riley",
+      player_id: "p_liz",
+      name: "Riley Brooks",
+      faceclaim: null,
+      faceclaim_image_url: "https://picsum.photos/seed/rileybrooks/400/600",
+      tagline: "runs on caffeine and bad ideas",
+      role: "barista",
+      age: 22,
+      area: "rivers_edge",
+      bio: "Steht tagsüber hinter der Theke, nachts hinter der Kamera. Kennt jeden in Rivers Edge und die halbe Stadt beim Vornamen.",
+      pinterest_url: null,
+      created_at: "2021-11-11T10:00:00Z",
+      height: "170cm",
+      figure: "zierlich",
+      hair: "kupferrot",
+      eyes: "haselnuss",
+      full_name: "Riley Brooks",
+      sexuality: "pan",
+      status: "chronisch verknallt",
+      origin: "Rivers Edge, Eden",
+      job: "Barista",
+      company: "Café Marlowe",
+      quote: "Ich merk mir Gesichter. Und Trinkgeld.",
+      personality:
+        "Warmherzig, vorlaut, unheilbar neugierig. Redet zu viel, hört aber genau zu — und vergisst nie, wer sich wie benommen hat.",
+    },
+    {
+      id: "c_roach",
+      player_id: "p_liz",
+      name: "Roach",
+      faceclaim: null,
+      faceclaim_image_url: "https://picsum.photos/seed/roachdelgado/400/600",
+      tagline: null,
+      role: "mechaniker",
+      age: 31,
+      area: "westridge",
+      bio: "Schraubt an allem, was Motor hat, und an ein paar Dingen, die keinen haben sollten. In Westridge geboren, in Westridge geblieben.",
+      pinterest_url: null,
+      created_at: "2021-11-12T10:00:00Z",
+      height: "182cm",
+      figure: "breit",
+      hair: "rasiert",
+      eyes: "dunkelbraun",
+      full_name: "Marcus \"Roach\" Delgado",
+      sexuality: "hetero",
+      status: "besser nicht fragen",
+      origin: "Westridge, Eden",
+      job: "Kfz-Mechaniker",
+      company: "Delgado Auto & Salvage",
+      quote: "Alles lässt sich reparieren. Fast alles.",
+      personality:
+        "Wortkarg, loyal, gefährlich ruhig. Tut niemandem etwas, solange man ihn in Ruhe lässt — und ein sehr langes Gedächtnis für die, die es nicht tun.",
+    },
   ];
 }
 
@@ -206,6 +274,34 @@ export function seedScenes(): Scene[] {
       // Nigel (tabs) ist hier zuletzt dran gewesen -> es wartet auf Alexander (Vera)
       participant_ids: ["c_nigel", "c_alexander"],
       summary: "Ein anonymer Umschlag zwingt zwei Fremde zu einem heiklen Deal.",
+    },
+    {
+      // Mockup-Szene für Riley (liz) — mit Elliot (tabs) und Julius (vera)
+      id: "s_riley",
+      title: "Vinyl und andere Fehler",
+      location_area: "rivers_edge",
+      location_name: "The Record Store",
+      inplay_date: "2021-11-18",
+      inplay_time: "Abend",
+      status: "active",
+      trigger_warning: false,
+      created_at: hoursAgo(48),
+      participant_ids: ["c_riley", "c_julius", "c_elliot"],
+      summary: "Riley schließt den Laden ab — und zwei ungebetene Gäste machen daraus eine lange Nacht.",
+    },
+    {
+      // Mockup-Szene für Roach (liz) — mit Nigel (tabs) und Alexander (vera)
+      id: "s_roach",
+      title: "Kein guter Ort für Fragen",
+      location_area: "westridge",
+      location_name: "Trailer Park",
+      inplay_date: "2021-11-19",
+      inplay_time: "Nacht",
+      status: "active",
+      trigger_warning: false,
+      created_at: hoursAgo(30),
+      participant_ids: ["c_roach", "c_nigel", "c_alexander"],
+      summary: "Ein Journalist und ein Anwalt tauchen in Westridge auf — und Roach mag keinen von beiden.",
     },
   ];
 }
@@ -274,6 +370,62 @@ export function seedPosts(): Post[] {
         "Nigel schob den Umschlag über den resopalbeschichteten Tisch, ohne den Blick zu heben. Kein Absender, keine Briefmarke — nur sein Name, in einer Handschrift, die er zu kennen glaubte und doch nicht zuordnen konnte. Der Kaffee dampfte längst nicht mehr.",
       post_number: 1,
       created_at: hoursAgo(34),
+    },
+    // --- Mockup-Szene: Riley (s_riley) ---
+    {
+      id: "post_8",
+      scene_id: "s_riley",
+      character_id: "c_riley",
+      content:
+        "Riley drehte das Schild an der Tür auf <i>geschlossen</i> und ließ die letzte Platte auslaufen, bevor sie den Arm des Plattenspielers anhob. „Wir haben zu“, sagte sie, ohne sich umzudrehen — und wusste schon, dass die zwei am Regal nicht deshalb gehen würden.",
+      post_number: 1,
+      created_at: hoursAgo(46),
+    },
+    {
+      id: "post_9",
+      scene_id: "s_riley",
+      character_id: "c_julius",
+      content:
+        "Julius kam die Treppe von oben herunter, den Schlüssel noch in der Hand. „Sie gehört quasi zum Inventar“, sagte er zu Riley und nickte in Elliots Richtung, ohne ihn anzusehen. „Der hier leider auch.“",
+      post_number: 2,
+      created_at: hoursAgo(45),
+    },
+    {
+      id: "post_10",
+      scene_id: "s_riley",
+      character_id: "c_elliot",
+      content:
+        "Elliot lächelte das Lächeln, das nie ganz die Augen erreichte. „Ich kauf nur eine Platte“, sagte er und zog eine aus dem Regal, ohne hinzusehen. „Und höre mir an, worüber ihr beiden so redet, wenn abgeschlossen ist.“",
+      post_number: 3,
+      created_at: hoursAgo(44),
+    },
+    // --- Mockup-Szene: Roach (s_roach) ---
+    {
+      id: "post_11",
+      scene_id: "s_roach",
+      character_id: "c_roach",
+      content:
+        "Roach wischte sich das Öl an einem Lappen ab, der es nicht besser machte, und musterte die beiden Anzüge, die zwischen den Wohnwagen fehl am Platz wirkten wie Klavierlack im Schlamm. „Ihr seid falsch abgebogen“, sagte er. Es war keine Frage.",
+      post_number: 1,
+      created_at: hoursAgo(28),
+    },
+    {
+      id: "post_12",
+      scene_id: "s_roach",
+      character_id: "c_nigel",
+      content:
+        "„Vielleicht“, sagte Nigel und blieb stehen, wo er war. „Oder Sie kennen einen Wagen, der letzte Woche hier durch ist. Kennzeichen halb abgeschraubt.“ Er ließ die Worte im Regen hängen. „Ich frage nur, bevor es jemand Unfreundlicheres tut.“",
+      post_number: 2,
+      created_at: hoursAgo(27),
+    },
+    {
+      id: "post_13",
+      scene_id: "s_roach",
+      character_id: "c_alexander",
+      content:
+        "Alexander blieb einen Schritt zurück, die Hände in den Manteltaschen, und ließ Nigel reden. Erst als Roach nicht antwortete, sagte er ruhig: „Was mein Kollege meint: Es gibt einen Weg, bei dem niemand Ihren Namen aufschreibt. Ich empfehle ihn.“",
+      post_number: 3,
+      created_at: hoursAgo(26),
     },
   ];
 }

@@ -85,6 +85,14 @@ function uid(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+// Ergänzt bestehende (ggf. editierte) Einträge um neu hinzugekommene Seed-Einträge
+// nach id — vorhandene bleiben unberührt, neue Seeds (z.B. neue Charaktere/Szenen)
+// erscheinen auch bei bereits gespeichertem localStorage.
+function mergeNew<T extends { id: string }>(existing: T[], seed: T[]): T[] {
+  const have = new Set(existing.map((e) => e.id));
+  return [...existing, ...seed.filter((s) => !have.has(s.id))];
+}
+
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<PersistedState>(freshState);
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
@@ -99,32 +107,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         // Neue Felder (summary/header_url) für bereits gespeicherte Seed-Szenen
         // aus den aktuellen Seeds nachfüllen, ohne eigene Werte zu überschreiben.
         const seedSceneById = new Map(seedScenes().map((s) => [s.id, s]));
-        const scenes = (parsed.scenes ?? seedScenes()).map((s) => {
+        const scenesBase = (parsed.scenes ?? seedScenes()).map((s) => {
           const seed = seedSceneById.get(s.id);
           return seed ? { summary: seed.summary, header_url: seed.header_url, ...s } : s;
         });
+        const scenes = mergeNew(scenesBase, seedScenes());
         // Seed-Posts (nicht editierbar) inhaltlich aus den aktuellen Seeds
         // übernehmen, damit Seed-Änderungen auch bei bestehenden Daten greifen.
         const seedPostById = new Map(seedPosts().map((p) => [p.id, p]));
-        const posts = (parsed.posts ?? seedPosts()).map((p) => {
+        const postsBase = (parsed.posts ?? seedPosts()).map((p) => {
           const seed = seedPostById.get(p.id);
           return seed ? { ...p, content: seed.content } : p;
         });
+        const posts = mergeNew(postsBase, seedPosts());
         // Authored Quotes der Seed-Charaktere übernehmen (≠ Tagline), damit sie
         // auch bei bestehenden Daten erscheinen. Eigene Charaktere bleiben unberührt.
         const seedCharById = new Map(seedCharacters().map((ch) => [ch.id, ch]));
-        const characters = (parsed.characters ?? seedCharacters()).map((ch) => {
+        const charactersBase = (parsed.characters ?? seedCharacters()).map((ch) => {
           const seed = seedCharById.get(ch.id);
           return seed ? { ...ch, quote: seed.quote } : ch;
         });
+        const characters = mergeNew(charactersBase, seedCharacters());
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setState({
-          players: parsed.players ?? seedPlayers(),
+          players: mergeNew(parsed.players ?? seedPlayers(), seedPlayers()),
           characters,
           scenes,
           posts,
-          quotes: parsed.quotes ?? seedQuotes(),
-          locations: parsed.locations ?? seedLocations(),
+          quotes: mergeNew(parsed.quotes ?? seedQuotes(), seedQuotes()),
+          locations: mergeNew(parsed.locations ?? seedLocations(), seedLocations()),
         });
       }
       const session = localStorage.getItem(SESSION_KEY);
