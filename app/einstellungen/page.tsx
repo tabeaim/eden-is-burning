@@ -30,9 +30,11 @@ export default function SettingsPage() {
   if (!currentPlayer) return null;
 
   return (
-    <div className="max-w-2xl mx-auto px-8 py-8">
-      <PageHeader title="Einstellungen" width="max-w-2xl" />
+    <div className="max-w-5xl mx-auto px-8 py-8">
+      <PageHeader title="Einstellungen" width="max-w-5xl" />
 
+      {/* Inhalt linksbündig in Formularbreite — Container-Breite bleibt einheitlich */}
+      <div className="max-w-2xl">
       <div className="flex gap-1.5 mb-6 border-b border-border-subtle">
         {(
           [
@@ -55,6 +57,7 @@ export default function SettingsPage() {
       </div>
 
       {tab === "profile" ? <ProfileTab /> : <CharactersTab />}
+      </div>
     </div>
   );
 }

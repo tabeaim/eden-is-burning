@@ -24,11 +24,11 @@ export default function CharacterPage({
   const [tab, setTab] = useState<Tab>("general");
 
   // Charaktername als Unterseiten-Titel in den Banner-Header heben
-  useSetPageMeta(c?.name ?? "Charakter", undefined, undefined, "max-w-4xl");
+  useSetPageMeta(c?.name ?? "Charakter", undefined, undefined, "max-w-5xl");
 
   if (!c) {
     return (
-      <div className="max-w-4xl mx-auto px-8 py-16 text-text-tertiary">
+      <div className="max-w-5xl mx-auto px-8 py-16 text-text-tertiary">
         Charakter nicht gefunden.{" "}
         <Link href="/einwohnerinnen" className="underline">
           Zum Verzeichnis
@@ -50,7 +50,9 @@ export default function CharacterPage({
     .filter(Boolean) as Character[];
 
   return (
-    <div className="max-w-4xl mx-auto px-8 pt-1 pb-8">
+    <div className="max-w-5xl mx-auto px-8 pt-1 pb-8">
+      {/* Inhalt linksbündig in gewohnter Breite — Container-Breite bleibt einheitlich */}
+      <div className="max-w-4xl">
       {/* Zitat — direkt unter dem Seitentitel, über der Trennlinie */}
       <QuoteBlock c={c} />
 
@@ -131,6 +133,7 @@ export default function CharacterPage({
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -66,10 +66,10 @@ export default function PlacesPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-8">
+    <div className="max-w-5xl mx-auto px-8 py-8">
       <PageHeader
         title="Orte"
-        subtitle="Eden, Virginia — fünf Bezirke, ein Fluss, und alles dahinter." width="max-w-6xl" />
+        subtitle="Eden, Virginia — fünf Bezirke, ein Fluss, und alles dahinter." width="max-w-5xl" />
 
       <div className="grid lg:grid-cols-[1.7fr_1fr] gap-10 items-start">
         <div className="rounded-xl border border-border-subtle bg-bg-surface p-3">

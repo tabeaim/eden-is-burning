@@ -96,11 +96,13 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-8 py-8">
+    <div className="max-w-5xl mx-auto px-8 py-8">
       <PageHeader
         title="Kalender"
-        subtitle="In-Game-Zeitstrahl der Szenen, nach Monaten gruppiert." width="max-w-2xl" />
+        subtitle="In-Game-Zeitstrahl der Szenen, nach Monaten gruppiert." width="max-w-5xl" />
 
+      {/* Inhalt linksbündig in Lesebreite — Container-Breite bleibt einheitlich */}
+      <div className="max-w-2xl">
       {/* Filter (Charaktere/Spieler) & gespeicherte Kombinationen — nebeneinander, ohne Kasten */}
       <div className="mb-8 grid md:grid-cols-2 gap-x-10 gap-y-5">
         <div>
@@ -268,6 +270,7 @@ export default function CalendarPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

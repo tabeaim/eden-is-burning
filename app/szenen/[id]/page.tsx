@@ -48,7 +48,7 @@ export default function ScenePage({
 
   if (!scene) {
     return (
-      <div className="max-w-3xl mx-auto px-8 py-16 text-text-tertiary">
+      <div className="max-w-5xl mx-auto px-8 py-16 text-text-tertiary">
         Szene nicht gefunden.{" "}
         <Link href="/szenen" className="underline">
           Zur Übersicht
