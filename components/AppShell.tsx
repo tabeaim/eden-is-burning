@@ -121,10 +121,11 @@ function BannerHeader({ pathname }: { pathname: string }) {
   const statusBadge = onThisPage ? meta.statusBadge : undefined;
   const width = (onThisPage && meta.width) || "max-w-6xl";
   const showActions = pathname === "/dashboard";
-  // Szenen-Detailseiten zeichnen ihre eigene Trennlinie (unter dem Satz),
-  // damit Charaktere/Zusammenfassung noch über der Linie stehen.
-  const isSceneDetail =
-    /^\/szenen\/[^/]+$/.test(pathname) && pathname !== "/szenen/neu";
+  // Detailseiten (Szene, Charakter) zeichnen ihre eigene Trennlinie unter dem
+  // Inhalt (Zusammenfassung bzw. Zitat), damit der noch über der Linie steht.
+  const ownsDivider =
+    (/^\/szenen\/[^/]+$/.test(pathname) && pathname !== "/szenen/neu") ||
+    /^\/charaktere\/[^/]+$/.test(pathname);
   // Beispiel-Banner (lokal, lädt zuverlässig); pro Szene per header_url überschreibbar.
   const banner = (onThisPage && meta.bannerImage) || "/banner-eden.svg";
 
@@ -143,14 +144,14 @@ function BannerHeader({ pathname }: { pathname: string }) {
       {/* Titel — ragt halb über die Banner-Unterkante in die Seite (nicht beschnitten).
           Container in der Seitenbreite zentriert → Titel startet bündig mit dem Inhalt. */}
       <div className={`relative ${width} mx-auto px-8`}>
-        <h1 className="inline-block -mt-7 font-display text-4xl sm:text-5xl leading-none tracking-tight text-text-primary">
+        <h1 className="inline-block -mt-8 font-display lowercase text-[42px] sm:text-[54px] leading-none tracking-tight text-text-primary">
           {title}
           <span className="text-accent">.</span>
         </h1>
 
         {/* Untertitel + Aktions-Leiste direkt unter dem Banner */}
         <div className="mt-2.5 flex items-center justify-between gap-4 pb-1">
-          <div className="flex flex-wrap items-center gap-2 text-[13px] text-text-secondary">
+          <div className="flex flex-wrap items-center gap-2 text-[12px] text-text-secondary">
             {subtitle}
             {statusBadge && <StatusBadge status={statusBadge} />}
           </div>
@@ -178,7 +179,7 @@ function BannerHeader({ pathname }: { pathname: string }) {
         </div>
       </div>
 
-      {!isSceneDetail && <div className="border-b border-border-subtle mt-2" />}
+      {!ownsDivider && <div className="border-b border-border-subtle mt-2" />}
     </header>
   );
 }
@@ -220,7 +221,7 @@ function SideLink({
   return (
     <Link
       href={href}
-      className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
+      className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[12px] transition-colors ${
         active
           ? "bg-white/[0.04] text-text-primary"
           : "text-text-secondary hover:text-text-primary hover:bg-white/[0.025]"
@@ -248,7 +249,7 @@ function Sidebar({ pathname }: { pathname: string }) {
     <aside className="w-[190px] shrink-0 bg-bg-sidebar border-r border-border-subtle flex flex-col sticky top-0 h-screen">
       <div className="px-4 pt-5 pb-5 border-b border-border-subtle">
         <Link href="/dashboard" className="block leading-none">
-          <div className="font-display text-[19px] text-text-primary">
+          <div className="font-display text-[20px] text-text-primary">
             eden is burning<span className="text-accent">.</span>
           </div>
         </Link>
@@ -261,7 +262,7 @@ function Sidebar({ pathname }: { pathname: string }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
+              className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[12px] transition-colors ${
                 active
                   ? "bg-white/[0.04] text-text-primary"
                   : "text-text-secondary hover:text-text-primary hover:bg-white/[0.025]"
@@ -292,7 +293,7 @@ function Sidebar({ pathname }: { pathname: string }) {
         )}
         <button
           onClick={logout}
-          className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-left text-text-secondary hover:text-text-primary hover:bg-white/[0.025] transition-colors"
+          className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[12px] text-left text-text-secondary hover:text-text-primary hover:bg-white/[0.025] transition-colors"
         >
           <Icon name="logout" size={17} />
           Abmelden
@@ -301,7 +302,7 @@ function Sidebar({ pathname }: { pathname: string }) {
 
       {/* Meine Charaktere */}
       <div className="px-3 py-3 border-t border-border-subtle">
-        <div className="text-[9px] uppercase tracking-[0.2em] text-text-tertiary mb-2">
+        <div className="text-[8px] uppercase tracking-[0.2em] text-text-tertiary mb-2">
           Meine Charaktere
         </div>
         <div className="flex flex-col gap-1.5">

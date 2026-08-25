@@ -111,7 +111,7 @@ export default function CalendarPage() {
             {tokens.length > 0 && (
               <button
                 onClick={() => setTokens([])}
-                className="text-[11px] text-text-tertiary hover:text-text-primary underline"
+                className="text-[10px] text-text-tertiary hover:text-text-primary underline"
               >
                 zurücksetzen ({tokens.length})
               </button>
@@ -138,14 +138,14 @@ export default function CalendarPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
           {presets.length === 0 && !saving && (
-            <span className="text-[11px] text-text-tertiary">— noch keine</span>
+            <span className="text-[10px] text-text-tertiary">— noch keine</span>
           )}
           {presets.map((p) => {
             const activePreset = sameTokens(p.tokens, tokens);
             return (
               <span
                 key={p.id}
-                className={`group flex items-center gap-1 rounded-full border pl-2.5 pr-1 py-0.5 text-[11px] transition-colors ${
+                className={`group flex items-center gap-1 rounded-full border pl-2.5 pr-1 py-0.5 text-[10px] transition-colors ${
                   activePreset
                     ? "border-accent/60 bg-accent-soft text-text-primary"
                     : "border-border-subtle bg-bg-primary text-text-secondary"
@@ -177,12 +177,12 @@ export default function CalendarPage() {
                 onKeyDown={(e) => e.key === "Enter" && saveCurrent()}
                 placeholder="Name…"
                 autoFocus
-                className="w-28 bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[11px] text-text-primary outline-none focus:border-white/20"
+                className="w-28 bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[10px] text-text-primary outline-none focus:border-white/20"
               />
               <button
                 onClick={saveCurrent}
                 disabled={!presetName.trim()}
-                className="rounded-md bg-accent/90 hover:bg-accent text-black text-[11px] font-medium px-2 py-1 disabled:opacity-40"
+                className="rounded-md bg-accent/90 hover:bg-accent text-black text-[10px] font-medium px-2 py-1 disabled:opacity-40"
               >
                 Speichern
               </button>
@@ -191,7 +191,7 @@ export default function CalendarPage() {
                   setSaving(false);
                   setPresetName("");
                 }}
-                className="text-[11px] text-text-tertiary hover:text-text-primary px-1"
+                className="text-[10px] text-text-tertiary hover:text-text-primary px-1"
               >
                 Abbrechen
               </button>
@@ -200,7 +200,7 @@ export default function CalendarPage() {
             tokens.length > 0 && (
               <button
                 onClick={() => setSaving(true)}
-                className="flex items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-0.5 text-[11px] text-text-tertiary hover:text-accent hover:border-accent/50"
+                className="flex items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-0.5 text-[10px] text-text-tertiary hover:text-accent hover:border-accent/50"
               >
                 <Icon name="plus" size={11} /> Auswahl speichern
               </button>
@@ -210,13 +210,13 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="text-[11px] text-text-tertiary mb-4">
+      <div className="text-[10px] text-text-tertiary mb-4">
         {totalShown} {totalShown === 1 ? "Szene" : "Szenen"}
       </div>
 
       {/* Zeitstrahl, nach Monaten gruppiert */}
       {groups.length === 0 ? (
-        <p className="text-[13px] text-text-tertiary">
+        <p className="text-[12px] text-text-tertiary">
           Keine Szenen für diesen Filter.
         </p>
       ) : (
@@ -236,7 +236,7 @@ export default function CalendarPage() {
                           active ? "bg-accent ring-2 ring-accent/25" : "bg-white/25"
                         }`}
                       />
-                      <div className="text-[11px] uppercase tracking-wider text-text-tertiary flex items-center gap-1.5">
+                      <div className="text-[10px] uppercase tracking-wider text-text-tertiary flex items-center gap-1.5">
                         {formatInplayDate(s.inplay_date)} · {s.inplay_time}
                         {active && (
                           <span className="inline-flex items-center gap-1 text-accent">

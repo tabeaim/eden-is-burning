@@ -39,12 +39,12 @@ export function SceneCharacterCard({
               showBio ? "opacity-100" : "opacity-0"
             }`}
           >
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-primary">
+            <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-primary">
               {[character.role, character.age ? `${character.age}` : null]
                 .filter(Boolean)
                 .join(" · ")}
             </div>
-            <p className="text-[12.5px] leading-relaxed text-text-primary/90 line-clamp-[9]">
+            <p className="text-[12px] leading-relaxed text-text-primary/90 line-clamp-[9]">
               {character.bio}
             </p>
           </div>
@@ -58,7 +58,7 @@ export function SceneCharacterCard({
         title="Beschreibung ein-/ausblenden"
       >
         {character.name}
-        <span className={`text-[11px] transition-transform ${showBio ? "rotate-180" : ""}`}>
+        <span className={`text-[10px] transition-transform ${showBio ? "rotate-180" : ""}`}>
           ▾
         </span>
       </button>
@@ -95,7 +95,7 @@ export function SceneCharacterCard({
 
       {/* by player */}
       {player && (
-        <div className="mt-1.5 text-center text-[11px] italic text-text-tertiary">
+        <div className="mt-1.5 text-center text-[10px] italic text-text-tertiary">
           by{" "}
           <Link
             href={`/spieler/${player.username}`}

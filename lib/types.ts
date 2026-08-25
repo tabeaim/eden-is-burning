@@ -26,6 +26,7 @@ export interface Character {
   name: string;
   faceclaim: string | null; // "FACE" — Schauspieler/Model
   faceclaim_image_url: string | null;
+  banner_url?: string | null; // eigens hochladbarer Profil-Banner (Seitenbild)
   tagline: string | null;
   role: string | null;
   age: number | null;
@@ -49,6 +50,8 @@ export interface Character {
   // --- sonstiges ---
   quote: string | null; // Zitat unter dem Bild
   personality: string | null; // CHARACTER-Tab
+  // Beziehungen zu anderen Charakteren (RELATIONS-Tab), keyed by Charakter-ID
+  relationships?: Record<string, { label?: string | null; note?: string | null }>;
 }
 
 export interface Scene {

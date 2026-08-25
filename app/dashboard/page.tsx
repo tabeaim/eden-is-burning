@@ -81,7 +81,7 @@ export default function DashboardPage() {
         {/* LINKS: Szenenübersicht, nach Charakteren gruppiert */}
         <div className="flex flex-col gap-10">
           <section>
-            <h2 className="section-bar text-[13px] text-text-primary mb-4">
+            <h2 className="section-bar text-[12px] text-text-primary mb-4">
               Du bist dran
             </h2>
             {!hasDran ? (
@@ -103,7 +103,7 @@ export default function DashboardPage() {
           </section>
 
           <section>
-            <h2 className="section-bar text-[13px] text-text-tertiary mb-4">
+            <h2 className="section-bar text-[12px] text-text-tertiary mb-4">
               Wartet auf andere
             </h2>
             {!hasWarten ? (
@@ -152,7 +152,7 @@ export default function DashboardPage() {
                         <Icon name="flame" size={17} />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="font-serif text-[13px] text-text-primary truncate">
+                        <div className="font-serif text-[12px] text-text-primary truncate">
                           {scene.title}
                         </div>
                         <div className="text-[10px] text-text-tertiary truncate">
@@ -286,7 +286,7 @@ function PlayerPresenceList({
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-[13px] text-text-tertiary bg-bg-surface border border-border-subtle rounded-lg px-4 py-5">
+    <div className="text-[12px] text-text-tertiary bg-bg-surface border border-border-subtle rounded-lg px-4 py-5">
       {children}
     </div>
   );
@@ -315,11 +315,11 @@ function CharacterGroup({
         />
         <Link
           href={`/charaktere/${char.id}`}
-          className="font-serif text-[15px] text-text-primary hover:text-accent"
+          className="font-serif text-[14px] text-text-primary hover:text-accent"
         >
           {char.name}
         </Link>
-        <span className="text-[11px] text-text-tertiary">
+        <span className="text-[10px] text-text-tertiary">
           {scenes.length} {scenes.length === 1 ? "Szene" : "Szenen"}
         </span>
       </div>

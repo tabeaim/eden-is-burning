@@ -35,7 +35,7 @@ export default function InfoPage() {
                 {AREAS[k].priceLevel}
               </span>
             </div>
-            <p className="text-[13px] text-text-secondary mt-1 leading-relaxed">
+            <p className="text-[12px] text-text-secondary mt-1 leading-relaxed">
               {AREAS[k].character}
             </p>
           </div>

@@ -38,7 +38,7 @@ export default function PlayerPage({
             {p.username}
           </h1>
           {p.bio && (
-            <p className="text-[13px] text-text-secondary mt-0.5 max-w-md">
+            <p className="text-[12px] text-text-secondary mt-0.5 max-w-md">
               {p.bio}
             </p>
           )}
@@ -62,11 +62,11 @@ export default function PlayerPage({
               className="w-16 h-24 rounded-lg object-cover shrink-0"
             />
             <div className="min-w-0">
-              <div className="font-serif text-[15px] text-text-primary">
+              <div className="font-serif text-[14px] text-text-primary">
                 {c.name}
               </div>
               <div className="text-[12px] text-text-tertiary">{c.role}</div>
-              <div className="text-[11px] text-text-tertiary mt-0.5">
+              <div className="text-[10px] text-text-tertiary mt-0.5">
                 {areaName(c.area)}
               </div>
               {c.tagline && (

@@ -117,7 +117,7 @@ export default function NewScenePage() {
               type="button"
               key={loc}
               onClick={() => setLocationName(loc)}
-              className="rounded-full bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[11px] text-text-secondary"
+              className="rounded-full bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[10px] text-text-secondary"
             >
               {loc}
             </button>
@@ -145,7 +145,7 @@ export default function NewScenePage() {
           </label>
         </div>
 
-        <label className="flex items-center gap-2 text-[13px] text-text-secondary">
+        <label className="flex items-center gap-2 text-[12px] text-text-secondary">
           <input
             type="checkbox"
             checked={tw}
@@ -184,16 +184,16 @@ export default function NewScenePage() {
                     className="w-8 h-8 rounded-full object-cover"
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13px] text-text-primary truncate">
+                    <div className="text-[12px] text-text-primary truncate">
                       {c.name}
                     </div>
-                    <div className="text-[11px] text-text-tertiary truncate">
+                    <div className="text-[10px] text-text-tertiary truncate">
                       {c.role}
                       {isMine ? " · du" : ""}
                     </div>
                   </div>
                   {checked && (
-                    <span className="text-[11px] text-text-secondary">
+                    <span className="text-[10px] text-text-secondary">
                       #{order + 1}
                     </span>
                   )}
@@ -207,7 +207,7 @@ export default function NewScenePage() {
           <button
             type="submit"
             disabled={!title.trim() || selected.length === 0}
-            className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] disabled:opacity-40 border border-border-subtle px-5 py-2 text-[13px] text-text-primary"
+            className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] disabled:opacity-40 border border-border-subtle px-5 py-2 text-[12px] text-text-primary"
           >
             Szene erstellen
           </button>

@@ -24,7 +24,7 @@ export function QuoteRotator() {
 
   if (quotes.length === 0) {
     return (
-      <div className="px-4 py-8 text-center text-[13px] text-text-tertiary">
+      <div className="px-4 py-8 text-center text-[12px] text-text-tertiary">
         Noch keine Zitate gehighlightet. Markiere in einer Szene eine Textstelle
         und klicke auf das Zitat-Symbol.
       </div>
@@ -62,7 +62,7 @@ export function QuoteRotator() {
       <span className="text-accent text-2xl leading-none font-serif">“</span>
       <blockquote
         key={q.id}
-        className="prose-serif !text-center !text-[15px] text-text-primary mx-auto max-w-xl mt-1 animate-[fadein_0.5s_ease]"
+        className="prose-serif !text-center !text-[14px] text-text-primary mx-auto max-w-xl mt-1 animate-[fadein_0.5s_ease]"
       >
         {q.text}
       </blockquote>

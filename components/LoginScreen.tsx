@@ -33,10 +33,10 @@ export function LoginScreen() {
       />
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="font-display text-4xl text-text-primary leading-none">
+          <h1 className="font-display text-[38px] text-text-primary leading-none">
             eden is burning<span className="text-accent">.</span>
           </h1>
-          <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary mt-2">
+          <p className="text-[10px] uppercase tracking-[0.22em] text-text-tertiary mt-2">
             Eden, Virginia
           </p>
         </div>
@@ -77,7 +77,7 @@ export function LoginScreen() {
         </form>
 
         <div className="mt-5">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-text-tertiary mb-2 text-center">
+          <div className="text-[10px] uppercase tracking-[0.16em] text-text-tertiary mb-2 text-center">
             Demo-Accounts — schnell einloggen
           </div>
           <div className="flex flex-col gap-2">
@@ -94,10 +94,10 @@ export function LoginScreen() {
                   className="w-8 h-8 rounded-full object-cover bg-bg-primary"
                 />
                 <div className="min-w-0">
-                  <div className="text-[13px] text-text-primary">
+                  <div className="text-[12px] text-text-primary">
                     {p.username}
                   </div>
-                  <div className="text-[11px] text-text-tertiary truncate">
+                  <div className="text-[10px] text-text-tertiary truncate">
                     {p.email}
                   </div>
                 </div>

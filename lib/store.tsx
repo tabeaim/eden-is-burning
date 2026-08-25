@@ -110,10 +110,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           const seed = seedPostById.get(p.id);
           return seed ? { ...p, content: seed.content } : p;
         });
+        // Authored Quotes der Seed-Charaktere übernehmen (≠ Tagline), damit sie
+        // auch bei bestehenden Daten erscheinen. Eigene Charaktere bleiben unberührt.
+        const seedCharById = new Map(seedCharacters().map((ch) => [ch.id, ch]));
+        const characters = (parsed.characters ?? seedCharacters()).map((ch) => {
+          const seed = seedCharById.get(ch.id);
+          return seed ? { ...ch, quote: seed.quote } : ch;
+        });
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setState({
           players: parsed.players ?? seedPlayers(),
-          characters: parsed.characters ?? seedCharacters(),
+          characters,
           scenes,
           posts,
           quotes: parsed.quotes ?? seedQuotes(),

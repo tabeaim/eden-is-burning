@@ -38,12 +38,17 @@ export default function ScenesPage() {
   const [sortKey, setSortKey] = useState<SortKey>("active");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // Bezirksfilter aus der URL übernehmen (Verlinkung von „Orte").
+  // Filter aus der URL übernehmen (Verlinkung von „Orte" bzw. Relations).
   // Bewusst im Effect (nach Hydration), da window.location erst clientseitig vorliegt.
   useEffect(() => {
-    const area = new URLSearchParams(window.location.search).get("area");
+    const params = new URLSearchParams(window.location.search);
+    const area = params.get("area");
+    const chars = params.get("chars");
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (area) setAreas([area]);
+    if (chars)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTokens(chars.split(",").filter(Boolean).map((id) => `char:${id}`));
   }, []);
 
   const myCharIds = useMemo(
@@ -202,7 +207,7 @@ export default function ScenesPage() {
           {activeFilters > 0 && (
             <button
               onClick={resetFilters}
-              className="text-[11px] text-text-tertiary hover:text-text-primary underline"
+              className="text-[10px] text-text-tertiary hover:text-text-primary underline"
             >
               zurücksetzen ({activeFilters})
             </button>
@@ -249,7 +254,7 @@ export default function ScenesPage() {
         </button>
       </div>
 
-      <div className="text-[11px] text-text-tertiary mb-3">
+      <div className="text-[10px] text-text-tertiary mb-3">
         {sorted.length} {sorted.length === 1 ? "Szene" : "Szenen"}
       </div>
 
@@ -274,7 +279,7 @@ export default function ScenesPage() {
                   </span>
                 )}
               </div>
-              <h3 className="font-serif text-[17px] text-text-primary mt-2 leading-tight">
+              <h3 className="font-serif text-[16px] text-text-primary mt-2 leading-tight">
                 {s.title}
               </h3>
               <div className="text-[12px] text-text-tertiary mt-1">
@@ -295,11 +300,11 @@ export default function ScenesPage() {
                     className="w-7 h-7 rounded-full object-cover border border-border-subtle"
                   />
                 ))}
-                <span className="ml-1 text-[11px] text-text-tertiary">
+                <span className="ml-1 text-[10px] text-text-tertiary">
                   {participants.map((c) => c!.name.split(" ")[0]).join(" & ")}
                 </span>
                 {s.status === "active" && turnId && (
-                  <span className="ml-auto text-[11px] text-text-secondary">
+                  <span className="ml-auto text-[10px] text-text-secondary">
                     {character(turnId)?.name.split(" ")[0]} ist dran
                   </span>
                 )}
@@ -310,7 +315,7 @@ export default function ScenesPage() {
       </div>
 
       {sorted.length === 0 && (
-        <div className="text-[13px] text-text-tertiary">
+        <div className="text-[12px] text-text-tertiary">
           Keine Szenen für diese Filter.
         </div>
       )}
@@ -375,7 +380,7 @@ function MultiSelect({
                 className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12px] text-text-secondary hover:bg-white/[0.04]"
               >
                 <span
-                  className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[9px] ${
+                  className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[8px] ${
                     on
                       ? "bg-accent border-accent text-black"
                       : "border-border-strong"
@@ -390,7 +395,7 @@ function MultiSelect({
           {selected.length > 0 && (
             <button
               onClick={onClear}
-              className="w-full text-left px-2 py-1.5 text-[11px] text-text-tertiary hover:text-text-primary"
+              className="w-full text-left px-2 py-1.5 text-[10px] text-text-tertiary hover:text-text-primary"
             >
               Auswahl leeren
             </button>

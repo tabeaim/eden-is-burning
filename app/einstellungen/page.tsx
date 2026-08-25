@@ -43,7 +43,7 @@ export default function SettingsPage() {
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`px-3 py-2 text-[13px] -mb-px border-b-2 transition-colors ${
+            className={`px-3 py-2 text-[12px] -mb-px border-b-2 transition-colors ${
               tab === key
                 ? "border-white/40 text-text-primary"
                 : "border-transparent text-text-secondary hover:text-text-primary"
@@ -94,7 +94,7 @@ function ProfileTab() {
         <div>
           <button
             onClick={() => fileRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-3 py-2 text-[13px] text-text-primary"
+            className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-3 py-2 text-[12px] text-text-primary"
           >
             <Icon name="upload" size={15} /> Avatar hochladen
           </button>
@@ -127,7 +127,7 @@ function ProfileTab() {
       <div className="flex items-center gap-3">
         <button
           onClick={save}
-          className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[13px] text-text-primary"
+          className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[12px] text-text-primary"
         >
           Speichern
         </button>
@@ -149,7 +149,7 @@ function CharactersTab() {
       ))}
       <button
         onClick={() => addCharacter(currentPlayer.id)}
-        className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/15 px-4 py-4 text-[13px] text-text-secondary hover:text-text-primary hover:border-white/30 transition-colors"
+        className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/15 px-4 py-4 text-[12px] text-text-secondary hover:text-text-primary hover:border-white/30 transition-colors"
       >
         <Icon name="plus" size={16} /> Neuen Charakter anlegen
       </button>
@@ -196,7 +196,7 @@ function CharacterEditor({ character }: { character: Character }) {
         />
         <div className="flex-1 min-w-0">
           <div className="text-[14px] text-text-primary">{draft.name}</div>
-          <div className="text-[11px] text-text-tertiary">{draft.role}</div>
+          <div className="text-[10px] text-text-tertiary">{draft.role}</div>
         </div>
         <span className="text-text-tertiary text-[12px]">
           {open ? "Schließen" : "Bearbeiten"}
@@ -223,7 +223,7 @@ function CharacterEditor({ character }: { character: Character }) {
               </div>
               <button
                 onClick={() => fileRef.current?.click()}
-                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-2 py-1.5 text-[11px] text-text-primary"
+                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-2 py-1.5 text-[10px] text-text-primary"
               >
                 <Icon name="upload" size={13} /> Foto
               </button>
@@ -315,7 +315,7 @@ function CharacterEditor({ character }: { character: Character }) {
           <div className="flex items-center gap-3">
             <button
               onClick={save}
-              className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[13px] text-text-primary"
+              className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[12px] text-text-primary"
             >
               Speichern
             </button>
@@ -345,7 +345,7 @@ function Labeled({
   children: React.ReactNode;
 }) {
   return (
-    <label className="text-[11px] text-text-secondary block">
+    <label className="text-[10px] text-text-secondary block">
       {label}
       <div className="mt-1">{children}</div>
     </label>

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Inter, Grenze_Gotisch } from "next/font/google";
+import { Montserrat, Grenze_Gotisch } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
 
-const inter = Inter({
-  variable: "--font-inter",
+const sans = Montserrat({
+  variable: "--font-sans-loaded",
   subsets: ["latin"],
 });
 
@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="de"
-      className={`${inter.variable} ${display.variable} h-full`}
+      className={`${sans.variable} ${display.variable} h-full`}
     >
       <body className="min-h-full">
         <StoreProvider>

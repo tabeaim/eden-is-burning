@@ -84,14 +84,14 @@ export default function PlacesPage() {
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-bg-surface via-bg-surface/30 to-transparent" />
-                <h2 className="absolute bottom-3 left-5 right-5 font-display text-2xl text-text-primary">
+                <h2 className="absolute bottom-3 left-5 right-5 font-display text-[26px] text-text-primary">
                   {info?.name ?? extra?.name}
                 </h2>
               </div>
 
               <div className="p-5">
               {/* Kurzbeschreibung */}
-              <p className="text-[13px] text-text-secondary leading-relaxed">
+              <p className="text-[12px] text-text-secondary leading-relaxed">
                 {info?.character ?? extra?.character}
               </p>
 
@@ -124,7 +124,7 @@ export default function PlacesPage() {
                       <Link
                         key={c.id}
                         href={`/charaktere/${c.id}`}
-                        className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[11px] text-text-secondary hover:text-text-primary"
+                        className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[10px] text-text-secondary hover:text-text-primary"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -189,14 +189,14 @@ export default function PlacesPage() {
                           className="rounded-lg border border-border-subtle bg-bg-primary px-3 py-2 hover:bg-white/[0.03] transition-colors"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-[13px] text-text-primary font-serif">
+                            <span className="text-[12px] text-text-primary font-serif">
                               {s.title}
                             </span>
                             <span className="text-[10px] uppercase tracking-wider text-accent">
                               aktiv
                             </span>
                           </div>
-                          <div className="text-[11px] text-text-tertiary">
+                          <div className="text-[10px] text-text-tertiary">
                             {s.location_name} · {formatInplayDate(s.inplay_date)}
                             {turnId && (
                               <> · {character(turnId)?.name.split(" ")[0]} ist dran</>
@@ -222,7 +222,7 @@ export default function PlacesPage() {
               </div>
             </>
           ) : (
-            <p className="p-5 text-[13px] text-text-tertiary">
+            <p className="p-5 text-[12px] text-text-tertiary">
               Klicke einen Ort auf der Karte.
             </p>
           )}
@@ -264,7 +264,7 @@ function LocationSection({
             <button
               key={l.id}
               onClick={() => setOpenLoc(isOpen ? null : l.id)}
-              className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+              className={`rounded-full border px-2.5 py-1 text-[10px] transition-colors ${
                 played
                   ? "bg-accent-soft border-accent/40 text-text-primary"
                   : "bg-white/[0.03] border-border-subtle text-text-tertiary hover:text-text-secondary"
@@ -278,7 +278,7 @@ function LocationSection({
         {orphans.map((n) => (
           <span
             key={n}
-            className="rounded-full bg-accent-soft border border-accent/40 px-2.5 py-1 text-[11px] text-text-primary"
+            className="rounded-full bg-accent-soft border border-accent/40 px-2.5 py-1 text-[10px] text-text-primary"
           >
             {n}
           </span>
@@ -288,7 +288,7 @@ function LocationSection({
           <button
             onClick={onAdd}
             title="Neuen Ort erstellen"
-            className="inline-flex items-center gap-1 rounded-full border border-accent/50 bg-accent-soft px-2.5 py-1 text-[11px] font-medium text-text-primary hover:bg-accent hover:text-black hover:border-accent transition-colors"
+            className="inline-flex items-center gap-1 rounded-full border border-accent/50 bg-accent-soft px-2.5 py-1 text-[10px] font-medium text-text-primary hover:bg-accent hover:text-black hover:border-accent transition-colors"
           >
             <Icon name="plus" size={12} /> Ort hinzufügen
           </button>
@@ -330,11 +330,11 @@ function AddLocationForm({
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const field =
-    "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[13px] text-text-primary outline-none focus:border-white/20";
+    "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[12px] text-text-primary outline-none focus:border-white/20";
 
   return (
     <div className="mt-4 rounded-lg border border-border-subtle bg-bg-primary p-3 flex flex-col gap-2">
-      <div className="text-[11px] text-text-secondary">
+      <div className="text-[10px] text-text-secondary">
         Neuer Ort in <span className="text-text-primary">{areaName(area)}</span>
       </div>
       <input

@@ -49,13 +49,13 @@ export default function ResidentsPage() {
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent pt-10 px-3 pb-2">
-                  <div className="font-serif text-[15px] text-white">
+                  <div className="font-serif text-[14px] text-white">
                     {c.name}
                   </div>
-                  <div className="text-[11px] text-white/60">{c.role}</div>
+                  <div className="text-[10px] text-white/60">{c.role}</div>
                 </div>
               </div>
-              <div className="px-3 py-2 text-[11px] text-text-tertiary flex items-center justify-between">
+              <div className="px-3 py-2 text-[10px] text-text-tertiary flex items-center justify-between">
                 <span>{areaName(c.area)}</span>
                 {p && <span>by {p.username}</span>}
               </div>
@@ -65,7 +65,7 @@ export default function ResidentsPage() {
       </div>
 
       {list.length === 0 && (
-        <p className="text-[13px] text-text-tertiary">
+        <p className="text-[12px] text-text-tertiary">
           Keine Charaktere in diesem Bezirk.
         </p>
       )}

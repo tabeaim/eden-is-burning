@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
+import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
 import { formatInplayDate, timeAgo } from "@/lib/format";
 import { Icon } from "@/components/Icon";
@@ -21,6 +22,9 @@ export default function CharacterPage({
     store;
   const c = character(id);
   const [tab, setTab] = useState<Tab>("general");
+
+  // Charaktername als Unterseiten-Titel in den Banner-Header heben
+  useSetPageMeta(c?.name ?? "Charakter", undefined, undefined, "max-w-4xl");
 
   if (!c) {
     return (
@@ -46,46 +50,22 @@ export default function CharacterPage({
     .filter(Boolean) as Character[];
 
   return (
-    <div className="max-w-4xl mx-auto px-8 py-8">
-      {/* Großer Blackletter-Name */}
-      <h1 className="font-display text-4xl sm:text-5xl text-text-primary text-center leading-none mb-6">
-        {c.name}
-        <span className="text-accent">.</span>
-      </h1>
+    <div className="max-w-4xl mx-auto px-8 pt-1 pb-8">
+      {/* Zitat — direkt unter dem Seitentitel, über der Trennlinie */}
+      <QuoteBlock c={c} />
 
-      <div className="grid md:grid-cols-[230px_1fr] gap-8 items-start">
-        {/* LINKS: Bild + looks. + Zitat */}
+      {/* Trennlinie zur Seite */}
+      <div className="border-b border-border-subtle mt-4 mb-6" />
+
+      <div className="grid md:grid-cols-[250px_1fr] gap-8 items-start">
+        {/* LINKS: Profil-Banner + Usertag */}
         <div>
-          <div
-            className="relative aspect-[2/3] w-full overflow-hidden rounded-xl border border-border-subtle bg-bg-surface"
-            style={{ backgroundImage: "linear-gradient(180deg, rgba(163,163,128,0.12), transparent)" }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={c.faceclaim_image_url ?? ""}
-              alt={c.name}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-            <div className="absolute left-3 top-3 right-3">
-              <h2 className="font-display text-2xl text-accent leading-none">
-                looks.
-              </h2>
-              <div className="mt-3 flex flex-col gap-1.5">
-                <LooksRow label="Height" value={c.height} />
-                <LooksRow label="Figure" value={c.figure} />
-                <LooksRow label="Hair" value={c.hair} />
-                <LooksRow label="Eyes" value={c.eyes} />
-                <LooksRow label="Face" value={c.faceclaim} />
-              </div>
-            </div>
-          </div>
-
-          {c.quote && (
-            <div className="mt-3 rounded-lg bg-black/40 border border-border-subtle px-4 py-3 text-center">
-              <p className="prose-serif !text-center !text-[13px] text-text-secondary italic">
-                {c.quote}
-              </p>
+          <ProfileBanner c={c} />
+          {c.tagline && (
+            <div className="mt-3 flex justify-center">
+              <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
+                {c.tagline}
+              </span>
             </div>
           )}
         </div>
@@ -105,7 +85,7 @@ export default function CharacterPage({
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`rounded-lg py-2 text-[11px] uppercase tracking-[0.14em] transition-colors ${
+                className={`rounded-lg py-2 text-[10px] uppercase tracking-[0.14em] transition-colors ${
                   tab === key
                     ? "bg-olive-soft text-text-primary border border-olive/40"
                     : "bg-white/[0.03] text-text-tertiary hover:text-text-secondary border border-transparent"
@@ -121,7 +101,7 @@ export default function CharacterPage({
           {tab === "inplay" && (
             <InplayTab inScenes={inScenes} postsOf={postsOf} />
           )}
-          {tab === "relations" && <RelationsTab coChars={coChars} player={player} />}
+          {tab === "relations" && <RelationsTab c={c} coChars={coChars} />}
 
           {/* Pinterest */}
           {c.pinterest_url && (
@@ -140,11 +120,11 @@ export default function CharacterPage({
 
           {/* Footer */}
           <div className="mt-6 text-center">
-            <div className="font-display text-2xl text-accent">
+            <div className="font-display lowercase text-[26px] text-accent">
               brought to you by {p?.username ?? "—"}
               <span className="text-accent">.</span>
             </div>
-            <div className="mt-1 text-[11px] uppercase tracking-[0.12em] text-text-tertiary">
+            <div className="mt-1 text-[10px] uppercase tracking-[0.12em] text-text-tertiary">
               {postCount} {postCount === 1 ? "Post" : "Posts"} · registriert am{" "}
               {formatInplayDate(c.created_at.slice(0, 10))}
               {p && <> · zuletzt online {timeAgo(p.last_seen)}</>}
@@ -156,17 +136,117 @@ export default function CharacterPage({
   );
 }
 
-function LooksRow({ label, value }: { label: string; value: string | null }) {
-  if (!value) return null;
+// Profil-Banner (Seitenbild, NICHT der Avatar; Upload folgt in den Einstellungen).
+// Looks erscheinen beim Hover — Hintergrund dunkelt leicht ab, Schrift tritt hervor.
+function ProfileBanner({ c }: { c: Character }) {
   return (
-    <div className="flex items-center gap-2 text-[11px]">
-      <span className="rounded bg-black/55 px-2 py-0.5 uppercase tracking-wider text-text-tertiary">
-        {label}
-      </span>
-      <span className="text-text-primary uppercase tracking-wide text-[11px]">
-        {value}
-      </span>
+    <div
+      className="group relative h-[492px] w-full overflow-hidden rounded-xl bg-bg-surface"
+      style={{
+        backgroundImage: c.banner_url
+          ? undefined
+          : "linear-gradient(180deg, rgba(163,163,128,0.16), rgba(10,10,11,0.7))",
+      }}
+    >
+      {c.banner_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={c.banner_url}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      )}
+      {!c.banner_url && (
+        <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-[10px] uppercase tracking-wider text-text-tertiary">
+          Profil-Banner
+        </div>
+      )}
+
+      {/* Looks-Overlay bei Hover */}
+      <div className="absolute inset-0 flex flex-col bg-black/80 px-4 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        <h2 className="font-display lowercase text-[32px] text-accent leading-none">looks.</h2>
+        <div className="mt-3 flex flex-col gap-2">
+          <FactRow label="Height" value={c.height} />
+          <FactRow label="Figure" value={c.figure} />
+          <FactRow label="Hair" value={c.hair} />
+          <FactRow label="Eyes" value={c.eyes} />
+          <FactRow label="Face" value={c.faceclaim} />
+        </div>
+      </div>
     </div>
+  );
+}
+
+// Zitat anzeigen/hinzufügen — volle Breite über "facts".
+function QuoteBlock({ c }: { c: Character }) {
+  const { updateCharacter } = useStore();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  function save() {
+    updateCharacter(c.id, { quote: draft.trim() || null });
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="border border-border-subtle bg-black/30 p-3">
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Ein Zitat des Charakters…"
+          autoFocus
+          rows={2}
+          className="w-full resize-y bg-bg-primary border border-border-subtle px-3 py-2 text-[12px] text-text-primary outline-none focus:border-white/20"
+        />
+        <div className="mt-2 flex items-center justify-end gap-3">
+          <button
+            onClick={() => setEditing(false)}
+            className="text-[12px] text-text-tertiary hover:text-text-primary px-2"
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={save}
+            className="bg-accent/90 hover:bg-accent text-black text-[12px] font-medium px-3 py-1.5"
+          >
+            Speichern
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (c.quote) {
+    return (
+      <div className="group/q relative">
+        <p className="text-left text-[18px] leading-snug text-text-primary">
+          <span className="mr-1.5 text-[34px] leading-none text-accent">„</span>
+          {c.quote}
+        </p>
+        <button
+          onClick={() => {
+            setDraft(c.quote ?? "");
+            setEditing(true);
+          }}
+          className="absolute right-0 top-0 text-[10px] uppercase tracking-wider text-text-tertiary opacity-0 transition-opacity hover:text-accent group-hover/q:opacity-100"
+        >
+          bearbeiten
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => {
+        setDraft("");
+        setEditing(true);
+      }}
+      className="w-full border border-dashed border-border-strong px-5 py-2.5 text-[12px] text-text-tertiary hover:text-accent hover:border-accent/50"
+    >
+      + Zitat hinzufügen
+    </button>
   );
 }
 
@@ -174,11 +254,11 @@ function LooksRow({ label, value }: { label: string; value: string | null }) {
 function FactRow({ label, value }: { label: string; value: React.ReactNode }) {
   if (!value) return null;
   return (
-    <div className="flex items-center gap-3">
-      <span className="shrink-0 w-28 text-right rounded bg-white/[0.04] px-2.5 py-1 text-[10px] uppercase tracking-wider text-text-tertiary">
+    <div className="flex items-center gap-2.5">
+      <span className="shrink-0 w-24 text-right bg-white/[0.06] px-2 py-1 text-[10px] uppercase tracking-wider text-text-primary">
         {label}
       </span>
-      <span className="text-[13px] text-text-primary uppercase tracking-wide">
+      <span className="text-[10px] text-text-primary uppercase tracking-wide">
         {value}
       </span>
     </div>
@@ -187,7 +267,7 @@ function FactRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 function Heading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="font-display text-2xl text-accent leading-none mb-3 mt-1">
+    <h2 className="font-display lowercase text-[32px] text-accent leading-none mb-3 mt-1">
       {children}
     </h2>
   );
@@ -195,30 +275,46 @@ function Heading({ children }: { children: React.ReactNode }) {
 
 function GeneralTab({ c }: { c: Character }) {
   return (
-    <div className="flex flex-col gap-7">
-      <section>
-        <Heading>facts.</Heading>
-        <div className="flex flex-col gap-2">
-          <FactRow label="Name" value={c.full_name ?? c.name} />
-          <FactRow label="Age" value={c.age ? `${c.age} Jahre` : null} />
-          <FactRow label="Occupation" value={c.role} />
-          <FactRow label="Residence" value={areaName(c.area)} />
-          <FactRow label="Sexuality" value={c.sexuality} />
-          <FactRow label="Status" value={c.status} />
-          <FactRow label="Origin" value={c.origin} />
-        </div>
-      </section>
+    <div className="grid sm:grid-cols-2 gap-x-8 gap-y-6 items-start">
+      {/* Charaktertext — links neben den Facts */}
+      <div>
+        {c.bio ? (
+          <p className="text-left text-[12px] leading-relaxed text-text-secondary">
+            {c.bio}
+          </p>
+        ) : (
+          <p className="text-[12px] text-text-tertiary">
+            Noch keine Beschreibung.
+          </p>
+        )}
+      </div>
 
-      {(c.job || c.company) && (
+      {/* Facts + occupation — rechts */}
+      <div className="flex flex-col gap-7">
         <section>
-          <Heading>occupation.</Heading>
+          <Heading>facts.</Heading>
           <div className="flex flex-col gap-2">
-            <FactRow label="Job" value={c.job} />
-            <FactRow label="Company" value={c.company} />
+            <FactRow label="Name" value={c.full_name ?? c.name} />
+            <FactRow label="Age" value={c.age ? `${c.age} Jahre` : null} />
+            <FactRow label="Occupation" value={c.role} />
+            <FactRow label="Residence" value={areaName(c.area)} />
+            <FactRow label="Sexuality" value={c.sexuality} />
+            <FactRow label="Status" value={c.status} />
+            <FactRow label="Origin" value={c.origin} />
           </div>
         </section>
-      )}
-    </div>
+
+        {(c.job || c.company) && (
+          <section>
+            <Heading>occupation.</Heading>
+            <div className="flex flex-col gap-2">
+              <FactRow label="Job" value={c.job} />
+              <FactRow label="Company" value={c.company} />
+            </div>
+          </section>
+        )}
+        </div>
+      </div>
   );
 }
 
@@ -233,7 +329,7 @@ function CharacterTab({ c }: { c: Character }) {
       {c.personality && (
         <section>
           <Heading>personality.</Heading>
-          <p className="prose-serif !text-left text-text-secondary">
+          <p className="text-left text-[14px] leading-relaxed text-text-secondary">
             {c.personality}
           </p>
         </section>
@@ -241,11 +337,11 @@ function CharacterTab({ c }: { c: Character }) {
       {c.bio && (
         <section>
           <Heading>biography.</Heading>
-          <p className="prose-serif !text-left text-text-secondary">{c.bio}</p>
+          <p className="text-left text-[14px] leading-relaxed text-text-secondary">{c.bio}</p>
         </section>
       )}
       {!c.personality && !c.bio && (
-        <p className="text-[13px] text-text-tertiary">
+        <p className="text-[12px] text-text-tertiary">
           Noch keine Charakterbeschreibung hinterlegt.
         </p>
       )}
@@ -264,7 +360,7 @@ function InplayTab({
     <section>
       <Heading>scenes.</Heading>
       {inScenes.length === 0 ? (
-        <p className="text-[13px] text-text-tertiary">Noch in keiner Szene.</p>
+        <p className="text-[12px] text-text-tertiary">Noch in keiner Szene.</p>
       ) : (
         <div className="flex flex-col gap-2">
           {inScenes.map((s) => (
@@ -273,7 +369,7 @@ function InplayTab({
               href={`/szenen/${s.id}`}
               className="rounded-lg border border-border-subtle bg-bg-surface px-4 py-3 hover:bg-white/[0.03] transition-colors"
             >
-              <div className="font-serif text-[15px] text-text-primary">
+              <div className="font-serif text-[16px] text-text-primary">
                 {s.title}
               </div>
               <div className="text-[12px] text-text-tertiary">
@@ -289,48 +385,137 @@ function InplayTab({
 }
 
 function RelationsTab({
+  c,
   coChars,
-  player,
 }: {
+  c: Character;
   coChars: Character[];
-  player: ReturnType<typeof useStore>["player"];
 }) {
   return (
     <section>
       <Heading>relations.</Heading>
       {coChars.length === 0 ? (
-        <p className="text-[13px] text-text-tertiary">
+        <p className="text-[12px] text-text-tertiary">
           Noch keine Verbindungen — sobald gemeinsame Szenen existieren,
           erscheinen sie hier.
         </p>
       ) : (
-        <div className="flex flex-col gap-2">
-          {coChars.map((rc) => {
-            const rp = player(rc.player_id);
-            return (
-              <Link
-                key={rc.id}
-                href={`/charaktere/${rc.id}`}
-                className="flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-surface px-3 py-2 hover:bg-white/[0.03] transition-colors"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={rc.faceclaim_image_url ?? ""}
-                  alt={rc.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <div className="min-w-0">
-                  <div className="text-[14px] text-text-primary">{rc.name}</div>
-                  <div className="text-[11px] text-text-tertiary">
-                    {rc.role}
-                    {rp ? ` · by ${rp.username}` : ""}
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+        <div className="flex flex-col gap-4">
+          {coChars.map((rc) => (
+            <RelationRow key={rc.id} c={c} rc={rc} />
+          ))}
         </div>
       )}
     </section>
+  );
+}
+
+// Eine Beziehung: Charakter-Bubble + Alter | Beruf | (Label) in Caps-Montserrat,
+// anpassbare Erläuterung, und ein "Szenen"-Button (gefilterte Suche mit beiden).
+function RelationRow({ c, rc }: { c: Character; rc: Character }) {
+  const { updateCharacter } = useStore();
+  const rel = c.relationships?.[rc.id] ?? {};
+  const [editing, setEditing] = useState(false);
+  const [label, setLabel] = useState(rel.label ?? "");
+  const [note, setNote] = useState(rel.note ?? "");
+
+  function save() {
+    updateCharacter(c.id, {
+      relationships: {
+        ...c.relationships,
+        [rc.id]: { label: label.trim() || null, note: note.trim() || null },
+      },
+    });
+    setEditing(false);
+  }
+
+  const facts = [rc.age ? `${rc.age}` : null, rc.role, rel.label ? `(${rel.label})` : null]
+    .filter(Boolean)
+    .join(" | ");
+
+  return (
+    <div className="rounded-lg border border-border-subtle bg-bg-surface p-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        {/* Charakter-Bubble (wie global) */}
+        <Link
+          href={`/charaktere/${rc.id}`}
+          className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[12px] text-text-secondary hover:text-text-primary"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={rc.faceclaim_image_url ?? ""}
+            alt={rc.name}
+            className="w-5 h-5 rounded-full object-cover"
+          />
+          {rc.name}
+        </Link>
+
+        {/* Alter | Beruf | (Beziehung) — Caps-Montserrat */}
+        {facts && (
+          <span className="text-[12px] uppercase tracking-wider text-text-secondary">
+            {facts}
+          </span>
+        )}
+
+        {/* Szenen-Button → gefilterte Suche mit beiden Charakteren */}
+        <Link
+          href={`/szenen?chars=${c.id},${rc.id}`}
+          className="ml-auto rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[10px] uppercase tracking-wider text-text-secondary hover:text-text-primary"
+        >
+          Szenen
+        </Link>
+      </div>
+
+      {/* Anpassbare Erläuterung zur Beziehung */}
+      {editing ? (
+        <div className="mt-3 flex flex-col gap-2">
+          <input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Beziehung (z. B. Freunde, Ex, Rivalen)"
+            className="w-full bg-bg-primary border border-border-subtle px-3 py-1.5 text-[12px] text-text-primary outline-none focus:border-white/20"
+          />
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Kurze Erläuterung zur Beziehung…"
+            rows={2}
+            className="w-full resize-y bg-bg-primary border border-border-subtle px-3 py-1.5 text-[12px] text-text-primary outline-none focus:border-white/20"
+          />
+          <div className="flex items-center justify-end gap-3">
+            <button
+              onClick={() => setEditing(false)}
+              className="text-[12px] text-text-tertiary hover:text-text-primary px-2"
+            >
+              Abbrechen
+            </button>
+            <button
+              onClick={save}
+              className="bg-accent/90 hover:bg-accent text-black text-[12px] font-medium px-3 py-1.5"
+            >
+              Speichern
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-2 flex items-start gap-2">
+          <p className="flex-1 text-[12px] text-text-secondary leading-relaxed">
+            {rel.note || (
+              <span className="text-text-tertiary">Noch keine Beschreibung.</span>
+            )}
+          </p>
+          <button
+            onClick={() => {
+              setLabel(rel.label ?? "");
+              setNote(rel.note ?? "");
+              setEditing(true);
+            }}
+            className="shrink-0 text-[10px] uppercase tracking-wider text-text-tertiary hover:text-accent"
+          >
+            bearbeiten
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

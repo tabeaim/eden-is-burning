@@ -75,7 +75,7 @@ export function seedCharacters(): Character[] {
       origin: "Eden, Virginia",
       job: "Student & angehender CEO",
       company: "Simmons Holding",
-      quote: "the ends justify the means.",
+      quote: "The ends justify the means.",
       personality:
         "Charmant, berechnend, geduldig. Elliot spielt langfristig — jede Geste hat einen Zweck, jedes Lächeln eine Funktion. Loyalität kennt er nur sich selbst gegenüber.",
     },
@@ -102,7 +102,7 @@ export function seedCharacters(): Character[] {
       origin: "Oak Hill, Eden",
       job: "Investigativjournalist",
       company: "Eden Tribune",
-      quote: "follow the money.",
+      quote: "Follow the money.",
       personality:
         "Misstrauisch, beharrlich, von einem altmodischen Sinn für Gerechtigkeit getrieben. Schläft schlecht, trinkt zu viel Kaffee, gibt niemals eine Spur auf.",
     },
@@ -129,7 +129,7 @@ export function seedCharacters(): Character[] {
       origin: "irgendwo zwischen zwei Akkorden",
       job: "Musikproduzent",
       company: "Freelance",
-      quote: "see your shape in the dark.",
+      quote: "Ein guter Beat verzeiht jede Lüge.",
       personality:
         "Still, beobachtend, ein wenig melancholisch. Sagt mehr mit Pausen als mit Worten. Lässt Menschen nah heran und bereut es meistens.",
     },
@@ -156,7 +156,7 @@ export function seedCharacters(): Character[] {
       origin: "Orchid Valley, Eden",
       job: "Strafverteidiger",
       company: "Voss & Partner",
-      quote: "everyone deserves a defense. mine costs more.",
+      quote: "Everyone deserves a defense. Mine costs more.",
       personality:
         "Kontrolliert, eloquent, eiskalt unter Druck. Behandelt das Leben wie einen Prozess, den er zu gewinnen gedenkt — koste es, wen es wolle.",
     },
