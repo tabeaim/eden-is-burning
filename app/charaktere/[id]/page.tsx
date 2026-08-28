@@ -18,8 +18,16 @@ export default function CharacterPage({
 }) {
   const { id } = use(params);
   const store = useStore();
-  const { character, player, players, characters, scenes, postsOf, posts } =
-    store;
+  const {
+    character,
+    player,
+    players,
+    characters,
+    scenes,
+    postsOf,
+    posts,
+    currentPlayer,
+  } = store;
   const c = character(id);
   const [tab, setTab] = useState<Tab>("general");
 
@@ -103,7 +111,13 @@ export default function CharacterPage({
           {tab === "inplay" && (
             <InplayTab inScenes={inScenes} postsOf={postsOf} />
           )}
-          {tab === "relations" && <RelationsTab c={c} coChars={coChars} />}
+          {tab === "relations" && (
+            <RelationsTab
+              c={c}
+              coChars={coChars}
+              canEdit={!!currentPlayer && currentPlayer.id === c.player_id}
+            />
+          )}
 
           {/* Pinterest */}
           {c.pinterest_url && (
@@ -390,24 +404,34 @@ function InplayTab({
 function RelationsTab({
   c,
   coChars,
+  canEdit,
 }: {
   c: Character;
   coChars: Character[];
+  canEdit: boolean;
 }) {
   return (
     <section>
       <Heading>relations.</Heading>
       {coChars.length === 0 ? (
         <p className="text-[12px] text-text-tertiary">
-          Noch keine Verbindungen — sobald gemeinsame Szenen existieren,
-          erscheinen sie hier.
+          Noch keine Verbindungen — sobald zwei Charaktere eine gemeinsame Szene
+          hatten, erscheint die Verbindung hier automatisch.
         </p>
       ) : (
-        <div className="flex flex-col gap-4">
-          {coChars.map((rc) => (
-            <RelationRow key={rc.id} c={c} rc={rc} />
-          ))}
-        </div>
+        <>
+          <p className="mb-4 text-[11px] text-text-tertiary">
+            Verbindungen werden automatisch aus gemeinsamen Szenen erkannt.
+            {canEdit
+              ? " Trag ein, um was für eine Beziehung es sich handelt."
+              : ` Nur wer ${c.name} spielt, kann die Art der Beziehung eintragen.`}
+          </p>
+          <div className="flex flex-col gap-4">
+            {coChars.map((rc) => (
+              <RelationRow key={rc.id} c={c} rc={rc} canEdit={canEdit} />
+            ))}
+          </div>
+        </>
       )}
     </section>
   );
@@ -415,7 +439,15 @@ function RelationsTab({
 
 // Eine Beziehung: Charakter-Bubble + Alter | Beruf | (Label) in Caps-Montserrat,
 // anpassbare Erläuterung, und ein "Szenen"-Button (gefilterte Suche mit beiden).
-function RelationRow({ c, rc }: { c: Character; rc: Character }) {
+function RelationRow({
+  c,
+  rc,
+  canEdit,
+}: {
+  c: Character;
+  rc: Character;
+  canEdit: boolean;
+}) {
   const { updateCharacter } = useStore();
   const rel = c.relationships?.[rc.id] ?? {};
   const [editing, setEditing] = useState(false);
@@ -504,19 +536,25 @@ function RelationRow({ c, rc }: { c: Character; rc: Character }) {
         <div className="mt-2 flex items-start gap-2">
           <p className="flex-1 text-[12px] text-text-secondary leading-relaxed">
             {rel.note || (
-              <span className="text-text-tertiary">Noch keine Beschreibung.</span>
+              <span className="text-text-tertiary">
+                {canEdit
+                  ? "Noch keine Beschreibung."
+                  : "Noch keine Beschreibung hinterlegt."}
+              </span>
             )}
           </p>
-          <button
-            onClick={() => {
-              setLabel(rel.label ?? "");
-              setNote(rel.note ?? "");
-              setEditing(true);
-            }}
-            className="shrink-0 text-[10px] uppercase tracking-wider text-text-tertiary hover:text-accent"
-          >
-            bearbeiten
-          </button>
+          {canEdit && (
+            <button
+              onClick={() => {
+                setLabel(rel.label ?? "");
+                setNote(rel.note ?? "");
+                setEditing(true);
+              }}
+              className="shrink-0 text-[10px] uppercase tracking-wider text-text-tertiary hover:text-accent"
+            >
+              bearbeiten
+            </button>
+          )}
         </div>
       )}
     </div>

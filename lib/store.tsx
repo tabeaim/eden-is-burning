@@ -125,7 +125,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const seedCharById = new Map(seedCharacters().map((ch) => [ch.id, ch]));
         const charactersBase = (parsed.characters ?? seedCharacters()).map((ch) => {
           const seed = seedCharById.get(ch.id);
-          return seed ? { ...ch, quote: seed.quote } : ch;
+          if (!seed) return ch;
+          return {
+            ...ch,
+            quote: seed.quote,
+            // Auto-getrackte Seed-Beziehungen (aus gemeinsamen Szenen) ergänzen,
+            // ohne selbst eingetragene Labels/Notizen zu überschreiben.
+            relationships: {
+              ...(seed.relationships ?? {}),
+              ...(ch.relationships ?? {}),
+            },
+          };
         });
         const characters = mergeNew(charactersBase, seedCharacters());
         // eslint-disable-next-line react-hooks/set-state-in-effect

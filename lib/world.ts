@@ -121,6 +121,8 @@ export const LOCATION_SUGGESTIONS: Record<AreaKey, string[]> = {
     "Café Marlowe",
     "Ron's Diner",
     "The Record Store",
+    "The Ember",
+    "Galerie Halbmond",
     "Eden Mall",
     "Buchhandlung Seiter",
     "Farmers Market",
@@ -128,6 +130,7 @@ export const LOCATION_SUGGESTIONS: Record<AreaKey, string[]> = {
   belle_view: [
     "Paola's & Elliot's Loft",
     "Glass Tower Bar",
+    "Hale Contemporary",
     "Promenade",
     "Belle View Hotel",
     "Strandabschnitt Nord",
