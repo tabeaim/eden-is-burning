@@ -81,7 +81,13 @@ export function LoginScreen() {
             Demo-Accounts — schnell einloggen
           </div>
           <div className="flex flex-col gap-2">
-            {players.map((p) => (
+            {[...players]
+              .sort((a, b) =>
+                a.username.localeCompare(b.username, "de", {
+                  sensitivity: "base",
+                }),
+              )
+              .map((p) => (
               <button
                 key={p.id}
                 onClick={() => login(p.id)}
