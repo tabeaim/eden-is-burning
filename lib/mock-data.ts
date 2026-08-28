@@ -592,8 +592,8 @@ export function seedScenes(): Scene[] {
     {
       id: "s_river",
       title: "Ein Umschlag, kein Absender",
-      location_area: "rivers_edge",
-      location_name: "Ron's Diner",
+      location_area: "umland",
+      location_name: "Highway 95 Diner",
       inplay_date: "2021-11-20",
       inplay_time: "Vormittag",
       status: "active",
@@ -650,8 +650,8 @@ export function seedScenes(): Scene[] {
       // Sam (Jule) & Nigel (tabs) — geforderte Szene Sam ↔ Nigel
       id: "s_nigelsam",
       title: "Zwischen zwei Schichten",
-      location_area: "rivers_edge",
-      location_name: "Ron's Diner",
+      location_area: "westridge",
+      location_name: "Route 9 Diner",
       inplay_date: "2021-11-21",
       inplay_time: "früher Morgen",
       status: "active",
@@ -665,8 +665,8 @@ export function seedScenes(): Scene[] {
       // Lou (Abby) & Nigel (tabs) — geforderte Szene Lou ↔ Nigel
       id: "s_nigellou",
       title: "Ein Kaffee, keine Namen",
-      location_area: "rivers_edge",
-      location_name: "Café Marlowe",
+      location_area: "downtown",
+      location_name: "Café Verlaine",
       inplay_date: "2021-11-22",
       inplay_time: "Vormittag",
       status: "active",
@@ -695,8 +695,8 @@ export function seedScenes(): Scene[] {
       // Nila (Abby) & Riley (liz)
       id: "s_nila2",
       title: "Zwei Milchkaffee, ein Porträt",
-      location_area: "rivers_edge",
-      location_name: "Café Marlowe",
+      location_area: "belle_view",
+      location_name: "Café an der Promenade",
       inplay_date: "2021-11-17",
       inplay_time: "Nachmittag",
       status: "closed",
@@ -1078,6 +1078,14 @@ const LOCATION_DESCRIPTIONS: Record<string, string> = {
     "Winzige Galerie an der Rückseite eines Hinterhofs. Terpentin, kaltes Kaffeewasser und Bilder, die woanders nicht hängen dürften.",
   "Hale Contemporary":
     "Cassandras Galerie in Belle View. Vorne makellose Kunst, hinten die Räume, in denen die eigentlichen Geschäfte laufen.",
+  "Café an der Promenade":
+    "Kleines Café mit Blick aufs Wasser an der Belle-View-Promenade. Nachmittagslicht, Möwen und der beste Milchkaffee der Küste.",
+  "Route 9 Diner":
+    "Abgewetzter Diner an der Ausfallstraße von Westridge. Fettige Pancakes, ehrlicher Kaffee, keine Fragen.",
+  "Highway 95 Diner":
+    "Letzter Halt vor der Stadtgrenze am Highway 95. Neon im Nirgendwo — hier trifft man sich, wenn man nicht gesehen werden will.",
+  "Café Verlaine":
+    "Ruhiges Café am Theaterplatz in Downtown. Marmor, Zeitungen und genug Betrieb, um ein Gespräch darin verschwinden zu lassen.",
   "Simmons Anwesen":
     "Kalter Marmor, hohe Decken, zu viele Zimmer. Das Elternhaus der Simmons — schön wie ein Mausoleum.",
   "Glass Tower Bar":

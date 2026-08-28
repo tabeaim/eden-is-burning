@@ -131,18 +131,19 @@ export const LOCATION_SUGGESTIONS: Record<AreaKey, string[]> = {
     "Paola's & Elliot's Loft",
     "Glass Tower Bar",
     "Hale Contemporary",
+    "Café an der Promenade",
     "Promenade",
     "Belle View Hotel",
     "Strandabschnitt Nord",
   ],
   oak_hill: ["Sinclair Haus", "Oak Hill Community Center", "Eichenallee Park"],
-  westridge: ["Westridge BBQ Platz", "Sozialbau Komplex A", "Trailer Park"],
+  westridge: ["Westridge BBQ Platz", "Sozialbau Komplex A", "Trailer Park", "Route 9 Diner"],
   orchid_valley: ["Simmons Anwesen", "Voss Villa", "Orchid Valley Country Club"],
   byron: ["Byron Locker Room", "Byron Library", "Football Field", "Byron Cafeteria"],
   sutton: ["Sutton Internat", "Sutton Schulhof", "Sutton Bibliothek"],
   washington: ["The Mall", "Georgetown", "Dupont Circle", "Capitol Hill"],
-  umland: ["Highway 95", "Der alte See", "Verlassene Scheune", "Waldlichtung"],
-  downtown: ["Stadtbibliothek", "City Hall", "Theater am Platz", "Eden Central Station"],
+  umland: ["Highway 95", "Highway 95 Diner", "Der alte See", "Verlassene Scheune", "Waldlichtung"],
+  downtown: ["Stadtbibliothek", "City Hall", "Theater am Platz", "Café Verlaine", "Eden Central Station"],
 };
 
 // Reihenfolge für Selects
