@@ -71,7 +71,7 @@ export default function PlacesPage() {
         title="Orte"
         subtitle="Eden, Virginia — fünf Bezirke, ein Fluss, und alles dahinter." width="max-w-5xl" />
 
-      <div className="grid lg:grid-cols-[1.7fr_1fr] gap-10 items-start">
+      <div className="grid lg:grid-cols-[1.7fr_1fr] gap-12 items-start">
         <div className="rounded-xl border border-border-subtle bg-bg-surface p-3">
           <EdenMap selected={selected} onSelect={(k) => { setSelected(k); setOpenLoc(null); setAdding(false); }} areaStats={areaStats} />
         </div>

@@ -53,10 +53,10 @@ export function QuoteRotator() {
         </>
       )}
 
-      <span className="text-accent text-[3.375rem] leading-none font-serif">“</span>
+      <span className="text-accent text-[3.375rem] leading-none font-display">“</span>
       <blockquote
         key={q.id}
-        className="prose-serif !text-center !text-[0.875rem] text-text-primary mx-auto max-w-xl mt-1 animate-[fadein_0.5s_ease]"
+        className="prose-serif !text-center !text-[1rem] text-text-primary mx-auto max-w-xl mt-1 animate-[fadein_0.5s_ease]"
       >
         {q.text}
       </blockquote>
