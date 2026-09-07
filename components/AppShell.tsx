@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { PageMetaProvider, usePageMeta } from "@/lib/page-meta";
@@ -21,8 +22,14 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { ready, currentPlayer, isApproved } = useStore();
+  const { ready, currentPlayer, isApproved, touchPresence } = useStore();
   const pathname = usePathname();
+
+  // "Zuletzt online" aktuell halten: bei jedem Seitenwechsel last_seen setzen.
+  useEffect(() => {
+    if (currentPlayer) touchPresence(currentPlayer.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, currentPlayer?.id]);
 
   if (!ready) {
     return (
