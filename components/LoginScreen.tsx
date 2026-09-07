@@ -87,7 +87,7 @@ export function LoginScreen() {
           <h1 className="font-display text-[38px] text-text-primary leading-none">
             eden is burning<span className="text-accent">.</span>
           </h1>
-          <p className="text-[12px] uppercase tracking-[0.22em] text-text-tertiary mt-2">
+          <p className="text-[13px] uppercase tracking-[0.22em] text-text-tertiary mt-2">
             Eden, Virginia
           </p>
         </div>
@@ -103,7 +103,7 @@ export function LoginScreen() {
                 setError(null);
                 setNotice(null);
               }}
-              className={`flex-1 rounded-md py-1.5 text-[12px] transition-colors ${
+              className={`flex-1 rounded-md py-1.5 text-[13px] transition-colors ${
                 mode === m
                   ? "bg-white/[0.06] text-text-primary"
                   : "text-text-secondary hover:text-text-primary"
@@ -118,7 +118,7 @@ export function LoginScreen() {
           onSubmit={submit}
           className="bg-bg-surface border border-border-subtle rounded-xl p-6 flex flex-col gap-3"
         >
-          <label className="text-[12px] text-text-secondary">
+          <label className="text-[13px] text-text-secondary">
             {mode === "signup" ? "E-Mail" : "Username oder E-Mail"}
             <input
               type={mode === "signup" ? "email" : "text"}
@@ -129,7 +129,7 @@ export function LoginScreen() {
               className="mt-1 w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[14px] text-text-primary outline-none focus:border-white/20"
             />
           </label>
-          <label className="text-[12px] text-text-secondary">
+          <label className="text-[13px] text-text-secondary">
             Passwort
             <input
               type="password"
@@ -141,8 +141,8 @@ export function LoginScreen() {
             />
           </label>
 
-          {error && <p className="text-[12px] text-red-400/80">{error}</p>}
-          {notice && <p className="text-[12px] text-accent">{notice}</p>}
+          {error && <p className="text-[13px] text-red-400/80">{error}</p>}
+          {notice && <p className="text-[13px] text-accent">{notice}</p>}
 
           <button
             type="submit"
@@ -159,7 +159,7 @@ export function LoginScreen() {
 
         {mode === "signin" && (
           <div className="mt-5">
-            <div className="text-[12px] uppercase tracking-[0.16em] text-text-tertiary mb-2 text-center">
+            <div className="text-[13px] uppercase tracking-[0.16em] text-text-tertiary mb-2 text-center">
               Test-Zugang — als Spieler*in reinklicken
             </div>
             <div className="flex flex-wrap justify-center gap-2">
@@ -169,13 +169,13 @@ export function LoginScreen() {
                   type="button"
                   disabled={busy}
                   onClick={() => quickLogin(p.email)}
-                  className="bg-bg-surface hover:bg-white/[0.06] border border-border-subtle rounded-lg px-3 py-1.5 text-[12px] text-text-primary transition-colors disabled:opacity-50"
+                  className="bg-bg-surface hover:bg-white/[0.06] border border-border-subtle rounded-lg px-3 py-1.5 text-[13px] text-text-primary transition-colors disabled:opacity-50"
                 >
                   {p.label}
                 </button>
               ))}
             </div>
-            <p className="text-[12px] text-text-tertiary text-center mt-2">
+            <p className="text-[13px] text-text-tertiary text-center mt-2">
               Vorübergehend — noch keine Registrierung nötig.
             </p>
           </div>

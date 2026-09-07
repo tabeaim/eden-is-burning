@@ -72,7 +72,7 @@ export default function DashboardPage() {
         {/* LINKS: Szenenübersicht, nach Charakteren gruppiert */}
         <div className="flex flex-col gap-10">
           <section>
-            <h2 className="section-bar text-[12px] text-text-primary mb-4">
+            <h2 className="section-bar text-[13px] text-text-primary mb-4">
               Du bist dran
             </h2>
             {!hasDran ? (
@@ -94,7 +94,7 @@ export default function DashboardPage() {
           </section>
 
           <section>
-            <h2 className="section-bar text-[12px] text-text-tertiary mb-4">
+            <h2 className="section-bar text-[13px] text-text-tertiary mb-4">
               Wartet auf andere
             </h2>
             {!hasWarten ? (
@@ -122,7 +122,7 @@ export default function DashboardPage() {
           <QuoteRotator />
 
           <section>
-            <h2 className="section-bar text-[12px] text-text-secondary mb-3">
+            <h2 className="section-bar text-[13px] text-text-secondary mb-3">
               Aktive Szenen · letzte 24h
             </h2>
             {recentScenes.length === 0 ? (
@@ -143,20 +143,20 @@ export default function DashboardPage() {
                         <Icon name="flame" size={17} />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="font-serif text-[12px] text-text-primary truncate">
+                        <div className="font-serif text-[13px] text-text-primary truncate">
                           {scene.title}
                         </div>
-                        <div className="text-[12px] text-text-tertiary truncate">
+                        <div className="text-[13px] text-text-tertiary truncate">
                           {scene.location_name} ·{" "}
                           {areaName(scene.location_area)}
                         </div>
                       </div>
                       {last && lastChar && (
                         <div className="text-right shrink-0">
-                          <div className="text-[12px] text-text-secondary">
+                          <div className="text-[13px] text-text-secondary">
                             {lastChar.name.split(" ")[0]}
                           </div>
-                          <div className="text-[12px] text-text-tertiary">
+                          <div className="text-[13px] text-text-tertiary">
                             {timeAgo(last.created_at)}
                           </div>
                         </div>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
           </section>
 
           <section>
-            <h2 className="section-bar text-[12px] text-text-secondary mb-3">
+            <h2 className="section-bar text-[13px] text-text-secondary mb-3">
               Spieler online · jetzt
             </h2>
             {onlineNow.length === 0 ? (
@@ -180,7 +180,7 @@ export default function DashboardPage() {
           </section>
 
           <section>
-            <h2 className="section-bar text-[12px] text-text-secondary mb-3">
+            <h2 className="section-bar text-[13px] text-text-secondary mb-3">
               Spieler online · letzte 24h
             </h2>
             {onlineRecent.length === 0 ? (
@@ -222,8 +222,8 @@ function PlayerPresenceList({
             )}
           </span>
           <div className="leading-tight">
-            <div className="text-[12px] text-text-primary">{p.username}</div>
-            <div className="text-[12px] text-text-tertiary">
+            <div className="text-[13px] text-text-primary">{p.username}</div>
+            <div className="text-[13px] text-text-tertiary">
               {now ? "online" : timeAgo(p.last_seen)}
             </div>
           </div>
@@ -235,7 +235,7 @@ function PlayerPresenceList({
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-[12px] text-text-tertiary bg-bg-surface border border-border-subtle rounded-lg px-4 py-5">
+    <div className="text-[13px] text-text-tertiary bg-bg-surface border border-border-subtle rounded-lg px-4 py-5">
       {children}
     </div>
   );
@@ -268,7 +268,7 @@ function CharacterGroup({
         >
           {char.name}
         </Link>
-        <span className="text-[12px] text-text-tertiary">
+        <span className="text-[13px] text-text-tertiary">
           {scenes.length} {scenes.length === 1 ? "Szene" : "Szenen"}
         </span>
       </div>
@@ -319,12 +319,12 @@ function SceneFacts({
             />
           ))}
         </div>
-        <span className="text-[12px] text-text-secondary">
+        <span className="text-[13px] text-text-secondary">
           {participants.map((c) => c.name.split(" ")[0]).join(" & ")}
         </span>
       </div>
 
-      <div className="mt-1.5 text-[12px] text-text-tertiary">
+      <div className="mt-1.5 text-[13px] text-text-tertiary">
         {scene.location_name} · {areaName(scene.location_area)} ·{" "}
         {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
       </div>

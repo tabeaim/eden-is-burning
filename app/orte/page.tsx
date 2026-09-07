@@ -96,13 +96,13 @@ export default function PlacesPage() {
 
               <div className="p-5">
               {/* Kurzbeschreibung */}
-              <p className="text-[12px] text-text-secondary leading-relaxed">
+              <p className="text-[14px] text-text-secondary leading-relaxed">
                 {info?.character ?? extra?.character}
               </p>
 
               {/* Steckbrief */}
               {info && (info.priceLevel !== "—" || info.residents !== "—") && (
-                <dl className="mt-4 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-[12px]">
+                <dl className="mt-4 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-[13px]">
                   {info.priceLevel !== "—" && (
                     <>
                       <dt className="text-text-tertiary">Preislevel:</dt>
@@ -121,7 +121,7 @@ export default function PlacesPage() {
               {/* Bewohner*innen (echte Charaktere) */}
               {residents.length > 0 && (
                 <div className="mt-4">
-                  <div className="text-[12px] uppercase tracking-wider text-text-tertiary mb-2">
+                  <div className="text-[13px] uppercase tracking-wider text-text-tertiary mb-2">
                     Bewohner*innen
                   </div>
                   <div className="flex flex-wrap gap-1.5">
@@ -129,7 +129,7 @@ export default function PlacesPage() {
                       <Link
                         key={c.id}
                         href={`/charaktere/${c.id}`}
-                        className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[12px] text-text-secondary hover:text-text-primary"
+                        className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[13px] text-text-secondary hover:text-text-primary"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -176,11 +176,11 @@ export default function PlacesPage() {
 
               {/* Aktive Szenen hier */}
               <div className="mt-5">
-                <div className="text-[12px] uppercase tracking-wider text-text-tertiary mb-2">
+                <div className="text-[13px] uppercase tracking-wider text-text-tertiary mb-2">
                   Aktive Szenen hier
                 </div>
                 {activeScenes.length === 0 ? (
-                  <p className="text-[12px] text-text-tertiary">
+                  <p className="text-[13px] text-text-tertiary">
                     Keine aktive Szene an diesem Ort.
                   </p>
                 ) : (
@@ -194,14 +194,14 @@ export default function PlacesPage() {
                           className="rounded-lg border border-border-subtle bg-bg-primary px-3 py-2 hover:bg-white/[0.03] transition-colors"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-[12px] text-text-primary font-serif">
+                            <span className="text-[13px] text-text-primary font-serif">
                               {s.title}
                             </span>
-                            <span className="text-[12px] uppercase tracking-wider text-accent">
+                            <span className="text-[13px] uppercase tracking-wider text-accent">
                               aktiv
                             </span>
                           </div>
-                          <div className="text-[12px] text-text-tertiary">
+                          <div className="text-[13px] text-text-tertiary">
                             {s.location_name} · {formatInplayDate(s.inplay_date)}
                             {turnId && (
                               <> · {character(turnId)?.name.split(" ")[0]} ist dran</>
@@ -217,7 +217,7 @@ export default function PlacesPage() {
                 {scenesHere.length > 0 && (
                   <Link
                     href={`/szenen?area=${selected}`}
-                    className="mt-2.5 inline-flex items-center gap-1 text-[12px] text-text-secondary hover:text-accent transition-colors"
+                    className="mt-2.5 inline-flex items-center gap-1 text-[13px] text-text-secondary hover:text-accent transition-colors"
                   >
                     Alle {scenesHere.length} {scenesHere.length === 1 ? "Szene" : "Szenen"} an diesem Ort
                     <Icon name="arrow-right" size={12} />
@@ -227,7 +227,7 @@ export default function PlacesPage() {
               </div>
             </>
           ) : (
-            <p className="p-5 text-[12px] text-text-tertiary">
+            <p className="p-5 text-[13px] text-text-tertiary">
               Klicke einen Ort auf der Karte.
             </p>
           )}
@@ -259,7 +259,7 @@ function LocationSection({
   const open = locs.find((l) => l.id === openLoc);
   return (
     <div className="mt-5">
-      <div className="text-[12px] uppercase tracking-wider text-text-tertiary mb-2">
+      <div className="text-[13px] uppercase tracking-wider text-text-tertiary mb-2">
         {title}
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -269,7 +269,7 @@ function LocationSection({
             <button
               key={l.id}
               onClick={() => setOpenLoc(isOpen ? null : l.id)}
-              className={`rounded-full border px-2.5 py-1 text-[12px] transition-colors ${
+              className={`rounded-full border px-2.5 py-1 text-[13px] transition-colors ${
                 played
                   ? "bg-accent-soft border-accent/40 text-text-primary"
                   : "bg-white/[0.03] border-border-subtle text-text-tertiary hover:text-text-secondary"
@@ -283,7 +283,7 @@ function LocationSection({
         {orphans.map((n) => (
           <span
             key={n}
-            className="rounded-full bg-accent-soft border border-accent/40 px-2.5 py-1 text-[12px] text-text-primary"
+            className="rounded-full bg-accent-soft border border-accent/40 px-2.5 py-1 text-[13px] text-text-primary"
           >
             {n}
           </span>
@@ -293,7 +293,7 @@ function LocationSection({
           <button
             onClick={onAdd}
             title="Neuen Ort erstellen"
-            className="inline-flex items-center gap-1 rounded-full border border-accent/50 bg-accent-soft px-2.5 py-1 text-[12px] font-medium text-text-primary hover:bg-accent hover:text-black hover:border-accent transition-colors"
+            className="inline-flex items-center gap-1 rounded-full border border-accent/50 bg-accent-soft px-2.5 py-1 text-[13px] font-medium text-text-primary hover:bg-accent hover:text-black hover:border-accent transition-colors"
           >
             <Icon name="plus" size={12} /> Ort hinzufügen
           </button>
@@ -309,12 +309,12 @@ function LocationSection({
             </div>
             <button
               onClick={() => setOpenLoc(null)}
-              className="text-text-tertiary hover:text-text-primary text-[12px]"
+              className="text-text-tertiary hover:text-text-primary text-[13px]"
             >
               ✕
             </button>
           </div>
-          <p className="text-[12px] text-text-secondary mt-1 leading-relaxed">
+          <p className="text-[14px] text-text-secondary mt-1 leading-relaxed">
             {open.description ?? "Noch keine Beschreibung hinterlegt."}
           </p>
         </div>
@@ -335,11 +335,11 @@ function AddLocationForm({
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const field =
-    "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[12px] text-text-primary outline-none focus:border-white/20";
+    "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[13px] text-text-primary outline-none focus:border-white/20";
 
   return (
     <div className="mt-4 rounded-lg border border-border-subtle bg-bg-primary p-3 flex flex-col gap-2">
-      <div className="text-[12px] text-text-secondary">
+      <div className="text-[13px] text-text-secondary">
         Neuer Ort in <span className="text-text-primary">{areaName(area)}</span>
       </div>
       <input
@@ -359,19 +359,19 @@ function AddLocationForm({
       <div className="flex items-center justify-end gap-2">
         <button
           onClick={onCancel}
-          className="text-[12px] text-text-tertiary hover:text-text-primary px-2"
+          className="text-[13px] text-text-tertiary hover:text-text-primary px-2"
         >
           Abbrechen
         </button>
         <button
           onClick={() => name.trim() && onCreate(name, desc)}
           disabled={!name.trim()}
-          className="rounded-md bg-accent/90 hover:bg-accent text-black text-[12px] font-medium px-3 py-1.5 disabled:opacity-40"
+          className="rounded-md bg-accent/90 hover:bg-accent text-black text-[13px] font-medium px-3 py-1.5 disabled:opacity-40"
         >
           Ort anlegen
         </button>
       </div>
-      <p className="text-[12px] text-text-tertiary">
+      <p className="text-[13px] text-text-tertiary">
         Bleibt unter „Ortsideen", bis eine Szene hier spielt.
       </p>
     </div>

@@ -39,12 +39,12 @@ export function SceneCharacterCard({
               showBio ? "opacity-100" : "opacity-0"
             }`}
           >
-            <div className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-text-primary">
+            <div className="mb-2 text-[13px] font-semibold uppercase tracking-wider text-text-primary">
               {[character.role, character.age ? `${character.age}` : null]
                 .filter(Boolean)
                 .join(" · ")}
             </div>
-            <p className="text-[12px] leading-relaxed text-text-primary/90 line-clamp-[9]">
+            <p className="text-[13px] leading-relaxed text-text-primary/90 line-clamp-[9]">
               {character.bio}
             </p>
           </div>
@@ -54,11 +54,11 @@ export function SceneCharacterCard({
       {/* Name (mit Aufklapp-Marker für die Bio) */}
       <button
         onClick={() => setShowBio((v) => !v)}
-        className="mt-3 flex w-full items-center justify-center gap-1.5 font-serif text-[18px] uppercase tracking-wide text-text-primary hover:text-accent"
+        className="mt-3 flex w-full items-center justify-center gap-1.5 font-serif font-bold text-[18px] uppercase tracking-wide text-text-primary hover:text-accent"
         title="Beschreibung ein-/ausblenden"
       >
         {character.name}
-        <span className={`text-[12px] transition-transform ${showBio ? "rotate-180" : ""}`}>
+        <span className={`text-[13px] transition-transform ${showBio ? "rotate-180" : ""}`}>
           ▾
         </span>
       </button>
@@ -66,7 +66,7 @@ export function SceneCharacterCard({
       {/* Tagline */}
       {character.tagline && (
         <div className="mt-1.5 flex justify-center">
-          <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[12px] uppercase tracking-wider text-text-secondary">
+          <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[13px] uppercase tracking-wider text-text-secondary">
             {character.tagline}
           </span>
         </div>
@@ -95,7 +95,7 @@ export function SceneCharacterCard({
 
       {/* by player */}
       {player && (
-        <div className="mt-1.5 text-center text-[12px] italic text-text-tertiary">
+        <div className="mt-1.5 text-center text-[13px] italic text-text-tertiary">
           by{" "}
           <Link
             href={`/spieler/${player.username}`}

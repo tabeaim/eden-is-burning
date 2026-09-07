@@ -37,7 +37,7 @@ export default function SpielerOverviewPage() {
                 <div className="text-[14px] text-text-primary truncate">
                   {p.username}
                 </div>
-                <div className="text-[12px] text-text-tertiary">
+                <div className="text-[13px] text-text-tertiary">
                   {chars.length}{" "}
                   {chars.length === 1 ? "Charakter" : "Charaktere"}
                 </div>

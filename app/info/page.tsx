@@ -20,7 +20,7 @@ export default function InfoPage() {
         </p>
       </div>
 
-      <h2 className="text-[12px] uppercase tracking-[0.16em] text-text-secondary mt-8 mb-3">
+      <h2 className="text-[13px] uppercase tracking-[0.16em] text-text-secondary mt-8 mb-3">
         Die Bezirke
       </h2>
       <div className="flex flex-col gap-3">
@@ -33,18 +33,18 @@ export default function InfoPage() {
               <h3 className="font-serif text-[16px] text-text-primary">
                 {AREAS[k].name}
               </h3>
-              <span className="text-[12px] text-text-tertiary">
+              <span className="text-[13px] text-text-tertiary">
                 {AREAS[k].priceLevel}
               </span>
             </div>
-            <p className="text-[12px] text-text-secondary mt-1 leading-relaxed">
+            <p className="text-[13px] text-text-secondary mt-1 leading-relaxed">
               {AREAS[k].character}
             </p>
           </div>
         ))}
       </div>
 
-      <h2 className="text-[12px] uppercase tracking-[0.16em] text-text-secondary mt-8 mb-3">
+      <h2 className="text-[13px] uppercase tracking-[0.16em] text-text-secondary mt-8 mb-3">
         Bildung
       </h2>
       <div className="prose-serif !text-left text-text-secondary space-y-3">

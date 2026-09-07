@@ -77,7 +77,6 @@ function BannerHeader({ pathname }: { pathname: string }) {
   );
   const onThisPage = meta.path === pathname;
   const title = (onThisPage && meta.title) || navMatch?.label || "Eden is burning";
-  const subtitle = onThisPage ? meta.subtitle : undefined;
   const statusBadge = onThisPage ? meta.statusBadge : undefined;
   // Einheitliche Seitenbreite: alle Seiten teilen dieselbe Container-Breite, damit
   // Titel und linksbündiger Inhalt beim Seitenwechsel nicht horizontal springen.
@@ -112,13 +111,12 @@ function BannerHeader({ pathname }: { pathname: string }) {
           <span className="text-accent">.</span>
         </h1>
 
-        {/* Untertitel direkt unter dem Banner */}
-        <div className="mt-2.5 flex items-center gap-4 pb-1">
-          <div className="flex flex-wrap items-center gap-2 text-[13px] text-text-secondary">
-            {subtitle}
-            {statusBadge && <StatusBadge status={statusBadge} />}
+        {/* Status-Badge direkt unter dem Banner (Untertitel entfernt) */}
+        {statusBadge && (
+          <div className="mt-2.5 flex items-center gap-4 pb-1">
+            <StatusBadge status={statusBadge} />
           </div>
-        </div>
+        )}
       </div>
 
       {!ownsDivider && <div className="border-b border-border-subtle mt-2" />}

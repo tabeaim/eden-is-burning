@@ -73,7 +73,7 @@ export default function CharacterPage({
           <ProfileBanner c={c} />
           {c.tagline && (
             <div className="mt-3 flex justify-center">
-              <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[12px] uppercase tracking-wider text-text-secondary">
+              <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[13px] uppercase tracking-wider text-text-secondary">
                 {c.tagline}
               </span>
             </div>
@@ -95,7 +95,7 @@ export default function CharacterPage({
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`rounded-lg py-2 text-[12px] uppercase tracking-[0.14em] transition-colors ${
+                className={`rounded-lg py-2 text-[13px] uppercase tracking-[0.14em] transition-colors ${
                   tab === key
                     ? "bg-olive-soft text-text-primary border border-olive/40"
                     : "bg-white/[0.03] text-text-tertiary hover:text-text-secondary border border-transparent"
@@ -140,7 +140,7 @@ export default function CharacterPage({
               brought to you by {p?.username ?? "—"}
               <span className="text-accent">.</span>
             </div>
-            <div className="mt-1 text-[12px] uppercase tracking-[0.12em] text-text-tertiary">
+            <div className="mt-1 text-[13px] uppercase tracking-[0.12em] text-text-tertiary">
               {postCount} {postCount === 1 ? "Post" : "Posts"} · registriert am{" "}
               {formatInplayDate(c.created_at.slice(0, 10))}
               {p && <> · zuletzt online {timeAgo(p.last_seen)}</>}
@@ -174,7 +174,7 @@ function ProfileBanner({ c }: { c: Character }) {
         />
       )}
       {!c.banner_url && (
-        <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-[12px] uppercase tracking-wider text-text-tertiary">
+        <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-[13px] uppercase tracking-wider text-text-tertiary">
           Profil-Banner
         </div>
       )}
@@ -214,18 +214,18 @@ function QuoteBlock({ c }: { c: Character }) {
           placeholder="Ein Zitat des Charakters…"
           autoFocus
           rows={2}
-          className="w-full resize-y bg-bg-primary border border-border-subtle px-3 py-2 text-[12px] text-text-primary outline-none focus:border-white/20"
+          className="w-full resize-y bg-bg-primary border border-border-subtle px-3 py-2 text-[13px] text-text-primary outline-none focus:border-white/20"
         />
         <div className="mt-2 flex items-center justify-end gap-3">
           <button
             onClick={() => setEditing(false)}
-            className="text-[12px] text-text-tertiary hover:text-text-primary px-2"
+            className="text-[13px] text-text-tertiary hover:text-text-primary px-2"
           >
             Abbrechen
           </button>
           <button
             onClick={save}
-            className="bg-accent/90 hover:bg-accent text-black text-[12px] font-medium px-3 py-1.5"
+            className="bg-accent/90 hover:bg-accent text-black text-[13px] font-medium px-3 py-1.5"
           >
             Speichern
           </button>
@@ -246,7 +246,7 @@ function QuoteBlock({ c }: { c: Character }) {
             setDraft(c.quote ?? "");
             setEditing(true);
           }}
-          className="absolute right-0 top-0 text-[12px] uppercase tracking-wider text-text-tertiary opacity-0 transition-opacity hover:text-accent group-hover/q:opacity-100"
+          className="absolute right-0 top-0 text-[13px] uppercase tracking-wider text-text-tertiary opacity-0 transition-opacity hover:text-accent group-hover/q:opacity-100"
         >
           bearbeiten
         </button>
@@ -260,7 +260,7 @@ function QuoteBlock({ c }: { c: Character }) {
         setDraft("");
         setEditing(true);
       }}
-      className="w-full border border-dashed border-border-strong px-5 py-2.5 text-[12px] text-text-tertiary hover:text-accent hover:border-accent/50"
+      className="w-full border border-dashed border-border-strong px-5 py-2.5 text-[13px] text-text-tertiary hover:text-accent hover:border-accent/50"
     >
       + Zitat hinzufügen
     </button>
@@ -272,10 +272,10 @@ function FactRow({ label, value }: { label: string; value: React.ReactNode }) {
   if (!value) return null;
   return (
     <div className="flex items-center gap-2.5">
-      <span className="shrink-0 w-24 text-right bg-white/[0.06] px-2 py-1 text-[12px] uppercase tracking-wider text-text-primary">
+      <span className="shrink-0 w-24 text-right bg-white/[0.06] px-2 py-1 text-[13px] uppercase tracking-wider text-text-primary">
         {label}
       </span>
-      <span className="text-[12px] text-text-primary uppercase tracking-wide">
+      <span className="text-[13px] text-text-primary uppercase tracking-wide">
         {value}
       </span>
     </div>
@@ -296,11 +296,11 @@ function GeneralTab({ c }: { c: Character }) {
       {/* Charaktertext — links neben den Facts */}
       <div>
         {c.bio ? (
-          <p className="text-left text-[12px] leading-relaxed text-text-secondary">
+          <p className="text-left text-[13px] leading-relaxed text-text-secondary">
             {c.bio}
           </p>
         ) : (
-          <p className="text-[12px] text-text-tertiary">
+          <p className="text-[13px] text-text-tertiary">
             Noch keine Beschreibung.
           </p>
         )}
@@ -339,7 +339,7 @@ function CharacterTab({ c }: { c: Character }) {
   return (
     <div className="flex flex-col gap-7">
       {c.tagline && (
-        <div className="inline-block self-start rounded-full bg-white/[0.05] px-3 py-1 text-[12px] text-text-secondary">
+        <div className="inline-block self-start rounded-full bg-white/[0.05] px-3 py-1 text-[13px] text-text-secondary">
           {c.tagline}
         </div>
       )}
@@ -358,7 +358,7 @@ function CharacterTab({ c }: { c: Character }) {
         </section>
       )}
       {!c.personality && !c.bio && (
-        <p className="text-[12px] text-text-tertiary">
+        <p className="text-[13px] text-text-tertiary">
           Noch keine Charakterbeschreibung hinterlegt.
         </p>
       )}
@@ -377,7 +377,7 @@ function InplayTab({
     <section>
       <Heading>scenes.</Heading>
       {inScenes.length === 0 ? (
-        <p className="text-[12px] text-text-tertiary">Noch in keiner Szene.</p>
+        <p className="text-[13px] text-text-tertiary">Noch in keiner Szene.</p>
       ) : (
         <div className="flex flex-col gap-2">
           {inScenes.map((s) => (
@@ -389,7 +389,7 @@ function InplayTab({
               <div className="font-serif text-[16px] text-text-primary">
                 {s.title}
               </div>
-              <div className="text-[12px] text-text-tertiary">
+              <div className="text-[13px] text-text-tertiary">
                 {s.location_name} · {areaName(s.location_area)} ·{" "}
                 {formatInplayDate(s.inplay_date)} · {postsOf(s.id).length} Posts
               </div>
@@ -414,7 +414,7 @@ function RelationsTab({
     <section>
       <Heading>relations.</Heading>
       {coChars.length === 0 ? (
-        <p className="text-[12px] text-text-tertiary">
+        <p className="text-[13px] text-text-tertiary">
           Noch keine Verbindungen — sobald zwei Charaktere eine gemeinsame Szene
           hatten, erscheint die Verbindung hier automatisch.
         </p>
@@ -474,7 +474,7 @@ function RelationRow({
         {/* Charakter-Bubble (wie global) */}
         <Link
           href={`/charaktere/${rc.id}`}
-          className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[12px] text-text-secondary hover:text-text-primary"
+          className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[13px] text-text-secondary hover:text-text-primary"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -487,7 +487,7 @@ function RelationRow({
 
         {/* Alter | Beruf | (Beziehung) — Caps-Montserrat */}
         {facts && (
-          <span className="text-[12px] uppercase tracking-wider text-text-secondary">
+          <span className="text-[13px] uppercase tracking-wider text-text-secondary">
             {facts}
           </span>
         )}
@@ -495,7 +495,7 @@ function RelationRow({
         {/* Szenen-Button → gefilterte Suche mit beiden Charakteren */}
         <Link
           href={`/szenen?chars=${c.id},${rc.id}`}
-          className="ml-auto rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[12px] uppercase tracking-wider text-text-secondary hover:text-text-primary"
+          className="ml-auto rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[13px] uppercase tracking-wider text-text-secondary hover:text-text-primary"
         >
           Szenen
         </Link>
@@ -508,25 +508,25 @@ function RelationRow({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="Beziehung (z. B. Freunde, Ex, Rivalen)"
-            className="w-full bg-bg-primary border border-border-subtle px-3 py-1.5 text-[12px] text-text-primary outline-none focus:border-white/20"
+            className="w-full bg-bg-primary border border-border-subtle px-3 py-1.5 text-[13px] text-text-primary outline-none focus:border-white/20"
           />
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Kurze Erläuterung zur Beziehung…"
             rows={2}
-            className="w-full resize-y bg-bg-primary border border-border-subtle px-3 py-1.5 text-[12px] text-text-primary outline-none focus:border-white/20"
+            className="w-full resize-y bg-bg-primary border border-border-subtle px-3 py-1.5 text-[13px] text-text-primary outline-none focus:border-white/20"
           />
           <div className="flex items-center justify-end gap-3">
             <button
               onClick={() => setEditing(false)}
-              className="text-[12px] text-text-tertiary hover:text-text-primary px-2"
+              className="text-[13px] text-text-tertiary hover:text-text-primary px-2"
             >
               Abbrechen
             </button>
             <button
               onClick={save}
-              className="bg-accent/90 hover:bg-accent text-black text-[12px] font-medium px-3 py-1.5"
+              className="bg-accent/90 hover:bg-accent text-black text-[13px] font-medium px-3 py-1.5"
             >
               Speichern
             </button>
@@ -534,7 +534,7 @@ function RelationRow({
         </div>
       ) : (
         <div className="mt-2 flex items-start gap-2">
-          <p className="flex-1 text-[12px] text-text-secondary leading-relaxed">
+          <p className="flex-1 text-[13px] text-text-secondary leading-relaxed">
             {rel.note || (
               <span className="text-text-tertiary">
                 {canEdit
@@ -550,7 +550,7 @@ function RelationRow({
                 setNote(rel.note ?? "");
                 setEditing(true);
               }}
-              className="shrink-0 text-[12px] uppercase tracking-wider text-text-tertiary hover:text-accent"
+              className="shrink-0 text-[13px] uppercase tracking-wider text-text-tertiary hover:text-accent"
             >
               bearbeiten
             </button>
