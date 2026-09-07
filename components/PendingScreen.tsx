@@ -31,13 +31,13 @@ export function PendingScreen() {
           <div className="flex gap-2 mt-5">
             <button
               onClick={() => refresh()}
-              className="flex-1 bg-accent/90 hover:bg-accent text-black font-medium border border-accent rounded-md py-2 text-[0.75rem] transition-colors"
+              className="flex-1 bg-accent/90 hover:bg-accent text-black font-medium border border-accent rounded-md py-2 text-[0.8125rem] transition-colors"
             >
               Erneut prüfen
             </button>
             <button
               onClick={() => signOut()}
-              className="flex-1 bg-white/[0.05] hover:bg-white/[0.1] text-text-secondary border border-border-subtle rounded-md py-2 text-[0.75rem] transition-colors"
+              className="flex-1 bg-white/[0.05] hover:bg-white/[0.1] text-text-secondary border border-border-subtle rounded-md py-2 text-[0.8125rem] transition-colors"
             >
               Abmelden
             </button>

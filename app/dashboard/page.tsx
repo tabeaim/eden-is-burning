@@ -222,8 +222,8 @@ function PlayerPresenceList({
             )}
           </span>
           <div className="leading-tight">
-            <div className="text-[0.875rem] text-text-primary">{p.username}</div>
-            <div className="text-[0.875rem] text-text-tertiary">
+            <div className="text-[0.8125rem] text-text-primary">{p.username}</div>
+            <div className="text-[0.8125rem] text-text-tertiary">
               {now ? "online" : timeAgo(p.last_seen)}
             </div>
           </div>

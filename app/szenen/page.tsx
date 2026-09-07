@@ -163,7 +163,7 @@ export default function ScenesPage() {
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`rounded-full px-3.5 py-1.5 text-[0.75rem] transition-colors ${
+            className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
               tab === key
                 ? "bg-accent text-black font-medium"
                 : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
@@ -207,7 +207,7 @@ export default function ScenesPage() {
           {activeFilters > 0 && (
             <button
               onClick={resetFilters}
-              className="text-[0.75rem] text-text-tertiary hover:text-text-primary underline"
+              className="text-[0.8125rem] text-text-tertiary hover:text-text-primary underline"
             >
               zurücksetzen ({activeFilters})
             </button>
@@ -248,7 +248,7 @@ export default function ScenesPage() {
         <button
           onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
           title={sortDir === "asc" ? "Aufsteigend" : "Absteigend"}
-          className="rounded-md border border-border-subtle bg-bg-primary px-2 py-1.5 text-[0.75rem] text-text-secondary hover:text-text-primary"
+          className="rounded-md border border-border-subtle bg-bg-primary px-2 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
         >
           {sortDir === "asc" ? "↑" : "↓"}
         </button>
@@ -274,7 +274,7 @@ export default function ScenesPage() {
               <div className="flex items-center justify-between gap-2">
                 <StatusBadge status={s.status} />
                 {s.trigger_warning && (
-                  <span className="text-[0.75rem] uppercase tracking-wider text-red-300/80">
+                  <span className="text-[0.8125rem] uppercase tracking-wider text-red-300/80">
                     TW
                   </span>
                 )}
@@ -352,7 +352,7 @@ function MultiSelect({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[0.75rem] transition-colors ${
+        className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[0.8125rem] transition-colors ${
           selected.length > 0
             ? "border-accent/50 bg-accent-soft text-text-primary"
             : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
@@ -360,7 +360,7 @@ function MultiSelect({
       >
         {label}
         {selected.length > 0 && (
-          <span className="rounded-full bg-accent text-black px-1.5 text-[0.75rem] font-medium">
+          <span className="rounded-full bg-accent text-black px-1.5 text-[0.8125rem] font-medium">
             {selected.length}
           </span>
         )}
@@ -377,7 +377,7 @@ function MultiSelect({
               <button
                 key={o.value}
                 onClick={() => onToggle(o.value)}
-                className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[0.75rem] text-text-secondary hover:bg-white/[0.04]"
+                className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[0.8125rem] text-text-secondary hover:bg-white/[0.04]"
               >
                 <span
                   className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[0.75rem] ${
@@ -395,7 +395,7 @@ function MultiSelect({
           {selected.length > 0 && (
             <button
               onClick={onClear}
-              className="w-full text-left px-2 py-1.5 text-[0.75rem] text-text-tertiary hover:text-text-primary"
+              className="w-full text-left px-2 py-1.5 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
             >
               Auswahl leeren
             </button>

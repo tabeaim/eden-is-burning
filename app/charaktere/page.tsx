@@ -85,7 +85,7 @@ function Chip({
   return (
     <button
       onClick={onClick}
-      className={`rounded-full px-3 py-1 text-[0.75rem] transition-colors ${
+      className={`rounded-full px-3 py-1 text-[0.8125rem] transition-colors ${
         active
           ? "bg-white/[0.1] text-text-primary"
           : "bg-white/[0.04] text-text-secondary hover:text-text-primary"

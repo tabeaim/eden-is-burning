@@ -212,7 +212,7 @@ function Sidebar({ pathname }: { pathname: string }) {
         )}
         <button
           onClick={logout}
-          className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.75rem] text-left text-text-secondary hover:text-text-primary hover:bg-white/[0.025] transition-colors"
+          className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.8125rem] text-left text-text-secondary hover:text-text-primary hover:bg-white/[0.025] transition-colors"
         >
           <Icon name="logout" size={17} />
           Abmelden

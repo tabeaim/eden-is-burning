@@ -137,7 +137,7 @@ export default function NewScenePage() {
               type="button"
               key={loc}
               onClick={() => setLocationName(loc)}
-              className="rounded-full bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[0.75rem] text-text-secondary"
+              className="rounded-full bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[0.8125rem] text-text-secondary"
             >
               {loc}
             </button>
@@ -227,7 +227,7 @@ export default function NewScenePage() {
           <button
             type="submit"
             disabled={!title.trim() || selected.length === 0}
-            className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] disabled:opacity-40 border border-border-subtle px-5 py-2 text-[0.75rem] text-text-primary"
+            className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] disabled:opacity-40 border border-border-subtle px-5 py-2 text-[0.8125rem] text-text-primary"
           >
             Szene erstellen
           </button>

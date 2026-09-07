@@ -113,7 +113,7 @@ export default function CalendarPage() {
             {tokens.length > 0 && (
               <button
                 onClick={() => setTokens([])}
-                className="text-[0.75rem] text-text-tertiary hover:text-text-primary underline"
+                className="text-[0.8125rem] text-text-tertiary hover:text-text-primary underline"
               >
                 zurücksetzen ({tokens.length})
               </button>
@@ -147,7 +147,7 @@ export default function CalendarPage() {
             return (
               <span
                 key={p.id}
-                className={`group flex items-center gap-1 rounded-full border pl-2.5 pr-1 py-0.5 text-[0.75rem] transition-colors ${
+                className={`group flex items-center gap-1 rounded-full border pl-2.5 pr-1 py-0.5 text-[0.8125rem] transition-colors ${
                   activePreset
                     ? "border-accent/60 bg-accent-soft text-text-primary"
                     : "border-border-subtle bg-bg-primary text-text-secondary"
@@ -184,7 +184,7 @@ export default function CalendarPage() {
               <button
                 onClick={saveCurrent}
                 disabled={!presetName.trim()}
-                className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.75rem] font-medium px-2 py-1 disabled:opacity-40"
+                className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-2 py-1 disabled:opacity-40"
               >
                 Speichern
               </button>
@@ -193,7 +193,7 @@ export default function CalendarPage() {
                   setSaving(false);
                   setPresetName("");
                 }}
-                className="text-[0.75rem] text-text-tertiary hover:text-text-primary px-1"
+                className="text-[0.8125rem] text-text-tertiary hover:text-text-primary px-1"
               >
                 Abbrechen
               </button>
@@ -202,7 +202,7 @@ export default function CalendarPage() {
             tokens.length > 0 && (
               <button
                 onClick={() => setSaving(true)}
-                className="flex items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-0.5 text-[0.75rem] text-text-tertiary hover:text-accent hover:border-accent/50"
+                className="flex items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-0.5 text-[0.8125rem] text-text-tertiary hover:text-accent hover:border-accent/50"
               >
                 <Icon name="plus" size={11} /> Auswahl speichern
               </button>
