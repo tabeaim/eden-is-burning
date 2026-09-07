@@ -9,10 +9,10 @@
   /* Rahmen kräftiger für sichtbare Komponenten-Grenzen (WCAG 1.4.11) */
   --border: rgba(255, 255, 255, 0.14);
   --border-strong: rgba(255, 255, 255, 0.24);
-  /* Text-Kontraste auf WCAG-AA angehoben (>= 4.5:1 auf dunklem Grund) */
+  /* Text-Kontraste: heller als AA-Minimum, damit Grau auf Dunkel klar lesbar ist */
   --text-primary: #ece8e0;
-  --text-secondary: rgba(236, 232, 224, 0.75);
-  --text-tertiary: rgba(236, 232, 224, 0.62);
+  --text-secondary: rgba(236, 232, 224, 0.88);
+  --text-tertiary: rgba(236, 232, 224, 0.72);
   /* Akzente */
   --accent: #e89a3c; /* Feuer-Orange */
   --accent-soft: rgba(232, 154, 60, 0.14);

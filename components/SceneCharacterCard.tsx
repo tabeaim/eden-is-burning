@@ -66,7 +66,7 @@ export function SceneCharacterCard({
       {/* Tagline */}
       {character.tagline && (
         <div className="mt-1.5 flex justify-center">
-          <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[13px] uppercase tracking-wider text-text-secondary">
+          <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[12px] uppercase tracking-wider text-text-secondary">
             {character.tagline}
           </span>
         </div>
