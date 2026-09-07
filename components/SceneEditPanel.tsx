@@ -10,10 +10,15 @@ import {
 } from "@/lib/world";
 import { sceneHeader } from "@/lib/headers";
 import { Icon } from "@/components/Icon";
+import { CharacterPicker } from "@/components/CharacterPicker";
 import type { Scene } from "@/lib/types";
 
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
+
+function Req() {
+  return <span className="text-accent">*</span>;
+}
 
 // Prototyp: Bild als Data-URL (später Supabase Storage).
 function readFileAsDataURL(file: File): Promise<string> {
@@ -49,21 +54,20 @@ export function SceneEditPanel({
   const fileRef = useRef<HTMLInputElement>(null);
 
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
+  const myCharIds = new Set(myChars.map((c) => c.id));
+  const suggestions = LOCATION_SUGGESTIONS[area as AreaKey] ?? [];
+  const valid =
+    title.trim() && locationName.trim() && date && selected.length > 0;
 
   async function onHeaderFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setHeaderUrl(await readFileAsDataURL(file));
   }
-  const suggestions = LOCATION_SUGGESTIONS[area as AreaKey] ?? [];
-
-  function toggle(id: string) {
-    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
-  }
 
   function save() {
-    if (!title.trim() || selected.length === 0) return;
-    const loc = locationName.trim() || suggestions[0] || scene.location_name;
+    if (!valid) return;
+    const loc = locationName.trim();
     addLocation(area, loc);
     updateScene(scene.id, {
       title: title.trim(),
@@ -125,7 +129,7 @@ export function SceneEditPanel({
       </div>
 
       <label className="text-[0.875rem] text-text-secondary">
-        Titel
+        Titel <Req />
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -145,7 +149,7 @@ export function SceneEditPanel({
 
       <div className="grid grid-cols-2 gap-4">
         <label className="text-[0.875rem] text-text-secondary">
-          Bezirk
+          Bezirk <Req />
           <select
             value={area}
             onChange={(e) => {
@@ -163,7 +167,7 @@ export function SceneEditPanel({
         </label>
 
         <label className="text-[0.875rem] text-text-secondary">
-          Ort
+          Ort <Req />
           <input
             value={locationName}
             onChange={(e) => setLocationName(e.target.value)}
@@ -190,7 +194,7 @@ export function SceneEditPanel({
 
       <div className="grid grid-cols-2 gap-4">
         <label className="text-[0.875rem] text-text-secondary">
-          In-Game-Datum
+          In-Game-Datum <Req />
           <input
             type="date"
             value={date}
@@ -228,51 +232,17 @@ export function SceneEditPanel({
 
       <div>
         <div className="text-[0.875rem] text-text-secondary mb-2">
-          Teilnehmende Charaktere{" "}
+          Teilnehmende Charaktere <Req />{" "}
           <span className="text-text-tertiary">
             (Reihenfolge = Schreib-Reihenfolge)
           </span>
         </div>
-        <div className="grid sm:grid-cols-2 gap-2">
-          {characters.map((c) => {
-            const isMine = myChars.some((m) => m.id === c.id);
-            const checked = selected.includes(c.id);
-            const order = selected.indexOf(c.id);
-            return (
-              <button
-                type="button"
-                key={c.id}
-                onClick={() => toggle(c.id)}
-                className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors ${
-                  checked
-                    ? "border-white/25 bg-white/[0.06]"
-                    : "border-border-subtle bg-bg-surface hover:bg-white/[0.03]"
-                }`}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={c.faceclaim_image_url ?? ""}
-                  alt={c.name}
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[0.875rem] text-text-primary truncate">
-                    {c.name}
-                  </div>
-                  <div className="text-[0.875rem] text-text-tertiary truncate">
-                    {c.role}
-                    {isMine ? " · du" : ""}
-                  </div>
-                </div>
-                {checked && (
-                  <span className="text-[0.875rem] text-text-secondary">
-                    #{order + 1}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        <CharacterPicker
+          characters={characters}
+          selected={selected}
+          onChange={setSelected}
+          myCharIds={myCharIds}
+        />
       </div>
 
       <div className="flex items-center justify-end gap-3">
@@ -284,7 +254,7 @@ export function SceneEditPanel({
         </button>
         <button
           onClick={save}
-          disabled={!title.trim() || selected.length === 0}
+          disabled={!valid}
           className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] disabled:opacity-40 border border-border-subtle px-5 py-2 text-[0.8125rem] text-text-primary"
         >
           Speichern

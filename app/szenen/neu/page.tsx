@@ -10,11 +10,17 @@ import {
   type AreaKey,
 } from "@/lib/world";
 import { PageHeader } from "@/components/PageHeader";
+import { CharacterPicker } from "@/components/CharacterPicker";
 import { sceneHeader } from "@/lib/headers";
+
+// Pflichtfeld-Stern
+function Req() {
+  return <span className="text-accent">*</span>;
+}
 
 export default function NewScenePage() {
   const router = useRouter();
-  const { addScene, addLocation, characters, currentPlayer, charactersOf } =
+  const { addScene, addLocation, addPost, characters, currentPlayer, charactersOf } =
     useStore();
 
   const [title, setTitle] = useState("");
@@ -26,20 +32,26 @@ export default function NewScenePage() {
   const [au, setAu] = useState(false);
   const [summary, setSummary] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const [firstPost, setFirstPost] = useState("");
+  const [firstCharId, setFirstCharId] = useState<string | null>(null);
 
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
+  const myCharIds = new Set(myChars.map((c) => c.id));
+  // Eigene Charaktere, die an dieser Szene teilnehmen (für den ersten Post)
+  const eligibleFirst = myChars.filter((c) => selected.includes(c.id));
+  const firstChar =
+    firstCharId && eligibleFirst.some((c) => c.id === firstCharId)
+      ? firstCharId
+      : eligibleFirst[0]?.id ?? null;
 
-  function toggle(id: string) {
-    setSelected((s) =>
-      s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
-    );
-  }
+  const valid =
+    title.trim() && locationName.trim() && date && selected.length > 0;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || selected.length === 0) return;
-    const loc = locationName.trim() || LOCATION_SUGGESTIONS[area][0];
-    // Ort anlegen, falls neu — wird durch diese Szene direkt "bespielt"
+    if (!valid) return;
+    const loc = locationName.trim();
+    // Neuer Ort wird angelegt und ist durch diese Szene direkt "bespielt".
     addLocation(area, loc);
     const id = addScene({
       title: title.trim(),
@@ -53,6 +65,10 @@ export default function NewScenePage() {
       participant_ids: selected,
       summary: summary.trim() || null,
     });
+    // Optionaler erster Post (kann auch später von einer teilnehmenden Person kommen)
+    if (firstPost.trim() && firstChar) {
+      addPost(id, firstChar, firstPost.trim());
+    }
     router.push(`/szenen/${id}`);
   }
 
@@ -63,28 +79,22 @@ export default function NewScenePage() {
     <div className="max-w-5xl mx-auto px-8 py-8">
       <PageHeader title="Neue Szene" subtitle="Eröffne einen neuen Thread." width="max-w-5xl" />
 
-      {/* Formular linksbündig in Lesebreite — Container-Breite bleibt einheitlich */}
       <form onSubmit={submit} className="flex flex-col gap-5 max-w-2xl">
-        {/* Header-Andeutung — jede Szene hat einen eigenen Header. Die Auswahl
-            folgt später; hier nur eine Vorschau (verändert sich mit dem Titel). */}
         <div>
           <div className="flex items-center justify-between text-[0.875rem] text-text-secondary mb-1">
             <span>Szenen-Header</span>
-            <span className="text-[0.875rem] text-text-tertiary">Auswahl folgt · Vorschau</span>
+            <span className="text-[0.875rem] text-text-tertiary">Vorschau · nach Erstellen editierbar</span>
           </div>
           <div
             className="relative h-24 w-full rounded-md overflow-hidden border border-border-subtle bg-center bg-cover opacity-90"
             style={{ backgroundImage: `url("${sceneHeader(title.trim() || "neue-szene")}")` }}
           >
             <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
-            <span className="absolute bottom-2 left-3 text-[0.875rem] text-text-tertiary">
-              Automatisch generiert · bald selbst einstellbar
-            </span>
           </div>
         </div>
 
         <label className="text-[0.875rem] text-text-secondary">
-          Titel
+          Titel <Req />
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -94,7 +104,7 @@ export default function NewScenePage() {
         </label>
 
         <label className="text-[0.875rem] text-text-secondary">
-          Zusammenfassung <span className="text-text-tertiary">(optional, ein Satz — kann auch später beim Schließen ergänzt werden)</span>
+          Zusammenfassung <span className="text-text-tertiary">(optional)</span>
           <input
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
@@ -105,7 +115,7 @@ export default function NewScenePage() {
 
         <div className="grid grid-cols-2 gap-4">
           <label className="text-[0.875rem] text-text-secondary">
-            Bezirk
+            Bezirk <Req />
             <select
               value={area}
               onChange={(e) => {
@@ -123,7 +133,7 @@ export default function NewScenePage() {
           </label>
 
           <label className="text-[0.875rem] text-text-secondary">
-            Ort
+            Ort <Req />
             <input
               value={locationName}
               onChange={(e) => setLocationName(e.target.value)}
@@ -148,7 +158,7 @@ export default function NewScenePage() {
 
         <div className="grid grid-cols-2 gap-4">
           <label className="text-[0.875rem] text-text-secondary">
-            In-Game-Datum
+            In-Game-Datum <Req />
             <input
               type="date"
               value={date}
@@ -168,77 +178,69 @@ export default function NewScenePage() {
         </div>
 
         <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
-          <input
-            type="checkbox"
-            checked={tw}
-            onChange={(e) => setTw(e.target.checked)}
-          />
+          <input type="checkbox" checked={tw} onChange={(e) => setTw(e.target.checked)} />
           Triggerwarnung anzeigen
         </label>
 
         <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
-          <input
-            type="checkbox"
-            checked={au}
-            onChange={(e) => setAu(e.target.checked)}
-          />
+          <input type="checkbox" checked={au} onChange={(e) => setAu(e.target.checked)} />
           <span className="text-accent font-medium">AU</span> — spielt in einem
           Alternate Universe (Nicht-Canon)
         </label>
 
         <div>
           <div className="text-[0.875rem] text-text-secondary mb-2">
-            Teilnehmende Charaktere{" "}
+            Teilnehmende Charaktere <Req />{" "}
             <span className="text-text-tertiary">
               (Reihenfolge = Schreib-Reihenfolge)
             </span>
           </div>
-          <div className="grid sm:grid-cols-2 gap-2">
-            {characters.map((c) => {
-              const isMine = myChars.some((m) => m.id === c.id);
-              const checked = selected.includes(c.id);
-              const order = selected.indexOf(c.id);
-              return (
-                <button
-                  type="button"
-                  key={c.id}
-                  onClick={() => toggle(c.id)}
-                  className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors ${
-                    checked
-                      ? "border-white/25 bg-white/[0.06]"
-                      : "border-border-subtle bg-bg-surface hover:bg-white/[0.03]"
-                  }`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={c.faceclaim_image_url ?? ""}
-                    alt={c.name}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[0.875rem] text-text-primary truncate">
-                      {c.name}
-                    </div>
-                    <div className="text-[0.875rem] text-text-tertiary truncate">
-                      {c.role}
-                      {isMine ? " · du" : ""}
-                    </div>
-                  </div>
-                  {checked && (
-                    <span className="text-[0.875rem] text-text-secondary">
-                      #{order + 1}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          <CharacterPicker
+            characters={characters}
+            selected={selected}
+            onChange={setSelected}
+            myCharIds={myCharIds}
+          />
         </div>
+
+        {/* Optionaler erster Post */}
+        {eligibleFirst.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between text-[0.875rem] text-text-secondary mb-2">
+              <span>
+                Erster Post{" "}
+                <span className="text-text-tertiary">
+                  (optional — kann auch später von einer teilnehmenden Person kommen)
+                </span>
+              </span>
+              {eligibleFirst.length > 1 && (
+                <select
+                  value={firstChar ?? ""}
+                  onChange={(e) => setFirstCharId(e.target.value)}
+                  className="bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[0.8125rem] text-text-primary outline-none focus:border-white/20"
+                >
+                  {eligibleFirst.map((c) => (
+                    <option key={c.id} value={c.id} className="bg-bg-surface">
+                      als {c.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <textarea
+              value={firstPost}
+              onChange={(e) => setFirstPost(e.target.value)}
+              rows={4}
+              placeholder="Schreibe den ersten Post… (*Sternchen* für kursiv)"
+              className={`${field} resize-y`}
+            />
+          </div>
+        )}
 
         <div className="flex justify-end gap-3">
           <button
             type="submit"
-            disabled={!title.trim() || selected.length === 0}
+            disabled={!valid}
             className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] disabled:opacity-40 border border-border-subtle px-5 py-2 text-[0.8125rem] text-text-primary"
           >
             Szene erstellen

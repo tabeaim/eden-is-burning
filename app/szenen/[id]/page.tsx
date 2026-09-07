@@ -38,6 +38,40 @@ function highlightTerm(html: string, term: string): string {
     .join("");
 }
 
+// Ca.-Zeilen pro Seite (Pagination erfolgt nach geschätzter Zeilenzahl,
+// nicht nach Post-Anzahl). ~45 Zeilen ≈ knapp zwei Bildschirmhöhen Prosa.
+const LINES_PER_PAGE = 45;
+
+function estimateLines(html: string): number {
+  const text = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div)>/gi, "\n")
+    .replace(/<[^>]+>/g, "");
+  let lines = 0;
+  for (const seg of text.split("\n")) {
+    lines += Math.max(1, Math.ceil(seg.trim().length / 90));
+  }
+  return Math.max(1, lines);
+}
+
+function paginate(posts: Post[]): Post[][] {
+  const pages: Post[][] = [];
+  let cur: Post[] = [];
+  let curLines = 0;
+  for (const p of posts) {
+    const l = estimateLines(p.content);
+    if (cur.length > 0 && curLines + l > LINES_PER_PAGE) {
+      pages.push(cur);
+      cur = [];
+      curLines = 0;
+    }
+    cur.push(p);
+    curLines += l;
+  }
+  if (cur.length) pages.push(cur);
+  return pages.length ? pages : [[]];
+}
+
 export default function ScenePage({
   params,
 }: {
@@ -48,6 +82,7 @@ export default function ScenePage({
   const { scenes, character, player, postsOf, currentPlayer, charactersOf } =
     store;
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(0);
 
   const scene = scenes.find((s) => s.id === id);
   const posts = scene ? postsOf(scene.id) : [];
@@ -78,17 +113,23 @@ export default function ScenePage({
     setSearchTerm(params.get("q") ?? "");
     const hash = window.location.hash;
     if (hash.startsWith("#post-")) {
-      const el = document.getElementById(hash.slice(1));
-      if (el) {
-        setTimeout(() => {
+      const anchorId = hash.slice(1); // "post-<id>"
+      const postId = anchorId.replace(/^post-/, "");
+      // Zielpost kann auf einer anderen Seite liegen -> dorthin blättern
+      const pgs = paginate(postsOf(scene.id));
+      const pIdx = pgs.findIndex((pg) => pg.some((p) => p.id === postId));
+      if (pIdx >= 0) setPage(pIdx);
+      setTimeout(() => {
+        const el = document.getElementById(anchorId);
+        if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
           el.classList.add("ring-2", "ring-accent", "rounded-lg");
           setTimeout(
             () => el.classList.remove("ring-2", "ring-accent", "rounded-lg"),
             2200,
           );
-        }, 250);
-      }
+        }
+      }, 320);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene?.id, posts.length]);
@@ -115,14 +156,21 @@ export default function ScenePage({
       )
     : [];
   const myTurn = !!turnId && myCharsInScene.some((c) => c.id === turnId);
+  const isParticipant = myCharsInScene.length > 0;
+
+  const pages = paginate(posts);
+  const safePage = Math.min(page, pages.length - 1);
+  const pagePosts = pages[safePage] ?? [];
 
   return (
     <div className="max-w-5xl mx-auto px-8 pt-4 pb-8">
-      {/* Aktionsleiste — linksbündig über den Szenen-Infos */}
-      <SceneAdminBar scene={scene} myTurn={myTurn} />
-
-      {/* Charaktere + Beschreibungssatz */}
-      <SceneFacts scene={scene} activeCharId={turnId} />
+      {/* Szenenkopf: Status + Charaktere + Aktions-Buttons, Datum/Ort/AU, Beschreibung */}
+      <SceneHeader
+        scene={scene}
+        activeCharId={turnId}
+        myTurn={myTurn}
+        isParticipant={isParticipant}
+      />
 
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mb-4" />
@@ -132,7 +180,7 @@ export default function ScenePage({
 
       {/* Posts (Ping-Pong), getrennt durch eine Akzentlinie */}
       <div className="flex flex-col">
-        {posts.map((post, i) => {
+        {pagePosts.map((post, i) => {
           const c = character(post.character_id);
           if (!c) return null;
           return (
@@ -153,8 +201,41 @@ export default function ScenePage({
         })}
       </div>
 
-      {/* Antwort-Editor */}
-      {scene.status === "active" && (
+      {/* Seitennavigation bei langen Szenen */}
+      {pages.length > 1 && (
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-1.5">
+          <button
+            disabled={safePage === 0}
+            onClick={() => setPage(safePage - 1)}
+            className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary disabled:opacity-40"
+          >
+            ‹ Zurück
+          </button>
+          {pages.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i)}
+              className={`rounded-md px-3 py-1.5 text-[0.8125rem] ${
+                i === safePage
+                  ? "bg-accent text-black font-medium"
+                  : "border border-border-subtle bg-white/[0.04] text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            disabled={safePage === pages.length - 1}
+            onClick={() => setPage(safePage + 1)}
+            className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary disabled:opacity-40"
+          >
+            Weiter ›
+          </button>
+        </div>
+      )}
+
+      {/* Antwort-Editor — nur für Teilnehmende, auf der letzten Seite */}
+      {scene.status === "active" && isParticipant && safePage === pages.length - 1 && (
         <ReplyBox
           sceneId={scene.id}
           myChars={myCharsInScene}
@@ -169,92 +250,34 @@ export default function ScenePage({
   );
 }
 
-// Charaktere (aktiver markiert) + Beschreibungssatz. (Ort/Datum/Tageszeit/Status
-// stehen als Untertitel-Zeile im Banner-Header. Header-Bild → Details bearbeiten.)
-function SceneFacts({
+// Szenenkopf: Status + Charaktere (aktiver markiert) links, Aktions-Buttons
+// rechts (gleiche Höhe), darunter Datum/Ort/AU und Beschreibung. Nur teilnehmende
+// Spieler·innen sehen die Buttons. Editier-/Beenden-Panel ersetzt den Kopf.
+function SceneHeader({
   scene,
   activeCharId,
+  myTurn,
+  isParticipant,
 }: {
   scene: Scene;
   activeCharId: string | null;
+  myTurn: boolean;
+  isParticipant: boolean;
 }) {
-  const { character } = useStore();
+  const { character, updateScene } = useStore();
+  const [closing, setClosing] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
 
   const participants = scene.participant_ids
     .map((id) => character(id))
     .filter(Boolean) as Character[];
 
-  return (
-    <div className="mb-6">
-      {/* Status (aktiv) + Charaktere — der Charakter, der am Zug ist, markiert */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        <StatusBadge status={scene.status} />
-        {scene.trigger_warning && (
-          <span className="rounded-full bg-red-500/15 text-red-300/90 text-[0.8125rem] uppercase tracking-wider px-2 py-0.5">
-            Triggerwarnung
-          </span>
-        )}
-        {participants.map((c) => {
-          const isTurn = scene.status === "active" && c.id === activeCharId;
-          return (
-            <Link
-              key={c.id}
-              href={`/charaktere/${c.id}`}
-              title={isTurn ? "am Zug" : undefined}
-              className={`flex items-center gap-1.5 rounded-full border pl-1 pr-2.5 py-0.5 text-[0.8125rem] transition-colors ${
-                isTurn
-                  ? "border-accent/70 bg-accent-soft text-text-primary"
-                  : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={c.faceclaim_image_url ?? ""}
-                alt={c.name}
-                className={`w-5 h-5 rounded-full object-cover ${isTurn ? "ring-2 ring-accent" : ""}`}
-              />
-              {c.name}
-              {isTurn && <Icon name="flame" size={12} className="text-accent" />}
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* Datum, Tageszeit · Ort · Bezirk (+ AU) */}
-      <div className="mt-2 text-[0.875rem] text-text-tertiary">
-        {formatInplayDate(scene.inplay_date)}, {scene.inplay_time} ·{" "}
-        {scene.location_name} · {areaName(scene.location_area)}
-        {scene.au && (
-          <>
-            {" · "}
-            <span className="text-accent font-medium">AU</span>
-          </>
-        )}
-      </div>
-
-      {/* Beschreibungssatz */}
-      {scene.summary ? (
-        <p className="mt-3 font-serif text-[0.875rem] italic text-text-secondary leading-relaxed">
-          {scene.summary}
-        </p>
-      ) : (
-        <p className="mt-3 text-[0.875rem] text-text-tertiary">
-          Noch keine Zusammenfassung hinterlegt — beim Beenden der Szene ergänzbar.
-        </p>
-      )}
-    </div>
-  );
-}
-
-// Aktionsleiste: links "bearbeiten" (Platzhalter), rechts "antworten" + "beenden".
-function SceneAdminBar({ scene, myTurn }: { scene: Scene; myTurn: boolean }) {
-  const { updateScene } = useStore();
-  const [closing, setClosing] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-
   function end() {
-    updateScene(scene.id, { status: "closed", summary: draft.trim() || scene.summary || null });
+    updateScene(scene.id, {
+      status: "closed",
+      summary: draft.trim() || scene.summary || null,
+    });
     setClosing(false);
   }
 
@@ -264,7 +287,7 @@ function SceneAdminBar({ scene, myTurn }: { scene: Scene; myTurn: boolean }) {
 
   if (closing) {
     return (
-      <div className="mb-8 rounded-xl border border-border-subtle bg-bg-surface p-4">
+      <div className="mb-6 rounded-xl border border-border-subtle bg-bg-surface p-4">
         <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary mb-2">
           Szene beenden — Zusammenfassung (ein Satz, optional)
         </div>
@@ -298,28 +321,91 @@ function SceneAdminBar({ scene, myTurn }: { scene: Scene; myTurn: boolean }) {
     "flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
 
   return (
-    <div className="mb-6 flex items-center justify-start gap-2">
-      {scene.status === "active" && (
-        <button
-          onClick={focusReplyEditor}
-          title={myTurn ? "Du bist am Zug" : undefined}
-          className={
-            myTurn
-              ? "flex items-center gap-1.5 rounded-md border border-accent/70 bg-accent-soft px-3 py-1.5 text-[0.8125rem] text-text-primary"
-              : btn
-          }
-        >
-          <Icon name="message" size={14} /> Antworten
-        </button>
+    <div className="mb-6">
+      {/* Status + Charaktere links, Aktions-Buttons rechts (gleiche Höhe) */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+        <StatusBadge status={scene.status} />
+        {scene.trigger_warning && (
+          <span className="rounded-full bg-red-500/15 text-red-300/90 text-[0.8125rem] uppercase tracking-wider px-2 py-0.5">
+            Triggerwarnung
+          </span>
+        )}
+        {participants.map((c) => {
+          const isTurn = scene.status === "active" && c.id === activeCharId;
+          return (
+            <Link
+              key={c.id}
+              href={`/charaktere/${c.id}`}
+              title={isTurn ? "am Zug" : undefined}
+              className={`flex items-center gap-1.5 rounded-full border pl-1 pr-2.5 py-0.5 text-[0.8125rem] transition-colors ${
+                isTurn
+                  ? "border-accent/70 bg-accent-soft text-text-primary"
+                  : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={c.faceclaim_image_url ?? ""}
+                alt={c.name}
+                className={`w-5 h-5 rounded-full object-cover ${isTurn ? "ring-2 ring-accent" : ""}`}
+              />
+              {c.name}
+              {isTurn && <Icon name="flame" size={12} className="text-accent" />}
+            </Link>
+          );
+        })}
+        </div>
+
+        {isParticipant && (
+          <div className="flex items-center gap-2 shrink-0">
+            {scene.status === "active" && (
+              <button
+                onClick={focusReplyEditor}
+                title={myTurn ? "Du bist am Zug" : undefined}
+                className={
+                  myTurn
+                    ? "flex items-center gap-1.5 rounded-md border border-accent/70 bg-accent-soft px-3 py-1.5 text-[0.8125rem] text-text-primary"
+                    : btn
+                }
+              >
+                <Icon name="message" size={14} /> Antworten
+              </button>
+            )}
+            {scene.status === "active" && (
+              <button onClick={() => setClosing(true)} className={btn}>
+                <Icon name="check" size={14} /> Beenden
+              </button>
+            )}
+            <button onClick={() => setEditing(true)} className={btn}>
+              <Icon name="edit" size={14} /> Details bearbeiten
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Datum, Tageszeit · Ort · Bezirk (+ AU) */}
+      <div className="mt-2 text-[0.875rem] text-text-tertiary">
+        {formatInplayDate(scene.inplay_date)}, {scene.inplay_time} ·{" "}
+        {scene.location_name} · {areaName(scene.location_area)}
+        {scene.au && (
+          <>
+            {" · "}
+            <span className="text-accent font-medium">AU</span>
+          </>
+        )}
+      </div>
+
+      {/* Beschreibungssatz */}
+      {scene.summary ? (
+        <p className="mt-3 font-serif text-[0.875rem] italic text-text-secondary leading-relaxed">
+          {scene.summary}
+        </p>
+      ) : (
+        <p className="mt-3 text-[0.875rem] text-text-tertiary">
+          Noch keine Zusammenfassung hinterlegt — beim Beenden der Szene ergänzbar.
+        </p>
       )}
-      {scene.status === "active" && (
-        <button onClick={() => setClosing(true)} className={btn}>
-          <Icon name="check" size={14} /> Beenden
-        </button>
-      )}
-      <button onClick={() => setEditing(true)} className={btn}>
-        <Icon name="edit" size={14} /> Details bearbeiten
-      </button>
     </div>
   );
 }
@@ -518,7 +604,7 @@ function PostRow({
   return (
     <div className="relative">
       {owner && !editing && (
-        <div className="absolute left-0 -top-3 z-10 flex gap-1">
+        <div className="absolute right-0 -top-3 z-10 flex gap-1">
           <button
             onClick={startEdit}
             title="Post bearbeiten"
