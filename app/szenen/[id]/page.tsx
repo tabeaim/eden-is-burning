@@ -320,6 +320,11 @@ function SceneHeader({
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
         <StatusBadge status={scene.status} />
+        {scene.paused && (
+          <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
+            pausiert
+          </span>
+        )}
         {scene.trigger_warning && (
           <span className="rounded-full bg-red-500/15 text-red-300/90 text-[0.8125rem] uppercase tracking-wider px-2 py-0.5">
             Triggerwarnung
@@ -371,6 +376,23 @@ function SceneHeader({
                 <Icon name="check" size={14} /> Beenden
               </button>
             )}
+            {scene.status === "active" && (
+              <button
+                onClick={() => updateScene(scene.id, { paused: !scene.paused })}
+                className={btn}
+              >
+                <Icon name={scene.paused ? "play" : "pause"} size={14} />{" "}
+                {scene.paused ? "Fortsetzen" : "Pausieren"}
+              </button>
+            )}
+            {scene.status === "closed" && (
+              <button
+                onClick={() => updateScene(scene.id, { status: "active" })}
+                className={btn}
+              >
+                <Icon name="flame" size={14} /> Wieder eröffnen
+              </button>
+            )}
             <button onClick={() => setEditing(true)} className={btn}>
               <Icon name="edit" size={14} /> Details bearbeiten
             </button>
@@ -385,10 +407,28 @@ function SceneHeader({
         {scene.au && (
           <>
             {" · "}
-            <span className="text-accent font-medium">AU</span>
+            <span className="italic">AU</span>
           </>
         )}
       </div>
+
+      {/* Am Zug — manuell übergebbar (falls jemand anderes weiterschreiben soll) */}
+      {scene.status === "active" && isParticipant && participants.length > 1 && (
+        <div className="mt-2 flex items-center gap-2 text-[0.8125rem] text-text-tertiary">
+          <span>Am Zug:</span>
+          <select
+            value={activeCharId ?? ""}
+            onChange={(e) => updateScene(scene.id, { next_up: e.target.value })}
+            className="bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[0.8125rem] text-text-primary outline-none focus:border-white/20"
+          >
+            {participants.map((c) => (
+              <option key={c.id} value={c.id} className="bg-bg-surface">
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Beschreibungssatz */}
       {scene.summary ? (

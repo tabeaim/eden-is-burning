@@ -256,6 +256,12 @@ export default function CalendarPage() {
                       </Link>
                       <div className="text-[0.875rem] text-text-tertiary">
                         {s.location_name} · {areaName(s.location_area)}
+                        {s.au && (
+                          <>
+                            {" · "}
+                            <span className="italic">AU</span>
+                          </>
+                        )}
                       </div>
                       {s.summary && (
                         <p className="mt-0.5 text-[0.875rem] italic text-text-secondary">

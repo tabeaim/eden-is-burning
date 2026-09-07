@@ -184,8 +184,8 @@ export default function NewScenePage() {
 
         <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
           <input type="checkbox" checked={au} onChange={(e) => setAu(e.target.checked)} />
-          <span className="text-accent font-medium">AU</span> — spielt in einem
-          Alternate Universe (Nicht-Canon)
+          <span className="italic">AU</span> — spielt in einem Alternate
+          Universe (Nicht-Canon)
         </label>
 
         <div>

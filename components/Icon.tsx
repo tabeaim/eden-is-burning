@@ -26,7 +26,9 @@ type IconName =
   | "search"
   | "check"
   | "trash"
-  | "copy";
+  | "copy"
+  | "pause"
+  | "play";
 
 const paths: Record<IconName, React.ReactNode> = {
   dashboard: (
@@ -162,6 +164,13 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="M5 15V5a2 2 0 0 1 2-2h10" />
     </>
   ),
+  pause: (
+    <>
+      <rect x="6" y="5" width="4" height="14" rx="1" />
+      <rect x="14" y="5" width="4" height="14" rx="1" />
+    </>
+  ),
+  play: <path d="M6 4l14 8-14 8V4z" />,
 };
 
 export function Icon({

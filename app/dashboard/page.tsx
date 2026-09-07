@@ -33,7 +33,10 @@ export default function DashboardPage() {
   const grouped = myChars
     .map((c) => {
       const charScenes = scenes.filter(
-        (s) => s.status === "active" && s.participant_ids.includes(c.id),
+        (s) =>
+          s.status === "active" &&
+          !s.paused &&
+          s.participant_ids.includes(c.id),
       );
       const dran: Scene[] = [];
       const warten: Scene[] = [];
@@ -55,7 +58,9 @@ export default function DashboardPage() {
   const myCharIds = new Set(myChars.map((c) => c.id));
   const myOpenScenes = scenes.filter(
     (s) =>
-      s.status === "active" && s.participant_ids.some((id) => myCharIds.has(id)),
+      s.status === "active" &&
+      !s.paused &&
+      s.participant_ids.some((id) => myCharIds.has(id)),
   );
   const totalOpen = myOpenScenes.length;
   const dranCount = myOpenScenes.filter((s) => {
@@ -381,7 +386,7 @@ function SceneFacts({
         {scene.au && (
           <>
             {" · "}
-            <span className="text-accent font-medium">AU</span>
+            <span className="italic">AU</span>
           </>
         )}
       </div>

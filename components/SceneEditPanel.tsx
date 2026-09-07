@@ -227,7 +227,7 @@ export function SceneEditPanel({
           checked={au}
           onChange={(e) => setAu(e.target.checked)}
         />
-        <span className="text-accent font-medium">AU</span> — Alternate Universe
+        <span className="italic">AU</span> — Alternate Universe
       </label>
 
       <div>

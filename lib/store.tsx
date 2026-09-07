@@ -325,7 +325,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           created_at: new Date().toISOString(),
         };
         persist("addPost", supabase.from("posts").insert(post));
-        return { ...s, posts: [...s.posts, post] };
+        // Manuelle Zug-Übergabe nach einem Post wieder aufheben
+        const sc = s.scenes.find((x) => x.id === sceneId);
+        let scenes = s.scenes;
+        if (sc?.next_up) {
+          persist(
+            "clearNextUp",
+            supabase.from("scenes").update({ next_up: null }).eq("id", sceneId),
+          );
+          scenes = s.scenes.map((x) =>
+            x.id === sceneId ? { ...x, next_up: null } : x,
+          );
+        }
+        return { ...s, posts: [...s.posts, post], scenes };
       });
     },
     [],
@@ -585,6 +597,10 @@ export function useStore() {
 // Wer ist in einer Szene als Nächstes "dran"? (der/die andere als der letzte Post)
 export function whoseTurn(scene: Scene, posts: Post[]): string | null {
   if (scene.participant_ids.length === 0) return null;
+  // Manuelle Zug-Übergabe überschreibt die automatische Reihenfolge
+  if (scene.next_up && scene.participant_ids.includes(scene.next_up)) {
+    return scene.next_up;
+  }
   if (posts.length === 0) return scene.participant_ids[0];
   const last = posts[posts.length - 1].character_id;
   const others = scene.participant_ids.filter((id) => id !== last);

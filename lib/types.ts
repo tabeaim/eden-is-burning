@@ -68,6 +68,8 @@ export interface Scene {
   status: "active" | "closed";
   trigger_warning: boolean;
   au?: boolean; // "Alternate Universe" — Szene in einem Nicht-Canon-Plot
+  next_up?: string | null; // manuelle Zug-Übergabe (Charakter-ID); sonst Reihenfolge
+  paused?: boolean; // pausiert -> nicht im Dashboard-Tracker
   created_at: string;
   participant_ids: string[]; // character ids, in turn order
   // Ein-Satz-Zusammenfassung — bei Erstellung oder beim Schließen ergänzbar

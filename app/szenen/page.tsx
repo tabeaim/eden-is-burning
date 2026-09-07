@@ -12,7 +12,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SceneTurnBar } from "@/components/SceneTurnBar";
 import type { Character, Scene } from "@/lib/types";
 
-type Tab = "active" | "all" | "mine" | "au" | "archive";
+type Tab = "active" | "all" | "mine" | "archive";
 type SortKey = "active" | "inplay" | "created" | "title";
 
 const SORT_LABELS: Record<SortKey, string> = {
@@ -35,6 +35,7 @@ export default function ScenesPage() {
   const [tab, setTab] = useState<Tab>("all");
   const [searchTitle, setSearchTitle] = useState("");
   const [searchPost, setSearchPost] = useState("");
+  const [auOnly, setAuOnly] = useState(false);
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [areas, setAreas] = useState<string[]>([]); // AreaKey | "rest"
   const [periods, setPeriods] = useState<string[]>([]); // "YYYY-MM"
@@ -103,9 +104,9 @@ export default function ScenesPage() {
   const filtered = scenes.filter((s) => {
     if (tab === "active" && s.status !== "active") return false;
     if (tab === "archive" && s.status !== "closed") return false;
-    if (tab === "au" && !s.au) return false;
     if (tab === "mine" && !s.participant_ids.some((id) => myCharIds.has(id)))
       return false;
+    if (auOnly && !s.au) return false;
     if (qTitle && !s.title.toLowerCase().includes(qTitle)) return false;
     if (qPost && !postMatchId(s)) return false;
     // Charaktere/Spieler: Szene muss zu ALLEN gewählten Tokens passen
@@ -157,6 +158,7 @@ export default function ScenesPage() {
   const activeFilters =
     (qTitle ? 1 : 0) +
     (qPost ? 1 : 0) +
+    (auOnly ? 1 : 0) +
     tokens.length +
     areas.length +
     periods.length;
@@ -164,6 +166,7 @@ export default function ScenesPage() {
   function resetFilters() {
     setSearchTitle("");
     setSearchPost("");
+    setAuOnly(false);
     setTokens([]);
     setAreas([]);
     setPeriods([]);
@@ -183,7 +186,6 @@ export default function ScenesPage() {
             ["all", "Alle"],
             ["active", "Aktive"],
             ["mine", "Meine"],
-            ["au", "AU"],
             ["archive", "Archiv"],
           ] as [Tab, string][]
         ).map(([key, label]) => (
@@ -241,6 +243,15 @@ export default function ScenesPage() {
             onToggle={(v) => toggle(periods, setPeriods, v)}
             onClear={() => setPeriods([])}
           />
+
+          <label className="flex items-center gap-1.5 text-[0.8125rem] text-text-secondary cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={auOnly}
+              onChange={(e) => setAuOnly(e.target.checked)}
+            />
+            <span className="italic">Alternate Universe</span>
+          </label>
 
           {activeFilters > 0 && (
             <button
@@ -317,7 +328,14 @@ export default function ScenesPage() {
               className="rounded-xl border border-border-subtle bg-bg-surface p-5 hover:bg-white/[0.03] transition-colors flex flex-col"
             >
               <div className="flex items-center justify-between gap-2">
-                <StatusBadge status={s.status} isNew={isSceneNew(s.id)} />
+                <div className="flex items-center gap-1.5">
+                  <StatusBadge status={s.status} isNew={isSceneNew(s.id)} />
+                  {s.paused && (
+                    <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
+                      pausiert
+                    </span>
+                  )}
+                </div>
                 {s.trigger_warning && (
                   <span className="text-[0.8125rem] uppercase tracking-wider text-red-300/80">
                     TW
@@ -335,7 +353,7 @@ export default function ScenesPage() {
                 {s.au && (
                   <>
                     {" · "}
-                    <span className="text-accent font-medium">AU</span>
+                    <span className="italic">AU</span>
                   </>
                 )}
               </div>
