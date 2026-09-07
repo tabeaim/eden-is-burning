@@ -155,11 +155,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [loadForSession]);
 
   // --- Auth-Methoden --------------------------------------------------------
-  const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
+  // Akzeptiert Username ODER E-Mail. Ist die Eingabe ein Username, wird über
+  // eine DB-Funktion die zugehörige E-Mail aufgelöst (Supabase-Login = E-Mail).
+  const signIn = useCallback(async (identifier: string, password: string) => {
+    const id = identifier.trim();
+    let email = id;
+    const { data } = await supabase.rpc("email_for_login", { identifier: id });
+    if (typeof data === "string" && data) email = data;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error?.message ?? null };
   }, []);
 

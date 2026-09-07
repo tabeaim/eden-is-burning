@@ -5,6 +5,17 @@ import { useStore } from "@/lib/store";
 
 type Mode = "signin" | "signup";
 
+// Vorübergehender Testzugang: bestehende Spieler*innen können ohne Registrierung
+// per Klick rein (alle mit demselben Test-Passwort). Später entfernen.
+const TEST_PASSWORD = "Eden1234!";
+const TEST_PLAYERS: { label: string; email: string }[] = [
+  { label: "Vera", email: "vera@example.com" },
+  { label: "liz", email: "liz@example.com" },
+  { label: "Abby", email: "abby@example.com" },
+  { label: "Jule", email: "jule@example.com" },
+  { label: "Kat", email: "kat@example.com" },
+];
+
 export function LoginScreen() {
   const { signIn, signUp, configured } = useStore();
   const [mode, setMode] = useState<Mode>("signin");
@@ -44,6 +55,18 @@ export function LoginScreen() {
           setPassword("");
         }
       }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function quickLogin(email: string) {
+    setError(null);
+    setNotice(null);
+    setBusy(true);
+    try {
+      const { error } = await signIn(email, TEST_PASSWORD);
+      if (error) setError(uebersetze(error));
     } finally {
       setBusy(false);
     }
@@ -95,13 +118,13 @@ export function LoginScreen() {
           className="bg-bg-surface border border-border-subtle rounded-xl p-6 flex flex-col gap-3"
         >
           <label className="text-[12px] text-text-secondary">
-            E-Mail
+            {mode === "signup" ? "E-Mail" : "Username oder E-Mail"}
             <input
-              type="email"
+              type={mode === "signup" ? "email" : "text"}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="du@beispiel.de"
-              autoComplete="email"
+              placeholder={mode === "signup" ? "du@beispiel.de" : "z.B. Vera oder du@beispiel.de"}
+              autoComplete={mode === "signup" ? "email" : "username"}
               className="mt-1 w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[14px] text-text-primary outline-none focus:border-white/20"
             />
           </label>
@@ -132,6 +155,30 @@ export function LoginScreen() {
                 : "Registrieren"}
           </button>
         </form>
+
+        {mode === "signin" && (
+          <div className="mt-5">
+            <div className="text-[10px] uppercase tracking-[0.16em] text-text-tertiary mb-2 text-center">
+              Test-Zugang — als Spieler*in reinklicken
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              {TEST_PLAYERS.map((p) => (
+                <button
+                  key={p.email}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => quickLogin(p.email)}
+                  className="bg-bg-surface hover:bg-white/[0.06] border border-border-subtle rounded-lg px-3 py-1.5 text-[12px] text-text-primary transition-colors disabled:opacity-50"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-text-tertiary text-center mt-2">
+              Vorübergehend — noch keine Registrierung nötig.
+            </p>
+          </div>
+        )}
 
         <p className="text-[11px] text-text-tertiary text-center mt-4 leading-relaxed">
           {mode === "signin"
