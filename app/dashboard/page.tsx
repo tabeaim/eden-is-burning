@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
 import { formatDateTime, formatInplayDate, timeAgo, withinHours } from "@/lib/format";
@@ -13,6 +14,7 @@ export default function DashboardPage() {
   const store = useStore();
   const { currentPlayer, scenes, players, charactersOf, postsOf, character } =
     store;
+  const [showWarten, setShowWarten] = useState(false);
   if (!currentPlayer) return null;
 
   const myChars = charactersOf(currentPlayer.id);
@@ -79,12 +81,18 @@ export default function DashboardPage() {
   const byLastSeen = (a: (typeof players)[number], b: (typeof players)[number]) =>
     new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime();
 
+  // Man selbst ist immer "jetzt online"; andere, wenn in den letzten 15 Min aktiv.
   const onlineNow = players
-    .filter((p) => withinHours(p.last_seen, 0.25))
+    .filter((p) => p.id === currentPlayer.id || withinHours(p.last_seen, 0.25))
     .sort(byLastSeen);
 
   const onlineRecent = players
-    .filter((p) => withinHours(p.last_seen, 24) && !withinHours(p.last_seen, 0.25))
+    .filter(
+      (p) =>
+        p.id !== currentPlayer.id &&
+        withinHours(p.last_seen, 24) &&
+        !withinHours(p.last_seen, 0.25),
+    )
     .sort(byLastSeen);
 
   return (
@@ -122,29 +130,42 @@ export default function DashboardPage() {
           </section>
 
           <section>
-            <h2 className="section-bar text-[0.875rem] text-text-tertiary mb-4">
-              Wartet auf andere{" "}
-              <span className="text-text-secondary">
-                {wartenCount}/{totalOpen}
+            <button
+              onClick={() => setShowWarten((v) => !v)}
+              className="mb-4 flex w-full items-center gap-2 text-left"
+            >
+              <h2 className="section-bar text-[0.875rem] text-text-tertiary">
+                Wartet auf andere{" "}
+                <span className="text-text-secondary">
+                  {wartenCount}/{totalOpen}
+                </span>
+              </h2>
+              <span
+                className={`text-text-tertiary transition-transform ${
+                  showWarten ? "rotate-180" : ""
+                }`}
+              >
+                ▾
               </span>
-            </h2>
-            {!hasWarten ? (
-              <Empty>Keine wartenden Szenen.</Empty>
-            ) : (
-              <div className="flex flex-col gap-6">
-                {grouped
-                  .filter((g) => g.warten.length > 0)
-                  .map((g) => (
-                    <CharacterGroup
-                      key={g.char.id}
-                      char={g.char}
-                      scenes={g.warten}
-                      store={store}
-                      muted
-                    />
-                  ))}
-              </div>
-            )}
+            </button>
+            {showWarten &&
+              (!hasWarten ? (
+                <Empty>Keine.</Empty>
+              ) : (
+                <div className="flex flex-col gap-6">
+                  {grouped
+                    .filter((g) => g.warten.length > 0)
+                    .map((g) => (
+                      <CharacterGroup
+                        key={g.char.id}
+                        char={g.char}
+                        scenes={g.warten}
+                        store={store}
+                        muted
+                      />
+                    ))}
+                </div>
+              ))}
           </section>
         </div>
 
@@ -157,7 +178,7 @@ export default function DashboardPage() {
               Aktive Szenen · letzte 24h
             </h2>
             {recentScenes.length === 0 ? (
-              <Empty>In den letzten 24 Stunden wurde nichts geschrieben.</Empty>
+              <Empty>Keine.</Empty>
             ) : (
               <div className="flex flex-col gap-2">
                 {recentScenes.map(({ scene, last }) => {
@@ -203,11 +224,7 @@ export default function DashboardPage() {
             <h2 className="section-bar text-[0.875rem] text-text-secondary mb-3">
               Spieler online · jetzt
             </h2>
-            {onlineNow.length === 0 ? (
-              <Empty>Gerade ist niemand online.</Empty>
-            ) : (
-              <PlayerPresenceList players={onlineNow} now />
-            )}
+            <PlayerPresenceList players={onlineNow} now />
           </section>
 
           <section>
