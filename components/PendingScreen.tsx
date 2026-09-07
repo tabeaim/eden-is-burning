@@ -16,28 +16,28 @@ export function PendingScreen() {
         }}
       />
       <div className="w-full max-w-sm text-center">
-        <h1 className="font-display text-[34px] text-text-primary leading-none">
+        <h1 className="font-display text-[2.125rem] text-text-primary leading-none">
           fast drin<span className="text-accent">.</span>
         </h1>
         <div className="bg-bg-surface border border-border-subtle rounded-xl p-6 mt-6">
-          <p className="text-[14px] text-text-primary">
+          <p className="text-[0.875rem] text-text-primary">
             Danke für die Registrierung
             {currentPlayer?.email ? `, ${currentPlayer.email}` : ""}.
           </p>
-          <p className="text-[13px] text-text-secondary mt-2 leading-relaxed">
+          <p className="text-[0.875rem] text-text-secondary mt-2 leading-relaxed">
             Dein Zugang wartet auf die Freischaltung durch einen Admin. Sobald das
             passiert ist, kannst du loslegen.
           </p>
           <div className="flex gap-2 mt-5">
             <button
               onClick={() => refresh()}
-              className="flex-1 bg-accent/90 hover:bg-accent text-black font-medium border border-accent rounded-md py-2 text-[13px] transition-colors"
+              className="flex-1 bg-accent/90 hover:bg-accent text-black font-medium border border-accent rounded-md py-2 text-[0.875rem] transition-colors"
             >
               Erneut prüfen
             </button>
             <button
               onClick={() => signOut()}
-              className="flex-1 bg-white/[0.05] hover:bg-white/[0.1] text-text-secondary border border-border-subtle rounded-md py-2 text-[13px] transition-colors"
+              className="flex-1 bg-white/[0.05] hover:bg-white/[0.1] text-text-secondary border border-border-subtle rounded-md py-2 text-[0.875rem] transition-colors"
             >
               Abmelden
             </button>

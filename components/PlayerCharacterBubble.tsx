@@ -54,7 +54,7 @@ export function PlayerCharacterBubble({
         <button
           onClick={onTogglePlayer}
           title="Ganzen Spieler (alle Charaktere) wählen"
-          className={`px-2 text-[13px] ${
+          className={`px-2 text-[0.875rem] ${
             playerOn ? "text-text-primary font-medium" : "text-text-secondary"
           }`}
         >
@@ -78,10 +78,10 @@ export function PlayerCharacterBubble({
         <div className="absolute z-20 mt-1 w-48 rounded-lg border border-border-subtle bg-bg-surface-2 p-1.5 shadow-xl">
           <button
             onClick={onTogglePlayer}
-            className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-white/[0.04]"
+            className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[0.875rem] hover:bg-white/[0.04]"
           >
             <span
-              className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[11px] ${
+              className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[0.75rem] ${
                 playerOn ? "bg-accent border-accent text-black" : "border-border-strong"
               }`}
             >
@@ -98,10 +98,10 @@ export function PlayerCharacterBubble({
               <button
                 key={c.id}
                 onClick={() => onToggleChar(c.id)}
-                className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-white/[0.04]"
+                className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[0.875rem] hover:bg-white/[0.04]"
               >
                 <span
-                  className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[11px] ${
+                  className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[0.75rem] ${
                     on ? "bg-accent border-accent text-black" : "border-border-strong"
                   }`}
                 >

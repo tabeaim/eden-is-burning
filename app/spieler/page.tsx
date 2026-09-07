@@ -34,10 +34,10 @@ export default function SpielerOverviewPage() {
                 className="w-12 h-12 rounded-full object-cover bg-bg-primary shrink-0"
               />
               <div className="min-w-0">
-                <div className="text-[14px] text-text-primary truncate">
+                <div className="text-[0.875rem] text-text-primary truncate">
                   {p.username}
                 </div>
-                <div className="text-[13px] text-text-tertiary">
+                <div className="text-[0.875rem] text-text-tertiary">
                   {chars.length}{" "}
                   {chars.length === 1 ? "Charakter" : "Charaktere"}
                 </div>

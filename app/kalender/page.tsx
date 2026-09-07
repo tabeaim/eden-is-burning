@@ -107,13 +107,13 @@ export default function CalendarPage() {
       <div className="mb-8 grid md:grid-cols-2 gap-x-10 gap-y-5">
         <div>
           <div className="flex items-center justify-between gap-2 mb-2">
-            <span className="text-[13px] uppercase tracking-wider text-text-tertiary">
+            <span className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
               Filter nach Charakter / Spieler
             </span>
             {tokens.length > 0 && (
               <button
                 onClick={() => setTokens([])}
-                className="text-[13px] text-text-tertiary hover:text-text-primary underline"
+                className="text-[0.875rem] text-text-tertiary hover:text-text-primary underline"
               >
                 zurücksetzen ({tokens.length})
               </button>
@@ -135,19 +135,19 @@ export default function CalendarPage() {
 
         {/* Gespeicherte Filterkombinationen */}
         <div>
-          <div className="text-[13px] uppercase tracking-wider text-text-tertiary mb-2">
+          <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary mb-2">
             Gespeichert
           </div>
           <div className="flex flex-wrap items-center gap-2">
           {presets.length === 0 && !saving && (
-            <span className="text-[13px] text-text-tertiary">— noch keine</span>
+            <span className="text-[0.875rem] text-text-tertiary">— noch keine</span>
           )}
           {presets.map((p) => {
             const activePreset = sameTokens(p.tokens, tokens);
             return (
               <span
                 key={p.id}
-                className={`group flex items-center gap-1 rounded-full border pl-2.5 pr-1 py-0.5 text-[13px] transition-colors ${
+                className={`group flex items-center gap-1 rounded-full border pl-2.5 pr-1 py-0.5 text-[0.875rem] transition-colors ${
                   activePreset
                     ? "border-accent/60 bg-accent-soft text-text-primary"
                     : "border-border-subtle bg-bg-primary text-text-secondary"
@@ -179,12 +179,12 @@ export default function CalendarPage() {
                 onKeyDown={(e) => e.key === "Enter" && saveCurrent()}
                 placeholder="Name…"
                 autoFocus
-                className="w-28 bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[13px] text-text-primary outline-none focus:border-white/20"
+                className="w-28 bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
               />
               <button
                 onClick={saveCurrent}
                 disabled={!presetName.trim()}
-                className="rounded-md bg-accent/90 hover:bg-accent text-black text-[13px] font-medium px-2 py-1 disabled:opacity-40"
+                className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.875rem] font-medium px-2 py-1 disabled:opacity-40"
               >
                 Speichern
               </button>
@@ -193,7 +193,7 @@ export default function CalendarPage() {
                   setSaving(false);
                   setPresetName("");
                 }}
-                className="text-[13px] text-text-tertiary hover:text-text-primary px-1"
+                className="text-[0.875rem] text-text-tertiary hover:text-text-primary px-1"
               >
                 Abbrechen
               </button>
@@ -202,7 +202,7 @@ export default function CalendarPage() {
             tokens.length > 0 && (
               <button
                 onClick={() => setSaving(true)}
-                className="flex items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-0.5 text-[13px] text-text-tertiary hover:text-accent hover:border-accent/50"
+                className="flex items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-0.5 text-[0.875rem] text-text-tertiary hover:text-accent hover:border-accent/50"
               >
                 <Icon name="plus" size={11} /> Auswahl speichern
               </button>
@@ -212,20 +212,20 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="text-[13px] text-text-tertiary mb-4">
+      <div className="text-[0.875rem] text-text-tertiary mb-4">
         {totalShown} {totalShown === 1 ? "Szene" : "Szenen"}
       </div>
 
       {/* Zeitstrahl, nach Monaten gruppiert */}
       {groups.length === 0 ? (
-        <p className="text-[13px] text-text-tertiary">
+        <p className="text-[0.875rem] text-text-tertiary">
           Keine Szenen für diesen Filter.
         </p>
       ) : (
         <div className="flex flex-col gap-8">
           {groups.map((g) => (
             <section key={g.key}>
-              <h2 className="section-bar text-[13px] text-text-secondary mb-4">
+              <h2 className="section-bar text-[0.875rem] text-text-secondary mb-4">
                 {g.label}
               </h2>
               <div className="relative border-l border-border-subtle pl-6 flex flex-col gap-5">
@@ -238,7 +238,7 @@ export default function CalendarPage() {
                           active ? "bg-accent ring-2 ring-accent/25" : "bg-white/25"
                         }`}
                       />
-                      <div className="text-[13px] uppercase tracking-wider text-text-tertiary flex items-center gap-1.5">
+                      <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary flex items-center gap-1.5">
                         {formatInplayDate(s.inplay_date)} · {s.inplay_time}
                         {active && (
                           <span className="inline-flex items-center gap-1 text-accent">
@@ -248,17 +248,17 @@ export default function CalendarPage() {
                       </div>
                       <Link
                         href={`/szenen/${s.id}`}
-                        className={`font-serif text-[16px] hover:underline ${
+                        className={`font-serif text-[1rem] hover:underline ${
                           active ? "text-text-primary" : "text-text-secondary"
                         }`}
                       >
                         {s.title}
                       </Link>
-                      <div className="text-[13px] text-text-tertiary">
+                      <div className="text-[0.875rem] text-text-tertiary">
                         {s.location_name} · {areaName(s.location_area)}
                       </div>
                       {s.summary && (
-                        <p className="mt-0.5 text-[14px] italic text-text-secondary">
+                        <p className="mt-0.5 text-[0.875rem] italic text-text-secondary">
                           {s.summary}
                         </p>
                       )}

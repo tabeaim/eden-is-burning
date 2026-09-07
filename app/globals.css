@@ -114,7 +114,7 @@ body {
 /* Szenen-Prosa — jetzt serifenlos, größer und linksbündig (bessere Lesbarkeit) */
 .prose-serif {
   font-family: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
-  font-size: 14px;
+  font-size: 0.875rem; /* 14px @ Basis 16px — skaliert mit Browser-Schriftgröße */
   line-height: 1.8;
   text-align: left;
 }

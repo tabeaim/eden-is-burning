@@ -49,13 +49,13 @@ export default function CharaktereePage() {
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent pt-10 px-3 pb-2">
-                  <div className="font-serif text-[14px] text-white">
+                  <div className="font-serif text-[0.875rem] text-white">
                     {c.name}
                   </div>
-                  <div className="text-[13px] text-white/70">{c.role}</div>
+                  <div className="text-[0.875rem] text-white/70">{c.role}</div>
                 </div>
               </div>
-              <div className="px-3 py-2 text-[13px] text-text-tertiary flex items-center justify-between">
+              <div className="px-3 py-2 text-[0.875rem] text-text-tertiary flex items-center justify-between">
                 <span>{areaName(c.area)}</span>
                 {p && <span>by {p.username}</span>}
               </div>
@@ -65,7 +65,7 @@ export default function CharaktereePage() {
       </div>
 
       {list.length === 0 && (
-        <p className="text-[13px] text-text-tertiary">
+        <p className="text-[0.875rem] text-text-tertiary">
           Keine Charaktere in diesem Bezirk.
         </p>
       )}
@@ -85,7 +85,7 @@ function Chip({
   return (
     <button
       onClick={onClick}
-      className={`rounded-full px-3 py-1 text-[13px] transition-colors ${
+      className={`rounded-full px-3 py-1 text-[0.875rem] transition-colors ${
         active
           ? "bg-white/[0.1] text-text-primary"
           : "bg-white/[0.04] text-text-secondary hover:text-text-primary"

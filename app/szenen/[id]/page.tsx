@@ -80,7 +80,7 @@ export default function ScenePage({
       {/* "Alle Szenen" über dem Details-bearbeiten-Button */}
       <Link
         href="/szenen"
-        className="inline-flex items-center gap-1 text-[13px] text-text-tertiary hover:text-text-secondary mb-3"
+        className="inline-flex items-center gap-1 text-[0.875rem] text-text-tertiary hover:text-text-secondary mb-3"
       >
         <span className="rotate-180 inline-flex">
           <Icon name="arrow-right" size={13} />
@@ -148,7 +148,7 @@ function SceneFacts({
       {/* Charaktere — der Charakter, der am Zug ist, wird markiert */}
       <div className="flex flex-wrap items-center gap-1.5">
         {scene.trigger_warning && (
-          <span className="rounded-full bg-red-500/15 text-red-300/90 text-[13px] uppercase tracking-wider px-2 py-0.5">
+          <span className="rounded-full bg-red-500/15 text-red-300/90 text-[0.875rem] uppercase tracking-wider px-2 py-0.5">
             Triggerwarnung
           </span>
         )}
@@ -159,7 +159,7 @@ function SceneFacts({
               key={c.id}
               href={`/charaktere/${c.id}`}
               title={isTurn ? "am Zug" : undefined}
-              className={`flex items-center gap-1.5 rounded-full border pl-1 pr-2.5 py-0.5 text-[13px] transition-colors ${
+              className={`flex items-center gap-1.5 rounded-full border pl-1 pr-2.5 py-0.5 text-[0.875rem] transition-colors ${
                 isTurn
                   ? "border-accent/70 bg-accent-soft text-text-primary"
                   : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
@@ -180,11 +180,11 @@ function SceneFacts({
 
       {/* Beschreibungssatz */}
       {scene.summary ? (
-        <p className="mt-3 font-serif text-[14px] italic text-text-secondary leading-relaxed">
+        <p className="mt-3 font-serif text-[0.875rem] italic text-text-secondary leading-relaxed">
           {scene.summary}
         </p>
       ) : (
-        <p className="mt-3 text-[13px] text-text-tertiary">
+        <p className="mt-3 text-[0.875rem] text-text-tertiary">
           Noch keine Zusammenfassung hinterlegt — beim Beenden der Szene ergänzbar.
         </p>
       )}
@@ -206,7 +206,7 @@ function SceneAdminBar({ scene }: { scene: Scene }) {
   if (closing) {
     return (
       <div className="mb-8 rounded-xl border border-border-subtle bg-bg-surface p-4">
-        <div className="text-[13px] uppercase tracking-wider text-text-tertiary mb-2">
+        <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary mb-2">
           Szene beenden — Zusammenfassung (ein Satz, optional)
         </div>
         <input
@@ -215,18 +215,18 @@ function SceneAdminBar({ scene }: { scene: Scene }) {
           onKeyDown={(e) => e.key === "Enter" && end()}
           placeholder={scene.summary ?? "Worum ging es in dieser Szene?"}
           autoFocus
-          className="w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[14px] text-text-primary outline-none focus:border-white/20"
+          className="w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
         />
         <div className="mt-3 flex items-center justify-end gap-3">
           <button
             onClick={() => setClosing(false)}
-            className="text-[13px] text-text-tertiary hover:text-text-primary px-2"
+            className="text-[0.875rem] text-text-tertiary hover:text-text-primary px-2"
           >
             Abbrechen
           </button>
           <button
             onClick={end}
-            className="rounded-md bg-accent/90 hover:bg-accent text-black text-[13px] font-medium px-4 py-2"
+            className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.875rem] font-medium px-4 py-2"
           >
             Beenden
           </button>
@@ -240,7 +240,7 @@ function SceneAdminBar({ scene }: { scene: Scene }) {
       <div className="flex items-center gap-2">
         <button
           onClick={() => {}}
-          className="flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[13px] text-text-secondary hover:text-text-primary"
+          className="flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.875rem] text-text-secondary hover:text-text-primary"
         >
           <Icon name="edit" size={13} /> Details bearbeiten
         </button>
@@ -249,13 +249,13 @@ function SceneAdminBar({ scene }: { scene: Scene }) {
         <div className="flex items-center gap-2">
           <button
             onClick={focusReplyEditor}
-            className="rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[13px] text-text-secondary hover:text-text-primary"
+            className="rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.875rem] text-text-secondary hover:text-text-primary"
           >
             Antworten
           </button>
           <button
             onClick={() => setClosing(true)}
-            className="rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[13px] text-text-secondary hover:text-text-primary"
+            className="rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.875rem] text-text-secondary hover:text-text-primary"
           >
             Beenden
           </button>
@@ -327,7 +327,7 @@ function PostRow({
           onMouseDown={(e) => e.preventDefault()}
           onClick={saveQuote}
           style={{ left: quoteBtn.x, top: quoteBtn.y }}
-          className="absolute z-20 -mt-1 flex -translate-x-1/2 -translate-y-full items-center gap-1 whitespace-nowrap rounded-md border border-border-subtle bg-bg-surface-2 px-2 py-1 text-[13px] text-text-secondary shadow-lg hover:text-accent"
+          className="absolute z-20 -mt-1 flex -translate-x-1/2 -translate-y-full items-center gap-1 whitespace-nowrap rounded-md border border-border-subtle bg-bg-surface-2 px-2 py-1 text-[0.875rem] text-text-secondary shadow-lg hover:text-accent"
         >
           <Icon name="quote" size={12} /> Als Zitat speichern
         </button>
@@ -377,7 +377,7 @@ function ReplyBox({
 
   if (myChars.length === 0) {
     return (
-      <div className="mt-10 rounded-xl border border-border-subtle bg-bg-surface px-5 py-4 text-[13px] text-text-tertiary">
+      <div className="mt-10 rounded-xl border border-border-subtle bg-bg-surface px-5 py-4 text-[0.875rem] text-text-tertiary">
         Du spielst in dieser Szene keinen Charakter mit — daher kannst du hier
         nicht antworten.
       </div>
@@ -404,14 +404,14 @@ function ReplyBox({
   }
 
   const toolBtn =
-    "rounded px-2 py-1 text-[13px] text-text-secondary hover:text-text-primary hover:bg-white/[0.06]";
+    "rounded px-2 py-1 text-[0.875rem] text-text-secondary hover:text-text-primary hover:bg-white/[0.06]";
 
   return (
     <div id="reply-box" className="mt-10 rounded-xl border border-border-subtle bg-bg-surface p-5">
       {/* Vorschau des Posts (wie er unter dem letzten Post erscheinen würde) */}
       {preview !== null && activeChar && (
         <div className="mb-6 rounded-lg border border-accent/30 bg-bg-primary/40 p-4">
-          <div className="mb-3 text-[13px] uppercase tracking-wider text-accent">
+          <div className="mb-3 text-[0.875rem] uppercase tracking-wider text-accent">
             Vorschau
           </div>
           <div className="flex gap-5 items-start">
@@ -440,21 +440,21 @@ function ReplyBox({
             className="w-8 h-8 rounded-full object-cover bg-bg-primary"
           />
           <div>
-            <div className="text-[13px] uppercase tracking-wider text-text-tertiary">
+            <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
               Antwort als
             </div>
-            <div className="text-[14px] text-text-primary">{activeChar?.name}</div>
+            <div className="text-[0.875rem] text-text-primary">{activeChar?.name}</div>
           </div>
         </div>
 
         {myChars.length > 1 && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[13px] text-text-tertiary">Charakter wechseln:</span>
+            <span className="text-[0.875rem] text-text-tertiary">Charakter wechseln:</span>
             {myChars.map((c) => (
               <button
                 key={c.id}
                 onClick={() => setActiveCharId(c.id)}
-                className={`rounded-full px-2.5 py-1 text-[13px] transition-colors ${
+                className={`rounded-full px-2.5 py-1 text-[0.875rem] transition-colors ${
                   c.id === activeChar?.id
                     ? "bg-white/[0.1] text-text-primary"
                     : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
@@ -493,16 +493,16 @@ function ReplyBox({
         contentEditable
         suppressContentEditableWarning
         data-placeholder={`Schreibe als ${activeChar?.name}…`}
-        className="reply-editor prose-serif min-h-[160px] w-full rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-[14px] leading-[1.8] text-text-primary outline-none focus:border-white/20"
+        className="reply-editor prose-serif min-h-[160px] w-full rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-[0.875rem] leading-[1.8] text-text-primary outline-none focus:border-white/20"
       />
 
       <div className="mt-3 flex items-center justify-end gap-3">
-        <span className="mr-auto text-[13px] text-text-tertiary">
+        <span className="mr-auto text-[0.875rem] text-text-tertiary">
           HTML wird übernommen
         </span>
         <button
           onClick={togglePreview}
-          className={`rounded-md border border-border-subtle px-4 py-2 text-[13px] transition-colors ${
+          className={`rounded-md border border-border-subtle px-4 py-2 text-[0.875rem] transition-colors ${
             preview !== null
               ? "bg-accent-soft border-accent/50 text-text-primary"
               : "bg-white/[0.04] hover:bg-white/[0.08] text-text-secondary hover:text-text-primary"
@@ -512,7 +512,7 @@ function ReplyBox({
         </button>
         <button
           onClick={send}
-          className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[13px] text-text-primary transition-colors"
+          className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[0.875rem] text-text-primary transition-colors"
         >
           Senden
         </button>

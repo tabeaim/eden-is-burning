@@ -48,7 +48,7 @@ export default function SettingsPage() {
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`px-3 py-2 text-[13px] -mb-px border-b-2 transition-colors ${
+            className={`px-3 py-2 text-[0.875rem] -mb-px border-b-2 transition-colors ${
               tab === key
                 ? "border-white/40 text-text-primary"
                 : "border-transparent text-text-secondary hover:text-text-primary"
@@ -76,11 +76,11 @@ function AdminTab() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <div className="text-[13px] text-text-secondary mb-3">
+        <div className="text-[0.875rem] text-text-secondary mb-3">
           Wartet auf Freischaltung ({pending.length})
         </div>
         {pending.length === 0 ? (
-          <p className="text-[13px] text-text-tertiary">
+          <p className="text-[0.875rem] text-text-tertiary">
             Niemand wartet gerade.{" "}
             <button onClick={() => refresh()} className="underline hover:text-text-secondary">
               Aktualisieren
@@ -94,16 +94,16 @@ function AdminTab() {
                 className="flex items-center gap-3 bg-bg-surface border border-border-subtle rounded-lg px-3 py-2"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] text-text-primary truncate">
+                  <div className="text-[0.875rem] text-text-primary truncate">
                     {p.username}
                   </div>
-                  <div className="text-[13px] text-text-tertiary truncate">
+                  <div className="text-[0.875rem] text-text-tertiary truncate">
                     {p.email}
                   </div>
                 </div>
                 <button
                   onClick={() => updatePlayer(p.id, { approved: true })}
-                  className="rounded-md bg-accent/90 hover:bg-accent text-black font-medium border border-accent px-3 py-1.5 text-[13px] transition-colors"
+                  className="rounded-md bg-accent/90 hover:bg-accent text-black font-medium border border-accent px-3 py-1.5 text-[0.875rem] transition-colors"
                 >
                   Freischalten
                 </button>
@@ -114,14 +114,14 @@ function AdminTab() {
       </div>
 
       <div>
-        <div className="text-[13px] text-text-secondary mb-3">
+        <div className="text-[0.875rem] text-text-secondary mb-3">
           Freigeschaltet ({approved.length})
         </div>
         <div className="flex flex-wrap gap-2">
           {approved.map((p) => (
             <span
               key={p.id}
-              className="inline-flex items-center gap-1.5 bg-bg-surface border border-border-subtle rounded-full px-3 py-1 text-[11px] text-text-secondary"
+              className="inline-flex items-center gap-1.5 bg-bg-surface border border-border-subtle rounded-full px-3 py-1 text-[0.75rem] text-text-secondary"
             >
               {p.username}
               {p.is_admin && <span className="text-accent">· Admin</span>}
@@ -137,7 +137,7 @@ function AdminTab() {
 }
 
 const field =
-  "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[14px] text-text-primary outline-none focus:border-white/20";
+  "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
 function ProfileTab() {
   const { currentPlayer, updatePlayer } = useStore();
@@ -171,7 +171,7 @@ function ProfileTab() {
         <div>
           <button
             onClick={() => fileRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-3 py-2 text-[13px] text-text-primary"
+            className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-3 py-2 text-[0.875rem] text-text-primary"
           >
             <Icon name="upload" size={15} /> Avatar hochladen
           </button>
@@ -185,12 +185,12 @@ function ProfileTab() {
         </div>
       </div>
 
-      <label className="text-[13px] text-text-secondary">
+      <label className="text-[0.875rem] text-text-secondary">
         Username
         <input value={currentPlayer.username} readOnly className={`mt-1 ${field} opacity-60`} />
       </label>
 
-      <label className="text-[13px] text-text-secondary">
+      <label className="text-[0.875rem] text-text-secondary">
         Bio <span className="text-text-tertiary">({bio.length}/500)</span>
         <textarea
           value={bio}
@@ -204,11 +204,11 @@ function ProfileTab() {
       <div className="flex items-center gap-3">
         <button
           onClick={save}
-          className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[13px] text-text-primary"
+          className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[0.875rem] text-text-primary"
         >
           Speichern
         </button>
-        {saved && <span className="text-[13px] text-text-secondary">Gespeichert ✓</span>}
+        {saved && <span className="text-[0.875rem] text-text-secondary">Gespeichert ✓</span>}
       </div>
     </div>
   );
@@ -226,7 +226,7 @@ function CharactersTab() {
       ))}
       <button
         onClick={() => addCharacter(currentPlayer.id)}
-        className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/15 px-4 py-4 text-[13px] text-text-secondary hover:text-text-primary hover:border-white/30 transition-colors"
+        className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/15 px-4 py-4 text-[0.875rem] text-text-secondary hover:text-text-primary hover:border-white/30 transition-colors"
       >
         <Icon name="plus" size={16} /> Neuen Charakter anlegen
       </button>
@@ -272,10 +272,10 @@ function CharacterEditor({ character }: { character: Character }) {
           className="w-10 h-10 rounded-full object-cover bg-bg-primary"
         />
         <div className="flex-1 min-w-0">
-          <div className="text-[14px] text-text-primary">{draft.name}</div>
-          <div className="text-[13px] text-text-tertiary">{draft.role}</div>
+          <div className="text-[0.875rem] text-text-primary">{draft.name}</div>
+          <div className="text-[0.875rem] text-text-tertiary">{draft.role}</div>
         </div>
-        <span className="text-text-tertiary text-[13px]">
+        <span className="text-text-tertiary text-[0.875rem]">
           {open ? "Schließen" : "Bearbeiten"}
         </span>
       </button>
@@ -300,7 +300,7 @@ function CharacterEditor({ character }: { character: Character }) {
               </div>
               <button
                 onClick={() => fileRef.current?.click()}
-                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-2 py-1.5 text-[13px] text-text-primary"
+                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-2 py-1.5 text-[0.875rem] text-text-primary"
               >
                 <Icon name="upload" size={13} /> Foto
               </button>
@@ -311,7 +311,7 @@ function CharacterEditor({ character }: { character: Character }) {
                 onChange={onPhoto}
                 className="hidden"
               />
-              <p className="mt-1 text-[13px] text-text-tertiary text-center">
+              <p className="mt-1 text-[0.875rem] text-text-tertiary text-center">
                 Pflicht für V1
               </p>
             </div>
@@ -392,18 +392,18 @@ function CharacterEditor({ character }: { character: Character }) {
           <div className="flex items-center gap-3">
             <button
               onClick={save}
-              className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[13px] text-text-primary"
+              className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[0.875rem] text-text-primary"
             >
               Speichern
             </button>
             {saved && (
-              <span className="text-[13px] text-text-secondary">
+              <span className="text-[0.875rem] text-text-secondary">
                 Gespeichert ✓
               </span>
             )}
             <Link
               href={`/charaktere/${character.id}`}
-              className="ml-auto text-[13px] text-text-tertiary hover:text-text-secondary"
+              className="ml-auto text-[0.875rem] text-text-tertiary hover:text-text-secondary"
             >
               Profil ansehen →
             </Link>
@@ -422,7 +422,7 @@ function Labeled({
   children: React.ReactNode;
 }) {
   return (
-    <label className="text-[13px] text-text-secondary block">
+    <label className="text-[0.875rem] text-text-secondary block">
       {label}
       <div className="mt-1">{children}</div>
     </label>

@@ -55,7 +55,7 @@ export default function NewScenePage() {
   }
 
   const field =
-    "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[14px] text-text-primary outline-none focus:border-white/20";
+    "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-8">
@@ -66,22 +66,22 @@ export default function NewScenePage() {
         {/* Header-Andeutung — jede Szene hat einen eigenen Header. Die Auswahl
             folgt später; hier nur eine Vorschau (verändert sich mit dem Titel). */}
         <div>
-          <div className="flex items-center justify-between text-[13px] text-text-secondary mb-1">
+          <div className="flex items-center justify-between text-[0.875rem] text-text-secondary mb-1">
             <span>Szenen-Header</span>
-            <span className="text-[13px] text-text-tertiary">Auswahl folgt · Vorschau</span>
+            <span className="text-[0.875rem] text-text-tertiary">Auswahl folgt · Vorschau</span>
           </div>
           <div
             className="relative h-24 w-full rounded-md overflow-hidden border border-border-subtle bg-center bg-cover opacity-90"
             style={{ backgroundImage: `url("${sceneHeader(title.trim() || "neue-szene")}")` }}
           >
             <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
-            <span className="absolute bottom-2 left-3 text-[13px] text-text-tertiary">
+            <span className="absolute bottom-2 left-3 text-[0.875rem] text-text-tertiary">
               Automatisch generiert · bald selbst einstellbar
             </span>
           </div>
         </div>
 
-        <label className="text-[13px] text-text-secondary">
+        <label className="text-[0.875rem] text-text-secondary">
           Titel
           <input
             value={title}
@@ -91,7 +91,7 @@ export default function NewScenePage() {
           />
         </label>
 
-        <label className="text-[13px] text-text-secondary">
+        <label className="text-[0.875rem] text-text-secondary">
           Zusammenfassung <span className="text-text-tertiary">(optional, ein Satz — kann auch später beim Schließen ergänzt werden)</span>
           <input
             value={summary}
@@ -102,7 +102,7 @@ export default function NewScenePage() {
         </label>
 
         <div className="grid grid-cols-2 gap-4">
-          <label className="text-[13px] text-text-secondary">
+          <label className="text-[0.875rem] text-text-secondary">
             Bezirk
             <select
               value={area}
@@ -120,7 +120,7 @@ export default function NewScenePage() {
             </select>
           </label>
 
-          <label className="text-[13px] text-text-secondary">
+          <label className="text-[0.875rem] text-text-secondary">
             Ort
             <input
               value={locationName}
@@ -137,7 +137,7 @@ export default function NewScenePage() {
               type="button"
               key={loc}
               onClick={() => setLocationName(loc)}
-              className="rounded-full bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[13px] text-text-secondary"
+              className="rounded-full bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[0.875rem] text-text-secondary"
             >
               {loc}
             </button>
@@ -145,7 +145,7 @@ export default function NewScenePage() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <label className="text-[13px] text-text-secondary">
+          <label className="text-[0.875rem] text-text-secondary">
             In-Game-Datum
             <input
               type="date"
@@ -154,7 +154,7 @@ export default function NewScenePage() {
               className={`mt-1 ${field}`}
             />
           </label>
-          <label className="text-[13px] text-text-secondary">
+          <label className="text-[0.875rem] text-text-secondary">
             Tageszeit
             <input
               value={time}
@@ -165,7 +165,7 @@ export default function NewScenePage() {
           </label>
         </div>
 
-        <label className="flex items-center gap-2 text-[13px] text-text-secondary">
+        <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
           <input
             type="checkbox"
             checked={tw}
@@ -175,7 +175,7 @@ export default function NewScenePage() {
         </label>
 
         <div>
-          <div className="text-[13px] text-text-secondary mb-2">
+          <div className="text-[0.875rem] text-text-secondary mb-2">
             Teilnehmende Charaktere{" "}
             <span className="text-text-tertiary">
               (Reihenfolge = Schreib-Reihenfolge)
@@ -204,16 +204,16 @@ export default function NewScenePage() {
                     className="w-8 h-8 rounded-full object-cover"
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13px] text-text-primary truncate">
+                    <div className="text-[0.875rem] text-text-primary truncate">
                       {c.name}
                     </div>
-                    <div className="text-[13px] text-text-tertiary truncate">
+                    <div className="text-[0.875rem] text-text-tertiary truncate">
                       {c.role}
                       {isMine ? " · du" : ""}
                     </div>
                   </div>
                   {checked && (
-                    <span className="text-[13px] text-text-secondary">
+                    <span className="text-[0.875rem] text-text-secondary">
                       #{order + 1}
                     </span>
                   )}
@@ -227,7 +227,7 @@ export default function NewScenePage() {
           <button
             type="submit"
             disabled={!title.trim() || selected.length === 0}
-            className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] disabled:opacity-40 border border-border-subtle px-5 py-2 text-[13px] text-text-primary"
+            className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] disabled:opacity-40 border border-border-subtle px-5 py-2 text-[0.875rem] text-text-primary"
           >
             Szene erstellen
           </button>

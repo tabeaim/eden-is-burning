@@ -40,14 +40,14 @@ export default function PlayerPage({
             {p.username}
           </h1>
           {p.bio && (
-            <p className="text-[13px] text-text-secondary mt-0.5 max-w-md">
+            <p className="text-[0.875rem] text-text-secondary mt-0.5 max-w-md">
               {p.bio}
             </p>
           )}
         </div>
       </div>
 
-      <h2 className="text-[13px] uppercase tracking-[0.16em] text-text-secondary mt-8 mb-3">
+      <h2 className="text-[0.875rem] uppercase tracking-[0.16em] text-text-secondary mt-8 mb-3">
         Charaktere ({chars.length})
       </h2>
       <div className="grid sm:grid-cols-2 gap-4">
@@ -64,15 +64,15 @@ export default function PlayerPage({
               className="w-16 h-24 rounded-lg object-cover shrink-0"
             />
             <div className="min-w-0">
-              <div className="font-serif text-[14px] text-text-primary">
+              <div className="font-serif text-[0.875rem] text-text-primary">
                 {c.name}
               </div>
-              <div className="text-[13px] text-text-tertiary">{c.role}</div>
-              <div className="text-[13px] text-text-tertiary mt-0.5">
+              <div className="text-[0.875rem] text-text-tertiary">{c.role}</div>
+              <div className="text-[0.875rem] text-text-tertiary mt-0.5">
                 {areaName(c.area)}
               </div>
               {c.tagline && (
-                <div className="mt-1.5 inline-block rounded-full bg-white/[0.05] px-2 py-0.5 text-[13px] text-text-secondary">
+                <div className="mt-1.5 inline-block rounded-full bg-white/[0.05] px-2 py-0.5 text-[0.875rem] text-text-secondary">
                   {c.tagline}
                 </div>
               )}
