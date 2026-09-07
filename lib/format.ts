@@ -20,6 +20,15 @@ export function formatInplayDate(iso: string): string {
   return `${d}. ${MONTHS_DE[m - 1]} ${y}`;
 }
 
+// Absoluter Zeitpunkt mit Datum + Uhrzeit, z.B. "22. November 2021, 14:30 Uhr"
+export function formatDateTime(iso: string): string {
+  const dt = new Date(iso);
+  if (isNaN(dt.getTime())) return iso;
+  const hh = String(dt.getHours()).padStart(2, "0");
+  const mm = String(dt.getMinutes()).padStart(2, "0");
+  return `${dt.getDate()}. ${MONTHS_DE[dt.getMonth()]} ${dt.getFullYear()}, ${hh}:${mm} Uhr`;
+}
+
 // Italic-Markdown (*wort*) -> Prosa-HTML mit <em>
 export function renderProse(text: string): string {
   const escaped = text

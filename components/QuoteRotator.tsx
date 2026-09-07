@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { Icon } from "./Icon";
 
@@ -15,12 +15,6 @@ export function QuoteRotator() {
     () => quotes.map((_, i) => i).sort(() => Math.random() - 0.5),
     [quotes.length],
   );
-
-  useEffect(() => {
-    if (quotes.length <= 1) return;
-    const t = setInterval(() => setIdx((i) => (i + 1) % quotes.length), 7000);
-    return () => clearInterval(t);
-  }, [quotes.length]);
 
   if (quotes.length === 0) {
     return (
@@ -59,7 +53,7 @@ export function QuoteRotator() {
         </>
       )}
 
-      <span className="text-accent text-2xl leading-none font-serif">“</span>
+      <span className="text-accent text-[3.375rem] leading-none font-serif">“</span>
       <blockquote
         key={q.id}
         className="prose-serif !text-center !text-[0.875rem] text-text-primary mx-auto max-w-xl mt-1 animate-[fadein_0.5s_ease]"
@@ -87,19 +81,6 @@ export function QuoteRotator() {
           </>
         )}
       </div>
-      {quotes.length > 1 && (
-        <div className="mt-3 flex items-center justify-center gap-1.5">
-          {quotes.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setIdx(i)}
-              className={`h-1 w-1 rounded-full transition-colors ${
-                i === idx % quotes.length ? "bg-accent" : "bg-white/15"
-              }`}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

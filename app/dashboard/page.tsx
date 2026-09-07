@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
-import { formatInplayDate, timeAgo, withinHours } from "@/lib/format";
+import { formatDateTime, formatInplayDate, timeAgo, withinHours } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { QuoteRotator } from "@/components/QuoteRotator";
@@ -16,6 +16,16 @@ export default function DashboardPage() {
   if (!currentPlayer) return null;
 
   const myChars = charactersOf(currentPlayer.id);
+
+  // Zeitpunkt des letzten Posts einer Szene (postsOf ist nach post_number sortiert)
+  const lastPostAt = (sceneId: string): string | null => {
+    const posts = postsOf(sceneId);
+    return posts.length ? posts[posts.length - 1].created_at : null;
+  };
+  // Szene mit dem jüngsten Post zuerst
+  const byLastPostDesc = (a: Scene, b: Scene) =>
+    new Date(lastPostAt(b.id) ?? b.created_at).getTime() -
+    new Date(lastPostAt(a.id) ?? a.created_at).getTime();
 
   // Pro Charakter: in welchen aktiven Szenen ist er dran / wartet er auf andere?
   const grouped = myChars
@@ -30,12 +40,27 @@ export default function DashboardPage() {
         if (turn === c.id) dran.push(s);
         else warten.push(s);
       }
+      dran.sort(byLastPostDesc);
+      warten.sort(byLastPostDesc);
       return { char: c, dran, warten };
     })
     .filter((g) => g.dran.length > 0 || g.warten.length > 0);
 
   const hasDran = grouped.some((g) => g.dran.length > 0);
   const hasWarten = grouped.some((g) => g.warten.length > 0);
+
+  // Numerische Übersicht über distinkte offene Szenen des Spielers
+  const myCharIds = new Set(myChars.map((c) => c.id));
+  const myOpenScenes = scenes.filter(
+    (s) =>
+      s.status === "active" && s.participant_ids.some((id) => myCharIds.has(id)),
+  );
+  const totalOpen = myOpenScenes.length;
+  const dranCount = myOpenScenes.filter((s) => {
+    const t = whoseTurn(s, postsOf(s.id));
+    return t != null && myCharIds.has(t);
+  }).length;
+  const wartenCount = totalOpen - dranCount;
 
   // Allgemein aktive Szenen der letzten 24h (über alle Spieler)
   const recentScenes = scenes
@@ -73,7 +98,10 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-10">
           <section>
             <h2 className="section-bar text-[0.875rem] text-text-primary mb-4">
-              Du bist dran
+              Du bist dran{" "}
+              <span className="text-accent">
+                {dranCount}/{totalOpen}
+              </span>
             </h2>
             {!hasDran ? (
               <Empty>Gerade bist du in keiner Szene am Zug.</Empty>
@@ -95,7 +123,10 @@ export default function DashboardPage() {
 
           <section>
             <h2 className="section-bar text-[0.875rem] text-text-tertiary mb-4">
-              Wartet auf andere
+              Wartet auf andere{" "}
+              <span className="text-text-secondary">
+                {wartenCount}/{totalOpen}
+              </span>
             </h2>
             {!hasWarten ? (
               <Empty>Keine wartenden Szenen.</Empty>
@@ -295,6 +326,9 @@ function SceneFacts({
     .map((id) => store.character(id))
     .filter(Boolean) as Character[];
 
+  const posts = store.postsOf(scene.id);
+  const lastPost = posts.length ? posts[posts.length - 1] : null;
+
   return (
     <Link
       href={`/szenen/${scene.id}`}
@@ -327,6 +361,12 @@ function SceneFacts({
       <div className="mt-1.5 text-[0.875rem] text-text-tertiary">
         {scene.location_name} · {areaName(scene.location_area)} ·{" "}
         {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
+      </div>
+
+      <div className="mt-1 text-[0.8125rem] text-text-tertiary">
+        {lastPost
+          ? `Letzter Post am ${formatDateTime(lastPost.created_at)}`
+          : "Noch kein Post"}
       </div>
     </Link>
   );
