@@ -38,9 +38,9 @@ function highlightTerm(html: string, term: string): string {
     .join("");
 }
 
-// Ca.-Zeilen pro Seite (Pagination erfolgt nach geschätzter Zeilenzahl,
-// nicht nach Post-Anzahl). ~45 Zeilen ≈ knapp zwei Bildschirmhöhen Prosa.
-const LINES_PER_PAGE = 45;
+// Ca.-Zeilen pro Seite (Pagination nach geschätzter Zeilenzahl, nicht nach
+// Post-Anzahl). ~280 Zeilen ≈ etwa 5 durchschnittlich lange Posts pro Seite.
+const LINES_PER_PAGE = 280;
 
 function estimateLines(html: string): number {
   const text = html
