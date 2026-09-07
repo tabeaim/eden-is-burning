@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { PageMetaProvider, usePageMeta } from "@/lib/page-meta";
@@ -11,73 +10,19 @@ import { LoginScreen } from "./LoginScreen";
 import { PendingScreen } from "./PendingScreen";
 import { pageHeader, sceneHeader } from "@/lib/headers";
 
-// Route → lesbares Label für "Wer ist wo?"
-function routeLabel(
-  pathname: string,
-  scenes: { id: string; title: string }[],
-  characterFn: (id: string) => { name: string } | undefined,
-): string {
-  const seg = pathname.split("/").filter(Boolean);
-  switch (seg[0]) {
-    case undefined:
-    case "dashboard":
-      return "Dashboard";
-    case "orte":
-      return "Orte";
-    case "kalender":
-      return "Kalender";
-    case "einwohnerinnen":
-      return "Einwohner*innen";
-    case "info":
-      return "Info";
-    case "einstellungen":
-      return "Einstellungen";
-    case "szenen":
-      if (seg[1] === "neu") return "Neue Szene";
-      if (seg[1]) {
-        const s = scenes.find((x) => x.id === seg[1]);
-        return s ? `Szene: ${s.title}` : "Szene";
-      }
-      return "Szenen";
-    case "charaktere":
-      if (seg[1]) {
-        const c = characterFn(seg[1]);
-        return c ? `Charakter: ${c.name}` : "Charakter";
-      }
-      return "Charaktere";
-    case "spieler":
-      return seg[1] ? `Profil: ${seg[1]}` : "Profil";
-    default:
-      return "unterwegs";
-  }
-}
-
 const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/szenen", label: "Szenen", icon: "book" },
   { href: "/orte", label: "Orte", icon: "map" },
   { href: "/kalender", label: "Kalender", icon: "calendar" },
-  { href: "/einwohnerinnen", label: "Einwohner*innen", icon: "users" },
+  { href: "/charaktere", label: "Charaktere", icon: "users" },
+  { href: "/spieler", label: "Spieler", icon: "star" },
   { href: "/info", label: "Info", icon: "info" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const store = useStore();
-  const { ready, currentPlayer, isApproved } = store;
+  const { ready, currentPlayer, isApproved } = useStore();
   const pathname = usePathname();
-
-  // "Wer ist wo?" — Aufenthaltsort des eingeloggten Spielers bei jedem
-  // Seitenwechsel festhalten. Prototyp: lokal. Mit Backend würde hier ein
-  // Heartbeat an den Server gehen, statt nur den lokalen Store zu aktualisieren.
-  useEffect(() => {
-    if (!currentPlayer) return;
-    store.setLocation(
-      currentPlayer.id,
-      pathname,
-      routeLabel(pathname, store.scenes, store.character),
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, currentPlayer?.id]);
 
   if (!ready) {
     return (
@@ -125,7 +70,6 @@ function bannerForPath(pathname: string): string {
 // Banner-Header: Titelbild pro Seite (Foto über Glut-Verlauf). Der Seitentitel
 // ragt halb über die Banner-Unterkante in die Seite; darunter die Aktions-Leiste.
 function BannerHeader({ pathname }: { pathname: string }) {
-  const { currentPlayer, logout } = useStore();
   const meta = usePageMeta();
 
   const navMatch = NAV.find(
@@ -138,7 +82,6 @@ function BannerHeader({ pathname }: { pathname: string }) {
   // Einheitliche Seitenbreite: alle Seiten teilen dieselbe Container-Breite, damit
   // Titel und linksbündiger Inhalt beim Seitenwechsel nicht horizontal springen.
   const width = (onThisPage && meta.width) || "max-w-5xl";
-  const showActions = pathname === "/dashboard";
   // Detailseiten (Szene, Charakter) zeichnen ihre eigene Trennlinie unter dem
   // Inhalt (Zusammenfassung bzw. Zitat), damit der noch über der Linie steht.
   const ownsDivider =
@@ -169,59 +112,17 @@ function BannerHeader({ pathname }: { pathname: string }) {
           <span className="text-accent">.</span>
         </h1>
 
-        {/* Untertitel + Aktions-Leiste direkt unter dem Banner */}
-        <div className="mt-2.5 flex items-center justify-between gap-4 pb-1">
-          <div className="flex flex-wrap items-center gap-2 text-[12px] text-text-secondary">
+        {/* Untertitel direkt unter dem Banner */}
+        <div className="mt-2.5 flex items-center gap-4 pb-1">
+          <div className="flex flex-wrap items-center gap-2 text-[13px] text-text-secondary">
             {subtitle}
             {statusBadge && <StatusBadge status={statusBadge} />}
           </div>
-          {showActions && (
-            <nav className="flex items-center gap-1.5 shrink-0">
-              <HeaderAction href="/szenen/neu" icon="message" label="Neue Szene" />
-              <HeaderAction href="/einstellungen" icon="settings" label="Einstellungen" />
-              {currentPlayer && (
-                <HeaderAction
-                  href={`/spieler/${currentPlayer.username}`}
-                  icon="users"
-                  label="Profil"
-                />
-              )}
-              <button
-                onClick={logout}
-                title="Abmelden"
-                className="flex items-center gap-1.5 rounded-md bg-white/[0.05] hover:bg-white/[0.1] hover:text-accent text-text-secondary px-2.5 py-1.5 text-[12px] transition-colors"
-              >
-                <Icon name="logout" size={16} />
-                <span className="hidden sm:inline">Abmelden</span>
-              </button>
-            </nav>
-          )}
         </div>
       </div>
 
       {!ownsDivider && <div className="border-b border-border-subtle mt-2" />}
     </header>
-  );
-}
-
-function HeaderAction({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: IconName;
-  label: string;
-}) {
-  return (
-    <Link
-      href={href}
-      title={label}
-      className="flex items-center gap-1.5 rounded-md bg-white/[0.05] hover:bg-white/[0.1] hover:text-accent text-text-secondary px-2.5 py-1.5 text-[12px] transition-colors"
-    >
-      <Icon name={icon} size={16} />
-      <span className="hidden sm:inline">{label}</span>
-    </Link>
   );
 }
 
@@ -241,7 +142,7 @@ function SideLink({
   return (
     <Link
       href={href}
-      className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[12px] transition-colors ${
+      className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
         active
           ? "bg-white/[0.04] text-text-primary"
           : "text-text-secondary hover:text-text-primary hover:bg-white/[0.025]"
@@ -282,7 +183,7 @@ function Sidebar({ pathname }: { pathname: string }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[12px] transition-colors ${
+              className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
                 active
                   ? "bg-white/[0.04] text-text-primary"
                   : "text-text-secondary hover:text-text-primary hover:bg-white/[0.025]"
@@ -313,7 +214,7 @@ function Sidebar({ pathname }: { pathname: string }) {
         )}
         <button
           onClick={logout}
-          className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[12px] text-left text-text-secondary hover:text-text-primary hover:bg-white/[0.025] transition-colors"
+          className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-left text-text-secondary hover:text-text-primary hover:bg-white/[0.025] transition-colors"
         >
           <Icon name="logout" size={17} />
           Abmelden
@@ -338,7 +239,7 @@ function Sidebar({ pathname }: { pathname: string }) {
                 alt={c.name}
                 className="w-6 h-6 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
               />
-              <span className="text-[12px] text-text-secondary group-hover:text-text-primary truncate">
+              <span className="text-[13px] text-text-secondary group-hover:text-text-primary truncate">
                 {c.name}
               </span>
             </Link>
@@ -358,7 +259,7 @@ function Sidebar({ pathname }: { pathname: string }) {
             />
           </Link>
           <div className="flex-1 min-w-0">
-            <div className="text-[12px] text-text-primary truncate">
+            <div className="text-[13px] text-text-primary truncate">
               {currentPlayer.username}
             </div>
           </div>

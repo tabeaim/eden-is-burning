@@ -6,20 +6,20 @@ import { useStore } from "@/lib/store";
 import { AREA_ORDER, AREAS, areaName, type AreaKey } from "@/lib/world";
 import { PageHeader } from "@/components/PageHeader";
 
-export default function ResidentsPage() {
+export default function CharaktereePage() {
   const { characters, player } = useStore();
   const [area, setArea] = useState<AreaKey | "all">("all");
 
   const list =
-    area === "all"
-      ? characters
-      : characters.filter((c) => c.area === area);
+    area === "all" ? characters : characters.filter((c) => c.area === area);
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-8">
       <PageHeader
-        title="Einwohner*innen"
-        subtitle="Das Charakterverzeichnis von Eden." width="max-w-5xl" />
+        title="Charaktere"
+        subtitle="Das Charakterverzeichnis von Eden."
+        width="max-w-5xl"
+      />
 
       <div className="flex flex-wrap gap-1.5 mb-6">
         <Chip active={area === "all"} onClick={() => setArea("all")}>
@@ -52,7 +52,7 @@ export default function ResidentsPage() {
                   <div className="font-serif text-[14px] text-white">
                     {c.name}
                   </div>
-                  <div className="text-[12px] text-white/60">{c.role}</div>
+                  <div className="text-[12px] text-white/70">{c.role}</div>
                 </div>
               </div>
               <div className="px-3 py-2 text-[12px] text-text-tertiary flex items-center justify-between">

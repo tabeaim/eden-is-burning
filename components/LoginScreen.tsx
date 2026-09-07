@@ -9,11 +9,12 @@ type Mode = "signin" | "signup";
 // per Klick rein (alle mit demselben Test-Passwort). Später entfernen.
 const TEST_PASSWORD = "Eden1234!";
 const TEST_PLAYERS: { label: string; email: string }[] = [
-  { label: "Vera", email: "vera@example.com" },
+  { label: "tabs", email: "tabeaim@gmail.com" },
+  { label: "vera", email: "vera@example.com" },
   { label: "liz", email: "liz@example.com" },
-  { label: "Abby", email: "abby@example.com" },
-  { label: "Jule", email: "jule@example.com" },
-  { label: "Kat", email: "kat@example.com" },
+  { label: "abby", email: "abby@example.com" },
+  { label: "jule", email: "jule@example.com" },
+  { label: "kat", email: "kat@example.com" },
 ];
 
 export function LoginScreen() {

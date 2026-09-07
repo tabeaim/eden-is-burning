@@ -38,7 +38,7 @@ export default function CharacterPage({
     return (
       <div className="max-w-5xl mx-auto px-8 py-16 text-text-tertiary">
         Charakter nicht gefunden.{" "}
-        <Link href="/einwohnerinnen" className="underline">
+        <Link href="/charaktere" className="underline">
           Zum Verzeichnis
         </Link>
       </div>
