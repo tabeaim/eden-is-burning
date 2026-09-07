@@ -135,7 +135,7 @@ export function LoginScreen() {
 
         <p className="text-[11px] text-text-tertiary text-center mt-4 leading-relaxed">
           {mode === "signin"
-            ? "Neu hier? Oben auf „Registrieren" — ein Admin schaltet dich frei."
+            ? "Neu hier? Wechsle oben zu Registrieren — ein Admin schaltet dich frei."
             : "Nach der Registrierung wirst du von einem Admin freigeschaltet."}
         </p>
       </div>
