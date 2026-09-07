@@ -360,7 +360,7 @@ function SceneHeader({
                 alt={c.name}
                 className={`w-5 h-5 rounded-full object-cover ${isTurn ? "ring-2 ring-accent" : ""}`}
               />
-              {c.name}
+              {c.name.split(" ")[0]}
               {isTurn && <Icon name="flame" size={12} className="text-accent" />}
             </Link>
           );
@@ -494,8 +494,10 @@ function PostRow({
   player?: ReturnType<typeof useStore>["players"][number];
   term?: string;
 }) {
-  const { addQuote, currentPlayer, updatePost, deletePost } = useStore();
-  const owner = !!currentPlayer && character.player_id === currentPlayer.id;
+  const { addQuote, currentPlayer, isAdmin, updatePost, deletePost } = useStore();
+  // Eigene Posts – oder als Admin alle – dürfen bearbeitet/gelöscht werden.
+  const canModify =
+    !!currentPlayer && (character.player_id === currentPlayer.id || isAdmin);
   const wrapRef = useRef<HTMLDivElement>(null);
   const proseRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLDivElement>(null);
@@ -621,22 +623,22 @@ function PostRow({
   );
 
   return (
-    <div>
-      {owner && !editing && (
-        <div className="mb-1.5 flex justify-end gap-1">
+    <div className="group">
+      {canModify && !editing && (
+        <div className="mb-1 flex justify-end gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
           <button
             onClick={startEdit}
             title="Post bearbeiten"
-            className="flex items-center gap-1 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2 py-1 text-[0.8125rem] text-text-tertiary hover:text-accent"
+            className="rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-accent"
           >
-            <Icon name="edit" size={13} /> Bearbeiten
+            <Icon name="edit" size={14} />
           </button>
           <button
             onClick={remove}
             title="Post löschen"
-            className="flex items-center gap-1 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2 py-1 text-[0.8125rem] text-text-tertiary hover:text-red-400"
+            className="rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-red-400"
           >
-            <Icon name="trash" size={13} /> Löschen
+            <Icon name="trash" size={14} />
           </button>
         </div>
       )}
