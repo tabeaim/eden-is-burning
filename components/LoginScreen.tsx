@@ -3,23 +3,50 @@
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 
+type Mode = "signin" | "signup";
+
 export function LoginScreen() {
-  const { players, login } = useStore();
+  const { signIn, signUp, configured } = useStore();
+  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const match = players.find(
-      (p) => p.email.toLowerCase() === email.trim().toLowerCase(),
-    );
-    if (!match) {
-      setError("Kein Account mit dieser E-Mail. Nutze einen der Demo-Accounts.");
+    setError(null);
+    setNotice(null);
+    if (!configured) {
+      setError("Backend nicht konfiguriert (.env.local fehlt).");
       return;
     }
-    // Prototyp: Passwort wird nicht geprüft.
-    login(match.id);
+    if (!email.trim() || !password) {
+      setError("Bitte E-Mail und Passwort eingeben.");
+      return;
+    }
+    setBusy(true);
+    try {
+      if (mode === "signin") {
+        const { error } = await signIn(email, password);
+        if (error) setError(uebersetze(error));
+        // Erfolg: onAuthStateChange lädt die App automatisch.
+      } else {
+        const { error } = await signUp(email, password);
+        if (error) {
+          setError(uebersetze(error));
+        } else {
+          setNotice(
+            "Registrierung eingegangen. Ein Admin muss dich freischalten — danach kannst du dich anmelden.",
+          );
+          setMode("signin");
+          setPassword("");
+        }
+      }
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -41,6 +68,28 @@ export function LoginScreen() {
           </p>
         </div>
 
+        {/* Umschalter Anmelden / Registrieren */}
+        <div className="flex gap-1 bg-bg-surface border border-border-subtle rounded-lg p-1 mb-3">
+          {(["signin", "signup"] as Mode[]).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => {
+                setMode(m);
+                setError(null);
+                setNotice(null);
+              }}
+              className={`flex-1 rounded-md py-1.5 text-[12px] transition-colors ${
+                mode === m
+                  ? "bg-white/[0.06] text-text-primary"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {m === "signin" ? "Anmelden" : "Registrieren"}
+            </button>
+          ))}
+        </div>
+
         <form
           onSubmit={submit}
           className="bg-bg-surface border border-border-subtle rounded-xl p-6 flex flex-col gap-3"
@@ -51,7 +100,8 @@ export function LoginScreen() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="tabeaim@gmail.com"
+              placeholder="du@beispiel.de"
+              autoComplete="email"
               className="mt-1 w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[14px] text-text-primary outline-none focus:border-white/20"
             />
           </label>
@@ -61,57 +111,46 @@ export function LoginScreen() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="(im Prototyp egal)"
+              placeholder={mode === "signup" ? "mind. 6 Zeichen" : "••••••••"}
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
               className="mt-1 w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[14px] text-text-primary outline-none focus:border-white/20"
             />
           </label>
 
           {error && <p className="text-[12px] text-red-400/80">{error}</p>}
+          {notice && <p className="text-[12px] text-accent">{notice}</p>}
 
           <button
             type="submit"
-            className="mt-1 bg-accent/90 hover:bg-accent text-black font-medium border border-accent rounded-md py-2 text-[14px] transition-colors"
+            disabled={busy}
+            className="mt-1 bg-accent/90 hover:bg-accent text-black font-medium border border-accent rounded-md py-2 text-[14px] transition-colors disabled:opacity-50"
           >
-            Anmelden
+            {busy
+              ? "…"
+              : mode === "signin"
+                ? "Anmelden"
+                : "Registrieren"}
           </button>
         </form>
 
-        <div className="mt-5">
-          <div className="text-[10px] uppercase tracking-[0.16em] text-text-tertiary mb-2 text-center">
-            Demo-Accounts — schnell einloggen
-          </div>
-          <div className="flex flex-col gap-2">
-            {[...players]
-              .sort((a, b) =>
-                a.username.localeCompare(b.username, "de", {
-                  sensitivity: "base",
-                }),
-              )
-              .map((p) => (
-              <button
-                key={p.id}
-                onClick={() => login(p.id)}
-                className="flex items-center gap-3 bg-bg-surface hover:bg-white/[0.04] border border-border-subtle rounded-lg px-3 py-2 text-left transition-colors"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={p.avatar_url ?? ""}
-                  alt={p.username}
-                  className="w-8 h-8 rounded-full object-cover bg-bg-primary"
-                />
-                <div className="min-w-0">
-                  <div className="text-[12px] text-text-primary">
-                    {p.username}
-                  </div>
-                  <div className="text-[10px] text-text-tertiary truncate">
-                    {p.email}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+        <p className="text-[11px] text-text-tertiary text-center mt-4 leading-relaxed">
+          {mode === "signin"
+            ? "Neu hier? Oben auf „Registrieren" — ein Admin schaltet dich frei."
+            : "Nach der Registrierung wirst du von einem Admin freigeschaltet."}
+        </p>
       </div>
     </div>
   );
+}
+
+// Häufige Supabase-Fehlermeldungen ins Deutsche übersetzen
+function uebersetze(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes("invalid login")) return "E-Mail oder Passwort stimmt nicht.";
+  if (m.includes("already registered") || m.includes("already been registered"))
+    return "Diese E-Mail ist bereits registriert. Melde dich an.";
+  if (m.includes("password should be")) return "Passwort zu kurz (mind. 6 Zeichen).";
+  if (m.includes("email") && m.includes("confirm"))
+    return "Bitte bestätige zuerst deine E-Mail.";
+  return msg;
 }

@@ -24,10 +24,18 @@ function readFileAsDataURL(file: File): Promise<string> {
   });
 }
 
+type SettingsTab = "profile" | "characters" | "admin";
+
 export default function SettingsPage() {
-  const { currentPlayer } = useStore();
-  const [tab, setTab] = useState<"profile" | "characters">("profile");
+  const { currentPlayer, isAdmin } = useStore();
+  const [tab, setTab] = useState<SettingsTab>("profile");
   if (!currentPlayer) return null;
+
+  const tabs: [SettingsTab, string][] = [
+    ["profile", "Mein Profil"],
+    ["characters", "Meine Charaktere"],
+  ];
+  if (isAdmin) tabs.push(["admin", "Freischaltungen"]);
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-8">
@@ -36,12 +44,7 @@ export default function SettingsPage() {
       {/* Inhalt linksbündig in Formularbreite — Container-Breite bleibt einheitlich */}
       <div className="max-w-2xl">
       <div className="flex gap-1.5 mb-6 border-b border-border-subtle">
-        {(
-          [
-            ["profile", "Mein Profil"],
-            ["characters", "Meine Charaktere"],
-          ] as ["profile" | "characters", string][]
-        ).map(([key, label]) => (
+        {tabs.map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -56,7 +59,78 @@ export default function SettingsPage() {
         ))}
       </div>
 
-      {tab === "profile" ? <ProfileTab /> : <CharactersTab />}
+      {tab === "profile" && <ProfileTab />}
+      {tab === "characters" && <CharactersTab />}
+      {tab === "admin" && isAdmin && <AdminTab />}
+      </div>
+    </div>
+  );
+}
+
+// Nur für Admins: neu registrierte Spieler*innen freischalten.
+function AdminTab() {
+  const { players, updatePlayer, currentPlayer, refresh } = useStore();
+  const pending = players.filter((p) => !p.approved);
+  const approved = players.filter((p) => p.approved);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <div className="text-[12px] text-text-secondary mb-3">
+          Wartet auf Freischaltung ({pending.length})
+        </div>
+        {pending.length === 0 ? (
+          <p className="text-[12px] text-text-tertiary">
+            Niemand wartet gerade.{" "}
+            <button onClick={() => refresh()} className="underline hover:text-text-secondary">
+              Aktualisieren
+            </button>
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {pending.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center gap-3 bg-bg-surface border border-border-subtle rounded-lg px-3 py-2"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] text-text-primary truncate">
+                    {p.username}
+                  </div>
+                  <div className="text-[10px] text-text-tertiary truncate">
+                    {p.email}
+                  </div>
+                </div>
+                <button
+                  onClick={() => updatePlayer(p.id, { approved: true })}
+                  className="rounded-md bg-accent/90 hover:bg-accent text-black font-medium border border-accent px-3 py-1.5 text-[12px] transition-colors"
+                >
+                  Freischalten
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="text-[12px] text-text-secondary mb-3">
+          Freigeschaltet ({approved.length})
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {approved.map((p) => (
+            <span
+              key={p.id}
+              className="inline-flex items-center gap-1.5 bg-bg-surface border border-border-subtle rounded-full px-3 py-1 text-[11px] text-text-secondary"
+            >
+              {p.username}
+              {p.is_admin && <span className="text-accent">· Admin</span>}
+              {p.id === currentPlayer?.id && (
+                <span className="text-text-tertiary">· du</span>
+              )}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );

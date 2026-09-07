@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import type { Session } from "@supabase/supabase-js";
 import type {
   Character,
   Location,
@@ -16,17 +17,7 @@ import type {
   Scene,
   SceneQuote,
 } from "./types";
-import {
-  seedCharacters,
-  seedLocations,
-  seedPlayers,
-  seedPosts,
-  seedQuotes,
-  seedScenes,
-} from "./mock-data";
-
-const STORAGE_KEY = "eden-is-burning-v5";
-const SESSION_KEY = "eden-is-burning-session";
+import { supabase, supabaseConfigured } from "./supabase";
 
 interface PersistedState {
   players: Player[];
@@ -39,10 +30,17 @@ interface PersistedState {
 
 interface StoreValue extends PersistedState {
   ready: boolean;
+  configured: boolean;
+  // Auth / Login
   currentPlayerId: string | null;
   currentPlayer: Player | null;
-  login: (playerId: string) => void;
-  logout: () => void;
+  isApproved: boolean;
+  isAdmin: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  signOut: () => Promise<void>;
+  logout: () => Promise<void>; // Alias für signOut (bestehende Aufrufe)
+  refresh: () => Promise<void>;
   // selectors
   charactersOf: (playerId: string) => Character[];
   postsOf: (sceneId: string) => Post[];
@@ -56,9 +54,7 @@ interface StoreValue extends PersistedState {
   addQuote: (postId: string, text: string) => void;
   removeQuote: (quoteId: string) => void;
   touchPresence: (playerId: string) => void;
-  // Aktuellen Aufenthaltsort setzen ("Wer ist wo?"). Prototyp: lokal/simuliert.
   setLocation: (playerId: string, path: string, label: string) => void;
-  // legt einen Ort an, falls in dieser Area noch nicht vorhanden; gibt Name zurück
   addLocation: (area: string, name: string, description?: string | null) => void;
   updateCharacter: (id: string, patch: Partial<Character>) => void;
   addCharacter: (playerId: string) => string;
@@ -70,129 +66,127 @@ interface StoreValue extends PersistedState {
 
 const StoreContext = createContext<StoreValue | null>(null);
 
-function freshState(): PersistedState {
-  return {
-    players: seedPlayers(),
-    characters: seedCharacters(),
-    scenes: seedScenes(),
-    posts: seedPosts(),
-    quotes: seedQuotes(),
-    locations: seedLocations(),
-  };
-}
+const EMPTY: PersistedState = {
+  players: [],
+  characters: [],
+  scenes: [],
+  posts: [],
+  quotes: [],
+  locations: [],
+};
 
 function uid(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-// Ergänzt bestehende (ggf. editierte) Einträge um neu hinzugekommene Seed-Einträge
-// nach id — vorhandene bleiben unberührt, neue Seeds (z.B. neue Charaktere/Szenen)
-// erscheinen auch bei bereits gespeichertem localStorage.
-function mergeNew<T extends { id: string }>(existing: T[], seed: T[]): T[] {
-  const have = new Set(existing.map((e) => e.id));
-  return [...existing, ...seed.filter((s) => !have.has(s.id))];
+// Schreibt asynchron in Supabase; Fehler werden geloggt, ohne die UI zu blockieren
+// (die Änderung ist lokal bereits sichtbar — "optimistic update").
+function persist(label: string, p: unknown) {
+  Promise.resolve(p as PromiseLike<{ error: unknown }>).then(({ error }) => {
+    if (error) console.warn(`[store] ${label}:`, error);
+  });
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<PersistedState>(freshState);
-  const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
+  const [state, setState] = useState<PersistedState>(EMPTY);
+  const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [ready, setReady] = useState(false);
 
-  // Laden aus localStorage (clientseitig)
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<PersistedState>;
-        // Neue Felder (summary/header_url) für bereits gespeicherte Seed-Szenen
-        // aus den aktuellen Seeds nachfüllen, ohne eigene Werte zu überschreiben.
-        const seedSceneById = new Map(seedScenes().map((s) => [s.id, s]));
-        const scenesBase = (parsed.scenes ?? seedScenes()).map((s) => {
-          const seed = seedSceneById.get(s.id);
-          return seed ? { summary: seed.summary, header_url: seed.header_url, ...s } : s;
-        });
-        const scenes = mergeNew(scenesBase, seedScenes());
-        // Seed-Posts (nicht editierbar) inhaltlich aus den aktuellen Seeds
-        // übernehmen, damit Seed-Änderungen auch bei bestehenden Daten greifen.
-        const seedPostById = new Map(seedPosts().map((p) => [p.id, p]));
-        const postsBase = (parsed.posts ?? seedPosts()).map((p) => {
-          const seed = seedPostById.get(p.id);
-          return seed ? { ...p, content: seed.content } : p;
-        });
-        const posts = mergeNew(postsBase, seedPosts());
-        // Authored Quotes der Seed-Charaktere übernehmen (≠ Tagline), damit sie
-        // auch bei bestehenden Daten erscheinen. Eigene Charaktere bleiben unberührt.
-        const seedCharById = new Map(seedCharacters().map((ch) => [ch.id, ch]));
-        const charactersBase = (parsed.characters ?? seedCharacters()).map((ch) => {
-          const seed = seedCharById.get(ch.id);
-          if (!seed) return ch;
-          return {
-            ...ch,
-            quote: seed.quote,
-            // Auto-getrackte Seed-Beziehungen (aus gemeinsamen Szenen) ergänzen,
-            // ohne selbst eingetragene Labels/Notizen zu überschreiben.
-            relationships: {
-              ...(seed.relationships ?? {}),
-              ...(ch.relationships ?? {}),
-            },
-          };
-        });
-        const characters = mergeNew(charactersBase, seedCharacters());
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setState({
-          players: mergeNew(parsed.players ?? seedPlayers(), seedPlayers()),
-          characters,
-          scenes,
-          posts,
-          quotes: mergeNew(parsed.quotes ?? seedQuotes(), seedQuotes()),
-          locations: mergeNew(parsed.locations ?? seedLocations(), seedLocations()),
-        });
+  const isApproved = Boolean(currentPlayer?.approved);
+  const isAdmin = Boolean(currentPlayer?.is_admin);
+
+  // Lädt alle Welt-Daten (nur für freigeschaltete Nutzer*innen sichtbar; RLS).
+  const loadWorld = useCallback(async () => {
+    const [pl, ch, sc, po, lo, qu] = await Promise.all([
+      supabase.from("players").select("*"),
+      supabase.from("characters").select("*"),
+      supabase.from("scenes").select("*"),
+      supabase.from("posts").select("*"),
+      supabase.from("locations").select("*"),
+      supabase.from("quotes").select("*"),
+    ]);
+    setState({
+      players: (pl.data as Player[]) ?? [],
+      characters: (ch.data as Character[]) ?? [],
+      scenes: (sc.data as Scene[]) ?? [],
+      posts: (po.data as Post[]) ?? [],
+      locations: (lo.data as Location[]) ?? [],
+      quotes: (qu.data as SceneQuote[]) ?? [],
+    });
+  }, []);
+
+  // Reagiert auf eine (geänderte) Auth-Session: eigenen Spieler laden,
+  // bei Freischaltung die ganze Welt.
+  const loadForSession = useCallback(
+    async (session: Session | null) => {
+      if (!session) {
+        setCurrentPlayer(null);
+        setState(EMPTY);
+        setReady(true);
+        return;
       }
-      const session = localStorage.getItem(SESSION_KEY);
-      if (session) setCurrentPlayerId(session);
-    } catch {
-      /* ignore */
+      const { data: me } = await supabase
+        .from("players")
+        .select("*")
+        .eq("auth_user_id", session.user.id)
+        .maybeSingle();
+      const player = (me as Player | null) ?? null;
+      setCurrentPlayer(player);
+      if (player?.approved) {
+        await loadWorld();
+      } else {
+        setState(EMPTY);
+      }
+      setReady(true);
+    },
+    [loadWorld],
+  );
+
+  useEffect(() => {
+    if (!supabaseConfigured) {
+      setReady(true);
+      return;
     }
-    setReady(true);
+    supabase.auth.getSession().then(({ data }) => loadForSession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      loadForSession(session);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [loadForSession]);
+
+  // --- Auth-Methoden --------------------------------------------------------
+  const signIn = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    return { error: error?.message ?? null };
   }, []);
 
-  // Persistieren
-  useEffect(() => {
-    if (!ready) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      /* ignore */
-    }
-  }, [state, ready]);
-
-  useEffect(() => {
-    if (!ready) return;
-    try {
-      if (currentPlayerId) localStorage.setItem(SESSION_KEY, currentPlayerId);
-      else localStorage.removeItem(SESSION_KEY);
-    } catch {
-      /* ignore */
-    }
-  }, [currentPlayerId, ready]);
-
-  const login = useCallback((playerId: string) => {
-    setCurrentPlayerId(playerId);
-    // Anwesenheit aktualisieren
-    setState((s) => ({
-      ...s,
-      players: s.players.map((p) =>
-        p.id === playerId ? { ...p, last_seen: new Date().toISOString() } : p,
-      ),
-    }));
+  const signUp = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+    });
+    return { error: error?.message ?? null };
   }, []);
-  const logout = useCallback(() => setCurrentPlayerId(null), []);
 
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    setCurrentPlayer(null);
+    setState(EMPTY);
+  }, []);
+
+  const refresh = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    await loadForSession(data.session);
+  }, [loadForSession]);
+
+  // --- Selektoren -----------------------------------------------------------
   const charactersOf = useCallback(
     (playerId: string) => state.characters.filter((c) => c.player_id === playerId),
     [state.characters],
   );
-
   const postsOf = useCallback(
     (sceneId: string) =>
       state.posts
@@ -200,7 +194,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         .sort((a, b) => a.post_number - b.post_number),
     [state.posts],
   );
-
   const character = useCallback(
     (id: string) => state.characters.find((c) => c.id === id),
     [state.characters],
@@ -216,12 +209,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ),
     [state.players],
   );
-
   const quotesOf = useCallback(
     (sceneId: string) => state.quotes.filter((q) => q.scene_id === sceneId),
     [state.quotes],
   );
+  const locationsOf = useCallback(
+    (area: string) => state.locations.filter((l) => l.area === area),
+    [state.locations],
+  );
 
+  // --- Mutationen (optimistisch lokal + Schreiben nach Supabase) ------------
   const addQuote = useCallback(
     (postId: string, text: string) => {
       const trimmed = text.trim();
@@ -229,11 +226,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setState((s) => {
         const post = s.posts.find((p) => p.id === postId);
         if (!post) return s;
-        // Doppelte (gleicher Post + Text) vermeiden
-        if (
-          s.quotes.some((q) => q.post_id === postId && q.text === trimmed)
-        )
+        if (s.quotes.some((q) => q.post_id === postId && q.text === trimmed)) {
           return s;
+        }
         const quote: SceneQuote = {
           id: uid("q"),
           scene_id: post.scene_id,
@@ -242,62 +237,28 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           text: trimmed,
           created_at: new Date().toISOString(),
         };
+        persist("addQuote", supabase.from("quotes").insert(quote));
         return { ...s, quotes: [...s.quotes, quote] };
       });
     },
     [],
   );
 
-  const locationsOf = useCallback(
-    (area: string) => state.locations.filter((l) => l.area === area),
-    [state.locations],
-  );
-
-  const addLocation = useCallback(
-    (area: string, name: string, description: string | null = null) => {
-      const trimmed = name.trim();
-      if (!trimmed) return;
-      setState((s) => {
-        // Schon vorhanden (gleiche Area + Name)? Dann nichts/ggf. Beschreibung ergänzen.
-        const existing = s.locations.find(
-          (l) => l.area === area && l.name.toLowerCase() === trimmed.toLowerCase(),
-        );
-        if (existing) {
-          if (description && !existing.description) {
-            return {
-              ...s,
-              locations: s.locations.map((l) =>
-                l.id === existing.id ? { ...l, description } : l,
-              ),
-            };
-          }
-          return s;
-        }
-        const loc: Location = {
-          id: uid("loc"),
-          area,
-          name: trimmed,
-          description: description ?? null,
-          created_at: new Date().toISOString(),
-        };
-        return { ...s, locations: [...s.locations, loc] };
-      });
-    },
-    [],
-  );
-
   const removeQuote = useCallback((quoteId: string) => {
-    setState((s) => ({
-      ...s,
-      quotes: s.quotes.filter((q) => q.id !== quoteId),
-    }));
+    persist("removeQuote", supabase.from("quotes").delete().eq("id", quoteId));
+    setState((s) => ({ ...s, quotes: s.quotes.filter((q) => q.id !== quoteId) }));
   }, []);
 
   const touchPresence = useCallback((playerId: string) => {
+    const now = new Date().toISOString();
+    persist(
+      "touchPresence",
+      supabase.from("players").update({ last_seen: now }).eq("id", playerId),
+    );
     setState((s) => ({
       ...s,
       players: s.players.map((p) =>
-        p.id === playerId ? { ...p, last_seen: new Date().toISOString() } : p,
+        p.id === playerId ? { ...p, last_seen: now } : p,
       ),
     }));
   }, []);
@@ -305,12 +266,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const setLocation = useCallback(
     (playerId: string, path: string, label: string) => {
       const now = new Date().toISOString();
+      const current_location = { path, label, at: now };
+      persist(
+        "setLocation",
+        supabase
+          .from("players")
+          .update({ last_seen: now, current_location })
+          .eq("id", playerId),
+      );
       setState((s) => ({
         ...s,
         players: s.players.map((p) =>
-          p.id === playerId
-            ? { ...p, last_seen: now, current_location: { path, label, at: now } }
-            : p,
+          p.id === playerId ? { ...p, last_seen: now, current_location } : p,
         ),
       }));
     },
@@ -331,81 +298,118 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           post_number: nextNumber,
           created_at: new Date().toISOString(),
         };
+        persist("addPost", supabase.from("posts").insert(post));
         return { ...s, posts: [...s.posts, post] };
       });
     },
     [],
   );
 
-  const updateCharacter = useCallback(
-    (id: string, patch: Partial<Character>) => {
-      setState((s) => ({
-        ...s,
-        characters: s.characters.map((c) =>
-          c.id === id ? { ...c, ...patch } : c,
-        ),
-      }));
+  const addLocation = useCallback(
+    (area: string, name: string, description: string | null = null) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      setState((s) => {
+        const existing = s.locations.find(
+          (l) => l.area === area && l.name.toLowerCase() === trimmed.toLowerCase(),
+        );
+        if (existing) {
+          if (description && !existing.description) {
+            persist(
+              "addLocation/desc",
+              supabase
+                .from("locations")
+                .update({ description })
+                .eq("id", existing.id),
+            );
+            return {
+              ...s,
+              locations: s.locations.map((l) =>
+                l.id === existing.id ? { ...l, description } : l,
+              ),
+            };
+          }
+          return s;
+        }
+        const loc: Location = {
+          id: uid("loc"),
+          area,
+          name: trimmed,
+          description: description ?? null,
+          created_at: new Date().toISOString(),
+        };
+        persist("addLocation", supabase.from("locations").insert(loc));
+        return { ...s, locations: [...s.locations, loc] };
+      });
     },
     [],
   );
 
-  const addCharacter = useCallback((playerId: string) => {
-    const id = uid("c");
+  const updateCharacter = useCallback((id: string, patch: Partial<Character>) => {
+    persist(
+      "updateCharacter",
+      supabase.from("characters").update(patch).eq("id", id),
+    );
     setState((s) => ({
       ...s,
-      characters: [
-        ...s.characters,
-        {
-          id,
-          player_id: playerId,
-          name: "Neuer Charakter",
-          faceclaim: null,
-          faceclaim_image_url: null,
-          tagline: null,
-          role: null,
-          age: null,
-          area: "rivers_edge",
-          bio: null,
-          pinterest_url: null,
-          created_at: new Date().toISOString(),
-          height: null,
-          figure: null,
-          hair: null,
-          eyes: null,
-          full_name: null,
-          sexuality: null,
-          status: null,
-          origin: null,
-          job: null,
-          company: null,
-          quote: null,
-          personality: null,
-        },
-      ],
+      characters: s.characters.map((c) => (c.id === id ? { ...c, ...patch } : c)),
     }));
+  }, []);
+
+  const addCharacter = useCallback((playerId: string) => {
+    const id = uid("c");
+    const newChar: Character = {
+      id,
+      player_id: playerId,
+      name: "Neuer Charakter",
+      faceclaim: null,
+      faceclaim_image_url: null,
+      tagline: null,
+      role: null,
+      age: null,
+      area: "rivers_edge",
+      bio: null,
+      pinterest_url: null,
+      created_at: new Date().toISOString(),
+      height: null,
+      figure: null,
+      hair: null,
+      eyes: null,
+      full_name: null,
+      sexuality: null,
+      status: null,
+      origin: null,
+      job: null,
+      company: null,
+      quote: null,
+      personality: null,
+      relationships: {},
+    };
+    persist("addCharacter", supabase.from("characters").insert(newChar));
+    setState((s) => ({ ...s, characters: [...s.characters, newChar] }));
     return id;
   }, []);
 
   const updatePlayer = useCallback((id: string, patch: Partial<Player>) => {
+    persist("updatePlayer", supabase.from("players").update(patch).eq("id", id));
     setState((s) => ({
       ...s,
       players: s.players.map((p) => (p.id === id ? { ...p, ...patch } : p)),
     }));
+    // Falls die eigene Zeile betroffen ist (z.B. Freischaltung/Profil), mitziehen.
+    setCurrentPlayer((cp) => (cp && cp.id === id ? { ...cp, ...patch } : cp));
   }, []);
 
   const addScene = useCallback((scene: Omit<Scene, "id" | "created_at">) => {
     const id = uid("s");
-    setState((s) => ({
-      ...s,
-      scenes: [
-        ...s.scenes,
-        { ...scene, id, created_at: new Date().toISOString() },
-      ],
-    }));
+    const newScene: Scene = { ...scene, id, created_at: new Date().toISOString() };
+    persist("addScene", supabase.from("scenes").insert(newScene));
+    setState((s) => ({ ...s, scenes: [...s.scenes, newScene] }));
     return id;
   }, []);
 
   const updateScene = useCallback((id: string, patch: Partial<Scene>) => {
+    persist("updateScene", supabase.from("scenes").update(patch).eq("id", id));
     setState((s) => ({
       ...s,
       scenes: s.scenes.map((sc) => (sc.id === id ? { ...sc, ...patch } : sc)),
@@ -413,19 +417,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resetData = useCallback(() => {
-    setState(freshState());
-  }, []);
+    void refresh();
+  }, [refresh]);
 
   const value = useMemo<StoreValue>(
     () => ({
       ...state,
       ready,
-      currentPlayerId,
-      currentPlayer: currentPlayerId
-        ? state.players.find((p) => p.id === currentPlayerId) ?? null
-        : null,
-      login,
-      logout,
+      configured: supabaseConfigured,
+      currentPlayerId: currentPlayer?.id ?? null,
+      currentPlayer,
+      isApproved,
+      isAdmin,
+      signIn,
+      signUp,
+      signOut,
+      logout: signOut,
+      refresh,
       charactersOf,
       postsOf,
       character,
@@ -449,9 +457,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [
       state,
       ready,
-      currentPlayerId,
-      login,
-      logout,
+      currentPlayer,
+      isApproved,
+      isAdmin,
+      signIn,
+      signUp,
+      signOut,
+      refresh,
       charactersOf,
       postsOf,
       character,

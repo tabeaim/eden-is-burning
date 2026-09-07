@@ -18,6 +18,10 @@ export interface Player {
   created_at: string;
   last_seen: string; // ISO timestamp — "zuletzt online"
   current_location?: PlayerLocation | null;
+  // --- Backend/Login (Supabase) ---
+  auth_user_id?: string | null; // verknüpfter Supabase-Auth-User
+  approved?: boolean; // von Admin freigeschaltet
+  is_admin?: boolean; // darf andere freischalten
 }
 
 export interface Character {

@@ -8,6 +8,7 @@ import { PageMetaProvider, usePageMeta } from "@/lib/page-meta";
 import { Icon, type IconName } from "./Icon";
 import { StatusBadge } from "./StatusBadge";
 import { LoginScreen } from "./LoginScreen";
+import { PendingScreen } from "./PendingScreen";
 import { pageHeader, sceneHeader } from "@/lib/headers";
 
 // Route → lesbares Label für "Wer ist wo?"
@@ -62,7 +63,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const store = useStore();
-  const { ready, currentPlayer } = store;
+  const { ready, currentPlayer, isApproved } = store;
   const pathname = usePathname();
 
   // "Wer ist wo?" — Aufenthaltsort des eingeloggten Spielers bei jedem
@@ -88,6 +89,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (!currentPlayer) {
     return <LoginScreen />;
+  }
+
+  if (!isApproved) {
+    return <PendingScreen />;
   }
 
   return (
