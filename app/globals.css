@@ -35,9 +35,10 @@
   --color-olive: var(--olive);
   --color-olive-soft: var(--olive-soft);
   --font-sans: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
-  /* Serifenlos überall — vormals Georgia / Blackletter, jetzt die Sans-Schrift */
+  /* Georgia-Serifenschrift entfernt -> serifenlos (Content-Titel, Prosa, Zitate) */
   --font-serif: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
+  /* Fraktur/Blackletter bleibt für Bildmarke & Seiten-Überschriften */
+  --font-display: var(--font-display), "Grenze Gotisch", serif;
 }
 
 * {
@@ -81,11 +82,11 @@ body {
   background-attachment: fixed;
 }
 
-/* Display-/Überschrift-Hilfsklasse — serifenlos, kräftig (vormals Blackletter) */
+/* Display-Font (Blackletter/Fraktur) — Bildmarke & Seiten-Überschriften */
 .font-display {
-  font-family: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
-  font-weight: 800;
-  letter-spacing: 0.005em;
+  font-family: var(--font-display), "Grenze Gotisch", serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 /* Sektions-Bar-Überschrift wie im Forum (GENERAL / INPLAY) */
