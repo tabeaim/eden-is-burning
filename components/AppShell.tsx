@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { PageMetaProvider, usePageMeta } from "@/lib/page-meta";
@@ -159,6 +159,7 @@ function SideLink({
 function Sidebar({ pathname }: { pathname: string }) {
   const { currentPlayer, charactersOf, logout } = useStore();
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
+  const [charsOpen, setCharsOpen] = useState(false);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -218,12 +219,18 @@ function Sidebar({ pathname }: { pathname: string }) {
         </button>
       </div>
 
-      {/* Meine Charaktere */}
+      {/* Meine Charaktere — aufklappbares Dropdown */}
       <div className="px-3 py-3 border-t border-border-subtle">
-        <div className="text-[0.75rem] uppercase tracking-[0.2em] text-text-tertiary mb-2">
-          Meine Charaktere
-        </div>
-        <div className="flex flex-col gap-1.5">
+        <button
+          onClick={() => setCharsOpen((o) => !o)}
+          className="flex w-full items-center justify-between text-[0.75rem] uppercase tracking-[0.2em] text-text-tertiary hover:text-text-secondary"
+        >
+          <span>Meine Charaktere ({myChars.length})</span>
+          <span className={`transition-transform ${charsOpen ? "rotate-180" : ""}`}>
+            ▾
+          </span>
+        </button>
+        <div className={`flex flex-col gap-1.5 ${charsOpen ? "mt-2" : "hidden"}`}>
           {myChars.map((c) => (
             <Link
               key={c.id}

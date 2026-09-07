@@ -145,11 +145,6 @@ export default function ScenePage({
     );
   }
 
-  const sideOf = (charId: string): "left" | "right" => {
-    const idx = scene.participant_ids.indexOf(charId);
-    return idx % 2 === 0 ? "left" : "right";
-  };
-
   const myCharsInScene: Character[] = currentPlayer
     ? charactersOf(currentPlayer.id).filter((c) =>
         scene.participant_ids.includes(c.id),
@@ -193,7 +188,6 @@ export default function ScenePage({
                 post={post}
                 character={c}
                 player={player(c.player_id)}
-                side={sideOf(post.character_id)}
                 term={searchTerm}
               />
             </div>
@@ -464,13 +458,11 @@ function PostRow({
   post,
   character,
   player,
-  side,
   term,
 }: {
   post: Post;
   character: Character;
   player?: ReturnType<typeof useStore>["players"][number];
-  side: "left" | "right";
   term?: string;
 }) {
   const { addQuote, currentPlayer, updatePost, deletePost } = useStore();
@@ -509,14 +501,12 @@ function PostRow({
   function saveQuote() {
     if (!quoteBtn) return;
     addQuote(post.id, quoteBtn.text);
-    window.getSelection()?.removeAllRanges();
     setQuoteBtn(null);
   }
 
   function copySelection() {
     if (!quoteBtn) return;
     navigator.clipboard?.writeText(quoteBtn.text).catch(() => {});
-    window.getSelection()?.removeAllRanges();
     setQuoteBtn(null);
   }
 
@@ -602,37 +592,28 @@ function PostRow({
   );
 
   return (
-    <div className="relative">
+    <div>
       {owner && !editing && (
-        <div className="absolute right-0 -top-3 z-10 flex gap-1">
+        <div className="mb-1.5 flex justify-end gap-1">
           <button
             onClick={startEdit}
             title="Post bearbeiten"
-            className="rounded-md border border-border-subtle bg-bg-surface-2 px-1.5 py-1 text-text-tertiary hover:text-accent"
+            className="flex items-center gap-1 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2 py-1 text-[0.8125rem] text-text-tertiary hover:text-accent"
           >
-            <Icon name="edit" size={13} />
+            <Icon name="edit" size={13} /> Bearbeiten
           </button>
           <button
             onClick={remove}
             title="Post löschen"
-            className="rounded-md border border-border-subtle bg-bg-surface-2 px-1.5 py-1 text-text-tertiary hover:text-red-400"
+            className="flex items-center gap-1 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2 py-1 text-[0.8125rem] text-text-tertiary hover:text-red-400"
           >
-            <Icon name="trash" size={13} />
+            <Icon name="trash" size={13} /> Löschen
           </button>
         </div>
       )}
       <div className="flex gap-5 items-start">
-        {side === "left" ? (
-          <>
-            {card}
-            {prose}
-          </>
-        ) : (
-          <>
-            {prose}
-            {card}
-          </>
-        )}
+        {card}
+        {prose}
       </div>
     </div>
   );
