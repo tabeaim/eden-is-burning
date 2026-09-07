@@ -1,19 +1,13 @@
 import type { Metadata } from "next";
-import { Montserrat, Grenze_Gotisch } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
 
+// Serifenlose Schrift für die ganze App (Body, Überschriften, Prosa)
 const sans = Montserrat({
   variable: "--font-sans-loaded",
   subsets: ["latin"],
-});
-
-// Blackletter-Display-Font für Logo, Profilnamen, Sektionstitel
-const display = Grenze_Gotisch({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "700", "900"],
 });
 
 export const metadata: Metadata = {
@@ -29,7 +23,7 @@ export default function RootLayout({
   return (
     <html
       lang="de"
-      className={`${sans.variable} ${display.variable} h-full`}
+      className={`${sans.variable} h-full`}
     >
       <body className="min-h-full">
         <StoreProvider>

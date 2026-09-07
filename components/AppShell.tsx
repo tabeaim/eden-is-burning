@@ -322,7 +322,7 @@ function Sidebar({ pathname }: { pathname: string }) {
 
       {/* Meine Charaktere */}
       <div className="px-3 py-3 border-t border-border-subtle">
-        <div className="text-[8px] uppercase tracking-[0.2em] text-text-tertiary mb-2">
+        <div className="text-[11px] uppercase tracking-[0.2em] text-text-tertiary mb-2">
           Meine Charaktere
         </div>
         <div className="flex flex-col gap-1.5">

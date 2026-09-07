@@ -207,7 +207,7 @@ export default function ScenesPage() {
           {activeFilters > 0 && (
             <button
               onClick={resetFilters}
-              className="text-[10px] text-text-tertiary hover:text-text-primary underline"
+              className="text-[12px] text-text-tertiary hover:text-text-primary underline"
             >
               zurücksetzen ({activeFilters})
             </button>
@@ -231,7 +231,7 @@ export default function ScenesPage() {
 
       {/* Sortierung — rechtsbündig, direkt über den Ergebnissen */}
       <div className="flex items-center justify-end gap-1.5 mt-4 mb-2">
-        <span className="text-[10px] uppercase tracking-wider text-text-tertiary">
+        <span className="text-[12px] uppercase tracking-wider text-text-tertiary">
           Sortieren
         </span>
         <select
@@ -254,7 +254,7 @@ export default function ScenesPage() {
         </button>
       </div>
 
-      <div className="text-[10px] text-text-tertiary mb-3">
+      <div className="text-[12px] text-text-tertiary mb-3">
         {sorted.length} {sorted.length === 1 ? "Szene" : "Szenen"}
       </div>
 
@@ -274,7 +274,7 @@ export default function ScenesPage() {
               <div className="flex items-center justify-between gap-2">
                 <StatusBadge status={s.status} />
                 {s.trigger_warning && (
-                  <span className="text-[10px] uppercase tracking-wider text-red-300/80">
+                  <span className="text-[12px] uppercase tracking-wider text-red-300/80">
                     TW
                   </span>
                 )}
@@ -300,11 +300,11 @@ export default function ScenesPage() {
                     className="w-7 h-7 rounded-full object-cover border border-border-subtle"
                   />
                 ))}
-                <span className="ml-1 text-[10px] text-text-tertiary">
+                <span className="ml-1 text-[12px] text-text-tertiary">
                   {participants.map((c) => c!.name.split(" ")[0]).join(" & ")}
                 </span>
                 {s.status === "active" && turnId && (
-                  <span className="ml-auto text-[10px] text-text-secondary">
+                  <span className="ml-auto text-[12px] text-text-secondary">
                     {character(turnId)?.name.split(" ")[0]} ist dran
                   </span>
                 )}
@@ -360,7 +360,7 @@ function MultiSelect({
       >
         {label}
         {selected.length > 0 && (
-          <span className="rounded-full bg-accent text-black px-1.5 text-[10px] font-medium">
+          <span className="rounded-full bg-accent text-black px-1.5 text-[12px] font-medium">
             {selected.length}
           </span>
         )}
@@ -380,7 +380,7 @@ function MultiSelect({
                 className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12px] text-text-secondary hover:bg-white/[0.04]"
               >
                 <span
-                  className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[8px] ${
+                  className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[11px] ${
                     on
                       ? "bg-accent border-accent text-black"
                       : "border-border-strong"
@@ -395,7 +395,7 @@ function MultiSelect({
           {selected.length > 0 && (
             <button
               onClick={onClear}
-              className="w-full text-left px-2 py-1.5 text-[10px] text-text-tertiary hover:text-text-primary"
+              className="w-full text-left px-2 py-1.5 text-[12px] text-text-tertiary hover:text-text-primary"
             >
               Auswahl leeren
             </button>

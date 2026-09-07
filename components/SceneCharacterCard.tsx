@@ -39,7 +39,7 @@ export function SceneCharacterCard({
               showBio ? "opacity-100" : "opacity-0"
             }`}
           >
-            <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-primary">
+            <div className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-text-primary">
               {[character.role, character.age ? `${character.age}` : null]
                 .filter(Boolean)
                 .join(" · ")}
@@ -58,7 +58,7 @@ export function SceneCharacterCard({
         title="Beschreibung ein-/ausblenden"
       >
         {character.name}
-        <span className={`text-[10px] transition-transform ${showBio ? "rotate-180" : ""}`}>
+        <span className={`text-[12px] transition-transform ${showBio ? "rotate-180" : ""}`}>
           ▾
         </span>
       </button>
@@ -66,7 +66,7 @@ export function SceneCharacterCard({
       {/* Tagline */}
       {character.tagline && (
         <div className="mt-1.5 flex justify-center">
-          <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
+          <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[12px] uppercase tracking-wider text-text-secondary">
             {character.tagline}
           </span>
         </div>
@@ -95,7 +95,7 @@ export function SceneCharacterCard({
 
       {/* by player */}
       {player && (
-        <div className="mt-1.5 text-center text-[10px] italic text-text-tertiary">
+        <div className="mt-1.5 text-center text-[12px] italic text-text-tertiary">
           by{" "}
           <Link
             href={`/spieler/${player.username}`}

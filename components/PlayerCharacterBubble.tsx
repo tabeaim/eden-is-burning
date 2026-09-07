@@ -81,7 +81,7 @@ export function PlayerCharacterBubble({
             className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12px] hover:bg-white/[0.04]"
           >
             <span
-              className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[8px] ${
+              className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[11px] ${
                 playerOn ? "bg-accent border-accent text-black" : "border-border-strong"
               }`}
             >
@@ -101,7 +101,7 @@ export function PlayerCharacterBubble({
                 className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12px] hover:bg-white/[0.04]"
               >
                 <span
-                  className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[8px] ${
+                  className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[11px] ${
                     on ? "bg-accent border-accent text-black" : "border-border-strong"
                   }`}
                 >

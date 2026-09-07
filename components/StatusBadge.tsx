@@ -5,14 +5,14 @@ import { Icon } from "./Icon";
 export function StatusBadge({ status }: { status: "active" | "closed" }) {
   if (status === "active") {
     return (
-      <span className="inline-flex items-center gap-1 rounded bg-bg-surface-2 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-accent">
+      <span className="inline-flex items-center gap-1 rounded bg-bg-surface-2 px-2 py-0.5 text-[12px] font-medium uppercase tracking-wider text-accent">
         <Icon name="flame" size={11} />
         aktiv
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center rounded bg-bg-surface-2 px-2 py-0.5 text-[10px] uppercase tracking-wider text-text-tertiary">
+    <span className="inline-flex items-center rounded bg-bg-surface-2 px-2 py-0.5 text-[12px] uppercase tracking-wider text-text-tertiary">
       geschlossen
     </span>
   );

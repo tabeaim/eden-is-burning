@@ -97,7 +97,7 @@ function AdminTab() {
                   <div className="text-[13px] text-text-primary truncate">
                     {p.username}
                   </div>
-                  <div className="text-[10px] text-text-tertiary truncate">
+                  <div className="text-[12px] text-text-tertiary truncate">
                     {p.email}
                   </div>
                 </div>
@@ -273,7 +273,7 @@ function CharacterEditor({ character }: { character: Character }) {
         />
         <div className="flex-1 min-w-0">
           <div className="text-[14px] text-text-primary">{draft.name}</div>
-          <div className="text-[10px] text-text-tertiary">{draft.role}</div>
+          <div className="text-[12px] text-text-tertiary">{draft.role}</div>
         </div>
         <span className="text-text-tertiary text-[12px]">
           {open ? "Schließen" : "Bearbeiten"}
@@ -300,7 +300,7 @@ function CharacterEditor({ character }: { character: Character }) {
               </div>
               <button
                 onClick={() => fileRef.current?.click()}
-                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-2 py-1.5 text-[10px] text-text-primary"
+                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-2 py-1.5 text-[12px] text-text-primary"
               >
                 <Icon name="upload" size={13} /> Foto
               </button>
@@ -311,7 +311,7 @@ function CharacterEditor({ character }: { character: Character }) {
                 onChange={onPhoto}
                 className="hidden"
               />
-              <p className="mt-1 text-[10px] text-text-tertiary text-center">
+              <p className="mt-1 text-[12px] text-text-tertiary text-center">
                 Pflicht für V1
               </p>
             </div>
@@ -422,7 +422,7 @@ function Labeled({
   children: React.ReactNode;
 }) {
   return (
-    <label className="text-[10px] text-text-secondary block">
+    <label className="text-[12px] text-text-secondary block">
       {label}
       <div className="mt-1">{children}</div>
     </label>

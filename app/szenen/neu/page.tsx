@@ -68,14 +68,14 @@ export default function NewScenePage() {
         <div>
           <div className="flex items-center justify-between text-[12px] text-text-secondary mb-1">
             <span>Szenen-Header</span>
-            <span className="text-[10px] text-text-tertiary">Auswahl folgt · Vorschau</span>
+            <span className="text-[12px] text-text-tertiary">Auswahl folgt · Vorschau</span>
           </div>
           <div
             className="relative h-24 w-full rounded-md overflow-hidden border border-border-subtle bg-center bg-cover opacity-90"
             style={{ backgroundImage: `url("${sceneHeader(title.trim() || "neue-szene")}")` }}
           >
             <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
-            <span className="absolute bottom-2 left-3 text-[10px] text-text-tertiary">
+            <span className="absolute bottom-2 left-3 text-[12px] text-text-tertiary">
               Automatisch generiert · bald selbst einstellbar
             </span>
           </div>
@@ -137,7 +137,7 @@ export default function NewScenePage() {
               type="button"
               key={loc}
               onClick={() => setLocationName(loc)}
-              className="rounded-full bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[10px] text-text-secondary"
+              className="rounded-full bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[12px] text-text-secondary"
             >
               {loc}
             </button>
@@ -207,13 +207,13 @@ export default function NewScenePage() {
                     <div className="text-[12px] text-text-primary truncate">
                       {c.name}
                     </div>
-                    <div className="text-[10px] text-text-tertiary truncate">
+                    <div className="text-[12px] text-text-tertiary truncate">
                       {c.role}
                       {isMine ? " · du" : ""}
                     </div>
                   </div>
                   {checked && (
-                    <span className="text-[10px] text-text-secondary">
+                    <span className="text-[12px] text-text-secondary">
                       #{order + 1}
                     </span>
                   )}

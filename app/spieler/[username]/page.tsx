@@ -68,11 +68,11 @@ export default function PlayerPage({
                 {c.name}
               </div>
               <div className="text-[12px] text-text-tertiary">{c.role}</div>
-              <div className="text-[10px] text-text-tertiary mt-0.5">
+              <div className="text-[12px] text-text-tertiary mt-0.5">
                 {areaName(c.area)}
               </div>
               {c.tagline && (
-                <div className="mt-1.5 inline-block rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] text-text-secondary">
+                <div className="mt-1.5 inline-block rounded-full bg-white/[0.05] px-2 py-0.5 text-[12px] text-text-secondary">
                   {c.tagline}
                 </div>
               )}

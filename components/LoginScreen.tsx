@@ -86,7 +86,7 @@ export function LoginScreen() {
           <h1 className="font-display text-[38px] text-text-primary leading-none">
             eden is burning<span className="text-accent">.</span>
           </h1>
-          <p className="text-[10px] uppercase tracking-[0.22em] text-text-tertiary mt-2">
+          <p className="text-[12px] uppercase tracking-[0.22em] text-text-tertiary mt-2">
             Eden, Virginia
           </p>
         </div>
@@ -158,7 +158,7 @@ export function LoginScreen() {
 
         {mode === "signin" && (
           <div className="mt-5">
-            <div className="text-[10px] uppercase tracking-[0.16em] text-text-tertiary mb-2 text-center">
+            <div className="text-[12px] uppercase tracking-[0.16em] text-text-tertiary mb-2 text-center">
               Test-Zugang — als Spieler*in reinklicken
             </div>
             <div className="flex flex-wrap justify-center gap-2">
@@ -174,7 +174,7 @@ export function LoginScreen() {
                 </button>
               ))}
             </div>
-            <p className="text-[10px] text-text-tertiary text-center mt-2">
+            <p className="text-[12px] text-text-tertiary text-center mt-2">
               Vorübergehend — noch keine Registrierung nötig.
             </p>
           </div>

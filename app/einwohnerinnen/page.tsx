@@ -52,10 +52,10 @@ export default function ResidentsPage() {
                   <div className="font-serif text-[14px] text-white">
                     {c.name}
                   </div>
-                  <div className="text-[10px] text-white/60">{c.role}</div>
+                  <div className="text-[12px] text-white/60">{c.role}</div>
                 </div>
               </div>
-              <div className="px-3 py-2 text-[10px] text-text-tertiary flex items-center justify-between">
+              <div className="px-3 py-2 text-[12px] text-text-tertiary flex items-center justify-between">
                 <span>{areaName(c.area)}</span>
                 {p && <span>by {p.username}</span>}
               </div>

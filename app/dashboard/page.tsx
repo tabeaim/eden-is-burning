@@ -155,17 +155,17 @@ export default function DashboardPage() {
                         <div className="font-serif text-[12px] text-text-primary truncate">
                           {scene.title}
                         </div>
-                        <div className="text-[10px] text-text-tertiary truncate">
+                        <div className="text-[12px] text-text-tertiary truncate">
                           {scene.location_name} ·{" "}
                           {areaName(scene.location_area)}
                         </div>
                       </div>
                       {last && lastChar && (
                         <div className="text-right shrink-0">
-                          <div className="text-[10px] text-text-secondary">
+                          <div className="text-[12px] text-text-secondary">
                             {lastChar.name.split(" ")[0]}
                           </div>
-                          <div className="text-[10px] text-text-tertiary">
+                          <div className="text-[12px] text-text-tertiary">
                             {timeAgo(last.created_at)}
                           </div>
                         </div>
@@ -217,11 +217,11 @@ export default function DashboardPage() {
                       <div className="text-[12px] text-text-primary truncate">
                         {p.username}
                       </div>
-                      <div className="text-[10px] text-text-tertiary truncate">
+                      <div className="text-[12px] text-text-tertiary truncate">
                         {p.current_location!.label}
                       </div>
                     </div>
-                    <span className="text-[10px] text-text-tertiary shrink-0">
+                    <span className="text-[12px] text-text-tertiary shrink-0">
                       {timeAgo(p.current_location!.at)}
                     </span>
                   </Link>
@@ -274,7 +274,7 @@ function PlayerPresenceList({
           </span>
           <div className="leading-tight">
             <div className="text-[12px] text-text-primary">{p.username}</div>
-            <div className="text-[10px] text-text-tertiary">
+            <div className="text-[12px] text-text-tertiary">
               {now ? "online" : timeAgo(p.last_seen)}
             </div>
           </div>
@@ -319,7 +319,7 @@ function CharacterGroup({
         >
           {char.name}
         </Link>
-        <span className="text-[10px] text-text-tertiary">
+        <span className="text-[12px] text-text-tertiary">
           {scenes.length} {scenes.length === 1 ? "Szene" : "Szenen"}
         </span>
       </div>

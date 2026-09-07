@@ -6,11 +6,13 @@
   --bg-sidebar: #060607;
   --bg-surface: #141416;
   --bg-surface-2: #1c1c1f;
-  --border: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.14);
+  /* Rahmen kräftiger für sichtbare Komponenten-Grenzen (WCAG 1.4.11) */
+  --border: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.24);
+  /* Text-Kontraste auf WCAG-AA angehoben (>= 4.5:1 auf dunklem Grund) */
   --text-primary: #ece8e0;
-  --text-secondary: rgba(236, 232, 224, 0.55);
-  --text-tertiary: rgba(236, 232, 224, 0.32);
+  --text-secondary: rgba(236, 232, 224, 0.75);
+  --text-tertiary: rgba(236, 232, 224, 0.62);
   /* Akzente */
   --accent: #e89a3c; /* Feuer-Orange */
   --accent-soft: rgba(232, 154, 60, 0.14);
@@ -33,12 +35,20 @@
   --color-olive: var(--olive);
   --color-olive-soft: var(--olive-soft);
   --font-sans: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: Georgia, "Times New Roman", serif;
-  --font-display: var(--font-display), "Grenze Gotisch", serif;
+  /* Serifenlos überall — vormals Georgia / Blackletter, jetzt die Sans-Schrift */
+  --font-serif: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
 }
 
 * {
   border-color: var(--border);
+}
+
+/* Sichtbarer Tastatur-Fokus (WCAG 2.4.7) — nur bei Keyboard-Navigation */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 
 html,
@@ -71,11 +81,11 @@ body {
   background-attachment: fixed;
 }
 
-/* Display-Font (Blackletter) Hilfsklasse */
+/* Display-/Überschrift-Hilfsklasse — serifenlos, kräftig (vormals Blackletter) */
 .font-display {
-  font-family: var(--font-display), "Grenze Gotisch", serif;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-family: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.005em;
 }
 
 /* Sektions-Bar-Überschrift wie im Forum (GENERAL / INPLAY) */
@@ -100,11 +110,12 @@ body {
   background: var(--accent-soft);
 }
 
+/* Szenen-Prosa — jetzt serifenlos, größer und linksbündig (bessere Lesbarkeit) */
 .prose-serif {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 15px;
-  line-height: 1.9;
-  text-align: justify;
+  font-family: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+  text-align: left;
 }
 
 .prose-serif em {

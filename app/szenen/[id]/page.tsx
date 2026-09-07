@@ -148,7 +148,7 @@ function SceneFacts({
       {/* Charaktere — der Charakter, der am Zug ist, wird markiert */}
       <div className="flex flex-wrap items-center gap-1.5">
         {scene.trigger_warning && (
-          <span className="rounded-full bg-red-500/15 text-red-300/90 text-[10px] uppercase tracking-wider px-2 py-0.5">
+          <span className="rounded-full bg-red-500/15 text-red-300/90 text-[12px] uppercase tracking-wider px-2 py-0.5">
             Triggerwarnung
           </span>
         )}
@@ -206,7 +206,7 @@ function SceneAdminBar({ scene }: { scene: Scene }) {
   if (closing) {
     return (
       <div className="mb-8 rounded-xl border border-border-subtle bg-bg-surface p-4">
-        <div className="text-[10px] uppercase tracking-wider text-text-tertiary mb-2">
+        <div className="text-[12px] uppercase tracking-wider text-text-tertiary mb-2">
           Szene beenden — Zusammenfassung (ein Satz, optional)
         </div>
         <input
@@ -307,7 +307,7 @@ function DownloadMenu() {
               {f.label}
             </button>
           ))}
-          <p className="px-2.5 pt-1 pb-0.5 text-[10px] text-text-tertiary">
+          <p className="px-2.5 pt-1 pb-0.5 text-[12px] text-text-tertiary">
             (noch ohne Funktion)
           </p>
         </div>
@@ -378,7 +378,7 @@ function PostRow({
           onMouseDown={(e) => e.preventDefault()}
           onClick={saveQuote}
           style={{ left: quoteBtn.x, top: quoteBtn.y }}
-          className="absolute z-20 -mt-1 flex -translate-x-1/2 -translate-y-full items-center gap-1 whitespace-nowrap rounded-md border border-border-subtle bg-bg-surface-2 px-2 py-1 text-[10px] text-text-secondary shadow-lg hover:text-accent"
+          className="absolute z-20 -mt-1 flex -translate-x-1/2 -translate-y-full items-center gap-1 whitespace-nowrap rounded-md border border-border-subtle bg-bg-surface-2 px-2 py-1 text-[12px] text-text-secondary shadow-lg hover:text-accent"
         >
           <Icon name="quote" size={12} /> Als Zitat speichern
         </button>
@@ -462,7 +462,7 @@ function ReplyBox({
       {/* Vorschau des Posts (wie er unter dem letzten Post erscheinen würde) */}
       {preview !== null && activeChar && (
         <div className="mb-6 rounded-lg border border-accent/30 bg-bg-primary/40 p-4">
-          <div className="mb-3 text-[10px] uppercase tracking-wider text-accent">
+          <div className="mb-3 text-[12px] uppercase tracking-wider text-accent">
             Vorschau
           </div>
           <div className="flex gap-5 items-start">
@@ -491,7 +491,7 @@ function ReplyBox({
             className="w-8 h-8 rounded-full object-cover bg-bg-primary"
           />
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-text-tertiary">
+            <div className="text-[12px] uppercase tracking-wider text-text-tertiary">
               Antwort als
             </div>
             <div className="text-[14px] text-text-primary">{activeChar?.name}</div>
@@ -500,12 +500,12 @@ function ReplyBox({
 
         {myChars.length > 1 && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-text-tertiary">Charakter wechseln:</span>
+            <span className="text-[12px] text-text-tertiary">Charakter wechseln:</span>
             {myChars.map((c) => (
               <button
                 key={c.id}
                 onClick={() => setActiveCharId(c.id)}
-                className={`rounded-full px-2.5 py-1 text-[10px] transition-colors ${
+                className={`rounded-full px-2.5 py-1 text-[12px] transition-colors ${
                   c.id === activeChar?.id
                     ? "bg-white/[0.1] text-text-primary"
                     : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
@@ -545,11 +545,10 @@ function ReplyBox({
         suppressContentEditableWarning
         data-placeholder={`Schreibe als ${activeChar?.name}…`}
         className="reply-editor prose-serif min-h-[160px] w-full rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-[14px] leading-[1.8] text-text-primary outline-none focus:border-white/20"
-        style={{ fontFamily: "Georgia, serif" }}
       />
 
       <div className="mt-3 flex items-center justify-end gap-3">
-        <span className="mr-auto text-[10px] text-text-tertiary">
+        <span className="mr-auto text-[12px] text-text-tertiary">
           HTML wird übernommen
         </span>
         <button
