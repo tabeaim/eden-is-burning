@@ -275,6 +275,17 @@ function SceneHeader({
     setClosing(false);
   }
 
+  // Zug an den nächsten Charakter in der Reihenfolge weitergeben
+  function passTurn() {
+    if (!activeCharId) return;
+    const ids = scene.participant_ids;
+    const idx = ids.indexOf(activeCharId);
+    const next = ids[(idx + 1) % ids.length];
+    if (next && next !== activeCharId) {
+      updateScene(scene.id, { next_up: next });
+    }
+  }
+
   if (editing) {
     return <SceneEditPanel scene={scene} onClose={() => setEditing(false)} />;
   }
@@ -371,18 +382,14 @@ function SceneHeader({
                 <Icon name="message" size={14} /> Antworten
               </button>
             )}
-            {scene.status === "active" && (
-              <button onClick={() => setClosing(true)} className={btn}>
-                <Icon name="check" size={14} /> Beenden
+            {scene.status === "active" && myTurn && (
+              <button onClick={passTurn} className={btn} title="Zug weitergeben">
+                <Icon name="arrow-right" size={14} /> Weitergeben
               </button>
             )}
             {scene.status === "active" && (
-              <button
-                onClick={() => updateScene(scene.id, { paused: !scene.paused })}
-                className={btn}
-              >
-                <Icon name={scene.paused ? "play" : "pause"} size={14} />{" "}
-                {scene.paused ? "Fortsetzen" : "Pausieren"}
+              <button onClick={() => setClosing(true)} className={btn}>
+                <Icon name="check" size={14} /> Beenden
               </button>
             )}
             {scene.status === "closed" && (
@@ -394,7 +401,7 @@ function SceneHeader({
               </button>
             )}
             <button onClick={() => setEditing(true)} className={btn}>
-              <Icon name="edit" size={14} /> Details bearbeiten
+              <Icon name="edit" size={14} /> Bearbeiten
             </button>
           </div>
         )}
@@ -411,24 +418,6 @@ function SceneHeader({
           </>
         )}
       </div>
-
-      {/* Am Zug — manuell übergebbar (falls jemand anderes weiterschreiben soll) */}
-      {scene.status === "active" && isParticipant && participants.length > 1 && (
-        <div className="mt-2 flex items-center gap-2 text-[0.8125rem] text-text-tertiary">
-          <span>Am Zug:</span>
-          <select
-            value={activeCharId ?? ""}
-            onChange={(e) => updateScene(scene.id, { next_up: e.target.value })}
-            className="bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[0.8125rem] text-text-primary outline-none focus:border-white/20"
-          >
-            {participants.map((c) => (
-              <option key={c.id} value={c.id} className="bg-bg-surface">
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
 
       {/* Beschreibungssatz */}
       {scene.summary ? (

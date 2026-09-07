@@ -244,13 +244,21 @@ export default function ScenesPage() {
             onClear={() => setPeriods([])}
           />
 
-          <label className="flex items-center gap-1.5 text-[0.8125rem] text-text-secondary cursor-pointer select-none">
+          <label
+            title="Nur Alternate-Universe-Szenen"
+            className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[0.8125rem] cursor-pointer select-none transition-colors ${
+              auOnly
+                ? "border-accent/60 bg-accent-soft text-text-primary"
+                : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
+            }`}
+          >
             <input
               type="checkbox"
               checked={auOnly}
               onChange={(e) => setAuOnly(e.target.checked)}
+              className="accent-accent"
             />
-            <span className="italic">Alternate Universe</span>
+            AU
           </label>
 
           {activeFilters > 0 && (
