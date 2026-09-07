@@ -67,6 +67,7 @@ export interface Scene {
   inplay_time: string;
   status: "active" | "closed";
   trigger_warning: boolean;
+  au?: boolean; // "Alternate Universe" — Szene in einem Nicht-Canon-Plot
   created_at: string;
   participant_ids: string[]; // character ids, in turn order
   // Ein-Satz-Zusammenfassung — bei Erstellung oder beim Schließen ergänzbar

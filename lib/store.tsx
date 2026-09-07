@@ -62,6 +62,9 @@ interface StoreValue extends PersistedState {
   addScene: (scene: Omit<Scene, "id" | "created_at">) => string;
   updateScene: (id: string, patch: Partial<Scene>) => void;
   resetData: () => void;
+  // Ungelesene Posts ("neu"-Tag) — pro Gerät/Nutzer in localStorage
+  isSceneNew: (sceneId: string) => boolean;
+  markSceneSeen: (sceneId: string) => void;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -91,6 +94,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<PersistedState>(EMPTY);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [ready, setReady] = useState(false);
+  // Lese-Status pro Szene (wann zuletzt geöffnet) + Basiszeitpunkt (erste Nutzung)
+  const [reads, setReads] = useState<Record<string, string>>({});
+  const [readsBaseline, setReadsBaseline] = useState<string>(() =>
+    new Date().toISOString(),
+  );
 
   const isApproved = Boolean(currentPlayer?.approved);
   const isAdmin = Boolean(currentPlayer?.is_admin);
@@ -153,6 +161,28 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
     return () => sub.subscription.unsubscribe();
   }, [loadForSession]);
+
+  // Lese-Status des aktuellen Nutzers laden (localStorage, pro Gerät)
+  useEffect(() => {
+    if (!currentPlayer) {
+      setReads({});
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(`eden:reads:${currentPlayer.id}`);
+      setReads(raw ? (JSON.parse(raw) as Record<string, string>) : {});
+      const bKey = `eden:reads-baseline:${currentPlayer.id}`;
+      let b = localStorage.getItem(bKey);
+      if (!b) {
+        b = new Date().toISOString();
+        localStorage.setItem(bKey, b);
+      }
+      setReadsBaseline(b);
+    } catch {
+      setReads({});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPlayer?.id]);
 
   // --- Auth-Methoden --------------------------------------------------------
   // Akzeptiert Username ODER E-Mail. Ist die Eingabe ein Username, wird über
@@ -423,6 +453,39 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     void refresh();
   }, [refresh]);
 
+  const markSceneSeen = useCallback(
+    (sceneId: string) => {
+      if (!currentPlayer) return;
+      const pid = currentPlayer.id;
+      setReads((r) => {
+        const next = { ...r, [sceneId]: new Date().toISOString() };
+        try {
+          localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    },
+    [currentPlayer?.id],
+  );
+
+  const isSceneNew = useCallback(
+    (sceneId: string) => {
+      if (!currentPlayer) return false;
+      let newest = 0;
+      for (const p of state.posts) {
+        if (p.scene_id !== sceneId) continue;
+        const t = new Date(p.created_at).getTime();
+        if (t > newest) newest = t;
+      }
+      if (!newest) return false;
+      const refIso = reads[sceneId] ?? readsBaseline;
+      return newest > new Date(refIso).getTime();
+    },
+    [state.posts, reads, readsBaseline, currentPlayer?.id],
+  );
+
   const value = useMemo<StoreValue>(
     () => ({
       ...state,
@@ -456,6 +519,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addScene,
       updateScene,
       resetData,
+      isSceneNew,
+      markSceneSeen,
     }),
     [
       state,
@@ -486,6 +551,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addScene,
       updateScene,
       resetData,
+      isSceneNew,
+      markSceneSeen,
     ],
   );
 

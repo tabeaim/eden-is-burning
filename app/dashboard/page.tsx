@@ -378,6 +378,12 @@ function SceneFacts({
       <div className="mt-1.5 text-[0.875rem] text-text-tertiary">
         {scene.location_name} · {areaName(scene.location_area)} ·{" "}
         {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
+        {scene.au && (
+          <>
+            {" · "}
+            <span className="text-accent font-medium">AU</span>
+          </>
+        )}
       </div>
 
       <div className="mt-1 text-[0.8125rem] text-text-tertiary">

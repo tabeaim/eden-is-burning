@@ -9,8 +9,10 @@ import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import { StatusBadge } from "@/components/StatusBadge";
+import { SceneTurnBar } from "@/components/SceneTurnBar";
+import type { Character, Scene } from "@/lib/types";
 
-type Tab = "active" | "all" | "mine" | "archive";
+type Tab = "active" | "all" | "mine" | "au" | "archive";
 type SortKey = "active" | "inplay" | "created" | "title";
 
 const SORT_LABELS: Record<SortKey, string> = {
@@ -27,11 +29,12 @@ const MONTHS_DE = [
 
 export default function ScenesPage() {
   const store = useStore();
-  const { scenes, characters, players, character, postsOf, currentPlayer, charactersOf } =
+  const { scenes, characters, players, character, postsOf, currentPlayer, charactersOf, isSceneNew } =
     store;
 
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
+  const [searchIn, setSearchIn] = useState<"title" | "post">("title");
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [areas, setAreas] = useState<string[]>([]); // AreaKey | "rest"
   const [periods, setPeriods] = useState<string[]>([]); // "YYYY-MM"
@@ -66,7 +69,7 @@ export default function ScenesPage() {
   const areaOptions = [
     ...AREA_ORDER.map((k) => ({ value: k as string, label: AREAS[k].name })),
     { value: "rest", label: "Rest der Welt" },
-  ];
+  ].sort((a, b) => a.label.localeCompare(b.label, "de"));
   const periodOptions = useMemo(() => {
     const set = new Set<string>();
     for (const s of scenes) set.add(s.inplay_date.slice(0, 7));
@@ -85,13 +88,30 @@ export default function ScenesPage() {
     return participantIds.some((pid) => character(pid)?.player_id === id);
   }
 
+  // Suche: nach Titel oder nach Text in einem Post
+  const q = search.trim().toLowerCase();
+  const stripHtml = (h: string) => h.replace(/<[^>]*>/g, " ");
+  const postMatchId = (scene: Scene): string | null => {
+    if (!q) return null;
+    for (const p of postsOf(scene.id)) {
+      if (stripHtml(p.content).toLowerCase().includes(q)) return p.id;
+    }
+    return null;
+  };
+
   const filtered = scenes.filter((s) => {
     if (tab === "active" && s.status !== "active") return false;
     if (tab === "archive" && s.status !== "closed") return false;
+    if (tab === "au" && !s.au) return false;
     if (tab === "mine" && !s.participant_ids.some((id) => myCharIds.has(id)))
       return false;
-    if (search.trim() && !s.title.toLowerCase().includes(search.trim().toLowerCase()))
-      return false;
+    if (q) {
+      if (searchIn === "post") {
+        if (!postMatchId(s)) return false;
+      } else if (!s.title.toLowerCase().includes(q)) {
+        return false;
+      }
+    }
     // Charaktere/Spieler: Szene muss zu ALLEN gewählten Tokens passen
     if (tokens.length > 0 && !tokens.every((t) => tokenMatches(t, s.participant_ids)))
       return false;
@@ -131,7 +151,12 @@ export default function ScenesPage() {
 
   const charsByPlayer = players
     .map((p) => ({ player: p, chars: characters.filter((c) => c.player_id === p.id) }))
-    .filter((g) => g.chars.length > 0);
+    .filter((g) => g.chars.length > 0)
+    .sort((a, b) =>
+      a.player.username.localeCompare(b.player.username, "de", {
+        sensitivity: "base",
+      }),
+    );
 
   const activeFilters =
     (search.trim() ? 1 : 0) + tokens.length + areas.length + periods.length;
@@ -157,6 +182,7 @@ export default function ScenesPage() {
             ["all", "Alle"],
             ["active", "Aktive"],
             ["mine", "Meine"],
+            ["au", "AU"],
             ["archive", "Archiv"],
           ] as [Tab, string][]
         ).map(([key, label]) => (
@@ -184,10 +210,25 @@ export default function ScenesPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Titel durchsuchen…"
+              placeholder={
+                searchIn === "post" ? "In Posts suchen…" : "Titel durchsuchen…"
+              }
               className="w-full bg-bg-primary border border-border-subtle rounded-md pl-8 pr-3 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
             />
           </div>
+          <select
+            value={searchIn}
+            onChange={(e) => setSearchIn(e.target.value as "title" | "post")}
+            title="Wo gesucht wird"
+            className="bg-bg-primary border border-border-subtle rounded-md px-2.5 py-1.5 text-[0.8125rem] text-text-primary outline-none focus:border-white/20"
+          >
+            <option value="title" className="bg-bg-surface">
+              Titel
+            </option>
+            <option value="post" className="bg-bg-surface">
+              Post-Text
+            </option>
+          </select>
 
           <MultiSelect
             label="Bezirke"
@@ -264,15 +305,16 @@ export default function ScenesPage() {
           const turnId = whoseTurn(s, posts);
           const participants = s.participant_ids
             .map((id) => character(id))
-            .filter(Boolean);
+            .filter(Boolean) as Character[];
+          const matchId = searchIn === "post" ? postMatchId(s) : null;
           return (
             <Link
               key={s.id}
-              href={`/szenen/${s.id}`}
+              href={matchId ? `/szenen/${s.id}#post-${matchId}` : `/szenen/${s.id}`}
               className="rounded-xl border border-border-subtle bg-bg-surface p-5 hover:bg-white/[0.03] transition-colors flex flex-col"
             >
               <div className="flex items-center justify-between gap-2">
-                <StatusBadge status={s.status} />
+                <StatusBadge status={s.status} isNew={isSceneNew(s.id)} />
                 {s.trigger_warning && (
                   <span className="text-[0.8125rem] uppercase tracking-wider text-red-300/80">
                     TW
@@ -287,27 +329,21 @@ export default function ScenesPage() {
               </div>
               <div className="text-[0.875rem] text-text-tertiary">
                 {formatInplayDate(s.inplay_date)}, {s.inplay_time}
+                {s.au && (
+                  <>
+                    {" · "}
+                    <span className="text-accent font-medium">AU</span>
+                  </>
+                )}
               </div>
 
-              <div className="mt-auto pt-4 flex items-center gap-1.5">
-                {participants.map((c) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={c!.id}
-                    src={c!.faceclaim_image_url ?? ""}
-                    alt={c!.name}
-                    title={c!.name}
-                    className="w-7 h-7 rounded-full object-cover border border-border-subtle"
-                  />
-                ))}
-                <span className="ml-1 text-[0.875rem] text-text-tertiary">
-                  {participants.map((c) => c!.name.split(" ")[0]).join(" & ")}
-                </span>
-                {s.status === "active" && turnId && (
-                  <span className="ml-auto text-[0.875rem] text-text-secondary">
-                    {character(turnId)?.name.split(" ")[0]} ist dran
-                  </span>
-                )}
+              <div className="mt-auto pt-4">
+                <SceneTurnBar
+                  participants={participants}
+                  activeCharId={turnId}
+                  active={s.status === "active"}
+                  firstNameOnly
+                />
               </div>
             </Link>
           );

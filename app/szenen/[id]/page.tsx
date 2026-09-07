@@ -46,6 +46,28 @@ export default function ScenePage({
     scene?.status,
   );
 
+  // Szene als gesehen markieren (setzt das "neu"-Tag zurück) und – falls aus der
+  // Post-Suche verlinkt (#post-<id>) – zum passenden Post springen und hervorheben.
+  useEffect(() => {
+    if (!scene) return;
+    store.markSceneSeen(scene.id);
+    const hash = window.location.hash;
+    if (hash.startsWith("#post-")) {
+      const el = document.getElementById(hash.slice(1));
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.classList.add("ring-2", "ring-accent", "rounded-lg");
+          setTimeout(
+            () => el.classList.remove("ring-2", "ring-accent", "rounded-lg"),
+            2200,
+          );
+        }, 250);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scene?.id, posts.length]);
+
   if (!scene) {
     return (
       <div className="max-w-5xl mx-auto px-8 py-16 text-text-tertiary">
@@ -99,7 +121,8 @@ export default function ScenePage({
           return (
             <div
               key={post.id}
-              className={i > 0 ? "mt-7 pt-7 border-t border-accent/40" : ""}
+              id={`post-${post.id}`}
+              className={`scroll-mt-24 ${i > 0 ? "mt-7 pt-7 border-t border-accent/40" : ""}`}
             >
               <PostRow
                 post={post}
@@ -176,6 +199,18 @@ function SceneFacts({
             </Link>
           );
         })}
+      </div>
+
+      {/* Ort · Bezirk · Datum, Tageszeit (+ AU) */}
+      <div className="mt-2 text-[0.875rem] text-text-tertiary">
+        {scene.location_name} · {areaName(scene.location_area)} ·{" "}
+        {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
+        {scene.au && (
+          <>
+            {" · "}
+            <span className="text-accent font-medium">AU</span>
+          </>
+        )}
       </div>
 
       {/* Beschreibungssatz */}

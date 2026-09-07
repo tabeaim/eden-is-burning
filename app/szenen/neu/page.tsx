@@ -23,6 +23,7 @@ export default function NewScenePage() {
   const [date, setDate] = useState("2021-11-23");
   const [time, setTime] = useState("Nachmittag");
   const [tw, setTw] = useState(false);
+  const [au, setAu] = useState(false);
   const [summary, setSummary] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -48,6 +49,7 @@ export default function NewScenePage() {
       inplay_time: time,
       status: "active",
       trigger_warning: tw,
+      au,
       participant_ids: selected,
       summary: summary.trim() || null,
     });
@@ -172,6 +174,16 @@ export default function NewScenePage() {
             onChange={(e) => setTw(e.target.checked)}
           />
           Triggerwarnung anzeigen
+        </label>
+
+        <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
+          <input
+            type="checkbox"
+            checked={au}
+            onChange={(e) => setAu(e.target.checked)}
+          />
+          <span className="text-accent font-medium">AU</span> — spielt in einem
+          Alternate Universe (Nicht-Canon)
         </label>
 
         <div>
