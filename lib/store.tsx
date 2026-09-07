@@ -94,11 +94,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<PersistedState>(EMPTY);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [ready, setReady] = useState(false);
-  // Lese-Status pro Szene (wann zuletzt geöffnet) + Basiszeitpunkt (erste Nutzung)
+  // Lese-Status pro Szene (wann zuletzt geöffnet). Eine Szene gilt als "neu",
+  // wenn ihr jüngster Post neuer ist als der letzte Besuch (oder nie geöffnet).
   const [reads, setReads] = useState<Record<string, string>>({});
-  const [readsBaseline, setReadsBaseline] = useState<string>(() =>
-    new Date().toISOString(),
-  );
 
   const isApproved = Boolean(currentPlayer?.approved);
   const isAdmin = Boolean(currentPlayer?.is_admin);
@@ -171,13 +169,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       const raw = localStorage.getItem(`eden:reads:${currentPlayer.id}`);
       setReads(raw ? (JSON.parse(raw) as Record<string, string>) : {});
-      const bKey = `eden:reads-baseline:${currentPlayer.id}`;
-      let b = localStorage.getItem(bKey);
-      if (!b) {
-        b = new Date().toISOString();
-        localStorage.setItem(bKey, b);
-      }
-      setReadsBaseline(b);
     } catch {
       setReads({});
     }
@@ -480,10 +471,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (t > newest) newest = t;
       }
       if (!newest) return false;
-      const refIso = reads[sceneId] ?? readsBaseline;
-      return newest > new Date(refIso).getTime();
+      const ref = reads[sceneId] ? new Date(reads[sceneId]).getTime() : 0;
+      return newest > ref;
     },
-    [state.posts, reads, readsBaseline, currentPlayer?.id],
+    [state.posts, reads, currentPlayer?.id],
   );
 
   const value = useMemo<StoreValue>(

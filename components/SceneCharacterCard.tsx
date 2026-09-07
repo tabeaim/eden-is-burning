@@ -95,7 +95,7 @@ export function SceneCharacterCard({
 
       {/* by player */}
       {player && (
-        <div className="mt-1.5 text-center text-[0.875rem] italic text-text-tertiary">
+        <div className="mt-1.5 text-center font-display text-[1rem] text-text-tertiary">
           by{" "}
           <Link
             href={`/spieler/${player.username}`}

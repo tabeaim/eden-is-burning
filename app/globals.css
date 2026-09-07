@@ -135,6 +135,13 @@ body {
   }
 }
 
+/* Aktueller Treffer der Post-Text-Suche (Sprung-Navigation) */
+.search-hit-current {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
 /* Markierte Zitat-Stelle in Prosa */
 .prose-serif mark {
   background: var(--accent-soft);

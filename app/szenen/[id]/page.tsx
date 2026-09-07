@@ -7,6 +7,8 @@ import { areaName } from "@/lib/world";
 import { formatInplayDate, renderPost } from "@/lib/format";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { SceneCharacterCard } from "@/components/SceneCharacterCard";
+import { SceneEditPanel } from "@/components/SceneEditPanel";
+import { StatusBadge } from "@/components/StatusBadge";
 import { Icon } from "@/components/Icon";
 import type { Character, Post, Scene } from "@/lib/types";
 
@@ -14,6 +16,26 @@ function focusReplyEditor() {
   const el = document.getElementById("reply-box");
   el?.scrollIntoView({ behavior: "smooth", block: "center" });
   setTimeout(() => document.getElementById("reply-editor")?.focus(), 350);
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Markiert Vorkommen von `term` im gerenderten Post-HTML mit <mark class="search-hit">,
+// ohne dabei in HTML-Tags hineinzuschreiben.
+function highlightTerm(html: string, term: string): string {
+  const t = term.trim();
+  if (!t) return html;
+  const re = new RegExp(`(${escapeRegExp(t)})`, "gi");
+  return html
+    .split(/(<[^>]+>)/g)
+    .map((seg) =>
+      seg.startsWith("<")
+        ? seg
+        : seg.replace(re, '<mark class="search-hit">$1</mark>'),
+    )
+    .join("");
 }
 
 export default function ScenePage({
@@ -25,6 +47,7 @@ export default function ScenePage({
   const store = useStore();
   const { scenes, character, player, postsOf, currentPlayer, charactersOf } =
     store;
+  const [searchTerm, setSearchTerm] = useState("");
 
   const scene = scenes.find((s) => s.id === id);
   const posts = scene ? postsOf(scene.id) : [];
@@ -51,6 +74,8 @@ export default function ScenePage({
   useEffect(() => {
     if (!scene) return;
     store.markSceneSeen(scene.id);
+    const params = new URLSearchParams(window.location.search);
+    setSearchTerm(params.get("q") ?? "");
     const hash = window.location.hash;
     if (hash.startsWith("#post-")) {
       const el = document.getElementById(hash.slice(1));
@@ -89,6 +114,7 @@ export default function ScenePage({
         scene.participant_ids.includes(c.id),
       )
     : [];
+  const myTurn = !!turnId && myCharsInScene.some((c) => c.id === turnId);
 
   return (
     <div className="max-w-5xl mx-auto px-8 pt-4 pb-8">
@@ -99,19 +125,11 @@ export default function ScenePage({
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mb-4" />
 
-      {/* "Alle Szenen" über dem Details-bearbeiten-Button */}
-      <Link
-        href="/szenen"
-        className="inline-flex items-center gap-1 text-[0.875rem] text-text-tertiary hover:text-text-secondary mb-3"
-      >
-        <span className="rotate-180 inline-flex">
-          <Icon name="arrow-right" size={13} />
-        </span>
-        Alle Szenen
-      </Link>
-
       {/* Aktionsleiste */}
-      <SceneAdminBar scene={scene} />
+      <SceneAdminBar scene={scene} myTurn={myTurn} />
+
+      {/* Trefferleiste der Post-Text-Suche */}
+      {searchTerm && <PostSearchBar term={searchTerm} />}
 
       {/* Posts (Ping-Pong), getrennt durch eine Akzentlinie */}
       <div className="flex flex-col">
@@ -129,6 +147,7 @@ export default function ScenePage({
                 character={c}
                 player={player(c.player_id)}
                 side={sideOf(post.character_id)}
+                term={searchTerm}
               />
             </div>
           );
@@ -168,8 +187,9 @@ function SceneFacts({
 
   return (
     <div className="mb-6">
-      {/* Charaktere — der Charakter, der am Zug ist, wird markiert */}
+      {/* Status (aktiv) + Charaktere — der Charakter, der am Zug ist, markiert */}
       <div className="flex flex-wrap items-center gap-1.5">
+        <StatusBadge status={scene.status} />
         {scene.trigger_warning && (
           <span className="rounded-full bg-red-500/15 text-red-300/90 text-[0.8125rem] uppercase tracking-wider px-2 py-0.5">
             Triggerwarnung
@@ -201,10 +221,10 @@ function SceneFacts({
         })}
       </div>
 
-      {/* Ort · Bezirk · Datum, Tageszeit (+ AU) */}
+      {/* Datum, Tageszeit · Ort · Bezirk (+ AU) */}
       <div className="mt-2 text-[0.875rem] text-text-tertiary">
-        {scene.location_name} · {areaName(scene.location_area)} ·{" "}
-        {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
+        {formatInplayDate(scene.inplay_date)}, {scene.inplay_time} ·{" "}
+        {scene.location_name} · {areaName(scene.location_area)}
         {scene.au && (
           <>
             {" · "}
@@ -228,14 +248,19 @@ function SceneFacts({
 }
 
 // Aktionsleiste: links "bearbeiten" (Platzhalter), rechts "antworten" + "beenden".
-function SceneAdminBar({ scene }: { scene: Scene }) {
+function SceneAdminBar({ scene, myTurn }: { scene: Scene; myTurn: boolean }) {
   const { updateScene } = useStore();
   const [closing, setClosing] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
 
   function end() {
     updateScene(scene.id, { status: "closed", summary: draft.trim() || scene.summary || null });
     setClosing(false);
+  }
+
+  if (editing) {
+    return <SceneEditPanel scene={scene} onClose={() => setEditing(false)} />;
   }
 
   if (closing) {
@@ -270,32 +295,82 @@ function SceneAdminBar({ scene }: { scene: Scene }) {
     );
   }
 
+  const btn =
+    "flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
+
   return (
-    <div className="mb-8 flex items-center justify-between gap-4">
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => {}}
-          className="flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
-        >
-          <Icon name="edit" size={13} /> Details bearbeiten
-        </button>
-      </div>
+    <div className="mb-8 flex items-center justify-end gap-2">
       {scene.status === "active" && (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={focusReplyEditor}
-            className="rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
-          >
-            Antworten
-          </button>
-          <button
-            onClick={() => setClosing(true)}
-            className="rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
-          >
-            Beenden
-          </button>
-        </div>
+        <button
+          onClick={focusReplyEditor}
+          title={myTurn ? "Du bist am Zug" : undefined}
+          className={
+            myTurn
+              ? "flex items-center gap-1.5 rounded-md bg-accent/90 hover:bg-accent text-black font-medium border border-accent px-3 py-1.5 text-[0.8125rem]"
+              : btn
+          }
+        >
+          <Icon name="message" size={14} /> Antworten
+        </button>
       )}
+      {scene.status === "active" && (
+        <button onClick={() => setClosing(true)} className={btn}>
+          <Icon name="check" size={14} /> Beenden
+        </button>
+      )}
+      <button onClick={() => setEditing(true)} className={btn}>
+        <Icon name="edit" size={14} /> Bearbeiten
+      </button>
+    </div>
+  );
+}
+
+// Trefferleiste der Post-Text-Suche: zählt Vorkommen und springt zwischen ihnen.
+function PostSearchBar({ term }: { term: string }) {
+  const [idx, setIdx] = useState(0);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const marks = document.querySelectorAll<HTMLElement>("mark.search-hit");
+    setCount(marks.length);
+    setIdx(0);
+    marks.forEach((m, i) => m.classList.toggle("search-hit-current", i === 0));
+  }, [term]);
+
+  function go(dir: number) {
+    const marks = Array.from(
+      document.querySelectorAll<HTMLElement>("mark.search-hit"),
+    );
+    if (marks.length === 0) return;
+    const next = (idx + dir + marks.length) % marks.length;
+    marks.forEach((m, i) => m.classList.toggle("search-hit-current", i === next));
+    marks[next].scrollIntoView({ behavior: "smooth", block: "center" });
+    setIdx(next);
+  }
+
+  if (!term.trim() || count === 0) return null;
+  return (
+    <div className="sticky top-2 z-10 mb-4 flex w-fit items-center gap-3 rounded-full border border-border-subtle bg-bg-surface-2 px-3 py-1.5 text-[0.8125rem] text-text-secondary shadow-lg">
+      <span className="text-text-primary">{term}</span>
+      <span>
+        {idx + 1}/{count}
+      </span>
+      <button
+        onClick={() => go(-1)}
+        title="Vorheriger Treffer"
+        className="hover:text-accent"
+      >
+        <span className="rotate-180 inline-flex">
+          <Icon name="arrow-right" size={14} />
+        </span>
+      </button>
+      <button
+        onClick={() => go(1)}
+        title="Nächster Treffer"
+        className="hover:text-accent"
+      >
+        <Icon name="arrow-right" size={14} />
+      </button>
     </div>
   );
 }
@@ -305,11 +380,13 @@ function PostRow({
   character,
   player,
   side,
+  term,
 }: {
   post: Post;
   character: Character;
   player?: ReturnType<typeof useStore>["players"][number];
   side: "left" | "right";
+  term?: string;
 }) {
   const { addQuote } = useStore();
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -355,7 +432,9 @@ function PostRow({
       <div
         ref={proseRef}
         className="prose-serif text-text-primary"
-        dangerouslySetInnerHTML={{ __html: renderPost(post.content) }}
+        dangerouslySetInnerHTML={{
+          __html: highlightTerm(renderPost(post.content), term ?? ""),
+        }}
       />
       {quoteBtn && (
         <button

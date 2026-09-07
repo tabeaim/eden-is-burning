@@ -33,8 +33,8 @@ export default function ScenesPage() {
     store;
 
   const [tab, setTab] = useState<Tab>("all");
-  const [search, setSearch] = useState("");
-  const [searchIn, setSearchIn] = useState<"title" | "post">("title");
+  const [searchTitle, setSearchTitle] = useState("");
+  const [searchPost, setSearchPost] = useState("");
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [areas, setAreas] = useState<string[]>([]); // AreaKey | "rest"
   const [periods, setPeriods] = useState<string[]>([]); // "YYYY-MM"
@@ -88,13 +88,14 @@ export default function ScenesPage() {
     return participantIds.some((pid) => character(pid)?.player_id === id);
   }
 
-  // Suche: nach Titel oder nach Text in einem Post
-  const q = search.trim().toLowerCase();
+  // Suche: getrennt nach Titel und nach Post-Text (eins von beiden oder beide)
+  const qTitle = searchTitle.trim().toLowerCase();
+  const qPost = searchPost.trim().toLowerCase();
   const stripHtml = (h: string) => h.replace(/<[^>]*>/g, " ");
   const postMatchId = (scene: Scene): string | null => {
-    if (!q) return null;
+    if (!qPost) return null;
     for (const p of postsOf(scene.id)) {
-      if (stripHtml(p.content).toLowerCase().includes(q)) return p.id;
+      if (stripHtml(p.content).toLowerCase().includes(qPost)) return p.id;
     }
     return null;
   };
@@ -105,13 +106,8 @@ export default function ScenesPage() {
     if (tab === "au" && !s.au) return false;
     if (tab === "mine" && !s.participant_ids.some((id) => myCharIds.has(id)))
       return false;
-    if (q) {
-      if (searchIn === "post") {
-        if (!postMatchId(s)) return false;
-      } else if (!s.title.toLowerCase().includes(q)) {
-        return false;
-      }
-    }
+    if (qTitle && !s.title.toLowerCase().includes(qTitle)) return false;
+    if (qPost && !postMatchId(s)) return false;
     // Charaktere/Spieler: Szene muss zu ALLEN gewählten Tokens passen
     if (tokens.length > 0 && !tokens.every((t) => tokenMatches(t, s.participant_ids)))
       return false;
@@ -159,10 +155,15 @@ export default function ScenesPage() {
     );
 
   const activeFilters =
-    (search.trim() ? 1 : 0) + tokens.length + areas.length + periods.length;
+    (qTitle ? 1 : 0) +
+    (qPost ? 1 : 0) +
+    tokens.length +
+    areas.length +
+    periods.length;
 
   function resetFilters() {
-    setSearch("");
+    setSearchTitle("");
+    setSearchPost("");
     setTokens([]);
     setAreas([]);
     setPeriods([]);
@@ -203,32 +204,28 @@ export default function ScenesPage() {
       {/* Filterleiste */}
       <div className="rounded-xl border border-border-subtle bg-bg-surface p-4 flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[180px]">
+          <div className="relative flex-1 min-w-[150px]">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary">
               <Icon name="search" size={14} />
             </span>
             <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={
-                searchIn === "post" ? "In Posts suchen…" : "Titel durchsuchen…"
-              }
+              value={searchTitle}
+              onChange={(e) => setSearchTitle(e.target.value)}
+              placeholder="Titel durchsuchen…"
               className="w-full bg-bg-primary border border-border-subtle rounded-md pl-8 pr-3 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
             />
           </div>
-          <select
-            value={searchIn}
-            onChange={(e) => setSearchIn(e.target.value as "title" | "post")}
-            title="Wo gesucht wird"
-            className="bg-bg-primary border border-border-subtle rounded-md px-2.5 py-1.5 text-[0.8125rem] text-text-primary outline-none focus:border-white/20"
-          >
-            <option value="title" className="bg-bg-surface">
-              Titel
-            </option>
-            <option value="post" className="bg-bg-surface">
-              Post-Text
-            </option>
-          </select>
+          <div className="relative flex-1 min-w-[150px]">
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary">
+              <Icon name="search" size={14} />
+            </span>
+            <input
+              value={searchPost}
+              onChange={(e) => setSearchPost(e.target.value)}
+              placeholder="Text in Posts suchen…"
+              className="w-full bg-bg-primary border border-border-subtle rounded-md pl-8 pr-3 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+            />
+          </div>
 
           <MultiSelect
             label="Bezirke"
@@ -306,11 +303,17 @@ export default function ScenesPage() {
           const participants = s.participant_ids
             .map((id) => character(id))
             .filter(Boolean) as Character[];
-          const matchId = searchIn === "post" ? postMatchId(s) : null;
+          const matchId = postMatchId(s);
           return (
             <Link
               key={s.id}
-              href={matchId ? `/szenen/${s.id}#post-${matchId}` : `/szenen/${s.id}`}
+              href={
+                matchId
+                  ? `/szenen/${s.id}?q=${encodeURIComponent(
+                      searchPost.trim(),
+                    )}#post-${matchId}`
+                  : `/szenen/${s.id}`
+              }
               className="rounded-xl border border-border-subtle bg-bg-surface p-5 hover:bg-white/[0.03] transition-colors flex flex-col"
             >
               <div className="flex items-center justify-between gap-2">

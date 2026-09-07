@@ -23,7 +23,8 @@ type IconName =
   | "upload"
   | "download"
   | "flame"
-  | "search";
+  | "search"
+  | "check";
 
 const paths: Record<IconName, React.ReactNode> = {
   dashboard: (
@@ -144,6 +145,7 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="m20 20-3.5-3.5" />
     </>
   ),
+  check: <path d="M20 6 9 17l-5-5" />,
 };
 
 export function Icon({
