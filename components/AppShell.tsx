@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { PageMetaProvider, usePageMeta } from "@/lib/page-meta";
 import { Icon, type IconName } from "./Icon";
-import { StatusBadge } from "./StatusBadge";
 import { LoginScreen } from "./LoginScreen";
 import { PendingScreen } from "./PendingScreen";
 import { pageHeader, sceneHeader } from "@/lib/headers";
@@ -84,7 +83,6 @@ function BannerHeader({ pathname }: { pathname: string }) {
   );
   const onThisPage = meta.path === pathname;
   const title = (onThisPage && meta.title) || navMatch?.label || "Eden is burning";
-  const statusBadge = onThisPage ? meta.statusBadge : undefined;
   // Einheitliche Seitenbreite: alle Seiten teilen dieselbe Container-Breite, damit
   // Titel und linksbündiger Inhalt beim Seitenwechsel nicht horizontal springen.
   const width = (onThisPage && meta.width) || "max-w-5xl";
@@ -118,12 +116,6 @@ function BannerHeader({ pathname }: { pathname: string }) {
           <span className="text-accent">.</span>
         </h1>
 
-        {/* Status-Badge direkt unter dem Banner (Untertitel entfernt) */}
-        {statusBadge && (
-          <div className="mt-2.5 flex items-center gap-4 pb-1">
-            <StatusBadge status={statusBadge} />
-          </div>
-        )}
       </div>
 
       {!ownsDivider && <div className="border-b border-border-subtle mt-2" />}

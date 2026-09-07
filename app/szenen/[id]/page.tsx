@@ -118,15 +118,14 @@ export default function ScenePage({
 
   return (
     <div className="max-w-5xl mx-auto px-8 pt-4 pb-8">
-      {/* Charaktere + Beschreibungssatz — direkt unter den Banner-Details,
-          noch über der Trennlinie zur Seite */}
+      {/* Aktionsleiste — linksbündig über den Szenen-Infos */}
+      <SceneAdminBar scene={scene} myTurn={myTurn} />
+
+      {/* Charaktere + Beschreibungssatz */}
       <SceneFacts scene={scene} activeCharId={turnId} />
 
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mb-4" />
-
-      {/* Aktionsleiste */}
-      <SceneAdminBar scene={scene} myTurn={myTurn} />
 
       {/* Trefferleiste der Post-Text-Suche */}
       {searchTerm && <PostSearchBar term={searchTerm} />}
@@ -299,14 +298,14 @@ function SceneAdminBar({ scene, myTurn }: { scene: Scene; myTurn: boolean }) {
     "flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
 
   return (
-    <div className="mb-8 flex items-center justify-end gap-2">
+    <div className="mb-6 flex items-center justify-start gap-2">
       {scene.status === "active" && (
         <button
           onClick={focusReplyEditor}
           title={myTurn ? "Du bist am Zug" : undefined}
           className={
             myTurn
-              ? "flex items-center gap-1.5 rounded-md bg-accent/90 hover:bg-accent text-black font-medium border border-accent px-3 py-1.5 text-[0.8125rem]"
+              ? "flex items-center gap-1.5 rounded-md border border-accent/70 bg-accent-soft px-3 py-1.5 text-[0.8125rem] text-text-primary"
               : btn
           }
         >
@@ -319,7 +318,7 @@ function SceneAdminBar({ scene, myTurn }: { scene: Scene; myTurn: boolean }) {
         </button>
       )}
       <button onClick={() => setEditing(true)} className={btn}>
-        <Icon name="edit" size={14} /> Bearbeiten
+        <Icon name="edit" size={14} /> Details bearbeiten
       </button>
     </div>
   );
@@ -388,15 +387,17 @@ function PostRow({
   side: "left" | "right";
   term?: string;
 }) {
-  const { addQuote } = useStore();
+  const { addQuote, currentPlayer, updatePost, deletePost } = useStore();
+  const owner = !!currentPlayer && character.player_id === currentPlayer.id;
   const wrapRef = useRef<HTMLDivElement>(null);
   const proseRef = useRef<HTMLDivElement>(null);
+  const editRef = useRef<HTMLDivElement>(null);
   const [quoteBtn, setQuoteBtn] = useState<{ x: number; y: number; text: string } | null>(
     null,
   );
+  const [editing, setEditing] = useState(false);
 
-  // Bei Textauswahl im Post: Button zum Speichern als Zitat anbieten.
-  // Der Text wird NICHT im Post hinterlegt/markiert.
+  // Bei Textauswahl im Post: Buttons zum Zitieren oder Kopieren anbieten.
   function onMouseUp() {
     const sel = window.getSelection();
     const text = sel?.toString().trim() ?? "";
@@ -426,9 +427,63 @@ function PostRow({
     setQuoteBtn(null);
   }
 
+  function copySelection() {
+    if (!quoteBtn) return;
+    navigator.clipboard?.writeText(quoteBtn.text).catch(() => {});
+    window.getSelection()?.removeAllRanges();
+    setQuoteBtn(null);
+  }
+
+  function startEdit() {
+    setQuoteBtn(null);
+    setEditing(true);
+    setTimeout(() => {
+      if (editRef.current) {
+        editRef.current.innerHTML = post.content;
+        editRef.current.focus();
+      }
+    }, 0);
+  }
+
+  function saveEdit() {
+    updatePost(post.id, editRef.current?.innerHTML ?? post.content);
+    setEditing(false);
+  }
+
+  function remove() {
+    if (window.confirm("Diesen Post wirklich löschen?")) deletePost(post.id);
+  }
+
   const card = <SceneCharacterCard character={character} player={player} />;
-  const prose = (
-    <div ref={wrapRef} className="relative flex-1 min-w-0" onMouseUp={onMouseUp}>
+  const prose = editing ? (
+    <div className="flex-1 min-w-0">
+      <div
+        ref={editRef}
+        contentEditable
+        suppressContentEditableWarning
+        className="reply-editor prose-serif w-full min-h-[120px] rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-text-primary outline-none focus:border-white/20"
+      />
+      <div className="mt-2 flex justify-end gap-2">
+        <button
+          onClick={() => setEditing(false)}
+          className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+        >
+          Abbrechen
+        </button>
+        <button
+          onClick={saveEdit}
+          className="rounded-md bg-accent/90 hover:bg-accent px-4 py-1.5 text-[0.8125rem] font-medium text-black"
+        >
+          Speichern
+        </button>
+      </div>
+    </div>
+  ) : (
+    <div
+      ref={wrapRef}
+      className="relative flex-1 min-w-0 select-text"
+      onMouseUp={onMouseUp}
+    >
       <div
         ref={proseRef}
         className="prose-serif text-text-primary"
@@ -437,31 +492,62 @@ function PostRow({
         }}
       />
       {quoteBtn && (
-        <button
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={saveQuote}
+        <div
           style={{ left: quoteBtn.x, top: quoteBtn.y }}
-          className="absolute z-20 -mt-1 flex -translate-x-1/2 -translate-y-full items-center gap-1 whitespace-nowrap rounded-md border border-border-subtle bg-bg-surface-2 px-2 py-1 text-[0.8125rem] text-text-secondary shadow-lg hover:text-accent"
+          className="absolute z-20 -mt-1 flex -translate-x-1/2 -translate-y-full items-center gap-1 whitespace-nowrap rounded-md border border-border-subtle bg-bg-surface-2 px-1 py-1 text-[0.8125rem] text-text-secondary shadow-lg"
         >
-          <Icon name="quote" size={12} /> Als Zitat speichern
-        </button>
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={saveQuote}
+            className="flex items-center gap-1 px-1.5 hover:text-accent"
+          >
+            <Icon name="quote" size={12} /> Zitat
+          </button>
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={copySelection}
+            className="flex items-center gap-1 px-1.5 hover:text-accent"
+          >
+            <Icon name="copy" size={12} /> Kopieren
+          </button>
+        </div>
       )}
     </div>
   );
 
   return (
-    <div className="flex gap-5 items-start">
-      {side === "left" ? (
-        <>
-          {card}
-          {prose}
-        </>
-      ) : (
-        <>
-          {prose}
-          {card}
-        </>
+    <div className="relative">
+      {owner && !editing && (
+        <div className="absolute left-0 -top-3 z-10 flex gap-1">
+          <button
+            onClick={startEdit}
+            title="Post bearbeiten"
+            className="rounded-md border border-border-subtle bg-bg-surface-2 px-1.5 py-1 text-text-tertiary hover:text-accent"
+          >
+            <Icon name="edit" size={13} />
+          </button>
+          <button
+            onClick={remove}
+            title="Post löschen"
+            className="rounded-md border border-border-subtle bg-bg-surface-2 px-1.5 py-1 text-text-tertiary hover:text-red-400"
+          >
+            <Icon name="trash" size={13} />
+          </button>
+        </div>
       )}
+      <div className="flex gap-5 items-start">
+        {side === "left" ? (
+          <>
+            {card}
+            {prose}
+          </>
+        ) : (
+          <>
+            {prose}
+            {card}
+          </>
+        )}
+      </div>
     </div>
   );
 }

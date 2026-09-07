@@ -51,6 +51,8 @@ interface StoreValue extends PersistedState {
   locationsOf: (area: string) => Location[];
   // mutations
   addPost: (sceneId: string, characterId: string, content: string) => void;
+  updatePost: (postId: string, content: string) => void;
+  deletePost: (postId: string) => void;
   addQuote: (postId: string, text: string) => void;
   removeQuote: (quoteId: string) => void;
   touchPresence: (playerId: string) => void;
@@ -329,6 +331,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const updatePost = useCallback((postId: string, content: string) => {
+    persist(
+      "updatePost",
+      supabase.from("posts").update({ content }).eq("id", postId),
+    );
+    setState((s) => ({
+      ...s,
+      posts: s.posts.map((p) => (p.id === postId ? { ...p, content } : p)),
+    }));
+  }, []);
+
+  const deletePost = useCallback((postId: string) => {
+    persist("deletePost", supabase.from("posts").delete().eq("id", postId));
+    setState((s) => ({
+      ...s,
+      posts: s.posts.filter((p) => p.id !== postId),
+      quotes: s.quotes.filter((q) => q.post_id !== postId),
+    }));
+  }, []);
+
   const addLocation = useCallback(
     (area: string, name: string, description: string | null = null) => {
       const trimmed = name.trim();
@@ -499,6 +521,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       quotesOf,
       locationsOf,
       addPost,
+      updatePost,
+      deletePost,
       addQuote,
       removeQuote,
       touchPresence,
@@ -531,6 +555,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       quotesOf,
       locationsOf,
       addPost,
+      updatePost,
+      deletePost,
       addQuote,
       removeQuote,
       touchPresence,
