@@ -73,7 +73,7 @@ export default function CharacterPage({
           <ProfileBanner c={c} />
           {c.tagline && (
             <div className="mt-3 flex justify-center">
-              <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[0.875rem] uppercase tracking-wider text-text-secondary">
+              <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[0.75rem] uppercase tracking-wider text-text-secondary">
                 {c.tagline}
               </span>
             </div>
@@ -95,7 +95,7 @@ export default function CharacterPage({
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`rounded-lg py-2 text-[0.875rem] uppercase tracking-[0.14em] transition-colors ${
+                className={`rounded-lg py-2 text-[0.75rem] uppercase tracking-[0.14em] transition-colors ${
                   tab === key
                     ? "bg-olive-soft text-text-primary border border-olive/40"
                     : "bg-white/[0.03] text-text-tertiary hover:text-text-secondary border border-transparent"
@@ -219,13 +219,13 @@ function QuoteBlock({ c }: { c: Character }) {
         <div className="mt-2 flex items-center justify-end gap-3">
           <button
             onClick={() => setEditing(false)}
-            className="text-[0.875rem] text-text-tertiary hover:text-text-primary px-2"
+            className="text-[0.75rem] text-text-tertiary hover:text-text-primary px-2"
           >
             Abbrechen
           </button>
           <button
             onClick={save}
-            className="bg-accent/90 hover:bg-accent text-black text-[0.875rem] font-medium px-3 py-1.5"
+            className="bg-accent/90 hover:bg-accent text-black text-[0.75rem] font-medium px-3 py-1.5"
           >
             Speichern
           </button>
@@ -246,7 +246,7 @@ function QuoteBlock({ c }: { c: Character }) {
             setDraft(c.quote ?? "");
             setEditing(true);
           }}
-          className="absolute right-0 top-0 text-[0.875rem] uppercase tracking-wider text-text-tertiary opacity-0 transition-opacity hover:text-accent group-hover/q:opacity-100"
+          className="absolute right-0 top-0 text-[0.75rem] uppercase tracking-wider text-text-tertiary opacity-0 transition-opacity hover:text-accent group-hover/q:opacity-100"
         >
           bearbeiten
         </button>
@@ -260,7 +260,7 @@ function QuoteBlock({ c }: { c: Character }) {
         setDraft("");
         setEditing(true);
       }}
-      className="w-full border border-dashed border-border-strong px-5 py-2.5 text-[0.875rem] text-text-tertiary hover:text-accent hover:border-accent/50"
+      className="w-full border border-dashed border-border-strong px-5 py-2.5 text-[0.75rem] text-text-tertiary hover:text-accent hover:border-accent/50"
     >
       + Zitat hinzufügen
     </button>
@@ -474,7 +474,7 @@ function RelationRow({
         {/* Charakter-Bubble (wie global) */}
         <Link
           href={`/charaktere/${rc.id}`}
-          className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[0.875rem] text-text-secondary hover:text-text-primary"
+          className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[0.75rem] text-text-secondary hover:text-text-primary"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -520,13 +520,13 @@ function RelationRow({
           <div className="flex items-center justify-end gap-3">
             <button
               onClick={() => setEditing(false)}
-              className="text-[0.875rem] text-text-tertiary hover:text-text-primary px-2"
+              className="text-[0.75rem] text-text-tertiary hover:text-text-primary px-2"
             >
               Abbrechen
             </button>
             <button
               onClick={save}
-              className="bg-accent/90 hover:bg-accent text-black text-[0.875rem] font-medium px-3 py-1.5"
+              className="bg-accent/90 hover:bg-accent text-black text-[0.75rem] font-medium px-3 py-1.5"
             >
               Speichern
             </button>
@@ -550,7 +550,7 @@ function RelationRow({
                 setNote(rel.note ?? "");
                 setEditing(true);
               }}
-              className="shrink-0 text-[0.875rem] uppercase tracking-wider text-text-tertiary hover:text-accent"
+              className="shrink-0 text-[0.75rem] uppercase tracking-wider text-text-tertiary hover:text-accent"
             >
               bearbeiten
             </button>

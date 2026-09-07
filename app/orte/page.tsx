@@ -129,7 +129,7 @@ export default function PlacesPage() {
                       <Link
                         key={c.id}
                         href={`/charaktere/${c.id}`}
-                        className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[0.875rem] text-text-secondary hover:text-text-primary"
+                        className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[0.75rem] text-text-secondary hover:text-text-primary"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -269,7 +269,7 @@ function LocationSection({
             <button
               key={l.id}
               onClick={() => setOpenLoc(isOpen ? null : l.id)}
-              className={`rounded-full border px-2.5 py-1 text-[0.875rem] transition-colors ${
+              className={`rounded-full border px-2.5 py-1 text-[0.75rem] transition-colors ${
                 played
                   ? "bg-accent-soft border-accent/40 text-text-primary"
                   : "bg-white/[0.03] border-border-subtle text-text-tertiary hover:text-text-secondary"
@@ -283,7 +283,7 @@ function LocationSection({
         {orphans.map((n) => (
           <span
             key={n}
-            className="rounded-full bg-accent-soft border border-accent/40 px-2.5 py-1 text-[0.875rem] text-text-primary"
+            className="rounded-full bg-accent-soft border border-accent/40 px-2.5 py-1 text-[0.75rem] text-text-primary"
           >
             {n}
           </span>
@@ -293,7 +293,7 @@ function LocationSection({
           <button
             onClick={onAdd}
             title="Neuen Ort erstellen"
-            className="inline-flex items-center gap-1 rounded-full border border-accent/50 bg-accent-soft px-2.5 py-1 text-[0.875rem] font-medium text-text-primary hover:bg-accent hover:text-black hover:border-accent transition-colors"
+            className="inline-flex items-center gap-1 rounded-full border border-accent/50 bg-accent-soft px-2.5 py-1 text-[0.75rem] font-medium text-text-primary hover:bg-accent hover:text-black hover:border-accent transition-colors"
           >
             <Icon name="plus" size={12} /> Ort hinzufügen
           </button>
@@ -309,7 +309,7 @@ function LocationSection({
             </div>
             <button
               onClick={() => setOpenLoc(null)}
-              className="text-text-tertiary hover:text-text-primary text-[0.875rem]"
+              className="text-text-tertiary hover:text-text-primary text-[0.75rem]"
             >
               ✕
             </button>
@@ -359,14 +359,14 @@ function AddLocationForm({
       <div className="flex items-center justify-end gap-2">
         <button
           onClick={onCancel}
-          className="text-[0.875rem] text-text-tertiary hover:text-text-primary px-2"
+          className="text-[0.75rem] text-text-tertiary hover:text-text-primary px-2"
         >
           Abbrechen
         </button>
         <button
           onClick={() => name.trim() && onCreate(name, desc)}
           disabled={!name.trim()}
-          className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.875rem] font-medium px-3 py-1.5 disabled:opacity-40"
+          className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.75rem] font-medium px-3 py-1.5 disabled:opacity-40"
         >
           Ort anlegen
         </button>

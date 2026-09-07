@@ -48,7 +48,7 @@ export default function SettingsPage() {
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`px-3 py-2 text-[0.875rem] -mb-px border-b-2 transition-colors ${
+            className={`px-3 py-2 text-[0.75rem] -mb-px border-b-2 transition-colors ${
               tab === key
                 ? "border-white/40 text-text-primary"
                 : "border-transparent text-text-secondary hover:text-text-primary"
@@ -103,7 +103,7 @@ function AdminTab() {
                 </div>
                 <button
                   onClick={() => updatePlayer(p.id, { approved: true })}
-                  className="rounded-md bg-accent/90 hover:bg-accent text-black font-medium border border-accent px-3 py-1.5 text-[0.875rem] transition-colors"
+                  className="rounded-md bg-accent/90 hover:bg-accent text-black font-medium border border-accent px-3 py-1.5 text-[0.75rem] transition-colors"
                 >
                   Freischalten
                 </button>
@@ -171,7 +171,7 @@ function ProfileTab() {
         <div>
           <button
             onClick={() => fileRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-3 py-2 text-[0.875rem] text-text-primary"
+            className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-3 py-2 text-[0.75rem] text-text-primary"
           >
             <Icon name="upload" size={15} /> Avatar hochladen
           </button>
@@ -204,7 +204,7 @@ function ProfileTab() {
       <div className="flex items-center gap-3">
         <button
           onClick={save}
-          className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[0.875rem] text-text-primary"
+          className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[0.75rem] text-text-primary"
         >
           Speichern
         </button>
@@ -226,7 +226,7 @@ function CharactersTab() {
       ))}
       <button
         onClick={() => addCharacter(currentPlayer.id)}
-        className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/15 px-4 py-4 text-[0.875rem] text-text-secondary hover:text-text-primary hover:border-white/30 transition-colors"
+        className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/15 px-4 py-4 text-[0.75rem] text-text-secondary hover:text-text-primary hover:border-white/30 transition-colors"
       >
         <Icon name="plus" size={16} /> Neuen Charakter anlegen
       </button>
@@ -300,7 +300,7 @@ function CharacterEditor({ character }: { character: Character }) {
               </div>
               <button
                 onClick={() => fileRef.current?.click()}
-                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-2 py-1.5 text-[0.875rem] text-text-primary"
+                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-2 py-1.5 text-[0.75rem] text-text-primary"
               >
                 <Icon name="upload" size={13} /> Foto
               </button>
@@ -392,7 +392,7 @@ function CharacterEditor({ character }: { character: Character }) {
           <div className="flex items-center gap-3">
             <button
               onClick={save}
-              className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[0.875rem] text-text-primary"
+              className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[0.75rem] text-text-primary"
             >
               Speichern
             </button>

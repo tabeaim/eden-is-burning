@@ -103,7 +103,7 @@ export function LoginScreen() {
                 setError(null);
                 setNotice(null);
               }}
-              className={`flex-1 rounded-md py-1.5 text-[0.875rem] transition-colors ${
+              className={`flex-1 rounded-md py-1.5 text-[0.75rem] transition-colors ${
                 mode === m
                   ? "bg-white/[0.06] text-text-primary"
                   : "text-text-secondary hover:text-text-primary"
@@ -147,7 +147,7 @@ export function LoginScreen() {
           <button
             type="submit"
             disabled={busy}
-            className="mt-1 bg-accent/90 hover:bg-accent text-black font-medium border border-accent rounded-md py-2 text-[0.875rem] transition-colors disabled:opacity-50"
+            className="mt-1 bg-accent/90 hover:bg-accent text-black font-medium border border-accent rounded-md py-2 text-[0.75rem] transition-colors disabled:opacity-50"
           >
             {busy
               ? "…"
@@ -169,7 +169,7 @@ export function LoginScreen() {
                   type="button"
                   disabled={busy}
                   onClick={() => quickLogin(p.email)}
-                  className="bg-bg-surface hover:bg-white/[0.06] border border-border-subtle rounded-lg px-3 py-1.5 text-[0.875rem] text-text-primary transition-colors disabled:opacity-50"
+                  className="bg-bg-surface hover:bg-white/[0.06] border border-border-subtle rounded-lg px-3 py-1.5 text-[0.75rem] text-text-primary transition-colors disabled:opacity-50"
                 >
                   {p.label}
                 </button>
