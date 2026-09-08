@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
 import { AREAS, areaName, type AreaKey } from "@/lib/world";
 import { formatInplayDate, placeholderImg } from "@/lib/format";
@@ -120,10 +120,7 @@ export default function PlacesPage() {
 
               {/* Bewohner*innen (echte Charaktere) */}
               {residents.length > 0 && (
-                <div className="mt-4">
-                  <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary mb-2">
-                    Bewohner*innen
-                  </div>
+                <AccordionSection key={`res-${selected}`} title="Bewohner*innen">
                   <div className="flex flex-wrap gap-1.5">
                     {residents.map((c) => (
                       <Link
@@ -141,11 +138,12 @@ export default function PlacesPage() {
                       </Link>
                     ))}
                   </div>
-                </div>
+                </AccordionSection>
               )}
 
               {/* Bespielte Orte */}
               <LocationSection
+                key={`played-${selected}`}
                 title="Bespielte Orte"
                 locs={playedLocs}
                 orphans={orphanPlayed}
@@ -155,14 +153,16 @@ export default function PlacesPage() {
                 onAdd={() => setAdding(true)}
               />
 
-              {/* Ortsideen */}
+              {/* Ortsideen — standardmäßig eingeklappt */}
               <LocationSection
+                key={`ideas-${selected}`}
                 title="Ortsideen (noch nicht bespielt)"
                 locs={ideaLocs}
                 openLoc={openLoc}
                 setOpenLoc={setOpenLoc}
                 onAdd={() => setAdding(true)}
                 showAdd
+                defaultOpen={false}
               />
 
               {/* Formular: neuen Ort anlegen */}
@@ -175,10 +175,7 @@ export default function PlacesPage() {
               )}
 
               {/* Aktive Szenen hier */}
-              <div className="mt-5">
-                <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary mb-2">
-                  Aktive Szenen hier
-                </div>
+              <AccordionSection key={`scenes-${selected}`} title="Aktive Szenen hier">
                 {activeScenes.length === 0 ? (
                   <p className="text-[0.875rem] text-text-tertiary">
                     Keine aktive Szene an diesem Ort.
@@ -223,7 +220,7 @@ export default function PlacesPage() {
                     <Icon name="arrow-right" size={12} />
                   </Link>
                 )}
-              </div>
+              </AccordionSection>
               </div>
             </>
           ) : (
@@ -237,6 +234,37 @@ export default function PlacesPage() {
   );
 }
 
+function AccordionSection({
+  title,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="mt-5">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="group flex w-full items-center gap-1.5 text-left mb-2"
+      >
+        <Icon
+          name="chevron-right"
+          size={12}
+          className={`text-text-tertiary transition-transform ${open ? "rotate-90" : ""}`}
+        />
+        <span className="text-[0.875rem] uppercase tracking-wider font-semibold text-text-tertiary group-hover:text-text-secondary transition-colors">
+          {title}
+        </span>
+      </button>
+      {open && children}
+    </div>
+  );
+}
+
 function LocationSection({
   title,
   locs,
@@ -246,6 +274,7 @@ function LocationSection({
   setOpenLoc,
   onAdd,
   showAdd = false,
+  defaultOpen = true,
 }: {
   title: string;
   locs: Location[];
@@ -255,13 +284,11 @@ function LocationSection({
   setOpenLoc: (id: string | null) => void;
   onAdd: () => void;
   showAdd?: boolean;
+  defaultOpen?: boolean;
 }) {
   const open = locs.find((l) => l.id === openLoc);
   return (
-    <div className="mt-5">
-      <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary mb-2">
-        {title}
-      </div>
+    <AccordionSection title={title} defaultOpen={defaultOpen}>
       <div className="flex flex-wrap gap-1.5">
         {locs.map((l) => {
           const isOpen = openLoc === l.id;
@@ -319,7 +346,7 @@ function LocationSection({
           </p>
         </div>
       )}
-    </div>
+    </AccordionSection>
   );
 }
 

@@ -3,7 +3,7 @@
 // Statische SVG-Karte von Eden, Virginia — 1:1 aus der aktualisierten Figma-Vorlage
 // "Stadtbezirks-Karte" (Frame 608×654) übernommen. Die exakten Vektorpfade sind aus
 // den Figma-Exporten transkribiert und per <g transform> an ihre Frame-Position
-// gesetzt; Orchid Valley und die Küsten-Splitter sind rotiert wie im Original.
+// gesetzt; Orchid Valley ist rotiert wie im Original.
 // Neu ggü. der alten Karte: eigener Bezirk "Central" (Downtown-Fläche), abgesetzter
 // "Industrial District & Eden Port", Byron University als Highlight in Rivers Edge.
 // Die Auswahl-, Bespielt- und Aktive-Szenen-Logik der App liegt darüber.
@@ -81,7 +81,7 @@ const DISTRICTS: District[] = [
   },
 ];
 
-// Wasser (Potomac → Chesapeake Bay) und Küsten-Splitter — rein dekorativ.
+// Wasser (Potomac → Chesapeake Bay) — rein dekorativ.
 const WATER: { d: string; transform: string; fill: string; stroke?: string }[] = [
   {
     d: "M156.562 18.3516L177.5 117.053V214.5L170.501 363.477L170.498 363.521L170.504 363.564L177.458 417.211L137.853 437.014L43.3555 448.453L14.9785 355.354L0.52832 301.041L43.4561 205.204L43.5 205.106V165.039L54.4922 101.585L54.5059 101.51L54.4961 101.435L43.5537 18.3789L116.95 0.525391L156.562 18.3516Z",
@@ -98,25 +98,6 @@ const WATER: { d: string; transform: string; fill: string; stroke?: string }[] =
     d: "M4 25.9112L12.9477 0L64 13.5L69.5 84.1824L25.3707 86.6955L0 40.3624L4 25.9112Z",
     transform: "translate(512.5 523)",
     fill: "#192438",
-  },
-  // Küsten-Splitter (rotiert -90.32° um AABB-Zentrum)
-  {
-    d: "M26.7021 28.5566L26.6572 28.96L27.042 29.0869L38.5078 32.8789L26.6514 59.5283L26.3896 60.1182L27.0254 60.2246L46.4717 63.498L39.1103 66.667L33.3769 63.6455L33.0254 63.4609L32.7656 63.7617L29.6435 67.375L29.4765 67.5684L29.5351 67.8174L32.5254 80.4717L24.0439 85.5791L23.9892 85.6123L23.9443 85.6582L18.9717 90.749L18.7881 90.9375L18.8389 91.1953L20.75 100.948L0.982405 100.839L14.7558 82.0625L21.792 76.9043L22.3008 76.5312L21.8213 76.1211L12.9199 68.5049L17.7285 57.6826L27.5293 46.1807L27.8603 45.792L27.4648 45.4688L22.2715 41.2275L27.5976 33.499L28.1738 32.6621L27.1592 32.7158L17.5439 33.2266L1.28807 19.3896L29.7812 0.991211L26.7021 28.5566Z",
-    transform: "translate(455.858 426.394) rotate(-90.32) translate(-24.1142 -50.726)",
-    fill: "#192438",
-    stroke: "#445130",
-  },
-  {
-    d: "M27.1416 28.918L27.0967 29.3213L27.4824 29.4482L39.1396 33.29L27.0898 60.2812L26.8262 60.8711L27.4638 60.9785L47.2461 64.2959L39.7422 67.5146L33.9121 64.4541L33.5615 64.2695L33.3017 64.5693L30.1289 68.2285L29.9619 68.4219L30.0205 68.6719L33.0596 81.4893L24.4375 86.6631L24.3828 86.6963L24.3379 86.7422L19.2842 91.8975L19.0996 92.0859L19.1513 92.3447L21.0957 102.228L0.983381 102.117L14.9863 83.0947L22.1387 77.8701L22.6504 77.4961L22.168 77.085L13.1191 69.3701L18.0078 58.4082L27.9678 46.7598L28.3008 46.3701L27.9033 46.0469L22.6221 41.748L28.0361 33.9189L28.6152 33.0811L27.5986 33.1348L17.8232 33.6523L1.29783 19.6348L30.2715 0.990234L27.1416 28.918Z",
-    transform: "translate(456.5 426.777) rotate(-90.32) translate(-24.5039 -51.3655)",
-    fill: "#192438",
-    stroke: "#445130",
-  },
-  {
-    d: "M26.752 19.5059L26.8447 19.6914L27.042 19.7568L38.5078 23.5479L26.6514 50.1982L26.3896 50.7871L27.0254 50.8945L46.4717 54.167L39.1094 57.3359L33.377 54.3154L33.0254 54.1299L32.7656 54.4307L29.6436 58.0449L29.4766 58.2383L29.5352 58.4863L32.5244 71.1406L24.0439 76.248L23.9893 76.2812L23.9443 76.3271L18.9717 81.4189L18.7881 81.6064L18.8389 81.8643L20.75 91.6172L0.982422 91.5078L14.7559 72.7324L21.792 67.5732L22.3008 67.2002L21.8213 66.79L12.9199 59.1748L17.7285 48.3516L27.5293 36.8496L27.8604 36.4609L27.4648 36.1387L22.2715 31.8965L27.5977 24.168L28.1738 23.3311L27.1592 23.3857L17.6807 23.8877L9.81348 7.09082L17.3428 0.788086L26.752 19.5059Z",
-    transform: "translate(520.523 560.368) rotate(-90.32) translate(-24.1142 -46.0605)",
-    fill: "#192438",
-    stroke: "#445130",
   },
 ];
 
@@ -189,7 +170,7 @@ export function EdenMap({
         x="559"
         y="79"
         fill="#4a6080"
-        fontSize="10"
+        fontSize="12"
         textAnchor="middle"
         transform="rotate(-91.02 559 79)"
         style={{ letterSpacing: "2.5px", pointerEvents: "none" }}
@@ -200,7 +181,7 @@ export function EdenMap({
         x="576"
         y="440"
         fill="#4a6080"
-        fontSize="10"
+        fontSize="12"
         textAnchor="middle"
         transform="rotate(-90 576 440)"
         style={{ letterSpacing: "2.5px", pointerEvents: "none" }}
@@ -209,10 +190,10 @@ export function EdenMap({
       </text>
 
       {/* Umland-Labels (Bereich = Frame-Hintergrund) */}
-      <text x="63" y="408" fill="#808080" fontSize="10" className="pointer-events-none">
+      <text x="63" y="408" fill="#808080" fontSize="12" className="pointer-events-none">
         Umland
       </text>
-      <text x="419" y="71" fill="#808080" fontSize="10" className="pointer-events-none">
+      <text x="419" y="71" fill="#808080" fontSize="12" className="pointer-events-none">
         Umland
       </text>
 
@@ -235,7 +216,7 @@ export function EdenMap({
               x={d.lx}
               y={d.ly}
               fill={isSel ? "var(--text-primary)" : "#b8c4a0"}
-              fontSize="11"
+              fontSize="12"
               className="pointer-events-none"
             >
               {d.label}
@@ -243,9 +224,9 @@ export function EdenMap({
             {d.label2 && (
               <text
                 x={d.lx}
-                y={d.ly + 13}
+                y={d.ly + 14}
                 fill={isSel ? "var(--text-primary)" : "#b8c4a0"}
-                fontSize="11"
+                fontSize="12"
                 className="pointer-events-none"
               >
                 {d.label2}
@@ -273,10 +254,10 @@ export function EdenMap({
             className="transition-all duration-150"
           />
         </g>
-        <text x={BYRON.lx} y={BYRON.ly} fill="#b8c4a0" fontSize="11" className="pointer-events-none">
+        <text x={BYRON.lx} y={BYRON.ly} fill="#b8c4a0" fontSize="12" className="pointer-events-none">
           Byron
         </text>
-        <text x={BYRON.lx} y={BYRON.ly + 13} fill="#b8c4a0" fontSize="11" className="pointer-events-none">
+        <text x={BYRON.lx} y={BYRON.ly + 14} fill="#b8c4a0" fontSize="12" className="pointer-events-none">
           University
         </text>
       </g>

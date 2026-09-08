@@ -28,7 +28,8 @@ type IconName =
   | "trash"
   | "copy"
   | "pause"
-  | "play";
+  | "play"
+  | "chevron-right";
 
 const paths: Record<IconName, React.ReactNode> = {
   dashboard: (
@@ -115,6 +116,7 @@ const paths: Record<IconName, React.ReactNode> = {
     <path d="M4 5h16v11H9l-4 3v-3H4V5Z" />
   ),
   "arrow-right": <path d="M4 12h15m-6-6 6 6-6 6" />,
+  "chevron-right": <path d="m9 6 6 6-6 6" />,
   logout: (
     <>
       <path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2" />
