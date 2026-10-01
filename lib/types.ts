@@ -98,7 +98,7 @@ export interface Location {
   // --- Ortsprofil ---
   created_by?: string | null; // Spieler-ID; darf den Ort (neben Admins) bearbeiten
   image_url?: string | null; // Titelbild
-  images?: string[] | null; // Inspo-Fotos (URLs bzw. Data-URLs)
+  images?: string[] | null; // Vibes-Fotos (URLs bzw. Data-URLs)
   pinterest_url?: string | null;
 }
 

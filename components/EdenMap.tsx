@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 // Statische SVG-Karte von Eden, Virginia — 1:1 aus der aktualisierten Figma-Vorlage
 // "Stadtbezirks-Karte" (Frame 608×654) übernommen. Die exakten Vektorpfade sind aus
 // den Figma-Exporten transkribiert und per <g transform> an ihre Frame-Position
@@ -7,7 +9,8 @@
 // Neu ggü. der alten Karte: eigener Bezirk "Central" (Downtown-Fläche), abgesetzter
 // "Industrial District & Eden Port", Byron University als Highlight in Rivers Edge.
 // Die Auswahl-, Bespielt- und Aktive-Szenen-Logik der App liegt darüber.
-// Pro Bereich zeigt ein pulsierender oranger Ticker die Zahl der aktiven Szenen.
+// Pro Bereich zeigt ein pulsierender oranger Ticker die Zahl der aktiven Szenen:
+// zentriert unter dem Bezirksnamen bzw. rechts neben dem Label in den Pills.
 
 interface District {
   key: string; // onSelect-Key (muss zu lib/world.ts bzw. EXTRA passen)
@@ -17,7 +20,6 @@ interface District {
   transform: string; // Positionierung im Frame-Koordinatensystem (0 0 608 654)
   lx: number;
   ly: number;
-  tdx?: number; // x-Versatz des Szenen-Tickers ggü. dem Label (Standard 9)
 }
 
 // Bezirke — Pfad-Koordinaten stammen aus dem jeweiligen Asset-viewBox (Ursprung
@@ -71,7 +73,6 @@ const DISTRICTS: District[] = [
     transform: "translate(388.5 421)",
     lx: 408,
     ly: 520,
-    tdx: 26,
     d: "M0.891562 91.7807L26.8916 69.7807L43.3916 12.2807L74.8916 0.780712L118.392 10.7807L127.892 91.7807L111.892 99.7807L118.392 112.781L127.892 126.281L118.392 156.281V181.281L26.8916 159.281L0.891562 91.7807Z",
   },
   {
@@ -132,11 +133,13 @@ const PILLS: Pill[] = [
   { key: "rest", label: "Rest der Welt", x: 436, y: 613, w: 158, h: 32 },
 ];
 
-// Ticker-Positionen für Bereiche ohne Bezirks-Label (Bezirke: über dem Label)
-const EXTRA_TICKERS: { key: string; x: number; y: number }[] = [
-  { key: "byron", x: 250, y: 386 },
-  { key: "umland", x: 72, y: 388 },
-];
+// Byron: Ticker an der Campus-Ecke (unter dem Label läge er auf der Strichellinie)
+const BYRON_TICKER = { x: 250, y: 386 };
+
+// Bereiche, deren Ticker neben statt unter dem Label sitzt (innerhalb der Pill)
+const PILL_BY_KEY = new Map(PILLS.map((p) => [p.key, p]));
+
+type LabelBox = { x: number; y: number; width: number; height: number };
 
 function fillFor(isSel: boolean) {
   return isSel ? "#2e2411" : "#2B2E27";
@@ -159,6 +162,31 @@ export function EdenMap({
     a.key === selected ? 1 : b.key === selected ? -1 : 0,
   );
   const byronSel = selected === "byron";
+
+  // Label-Maße (hängen von der geladenen Schrift ab) für die Ticker-Position messen
+  const labelEls = useRef(new Map<string, SVGGraphicsElement>());
+  const [boxes, setBoxes] = useState<Record<string, LabelBox>>({});
+  const labelRef = (key: string) => (el: SVGGraphicsElement | null) => {
+    if (el) labelEls.current.set(key, el);
+    else labelEls.current.delete(key);
+  };
+  useEffect(() => {
+    let alive = true;
+    const measure = () => {
+      if (!alive) return;
+      const next: Record<string, LabelBox> = {};
+      labelEls.current.forEach((el, key) => {
+        const b = el.getBBox();
+        next[key] = { x: b.x, y: b.y, width: b.width, height: b.height };
+      });
+      setBoxes(next);
+    };
+    measure();
+    document.fonts?.ready.then(measure);
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <svg viewBox="0 0 608 654" className="w-full h-auto select-none" style={{ maxHeight: 760 }}>
@@ -198,11 +226,8 @@ export function EdenMap({
         CHESAPEAKE BAY
       </text>
 
-      {/* Umland-Labels (Bereich = Frame-Hintergrund) */}
-      <text x="63" y="408" fill="#808080" fontSize="12" className="pointer-events-none">
-        Umland
-      </text>
-      <text x="419" y="71" fill="#808080" fontSize="12" className="pointer-events-none">
+      {/* Umland-Label (Bereich = Frame-Hintergrund) */}
+      <text ref={labelRef("umland")} x="63" y="408" fill="#808080" fontSize="12" className="pointer-events-none">
         Umland
       </text>
 
@@ -221,26 +246,21 @@ export function EdenMap({
                 className="transition-all duration-150"
               />
             </g>
-            <text
-              x={d.lx}
-              y={d.ly}
+            <g
+              ref={labelRef(d.key)}
               fill={isSel ? "var(--text-primary)" : "#b8c4a0"}
               fontSize="12"
               className="pointer-events-none"
             >
-              {d.label}
-            </text>
-            {d.label2 && (
-              <text
-                x={d.lx}
-                y={d.ly + 14}
-                fill={isSel ? "var(--text-primary)" : "#b8c4a0"}
-                fontSize="12"
-                className="pointer-events-none"
-              >
-                {d.label2}
+              <text x={d.lx} y={d.ly}>
+                {d.label}
               </text>
-            )}
+              {d.label2 && (
+                <text x={d.lx} y={d.ly + 14}>
+                  {d.label2}
+                </text>
+              )}
+            </g>
           </g>
         );
       })}
@@ -271,14 +291,6 @@ export function EdenMap({
         </text>
       </g>
 
-      {/* Aktive Szenen pro Bereich — zuletzt gezeichnet, damit nichts sie verdeckt */}
-      {DISTRICTS.map((d) => (
-        <Ticker key={d.key} x={d.lx + (d.tdx ?? 9)} y={d.ly - 21} count={areaStats[d.key]?.active ?? 0} />
-      ))}
-      {EXTRA_TICKERS.map((t) => (
-        <Ticker key={t.key} x={t.x} y={t.y} count={areaStats[t.key]?.active ?? 0} />
-      ))}
-
       {/* Washington D.C. — Nordpfeil */}
       <g onClick={() => onSelect("washington")} className="cursor-pointer">
         <path
@@ -289,13 +301,25 @@ export function EdenMap({
           fill="none"
           style={{ pointerEvents: "none" }}
         />
-        <ExternalPill p={PILLS[0]} selected={selected === "washington"} active={areaStats["washington"]?.active ?? 0} />
+        <ExternalPill p={PILLS[0]} selected={selected === "washington"} labelRef={labelRef("washington")} />
       </g>
 
       {/* Rest der Welt */}
       <g onClick={() => onSelect("rest")} className="cursor-pointer">
-        <ExternalPill p={PILLS[1]} selected={selected === "rest"} active={areaStats["rest"]?.active ?? 0} />
+        <ExternalPill p={PILLS[1]} selected={selected === "rest"} labelRef={labelRef("rest")} />
       </g>
+
+      {/* Aktive Szenen pro Bereich — zuletzt gezeichnet, damit nichts sie verdeckt */}
+      {Object.entries(boxes).map(([key, b]) => {
+        const pill = PILL_BY_KEY.get(key);
+        const count = areaStats[key]?.active ?? 0;
+        return pill ? (
+          <Ticker key={key} x={b.x + b.width + 16} y={pill.y + pill.h / 2} count={count} />
+        ) : (
+          <Ticker key={key} x={b.x + b.width / 2} y={b.y + b.height + 12} count={count} />
+        );
+      })}
+      <Ticker x={BYRON_TICKER.x} y={BYRON_TICKER.y} count={areaStats["byron"]?.active ?? 0} />
     </svg>
   );
 }
@@ -315,7 +339,15 @@ function Ticker({ x, y, count }: { x: number; y: number; count: number }) {
   );
 }
 
-function ExternalPill({ p, selected, active }: { p: Pill; selected: boolean; active: number }) {
+function ExternalPill({
+  p,
+  selected,
+  labelRef,
+}: {
+  p: Pill;
+  selected: boolean;
+  labelRef: (el: SVGGraphicsElement | null) => void;
+}) {
   return (
     <>
       <rect
@@ -329,12 +361,8 @@ function ExternalPill({ p, selected, active }: { p: Pill; selected: boolean; act
         strokeWidth="1"
         className="transition-all hover:stroke-white/60"
       />
-      {active > 0 ? (
-        <Ticker x={p.x + 16} y={p.y + p.h / 2} count={active} />
-      ) : (
-        <circle cx={p.x + 16} cy={p.y + p.h / 2} r="3" fill="#9E9E9E" />
-      )}
-      <text x={p.x + (active > 0 ? 31 : 27)} y={p.y + p.h / 2 + 4} fill={selected ? "var(--accent)" : "#dedede"} fontSize="12" className="pointer-events-none">
+      <circle cx={p.x + 16} cy={p.y + p.h / 2} r="3" fill="#9E9E9E" />
+      <text ref={labelRef} x={p.x + 27} y={p.y + p.h / 2 + 4} fill={selected ? "var(--accent)" : "#dedede"} fontSize="12" className="pointer-events-none">
         {p.label}
       </text>
     </>

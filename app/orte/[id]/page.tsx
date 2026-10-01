@@ -39,7 +39,7 @@ function readImageFile(file: File, maxSide = 1400): Promise<string> {
   });
 }
 
-// Ortsprofil: Beschreibung, Inspo-Fotos, Szenen und Charaktere an diesem Ort.
+// Ortsprofil: Beschreibung, Vibes-Fotos, Szenen und Charaktere an diesem Ort.
 // Bearbeiten dürfen Admins und wer den Ort erstellt hat.
 export default function LocationPage({
   params,
@@ -82,7 +82,6 @@ export default function LocationPage({
         Number(b.status === "active") - Number(a.status === "active") ||
         b.inplay_date.localeCompare(a.inplay_date),
     );
-  const activeCount = scenesHere.filter((s) => s.status === "active").length;
   const visitorIds = new Set(scenesHere.flatMap((s) => s.participant_ids));
   const visitors = characters.filter((c) => visitorIds.has(c.id));
   const creator = loc.created_by ? player(loc.created_by) : undefined;
@@ -90,40 +89,16 @@ export default function LocationPage({
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-8">
-      {/* Kopfzeile: zurück zur Karte, Bezirk, Status, Bearbeiten */}
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        <Link
-          href="/orte"
-          className="inline-flex items-center gap-1 text-[0.875rem] text-text-secondary hover:text-accent transition-colors"
-        >
-          <Icon name="arrow-right" size={12} className="rotate-180" /> Karte
-        </Link>
-        <span className="rounded-full border border-border-subtle bg-white/[0.03] px-2.5 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-secondary">
-          {areaName(loc.area)}
-        </span>
-        <span
-          className={`rounded-full border px-2.5 py-0.5 text-[0.8125rem] uppercase tracking-wider ${
-            scenesHere.length > 0
-              ? "border-accent/40 bg-accent-soft text-text-primary"
-              : "border-border-subtle bg-white/[0.03] text-text-tertiary"
-          }`}
-        >
-          {scenesHere.length > 0 ? "Bespielt" : "Ortsidee"}
-        </span>
-        {activeCount > 0 && (
-          <span className="text-[0.8125rem] uppercase tracking-wider text-accent">
-            {activeCount} aktive {activeCount === 1 ? "Szene" : "Szenen"}
-          </span>
-        )}
-        {canEdit && !editing && (
+      {canEdit && !editing && (
+        <div className="flex justify-end -mt-1 mb-5">
           <button
             onClick={() => setEditing(true)}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[0.8125rem] uppercase tracking-wider text-text-secondary hover:text-text-primary"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[0.8125rem] uppercase tracking-wider text-text-secondary hover:text-text-primary"
           >
             <Icon name="edit" size={13} /> Bearbeiten
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {editing && <LocationEditPanel loc={loc} onClose={() => setEditing(false)} />}
 
@@ -142,14 +117,10 @@ export default function LocationPage({
             )}
           </section>
 
-          <section>
-            <Heading>inspo.</Heading>
-            {images.length === 0 ? (
-              <p className="text-[0.875rem] text-text-tertiary">
-                Noch keine Inspo-Fotos.
-                {canEdit && " Über „Bearbeiten“ kannst du welche hinzufügen."}
-              </p>
-            ) : (
+          {/* Vibes — nur wenn Fotos hinterlegt sind */}
+          {images.length > 0 && (
+            <section>
+              <Heading>vibes.</Heading>
               <div className="columns-2 sm:columns-3 gap-3">
                 {images.map((src, i) => (
                   <button
@@ -162,8 +133,8 @@ export default function LocationPage({
                   </button>
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          )}
 
           <section>
             <Heading>scenes.</Heading>
@@ -206,6 +177,10 @@ export default function LocationPage({
             <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-[0.875rem]">
               <dt className="text-text-tertiary">Bezirk:</dt>
               <dd className="text-text-secondary">{areaName(loc.area)}</dd>
+              <dt className="text-text-tertiary">Status:</dt>
+              <dd className="text-text-secondary">
+                {scenesHere.length > 0 ? "Bespielt" : "Idee"}
+              </dd>
               <dt className="text-text-tertiary">Szenen:</dt>
               <dd className="text-text-secondary">{scenesHere.length}</dd>
               {creator && (
@@ -248,7 +223,7 @@ export default function LocationPage({
         </aside>
       </div>
 
-      {/* Großansicht eines Inspo-Fotos */}
+      {/* Großansicht eines Vibes-Fotos */}
       {zoom && (
         <div
           onClick={() => setZoom(null)}
@@ -405,10 +380,10 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
         />
       </label>
 
-      {/* Inspo-Fotos */}
+      {/* Vibes-Fotos */}
       <div>
         <div className="text-[0.875rem] text-text-secondary mb-1">
-          Inspo-Fotos{" "}
+          Vibes{" "}
           <span className="text-text-tertiary">
             ({images.length}/{MAX_IMAGES})
           </span>

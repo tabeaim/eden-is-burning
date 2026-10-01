@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
-import { useStore, whoseTurn } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import { AREAS, EXTRA_AREAS, areaName, type AreaKey } from "@/lib/world";
 import { formatInplayDate, placeholderImg } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
@@ -13,8 +13,7 @@ import type { Location } from "@/lib/types";
 
 export default function PlacesPage() {
   const router = useRouter();
-  const { scenes, characters, postsOf, character, locationsOf, addLocation } =
-    useStore();
+  const { scenes, characters, locationsOf, addLocation } = useStore();
   const [selected, setSelected] = useState<string>("rivers_edge");
   const [adding, setAdding] = useState(false);
 
@@ -166,31 +165,20 @@ export default function PlacesPage() {
                   </p>
                 ) : (
                   <div className="flex flex-col gap-1.5">
-                    {activeScenes.map((s) => {
-                      const turnId = whoseTurn(s, postsOf(s.id));
-                      return (
-                        <Link
-                          key={s.id}
-                          href={`/szenen/${s.id}`}
-                          className="rounded-lg border border-border-subtle bg-bg-primary px-3 py-2 hover:bg-white/[0.03] transition-colors"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[0.875rem] text-text-primary font-serif">
-                              {s.title}
-                            </span>
-                            <span className="text-[0.875rem] uppercase tracking-wider text-accent">
-                              aktiv
-                            </span>
-                          </div>
-                          <div className="text-[0.875rem] text-text-tertiary">
-                            {s.location_name} · {formatInplayDate(s.inplay_date)}
-                            {turnId && (
-                              <> · {character(turnId)?.name.split(" ")[0]} ist dran</>
-                            )}
-                          </div>
-                        </Link>
-                      );
-                    })}
+                    {activeScenes.map((s) => (
+                      <Link
+                        key={s.id}
+                        href={`/szenen/${s.id}`}
+                        className="rounded-lg border border-border-subtle bg-bg-primary px-3 py-2 hover:bg-white/[0.03] transition-colors"
+                      >
+                        <div className="text-[0.875rem] text-text-primary font-serif">
+                          {s.title}
+                        </div>
+                        <div className="text-[0.875rem] text-text-tertiary">
+                          {s.location_name} · {formatInplayDate(s.inplay_date)}
+                        </div>
+                      </Link>
+                    ))}
                   </div>
                 )}
 
