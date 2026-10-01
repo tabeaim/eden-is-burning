@@ -680,8 +680,8 @@ export function seedScenes(): Scene[] {
       // Nila (Abby) mit Elliot (tabs) & Julius (vera)
       id: "s_gallery",
       title: "Vernissage ohne Publikum",
-      location_area: "orchid_valley",
-      location_name: "Orchid Valley Country Club",
+      location_area: "washington",
+      location_name: "Dupont Circle",
       inplay_date: "2021-11-19",
       inplay_time: "Abend",
       status: "active",
