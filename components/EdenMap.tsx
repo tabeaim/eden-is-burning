@@ -7,6 +7,7 @@
 // Neu ggü. der alten Karte: eigener Bezirk "Central" (Downtown-Fläche), abgesetzter
 // "Industrial District & Eden Port", Byron University als Highlight in Rivers Edge.
 // Die Auswahl-, Bespielt- und Aktive-Szenen-Logik der App liegt darüber.
+// Pro Bereich zeigt ein pulsierender oranger Ticker die Zahl der aktiven Szenen.
 
 interface District {
   key: string; // onSelect-Key (muss zu lib/world.ts bzw. EXTRA passen)
@@ -16,6 +17,7 @@ interface District {
   transform: string; // Positionierung im Frame-Koordinatensystem (0 0 608 654)
   lx: number;
   ly: number;
+  tdx?: number; // x-Versatz des Szenen-Tickers ggü. dem Label (Standard 9)
 }
 
 // Bezirke — Pfad-Koordinaten stammen aus dem jeweiligen Asset-viewBox (Ursprung
@@ -69,6 +71,7 @@ const DISTRICTS: District[] = [
     transform: "translate(388.5 421)",
     lx: 408,
     ly: 520,
+    tdx: 26,
     d: "M0.891562 91.7807L26.8916 69.7807L43.3916 12.2807L74.8916 0.780712L118.392 10.7807L127.892 91.7807L111.892 99.7807L118.392 112.781L127.892 126.281L118.392 156.281V181.281L26.8916 159.281L0.891562 91.7807Z",
   },
   {
@@ -127,6 +130,12 @@ interface Pill {
 const PILLS: Pill[] = [
   { key: "washington", label: "Washington D.C.", x: 179, y: 27, w: 192, h: 32 },
   { key: "rest", label: "Rest der Welt", x: 436, y: 613, w: 158, h: 32 },
+];
+
+// Ticker-Positionen für Bereiche ohne Bezirks-Label (Bezirke: über dem Label)
+const EXTRA_TICKERS: { key: string; x: number; y: number }[] = [
+  { key: "byron", x: 250, y: 386 },
+  { key: "umland", x: 72, y: 388 },
 ];
 
 function fillFor(isSel: boolean) {
@@ -262,6 +271,14 @@ export function EdenMap({
         </text>
       </g>
 
+      {/* Aktive Szenen pro Bereich — zuletzt gezeichnet, damit nichts sie verdeckt */}
+      {DISTRICTS.map((d) => (
+        <Ticker key={d.key} x={d.lx + (d.tdx ?? 9)} y={d.ly - 21} count={areaStats[d.key]?.active ?? 0} />
+      ))}
+      {EXTRA_TICKERS.map((t) => (
+        <Ticker key={t.key} x={t.x} y={t.y} count={areaStats[t.key]?.active ?? 0} />
+      ))}
+
       {/* Washington D.C. — Nordpfeil */}
       <g onClick={() => onSelect("washington")} className="cursor-pointer">
         <path
@@ -272,18 +289,33 @@ export function EdenMap({
           fill="none"
           style={{ pointerEvents: "none" }}
         />
-        <ExternalPill p={PILLS[0]} selected={selected === "washington"} active={(areaStats["washington"]?.active ?? 0) > 0} />
+        <ExternalPill p={PILLS[0]} selected={selected === "washington"} active={areaStats["washington"]?.active ?? 0} />
       </g>
 
       {/* Rest der Welt */}
       <g onClick={() => onSelect("rest")} className="cursor-pointer">
-        <ExternalPill p={PILLS[1]} selected={selected === "rest"} active={(areaStats["rest"]?.active ?? 0) > 0} />
+        <ExternalPill p={PILLS[1]} selected={selected === "rest"} active={areaStats["rest"]?.active ?? 0} />
       </g>
     </svg>
   );
 }
 
-function ExternalPill({ p, selected, active }: { p: Pill; selected: boolean; active: boolean }) {
+// Runder oranger Zähler aktiver Szenen; der Ring dahinter pulsiert (globals.css).
+function Ticker({ x, y, count }: { x: number; y: number; count: number }) {
+  if (count <= 0) return null;
+  return (
+    <g className="pointer-events-none">
+      <title>{`${count} aktive ${count === 1 ? "Szene" : "Szenen"}`}</title>
+      <circle cx={x} cy={y} r="9" fill="var(--accent)" className="map-ticker-pulse" />
+      <circle cx={x} cy={y} r="9" fill="var(--accent)" />
+      <text x={x} y={y + 3.8} textAnchor="middle" fontSize="11" fontWeight="700" fill="#14100a">
+        {count}
+      </text>
+    </g>
+  );
+}
+
+function ExternalPill({ p, selected, active }: { p: Pill; selected: boolean; active: number }) {
   return (
     <>
       <rect
@@ -297,8 +329,12 @@ function ExternalPill({ p, selected, active }: { p: Pill; selected: boolean; act
         strokeWidth="1"
         className="transition-all hover:stroke-white/60"
       />
-      <circle cx={p.x + 16} cy={p.y + p.h / 2} r="3" fill={active ? "var(--accent)" : "#9E9E9E"} />
-      <text x={p.x + 27} y={p.y + p.h / 2 + 4} fill={selected ? "var(--accent)" : "#dedede"} fontSize="12" className="pointer-events-none">
+      {active > 0 ? (
+        <Ticker x={p.x + 16} y={p.y + p.h / 2} count={active} />
+      ) : (
+        <circle cx={p.x + 16} cy={p.y + p.h / 2} r="3" fill="#9E9E9E" />
+      )}
+      <text x={p.x + (active > 0 ? 31 : 27)} y={p.y + p.h / 2 + 4} fill={selected ? "var(--accent)" : "#dedede"} fontSize="12" className="pointer-events-none">
         {p.label}
       </text>
     </>

@@ -42,7 +42,7 @@ export default function ScenesPage() {
   const [sortKey, setSortKey] = useState<SortKey>("active");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  // Filter aus der URL übernehmen (Verlinkung von „Orte" bzw. Relations).
+  // Filter aus der URL übernehmen (Verlinkung von „Karte" bzw. Relations).
   // Bewusst im Effect (nach Hydration), da window.location erst clientseitig vorliegt.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

@@ -57,7 +57,7 @@ export function seedPlayers(): Player[] {
       last_seen: hoursAgo(3),
       current_location: {
         path: "/orte",
-        label: "Orte",
+        label: "Karte",
         at: hoursAgo(3),
       },
     },
@@ -1085,7 +1085,7 @@ const LOCATION_DESCRIPTIONS: Record<string, string> = {
   "Highway 95 Diner":
     "Letzter Halt vor der Stadtgrenze am Highway 95. Neon im Nirgendwo — hier trifft man sich, wenn man nicht gesehen werden will.",
   "Café Verlaine":
-    "Ruhiges Café am Theaterplatz in Downtown. Marmor, Zeitungen und genug Betrieb, um ein Gespräch darin verschwinden zu lassen.",
+    "Ruhiges Café am Theaterplatz in Central. Marmor, Zeitungen und genug Betrieb, um ein Gespräch darin verschwinden zu lassen.",
   "Simmons Anwesen":
     "Kalter Marmor, hohe Decken, zu viele Zimmer. Das Elternhaus der Simmons — schön wie ein Mausoleum.",
   "Glass Tower Bar":

@@ -13,7 +13,7 @@ import { pageHeader, sceneHeader } from "@/lib/headers";
 const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/szenen", label: "Szenen", icon: "book" },
-  { href: "/orte", label: "Orte", icon: "map" },
+  { href: "/orte", label: "Karte", icon: "map" },
   { href: "/kalender", label: "Kalender", icon: "calendar" },
   { href: "/charaktere", label: "Charaktere", icon: "users" },
   { href: "/spieler", label: "Spieler", icon: "star" },

@@ -95,6 +95,11 @@ export interface Location {
   name: string;
   description: string | null;
   created_at: string;
+  // --- Ortsprofil ---
+  created_by?: string | null; // Spieler-ID; darf den Ort (neben Admins) bearbeiten
+  image_url?: string | null; // Titelbild
+  images?: string[] | null; // Inspo-Fotos (URLs bzw. Data-URLs)
+  pinterest_url?: string | null;
 }
 
 // Ein aus einem Post markiertes Zitat — speist die rotierenden Dashboard-Zitate

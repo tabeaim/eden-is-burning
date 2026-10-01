@@ -141,6 +141,29 @@ body {
   }
 }
 
+/* Karte: pulsierender Ring hinter dem Aktive-Szenen-Ticker */
+.map-ticker-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ticker-pulse 1.8s ease-out infinite;
+}
+@keyframes ticker-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(2.3);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-ticker-pulse {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* Aktueller Treffer der Post-Text-Suche (Sprung-Navigation) */
 .search-hit-current {
   outline: 2px solid var(--accent);

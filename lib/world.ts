@@ -107,7 +107,7 @@ export const AREAS: Record<AreaKey, AreaInfo> = {
   },
   downtown: {
     key: "downtown",
-    name: "Downtown",
+    name: "Central",
     character:
       "Das pulsierende Herz Edens: Verwaltung, Theater, Hochhäuser und der zentrale Bahnhof. Tagsüber Anzüge, nachts Neon.",
     priceLevel: "$$$",
@@ -160,6 +160,20 @@ export const AREA_ORDER: AreaKey[] = [
   "washington",
 ];
 
+// Karten-Bereiche ohne eigenen Bezirks-Steckbrief (nur Name + Kurzbeschreibung)
+export const EXTRA_AREAS: Record<string, { name: string; character: string }> = {
+  rest: {
+    name: "Rest der Welt",
+    character:
+      "Alles jenseits von Eden und D.C. — Reisen, Rückblenden, ferne Orte. Für Szenen, die nirgendwo sonst hingehören.",
+  },
+  industrial: {
+    name: "Industrial District & Eden Port",
+    character:
+      "Hafen und Industriegürtel im Südosten — Lagerhallen, Docks, alte Fabriken. Wo Fracht umgeschlagen wird und die Stadt ihre raue Seite zeigt.",
+  },
+};
+
 export function areaName(key: string): string {
-  return AREAS[key as AreaKey]?.name ?? key;
+  return AREAS[key as AreaKey]?.name ?? EXTRA_AREAS[key]?.name ?? key;
 }

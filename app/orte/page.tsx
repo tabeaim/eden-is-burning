@@ -1,33 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
-import { AREAS, areaName, type AreaKey } from "@/lib/world";
+import { AREAS, EXTRA_AREAS, areaName, type AreaKey } from "@/lib/world";
 import { formatInplayDate, placeholderImg } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { EdenMap } from "@/components/EdenMap";
 import { Icon } from "@/components/Icon";
 import type { Location } from "@/lib/types";
 
-const EXTRA: Record<string, { name: string; character: string }> = {
-  rest: {
-    name: "Rest der Welt",
-    character:
-      "Alles jenseits von Eden und D.C. — Reisen, Rückblenden, ferne Orte. Für Szenen, die nirgendwo sonst hingehören.",
-  },
-  industrial: {
-    name: "Industrial District & Eden Port",
-    character:
-      "Hafen und Industriegürtel im Südosten — Lagerhallen, Docks, alte Fabriken. Wo Fracht umgeschlagen wird und die Stadt ihre raue Seite zeigt.",
-  },
-};
-
 export default function PlacesPage() {
-  const { scenes, characters, postsOf, character, player, locationsOf, addLocation } =
+  const router = useRouter();
+  const { scenes, characters, postsOf, character, locationsOf, addLocation } =
     useStore();
   const [selected, setSelected] = useState<string>("rivers_edge");
-  const [openLoc, setOpenLoc] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
   const areaStats = useMemo(() => {
@@ -58,22 +46,24 @@ export default function PlacesPage() {
   );
 
   const info = AREAS[selected as AreaKey];
-  const extra = EXTRA[selected];
+  const extra = EXTRA_AREAS[selected];
 
+  // Neuer Ort (unabhängig von einer Szene) → direkt aufs Ortsprofil zum Ausbauen
   function createLocation(name: string, description: string) {
-    addLocation(selected, name, description || null);
+    const id = addLocation(selected, name, description || null);
     setAdding(false);
+    if (id) router.push(`/orte/${id}`);
   }
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-8">
       <PageHeader
-        title="Orte"
+        title="Karte"
         subtitle="Eden, Virginia — fünf Bezirke, ein Fluss, und alles dahinter." width="max-w-5xl" />
 
       <div className="grid lg:grid-cols-[1.7fr_1fr] gap-12 items-start">
         <div className="rounded-xl border border-border-subtle bg-bg-surface p-3">
-          <EdenMap selected={selected} onSelect={(k) => { setSelected(k); setOpenLoc(null); setAdding(false); }} areaStats={areaStats} />
+          <EdenMap selected={selected} onSelect={(k) => { setSelected(k); setAdding(false); }} areaStats={areaStats} />
         </div>
 
         {/* Detail-Panel */}
@@ -148,20 +138,14 @@ export default function PlacesPage() {
                 locs={playedLocs}
                 orphans={orphanPlayed}
                 played
-                openLoc={openLoc}
-                setOpenLoc={setOpenLoc}
-                onAdd={() => setAdding(true)}
               />
 
               {/* Ortsideen — standardmäßig eingeklappt */}
               <LocationSection
                 key={`ideas-${selected}`}
-                title="Ortsideen (noch nicht bespielt)"
+                title="Ortsideen"
                 locs={ideaLocs}
-                openLoc={openLoc}
-                setOpenLoc={setOpenLoc}
                 onAdd={() => setAdding(true)}
-                showAdd
                 defaultOpen={false}
               />
 
@@ -270,42 +254,34 @@ function LocationSection({
   locs,
   orphans = [],
   played = false,
-  openLoc,
-  setOpenLoc,
   onAdd,
-  showAdd = false,
   defaultOpen = true,
 }: {
   title: string;
   locs: Location[];
   orphans?: string[];
   played?: boolean;
-  openLoc: string | null;
-  setOpenLoc: (id: string | null) => void;
-  onAdd: () => void;
-  showAdd?: boolean;
+  onAdd?: () => void; // zeigt den „+"-Button am Listenende (neuen Ort erstellen)
   defaultOpen?: boolean;
 }) {
-  const open = locs.find((l) => l.id === openLoc);
   return (
     <AccordionSection title={title} defaultOpen={defaultOpen}>
-      <div className="flex flex-wrap gap-1.5">
-        {locs.map((l) => {
-          const isOpen = openLoc === l.id;
-          return (
-            <button
-              key={l.id}
-              onClick={() => setOpenLoc(isOpen ? null : l.id)}
-              className={`rounded-full border px-2.5 py-1 text-[0.8125rem] transition-colors ${
-                played
-                  ? "bg-accent-soft border-accent/40 text-text-primary"
-                  : "bg-white/[0.03] border-border-subtle text-text-tertiary hover:text-text-secondary"
-              } ${isOpen ? "ring-1 ring-accent/60" : ""}`}
-            >
-              {l.name}
-            </button>
-          );
-        })}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {/* Jeder Ort führt auf sein Ortsprofil */}
+        {locs.map((l) => (
+          <Link
+            key={l.id}
+            href={`/orte/${l.id}`}
+            title={l.description ?? undefined}
+            className={`rounded-full border px-2.5 py-1 text-[0.8125rem] transition-colors ${
+              played
+                ? "bg-accent-soft border-accent/40 text-text-primary hover:border-accent"
+                : "bg-white/[0.03] border-border-subtle text-text-tertiary hover:text-text-primary hover:border-border-strong"
+            }`}
+          >
+            {l.name}
+          </Link>
+        ))}
         {/* Orphans (bespielt, ohne Eintrag) */}
         {orphans.map((n) => (
           <span
@@ -315,37 +291,23 @@ function LocationSection({
             {n}
           </span>
         ))}
-        {/* + neuen Ort (nur bei Ortsideen) */}
-        {showAdd && (
+        {played && locs.length === 0 && orphans.length === 0 && (
+          <p className="text-[0.875rem] text-text-tertiary">
+            Hier wurde noch nicht gespielt.
+          </p>
+        )}
+        {/* + neuen Ort erstellen — am Ende der Liste */}
+        {onAdd && (
           <button
             onClick={onAdd}
             title="Neuen Ort erstellen"
-            className="inline-flex items-center gap-1 rounded-full border border-accent/50 bg-accent-soft px-2.5 py-1 text-[0.8125rem] font-medium text-text-primary hover:bg-accent hover:text-black hover:border-accent transition-colors"
+            aria-label="Neuen Ort erstellen"
+            className="inline-flex h-[1.875rem] w-[1.875rem] items-center justify-center rounded-full border border-accent/50 bg-accent-soft text-text-primary hover:bg-accent hover:text-black hover:border-accent transition-colors"
           >
-            <Icon name="plus" size={12} /> Ort hinzufügen
+            <Icon name="plus" size={13} />
           </button>
         )}
       </div>
-
-      {/* Popup mit Beschreibung des angeklickten Orts */}
-      {open && (
-        <div className="mt-2 rounded-lg border border-accent/40 bg-bg-surface-2 px-3 py-2.5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="font-serif text-[0.875rem] text-text-primary">
-              {open.name}
-            </div>
-            <button
-              onClick={() => setOpenLoc(null)}
-              className="text-text-tertiary hover:text-text-primary text-[0.8125rem]"
-            >
-              ✕
-            </button>
-          </div>
-          <p className="text-[0.875rem] text-text-secondary mt-1 leading-relaxed">
-            {open.description ?? "Noch keine Beschreibung hinterlegt."}
-          </p>
-        </div>
-      )}
     </AccordionSection>
   );
 }

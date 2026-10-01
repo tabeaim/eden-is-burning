@@ -49,6 +49,8 @@ interface StoreValue extends PersistedState {
   playerByUsername: (username: string) => Player | undefined;
   quotesOf: (sceneId: string) => SceneQuote[];
   locationsOf: (area: string) => Location[];
+  location: (id: string) => Location | undefined;
+  canEditLocation: (loc: Location) => boolean;
   // mutations
   addPost: (sceneId: string, characterId: string, content: string) => void;
   updatePost: (postId: string, content: string) => void;
@@ -57,7 +59,9 @@ interface StoreValue extends PersistedState {
   removeQuote: (quoteId: string) => void;
   touchPresence: (playerId: string) => void;
   setLocation: (playerId: string, path: string, label: string) => void;
-  addLocation: (area: string, name: string, description?: string | null) => void;
+  // Legt den Ort an (oder findet den bestehenden) und gibt seine ID zurück.
+  addLocation: (area: string, name: string, description?: string | null) => string | null;
+  updateLocation: (id: string, patch: Partial<Location>) => void;
   updateCharacter: (id: string, patch: Partial<Character>) => void;
   addCharacter: (playerId: string) => string;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
@@ -243,6 +247,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     (area: string) => state.locations.filter((l) => l.area === area),
     [state.locations],
   );
+  const location = useCallback(
+    (id: string) => state.locations.find((l) => l.id === id),
+    [state.locations],
+  );
+  // Orte bearbeiten dürfen Admins und wer den Ort erstellt hat.
+  const canEditLocation = useCallback(
+    (loc: Location) =>
+      !!currentPlayer &&
+      (Boolean(currentPlayer.is_admin) || loc.created_by === currentPlayer.id),
+    [currentPlayer],
+  );
 
   // --- Mutationen (optimistisch lokal + Schreiben nach Supabase) ------------
   const addQuote = useCallback(
@@ -366,42 +381,77 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const addLocation = useCallback(
     (area: string, name: string, description: string | null = null) => {
       const trimmed = name.trim();
-      if (!trimmed) return;
-      setState((s) => {
-        const existing = s.locations.find(
-          (l) => l.area === area && l.name.toLowerCase() === trimmed.toLowerCase(),
-        );
-        if (existing) {
-          if (description && !existing.description) {
-            persist(
-              "addLocation/desc",
-              supabase
-                .from("locations")
-                .update({ description })
-                .eq("id", existing.id),
-            );
-            return {
-              ...s,
-              locations: s.locations.map((l) =>
-                l.id === existing.id ? { ...l, description } : l,
-              ),
-            };
-          }
-          return s;
+      if (!trimmed) return null;
+      const existing = state.locations.find(
+        (l) => l.area === area && l.name.toLowerCase() === trimmed.toLowerCase(),
+      );
+      if (existing) {
+        if (description && !existing.description && canEditLocation(existing)) {
+          persist(
+            "addLocation/desc",
+            supabase.from("locations").update({ description }).eq("id", existing.id),
+          );
+          setState((s) => ({
+            ...s,
+            locations: s.locations.map((l) =>
+              l.id === existing.id ? { ...l, description } : l,
+            ),
+          }));
         }
-        const loc: Location = {
-          id: uid("loc"),
-          area,
-          name: trimmed,
-          description: description ?? null,
-          created_at: new Date().toISOString(),
-        };
-        persist("addLocation", supabase.from("locations").insert(loc));
-        return { ...s, locations: [...s.locations, loc] };
-      });
+        return existing.id;
+      }
+      const base = {
+        id: uid("loc"),
+        area,
+        name: trimmed,
+        description: description ?? null,
+        created_at: new Date().toISOString(),
+      };
+      const loc: Location = { ...base, created_by: currentPlayer?.id ?? null };
+      // Fallback ohne created_by, falls schema-locations-profile.sql noch nicht
+      // eingespielt ist — sonst ließen sich keine Orte/Szenen mehr anlegen.
+      persist(
+        "addLocation",
+        supabase
+          .from("locations")
+          .insert(loc)
+          .then((res) => (res.error ? supabase.from("locations").insert(base) : res)),
+      );
+      setState((s) => ({ ...s, locations: [...s.locations, loc] }));
+      return loc.id;
     },
-    [],
+    [state.locations, currentPlayer?.id, canEditLocation],
   );
+
+  const updateLocation = useCallback((id: string, patch: Partial<Location>) => {
+    persist("updateLocation", supabase.from("locations").update(patch).eq("id", id));
+    setState((s) => {
+      const old = s.locations.find((l) => l.id === id);
+      if (!old) return s;
+      let scenes = s.scenes;
+      // Szenen hängen per Name am Ort — beim Umbenennen mitziehen.
+      if (patch.name && patch.name !== old.name) {
+        persist(
+          "updateLocation/scenes",
+          supabase
+            .from("scenes")
+            .update({ location_name: patch.name })
+            .eq("location_area", old.area)
+            .eq("location_name", old.name),
+        );
+        scenes = s.scenes.map((sc) =>
+          sc.location_area === old.area && sc.location_name === old.name
+            ? { ...sc, location_name: patch.name as string }
+            : sc,
+        );
+      }
+      return {
+        ...s,
+        scenes,
+        locations: s.locations.map((l) => (l.id === id ? { ...l, ...patch } : l)),
+      };
+    });
+  }, []);
 
   const updateCharacter = useCallback((id: string, patch: Partial<Character>) => {
     persist(
@@ -532,6 +582,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       playerByUsername,
       quotesOf,
       locationsOf,
+      location,
+      canEditLocation,
       addPost,
       updatePost,
       deletePost,
@@ -540,6 +592,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       touchPresence,
       setLocation,
       addLocation,
+      updateLocation,
       updateCharacter,
       addCharacter,
       updatePlayer,
@@ -566,6 +619,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       playerByUsername,
       quotesOf,
       locationsOf,
+      location,
+      canEditLocation,
       addPost,
       updatePost,
       deletePost,
@@ -574,6 +629,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       touchPresence,
       setLocation,
       addLocation,
+      updateLocation,
       updateCharacter,
       addCharacter,
       updatePlayer,
