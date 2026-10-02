@@ -33,7 +33,7 @@ export function QuoteRotator() {
   const scene = scenes.find((s) => s.id === q.scene_id);
 
   return (
-    <div className="relative px-8 py-4 text-center">
+    <div className="relative px-4 sm:px-8 py-4 text-center">
       {quotes.length > 1 && (
         <>
           <button

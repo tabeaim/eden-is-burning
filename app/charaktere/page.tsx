@@ -15,7 +15,7 @@ export default function CharaktereePage() {
     area === "all" ? characters : characters.filter((c) => c.area === area);
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader
         title="Charaktere"
         subtitle="Das Charakterverzeichnis von Eden."
@@ -33,7 +33,7 @@ export default function CharaktereePage() {
         ))}
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {list.map((c) => {
           const p = player(c.player_id);
           return (

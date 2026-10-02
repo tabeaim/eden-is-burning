@@ -76,7 +76,7 @@ export default function NewScenePage() {
     "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader title="Neue Szene" subtitle="Eröffne einen neuen Thread." width="max-w-6xl" />
 
       <form onSubmit={submit} className="flex flex-col gap-5 max-w-2xl">
@@ -113,7 +113,7 @@ export default function NewScenePage() {
           />
         </label>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="text-[0.875rem] text-text-secondary">
             Bezirk <Req />
             <select
@@ -156,7 +156,7 @@ export default function NewScenePage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="text-[0.875rem] text-text-secondary">
             In-Game-Datum <Req />
             <input

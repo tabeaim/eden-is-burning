@@ -23,6 +23,9 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { ready, currentPlayer, isApproved, touchPresence } = useStore();
   const pathname = usePathname();
+  // Handy: Navigation als Schublade, die über die Menü-Taste aufgeht
+  const [navOpen, setNavOpen] = useState(false);
+  useEffect(() => setNavOpen(false), [pathname]);
 
   // "Zuletzt online" aktuell halten: bei jedem Seitenwechsel last_seen setzen.
   useEffect(() => {
@@ -49,8 +52,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <PageMetaProvider>
       <div className="flex min-h-screen">
-        <Sidebar pathname={pathname} />
+        <Sidebar pathname={pathname} open={navOpen} onClose={() => setNavOpen(false)} />
         <div className="flex-1 min-w-0 flex flex-col">
+          {/* Kopfleiste nur auf schmalen Bildschirmen: Logo + Menü-Taste */}
+          <div className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border-subtle bg-bg-sidebar px-4 py-3">
+            <Link href="/dashboard" className="font-display text-[1.25rem] leading-none text-text-primary">
+              eden is burning<span className="text-accent">.</span>
+            </Link>
+            <button
+              onClick={() => setNavOpen(true)}
+              aria-label="Menü öffnen"
+              className="rounded-md border border-border-subtle p-1.5 text-text-secondary hover:text-text-primary"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </button>
+          </div>
           {/* Die Karte bekommt ausnahmsweise kein Titelbild — nur den Seitentitel;
               der Platz gehört der Karte. */}
           <BannerHeader pathname={pathname} noBanner={pathname === "/orte"} />
@@ -122,8 +140,8 @@ function BannerHeader({
 
       {/* Titel — ragt halb über die Banner-Unterkante in die Seite (nicht beschnitten).
           Container in der Seitenbreite zentriert → Titel startet bündig mit dem Inhalt. */}
-      <div className={`relative ${width} mx-auto px-8`}>
-        <h1 className={`page-title inline-block ${noBanner ? "mt-7" : "-mt-8"} font-display lowercase text-[2.625rem] sm:text-[3.375rem] leading-none text-text-primary`}>
+      <div className={`relative ${width} mx-auto px-4 sm:px-8`}>
+        <h1 className={`page-title inline-block ${noBanner ? "mt-7" : "-mt-8"} max-w-full break-words font-display lowercase text-[2.125rem] sm:text-[3.375rem] leading-none text-text-primary`}>
           {title}
           <span className="text-accent">.</span>
         </h1>
@@ -168,7 +186,15 @@ function SideLink({
   );
 }
 
-function Sidebar({ pathname }: { pathname: string }) {
+function Sidebar({
+  pathname,
+  open,
+  onClose,
+}: {
+  pathname: string;
+  open: boolean; // nur auf schmalen Bildschirmen relevant (Schublade)
+  onClose: () => void;
+}) {
   const { currentPlayer, charactersOf, logout } = useStore();
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
   const [charsOpen, setCharsOpen] = useState(false);
@@ -177,7 +203,16 @@ function Sidebar({ pathname }: { pathname: string }) {
     pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <aside className="w-[190px] shrink-0 bg-bg-sidebar border-r border-border-subtle flex flex-col sticky top-0 h-screen">
+    <>
+    {/* Abdunkelung hinter der offenen Schublade (Handy) */}
+    {open && (
+      <div onClick={onClose} className="fixed inset-0 z-40 bg-black/60 md:hidden" />
+    )}
+    <aside
+      className={`w-[230px] md:w-[190px] shrink-0 bg-bg-sidebar border-r border-border-subtle flex flex-col fixed inset-y-0 left-0 z-50 overflow-y-auto transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0 ${
+        open ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
       <div className="px-4 pt-5 pb-5 border-b border-border-subtle">
         <Link href="/dashboard" className="block leading-none">
           <div className="font-display text-[1.25rem] text-text-primary">
@@ -289,6 +324,7 @@ function Sidebar({ pathname }: { pathname: string }) {
         </div>
       )}
     </aside>
+    </>
   );
 }
 

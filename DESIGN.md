@@ -42,6 +42,13 @@ numerisch (`formatInplayDateShort`). Genau drei Varianten, keine weiteren:
 Alle Seiten nutzen denselben Container `max-w-6xl mx-auto px-8` (auch als `width`
 für den Banner-Titel), damit Titel und Inhalt beim Seitenwechsel nicht springen.
 
+## Responsive
+
+Alles muss auch auf dem Handy (~375px) benutzbar sein: Seiten-Gutter `px-4 sm:px-8`,
+mehrspaltige Raster und Karte-neben-Text erst ab `sm`/`md`/`lg` nebeneinander,
+Button-Reihen mit `flex-wrap`, keine festen Breiten ohne `max-w-full`. Die
+Seitenleiste ist unter `md` eine Schublade (Menü-Taste in der Kopfleiste).
+
 ## Detailseiten (Szene, Charakter, Ort)
 
 - Aktions-Buttons („Bearbeiten") rechts **über** der Trennlinie; die Seite zeichnet

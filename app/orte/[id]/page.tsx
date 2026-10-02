@@ -68,7 +68,7 @@ export default function LocationPage({
 
   if (!loc) {
     return (
-      <div className="max-w-6xl mx-auto px-8 py-16 text-text-tertiary">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-16 text-text-tertiary">
         Ort nicht gefunden.{" "}
         <Link href="/orte" className="underline">
           Zur Karte
@@ -93,7 +93,7 @@ export default function LocationPage({
   const people = loc.people ?? [];
 
   return (
-    <div className="max-w-6xl mx-auto px-8 pt-4 pb-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-8">
       {/* Kopf über der Trennlinie (wie in der Szenenansicht): Bearbeiten-Button
           bzw. das Editier-Panel */}
       {editing ? (

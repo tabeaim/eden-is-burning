@@ -137,7 +137,7 @@ export default function ScenePage({
 
   if (!scene) {
     return (
-      <div className="max-w-6xl mx-auto px-8 py-16 text-text-tertiary">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-16 text-text-tertiary">
         Szene nicht gefunden.{" "}
         <Link href="/szenen" className="underline">
           Zur Übersicht
@@ -159,7 +159,7 @@ export default function ScenePage({
   const pagePosts = pages[safePage] ?? [];
 
   return (
-    <div className="max-w-6xl mx-auto px-8 pt-4 pb-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-8">
       {/* Szenenkopf: Status + Charaktere + Aktions-Buttons, Datum/Ort/AU, Beschreibung */}
       <SceneHeader
         scene={scene}
@@ -333,7 +333,7 @@ function SceneHeader({
   return (
     <div className="mb-6">
       {/* Status + Charaktere links, Aktions-Buttons rechts (gleiche Höhe) */}
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
         <StatusBadge status={scene.status} sceneId={scene.id} />
         {scene.paused && (
@@ -361,7 +361,7 @@ function SceneHeader({
         </div>
 
         {isParticipant && (
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2">
             {scene.status === "active" && (
               <button
                 onClick={focusReplyEditor}
@@ -636,7 +636,7 @@ function PostRow({
           </button>
         </div>
       )}
-      <div className="flex gap-5 items-start">
+      <div className="flex flex-col md:flex-row gap-5 items-start">
         {card}
         {prose}
       </div>
@@ -706,7 +706,7 @@ function ReplyBox({
           <div className="mb-3 text-[0.875rem] uppercase tracking-wider text-accent">
             Vorschau
           </div>
-          <div className="flex gap-5 items-start">
+          <div className="flex flex-col md:flex-row gap-5 items-start">
             <SceneCharacterCard
               character={activeChar}
               player={player(activeChar.player_id)}

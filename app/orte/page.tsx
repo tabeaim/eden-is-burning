@@ -57,7 +57,7 @@ export default function PlacesPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-6">
       <PageHeader
         title="Karte"
         subtitle="Eden, Virginia — fünf Bezirke, ein Fluss, und alles dahinter." width="max-w-6xl" />

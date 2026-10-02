@@ -38,7 +38,7 @@ export default function SettingsPage() {
   if (isAdmin) tabs.push(["admin", "Freischaltungen"]);
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader title="Einstellungen" width="max-w-6xl" />
 
       {/* Inhalt linksbündig in Formularbreite — Container-Breite bleibt einheitlich */}
@@ -337,7 +337,7 @@ function CharacterEditor({ character }: { character: Character }) {
               </p>
             </div>
 
-            <div className="flex-1 grid grid-cols-2 gap-3">
+            <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Labeled label="Name">
                 <input
                   value={draft.name}

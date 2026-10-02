@@ -176,7 +176,7 @@ export default function ScenesPage() {
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader title="Szenen" subtitle="Alle Threads in Eden." width="max-w-6xl" />
 
       {/* Primäre Tabs */}

@@ -96,7 +96,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader
         title="Kalender"
         subtitle="In-Game-Zeitstrahl der Szenen, nach Monaten gruppiert." width="max-w-6xl" />

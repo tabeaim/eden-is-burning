@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 
 export default function InfoPage() {
   return (
-    <div className="max-w-6xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader title="Info" subtitle="Die Welt von Eden" width="max-w-6xl" />
 
       {/* Inhalt linksbündig in Lesebreite — Container-Breite bleibt einheitlich */}

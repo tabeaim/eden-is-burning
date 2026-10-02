@@ -100,7 +100,7 @@ export default function DashboardPage() {
     .sort(byLastSeen);
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader
         title={`Hallo, ${currentPlayer.username}`}
         subtitle="Dein Inplaytracker — offene Szenen, in denen du mitspielst." width="max-w-6xl" />

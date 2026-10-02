@@ -147,7 +147,7 @@ export function SceneEditPanel({
         />
       </label>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label className="text-[0.875rem] text-text-secondary">
           Bezirk <Req />
           <select
@@ -192,7 +192,7 @@ export function SceneEditPanel({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label className="text-[0.875rem] text-text-secondary">
           In-Game-Datum <Req />
           <input
