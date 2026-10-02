@@ -6,6 +6,7 @@ import { useStore } from "@/lib/store";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
 import { pageHeader } from "@/lib/headers";
+import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { Icon } from "@/components/Icon";
 import { CharacterBubble } from "@/components/Bubble";
 import { SceneCard } from "@/components/SceneCard";
@@ -15,31 +16,6 @@ const MAX_IMAGES = 12;
 
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
-
-// Prototyp: Bild als Data-URL (später Supabase Storage). Vorher verkleinert,
-// damit die Orts-Zeile in der DB nicht unnötig groß wird.
-function readImageFile(file: File, maxSide = 1400): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = reject;
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = reject;
-      img.onload = () => {
-        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return resolve(reader.result as string);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.82));
-      };
-      img.src = reader.result as string;
-    };
-    reader.readAsDataURL(file);
-  });
-}
 
 // Ortsprofil: Beschreibung, Vibes-Fotos, Characters & NPCs, Szenen und Charaktere an diesem Ort.
 // Bearbeiten dürfen Admins und wer den Ort erstellt hat.
@@ -493,14 +469,17 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
 
   async function onCoverFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) setImageUrl(await readImageFile(file, 1800));
+    if (file) setImageUrl(await uploadImage(file, "locations-banner", IMAGE_SIZES.banner));
     e.target.value = "";
   }
 
   async function onGalleryFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     e.target.value = "";
-    const added = await Promise.all(files.map((f) => readImageFile(f)));
+    const room = Math.max(0, MAX_IMAGES - images.length);
+    const added = await Promise.all(
+      files.slice(0, room).map((f) => uploadImage(f, "locations", IMAGE_SIZES.gallery)),
+    );
     setImages((cur) => [...cur, ...added].slice(0, MAX_IMAGES));
   }
 

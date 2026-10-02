@@ -101,7 +101,10 @@ export default function DashboardPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader
         title={`Hallo, ${currentPlayer.username}`}
-        subtitle="Dein Inplaytracker — offene Szenen, in denen du mitspielst." width="max-w-6xl" />
+        subtitle="Dein Inplaytracker — offene Szenen, in denen du mitspielst."
+        width="max-w-6xl"
+        bannerImage={currentPlayer.dashboard_header_url ?? undefined}
+      />
 
       <div className="grid lg:grid-cols-[1.6fr_1fr] gap-16 items-start">
         {/* LINKS: Szenenübersicht, nach Charakteren gruppiert */}

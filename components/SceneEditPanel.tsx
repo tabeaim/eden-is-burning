@@ -9,6 +9,7 @@ import {
   type AreaKey,
 } from "@/lib/world";
 import { sceneHeader } from "@/lib/headers";
+import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { Icon } from "@/components/Icon";
 import { CharacterPicker } from "@/components/CharacterPicker";
 import { AuNameField, auNames } from "@/components/AuNameField";
@@ -19,16 +20,6 @@ const field =
 
 function Req() {
   return <span className="text-accent">*</span>;
-}
-
-// Prototyp: Bild als Data-URL (später Supabase Storage).
-function readFileAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }
 
 // Editiermodus einer bestehenden Szene (analog zu "Neue Szene").
@@ -64,7 +55,7 @@ export function SceneEditPanel({
   async function onHeaderFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setHeaderUrl(await readFileAsDataURL(file));
+    setHeaderUrl(await uploadImage(file, "scenes", IMAGE_SIZES.banner));
   }
 
   function save() {

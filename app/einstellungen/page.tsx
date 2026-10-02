@@ -4,27 +4,13 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { AREA_ORDER, AREAS, type AreaKey } from "@/lib/world";
+import { IMAGE_SIZES, uploadImage } from "@/lib/images";
+import { pageHeader } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import type { Character } from "@/lib/types";
 
-// Prototyp: Bild wird als Data-URL gelesen statt zu Supabase Storage geladen.
-// In der echten App stattdessen:
-//   const { data } = await supabase.storage.from('faceclaims')
-//     .upload(`${characterId}/${file.name}`, file, { upsert: true });
-//   const { data: urlData } = supabase.storage.from('faceclaims')
-//     .getPublicUrl(`${characterId}/${file.name}`);
-//   -> urlData.publicUrl speichern.
-function readFileAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-type SettingsTab = "profile" | "characters" | "admin";
+type SettingsTab = "profile" | "characters" | "appearance" | "admin";
 
 export default function SettingsPage() {
   const { currentPlayer, isAdmin } = useStore();
@@ -34,6 +20,7 @@ export default function SettingsPage() {
   const tabs: [SettingsTab, string][] = [
     ["profile", "Mein Profil"],
     ["characters", "Meine Charaktere"],
+    ["appearance", "Darstellung"],
   ];
   if (isAdmin) tabs.push(["admin", "Freischaltungen"]);
 
@@ -61,6 +48,7 @@ export default function SettingsPage() {
 
       {tab === "profile" && <ProfileTab />}
       {tab === "characters" && <CharactersTab />}
+      {tab === "appearance" && <AppearanceTab />}
       {tab === "admin" && isAdmin && <AdminTab />}
       </div>
     </div>
@@ -149,7 +137,7 @@ function ProfileTab() {
   async function onAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !currentPlayer) return;
-    const url = await readFileAsDataURL(file);
+    const url = await uploadImage(file, "avatars", IMAGE_SIZES.avatar);
     updatePlayer(currentPlayer.id, { avatar_url: url });
   }
 
@@ -214,6 +202,85 @@ function ProfileTab() {
   );
 }
 
+// Darstellung: eigener Dashboard-Header und Farbmodus.
+function AppearanceTab() {
+  const { currentPlayer, updatePlayer } = useStore();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  if (!currentPlayer) return null;
+  const header = currentPlayer.dashboard_header_url ?? null;
+
+  async function onHeader(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !currentPlayer) return;
+    setBusy(true);
+    try {
+      const url = await uploadImage(file, "dashboards", IMAGE_SIZES.banner);
+      updatePlayer(currentPlayer.id, { dashboard_header_url: url });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-8">
+      {/* Dashboard-Header */}
+      <div>
+        <div className="flex items-center justify-between text-[0.875rem] text-text-secondary mb-1">
+          <span>
+            Header für dein Dashboard{" "}
+            {!header && <span className="text-text-tertiary">(Standard)</span>}
+          </span>
+          {header && (
+            <button
+              type="button"
+              onClick={() => updatePlayer(currentPlayer.id, { dashboard_header_url: null })}
+              className="text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+            >
+              Entfernen
+            </button>
+          )}
+        </div>
+        <div
+          className="relative h-32 w-full rounded-md overflow-hidden border border-border-subtle bg-bg-primary bg-center bg-cover"
+          style={{ backgroundImage: `url("${header || pageHeader("dashboard")}")` }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={busy}
+            className="absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-md bg-black/50 hover:bg-black/70 border border-border-subtle px-2.5 py-1.5 text-[0.8125rem] text-text-primary disabled:opacity-50"
+          >
+            <Icon name="upload" size={14} /> {busy ? "Lädt hoch…" : "Bild hochladen"}
+          </button>
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" onChange={onHeader} className="hidden" />
+        <p className="mt-1 text-[0.8125rem] text-text-tertiary">
+          Nur du siehst diesen Header, oben auf deinem Dashboard. Querformat wirkt am besten.
+        </p>
+      </div>
+
+      {/* Farbmodus */}
+      <div>
+        <div className="text-[0.875rem] text-text-secondary mb-2">Farbmodus</div>
+        <div className="flex gap-2">
+          <span className="rounded-md border border-accent/50 bg-accent-soft px-3 py-1.5 text-[0.8125rem] text-text-primary">
+            Dunkel
+          </span>
+          <span
+            title="Der Hellmodus kommt später"
+            className="rounded-md border border-border-subtle bg-bg-primary px-3 py-1.5 text-[0.8125rem] text-text-tertiary opacity-60"
+          >
+            Hell <span className="text-[0.75rem]">(kommt später)</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CharactersTab() {
   const { currentPlayer, charactersOf, addCharacter, npcs, canEditCharacter } =
     useStore();
@@ -262,7 +329,7 @@ function CharacterEditor({ character }: { character: Character }) {
   async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = await readFileAsDataURL(file);
+    const url = await uploadImage(file, "characters", IMAGE_SIZES.portrait);
     set("faceclaim_image_url", url);
     updateCharacter(character.id, { faceclaim_image_url: url });
   }

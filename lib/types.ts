@@ -18,6 +18,7 @@ export interface Player {
   created_at: string;
   last_seen: string; // ISO timestamp — "zuletzt online"
   current_location?: PlayerLocation | null;
+  dashboard_header_url?: string | null; // eigener Banner fürs Dashboard
   // --- Backend/Login (Supabase) ---
   auth_user_id?: string | null; // verknüpfter Supabase-Auth-User
   approved?: boolean; // von Admin freigeschaltet
