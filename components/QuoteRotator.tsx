@@ -32,55 +32,51 @@ export function QuoteRotator() {
   const c = character(q.character_id);
   const scene = scenes.find((s) => s.id === q.scene_id);
 
+  const arrow =
+    "shrink-0 rounded p-1 text-text-tertiary hover:text-accent transition-colors";
+
+  // Pfeile links und rechts dicht am Text, Anführungszeichen links vor dem Zitat,
+  // Text linksbündig und etwas breiter.
   return (
-    <div className="relative px-4 sm:px-8 py-4 text-center">
+    <div className="mx-auto flex max-w-4xl items-center gap-2 py-4 sm:gap-4">
       {quotes.length > 1 && (
-        <>
-          <button
-            onClick={() => go(-1)}
-            title="Vorheriges Zitat"
-            className="absolute left-0 top-1/2 -translate-y-1/2 rotate-180 text-text-tertiary hover:text-accent transition-colors"
-          >
-            <Icon name="arrow-right" size={18} />
-          </button>
-          <button
-            onClick={() => go(1)}
-            title="Nächstes Zitat"
-            className="absolute right-0 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-accent transition-colors"
-          >
-            <Icon name="arrow-right" size={18} />
-          </button>
-        </>
+        <button onClick={() => go(-1)} title="Vorheriges Zitat" className={arrow}>
+          <Icon name="arrow-right" size={18} className="rotate-180" />
+        </button>
       )}
 
-      <span className="text-accent text-[3.375rem] leading-none font-display">“</span>
-      <blockquote
-        key={q.id}
-        className="prose-serif !text-center !text-[1rem] text-text-primary mx-auto max-w-xl mt-1 animate-[fadein_0.5s_ease]"
-      >
-        {q.text}
-      </blockquote>
-      <div className="mt-3 text-[0.875rem] text-text-secondary">
-        {c && (
-          <Link
-            href={`/charaktere/${c.id}`}
-            className="text-text-primary hover:text-accent"
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <span className="shrink-0 font-display text-[3.375rem] leading-[0.8] text-accent">“</span>
+        <div className="min-w-0">
+          <blockquote
+            key={q.id}
+            className="prose-serif !text-left !text-[1rem] text-text-primary animate-[fadein_0.5s_ease]"
           >
-            {c.name}
-          </Link>
-        )}
-        {scene && (
-          <>
-            {" "}in{" "}
-            <Link
-              href={`/szenen/${scene.id}`}
-              className="italic hover:text-accent"
-            >
-              {scene.title}
-            </Link>
-          </>
-        )}
+            {q.text}
+          </blockquote>
+          <div className="mt-2 text-[0.875rem] text-text-secondary">
+            {c && (
+              <Link href={`/charaktere/${c.id}`} className="text-text-primary hover:text-accent">
+                {c.name}
+              </Link>
+            )}
+            {scene && (
+              <>
+                {" "}in{" "}
+                <Link href={`/szenen/${scene.id}`} className="italic hover:text-accent">
+                  {scene.title}
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
       </div>
+
+      {quotes.length > 1 && (
+        <button onClick={() => go(1)} title="Nächstes Zitat" className={arrow}>
+          <Icon name="arrow-right" size={18} />
+        </button>
+      )}
     </div>
   );
 }
