@@ -15,11 +15,11 @@ export default function CharaktereePage() {
     area === "all" ? characters : characters.filter((c) => c.area === area);
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-8 py-8">
       <PageHeader
         title="Charaktere"
         subtitle="Das Charakterverzeichnis von Eden."
-        width="max-w-5xl"
+        width="max-w-6xl"
       />
 
       <div className="flex flex-wrap gap-1.5 mb-6">

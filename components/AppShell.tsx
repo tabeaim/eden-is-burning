@@ -85,7 +85,7 @@ function BannerHeader({ pathname }: { pathname: string }) {
   const title = (onThisPage && meta.title) || navMatch?.label || "Eden is burning";
   // Einheitliche Seitenbreite: alle Seiten teilen dieselbe Container-Breite, damit
   // Titel und linksbündiger Inhalt beim Seitenwechsel nicht horizontal springen.
-  const width = (onThisPage && meta.width) || "max-w-5xl";
+  const width = (onThisPage && meta.width) || "max-w-6xl";
   // Detailseiten (Szene, Charakter, Ort) zeichnen ihre eigene Trennlinie unter dem
   // Inhalt (Zusammenfassung, Zitat bzw. Bearbeiten-Button), damit der noch über
   // der Linie steht.

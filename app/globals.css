@@ -158,6 +158,14 @@ body {
   mask-composite: intersect;
 }
 
+/* Kartenbreite aus der Fensterhöhe ableiten (Seitenverhältnis 608:654), damit die
+   ganze Karte unter Banner + Titel ohne Scrollen sichtbar bleibt. */
+@media (min-width: 1024px) {
+  .map-fit {
+    width: clamp(420px, calc((100vh - 270px) * 0.93), 620px);
+  }
+}
+
 /* Karte: langsam pulsierender Ring hinter dem Aktive-Szenen-Ticker */
 .map-ticker-pulse {
   transform-box: fill-box;

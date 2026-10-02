@@ -11,11 +11,11 @@ export default function SpielerOverviewPage() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-8 py-8">
       <PageHeader
         title="Spieler"
         subtitle="Alle Spieler*innen von Eden."
-        width="max-w-5xl"
+        width="max-w-6xl"
       />
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

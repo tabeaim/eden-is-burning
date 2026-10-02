@@ -76,8 +76,8 @@ export default function NewScenePage() {
     "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8">
-      <PageHeader title="Neue Szene" subtitle="Eröffne einen neuen Thread." width="max-w-5xl" />
+    <div className="max-w-6xl mx-auto px-8 py-8">
+      <PageHeader title="Neue Szene" subtitle="Eröffne einen neuen Thread." width="max-w-6xl" />
 
       <form onSubmit={submit} className="flex flex-col gap-5 max-w-2xl">
         <div>

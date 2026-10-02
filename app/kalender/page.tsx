@@ -96,10 +96,10 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-8 py-8">
       <PageHeader
         title="Kalender"
-        subtitle="In-Game-Zeitstrahl der Szenen, nach Monaten gruppiert." width="max-w-5xl" />
+        subtitle="In-Game-Zeitstrahl der Szenen, nach Monaten gruppiert." width="max-w-6xl" />
 
       {/* Inhalt linksbündig in Lesebreite — Container-Breite bleibt einheitlich */}
       <div className="max-w-2xl">

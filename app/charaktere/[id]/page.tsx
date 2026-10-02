@@ -39,12 +39,12 @@ export default function CharacterPage({
     c ? `${c.name}${c.is_npc ? " (NPC)" : ""}` : "Charakter",
     undefined,
     undefined,
-    "max-w-5xl",
+    "max-w-6xl",
   );
 
   if (!c) {
     return (
-      <div className="max-w-5xl mx-auto px-8 py-16 text-text-tertiary">
+      <div className="max-w-6xl mx-auto px-8 py-16 text-text-tertiary">
         Charakter nicht gefunden.{" "}
         <Link href="/charaktere" className="underline">
           Zum Verzeichnis
@@ -71,7 +71,7 @@ export default function CharacterPage({
     .filter(Boolean) as Character[];
 
   return (
-    <div className="max-w-5xl mx-auto px-8 pt-1 pb-8">
+    <div className="max-w-6xl mx-auto px-8 pt-1 pb-8">
       {/* Inhalt linksbündig in gewohnter Breite — Container-Breite bleibt einheitlich */}
       <div className="max-w-4xl">
       {/* Zitat — direkt unter dem Seitentitel, über der Trennlinie */}
@@ -173,7 +173,7 @@ function NpcFacts({ c }: { c: Character }) {
   const foundAt = locations.filter((l) => l.people?.some((x) => x.id === c.id));
 
   return (
-    <div className="max-w-5xl mx-auto px-8 pt-4 pb-8">
+    <div className="max-w-6xl mx-auto px-8 pt-4 pb-8">
       {canEditCharacter(c) && (
         <div className="mb-4 flex justify-end">
           <Link

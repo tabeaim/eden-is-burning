@@ -57,7 +57,7 @@ export default function LocationPage({
 
   // Ortsname als Seitentitel; Banner ist standardmäßig der der Karte, bis ein
   // eigenes Bild hinterlegt wird.
-  useSetPageMeta(loc?.name ?? "Ort", undefined, loc?.image_url ?? undefined, "max-w-5xl");
+  useSetPageMeta(loc?.name ?? "Ort", undefined, loc?.image_url ?? undefined, "max-w-6xl");
 
   useEffect(() => {
     if (!zoom) return;
@@ -68,7 +68,7 @@ export default function LocationPage({
 
   if (!loc) {
     return (
-      <div className="max-w-5xl mx-auto px-8 py-16 text-text-tertiary">
+      <div className="max-w-6xl mx-auto px-8 py-16 text-text-tertiary">
         Ort nicht gefunden.{" "}
         <Link href="/orte" className="underline">
           Zur Karte
@@ -93,7 +93,7 @@ export default function LocationPage({
   const people = loc.people ?? [];
 
   return (
-    <div className="max-w-5xl mx-auto px-8 pt-4 pb-8">
+    <div className="max-w-6xl mx-auto px-8 pt-4 pb-8">
       {/* Kopf über der Trennlinie (wie in der Szenenansicht): Bearbeiten-Button
           bzw. das Editier-Panel */}
       {editing ? (
@@ -114,7 +114,7 @@ export default function LocationPage({
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mb-6" />
 
-      <div className="grid md:grid-cols-[1fr_260px] gap-10 items-start">
+      <div className="grid md:grid-cols-[1fr_260px] gap-14 items-start">
         <div className="flex flex-col gap-9 min-w-0">
           <section>
             <Heading>about.</Heading>

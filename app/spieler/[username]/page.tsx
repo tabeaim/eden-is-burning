@@ -16,7 +16,7 @@ export default function PlayerPage({
 
   if (!p) {
     return (
-      <div className="max-w-5xl mx-auto px-8 py-16 text-text-tertiary">
+      <div className="max-w-6xl mx-auto px-8 py-16 text-text-tertiary">
         Spieler*in nicht gefunden.
       </div>
     );
@@ -25,7 +25,7 @@ export default function PlayerPage({
   const chars = charactersOf(p.id);
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-8 py-8">
       {/* Inhalt linksbündig in Lesebreite — Container-Breite bleibt einheitlich */}
       <div className="max-w-3xl">
       <div className="flex items-center gap-4">

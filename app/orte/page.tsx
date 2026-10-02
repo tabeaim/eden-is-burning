@@ -57,20 +57,21 @@ export default function PlacesPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-8 py-8">
       <PageHeader
         title="Karte"
-        subtitle="Eden, Virginia — fünf Bezirke, ein Fluss, und alles dahinter." width="max-w-5xl" />
+        subtitle="Eden, Virginia — fünf Bezirke, ein Fluss, und alles dahinter." width="max-w-6xl" />
 
-      {/* Karte liegt frei (ohne Kasten) und größer auf der Seite; das Detail-Panel
-          ragt rechts ein Stück in sie hinein. */}
-      <div className="grid gap-8 lg:gap-0 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
-        <div className="lg:-mr-16 lg:-ml-4">
+      {/* Karte liegt frei (ohne Kasten) auf der Seite und passt sich der Fensterhöhe
+          an (kein Scrollen auf Laptop-Bildschirmen); das Detail-Panel ragt rechts
+          ein Stück in sie hinein. */}
+      <div className="flex flex-col gap-8 lg:flex-row lg:gap-0 items-start">
+        <div className="map-fit w-full shrink-0 lg:-ml-4">
           <EdenMap selected={selected} onSelect={(k) => { setSelected(k); setAdding(false); }} areaStats={areaStats} />
         </div>
 
         {/* Detail-Panel */}
-        <div className="relative z-10 lg:mt-6 rounded-xl border border-border-subtle bg-bg-surface/95 backdrop-blur-sm shadow-2xl shadow-black/60 min-h-[320px] overflow-hidden">
+        <div className="relative z-10 w-full lg:w-auto lg:flex-1 lg:max-w-[440px] lg:-ml-10 lg:mt-6 rounded-xl border border-border-subtle bg-bg-surface/95 backdrop-blur-sm shadow-2xl shadow-black/60 min-h-[320px] overflow-hidden">
           {info || extra ? (
             <>
               {/* Titelbild-Banner mit Namen */}

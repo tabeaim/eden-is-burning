@@ -100,12 +100,12 @@ export default function DashboardPage() {
     .sort(byLastSeen);
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8">
+    <div className="max-w-6xl mx-auto px-8 py-8">
       <PageHeader
         title={`Hallo, ${currentPlayer.username}`}
-        subtitle="Dein Inplaytracker — offene Szenen, in denen du mitspielst." width="max-w-5xl" />
+        subtitle="Dein Inplaytracker — offene Szenen, in denen du mitspielst." width="max-w-6xl" />
 
-      <div className="grid lg:grid-cols-[1.6fr_1fr] gap-12 items-start">
+      <div className="grid lg:grid-cols-[1.6fr_1fr] gap-16 items-start">
         {/* LINKS: Szenenübersicht, nach Charakteren gruppiert */}
         <div className="flex flex-col gap-10">
           <section>

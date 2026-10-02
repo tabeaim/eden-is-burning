@@ -38,8 +38,8 @@ export default function SettingsPage() {
   if (isAdmin) tabs.push(["admin", "Freischaltungen"]);
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8">
-      <PageHeader title="Einstellungen" width="max-w-5xl" />
+    <div className="max-w-6xl mx-auto px-8 py-8">
+      <PageHeader title="Einstellungen" width="max-w-6xl" />
 
       {/* Inhalt linksbündig in Formularbreite — Container-Breite bleibt einheitlich */}
       <div className="max-w-2xl">

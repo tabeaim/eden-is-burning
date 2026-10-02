@@ -37,6 +37,11 @@ numerisch (`formatInplayDateShort`). Genau drei Varianten, keine weiteren:
 3. **`SceneRow`** — kompakte Zeile für schmale Spalten: Dashboard „letzte 24h",
    Bezirks-Panel der Karte.
 
+## Seitenbreite
+
+Alle Seiten nutzen denselben Container `max-w-6xl mx-auto px-8` (auch als `width`
+für den Banner-Titel), damit Titel und Inhalt beim Seitenwechsel nicht springen.
+
 ## Detailseiten (Szene, Charakter, Ort)
 
 - Aktions-Buttons („Bearbeiten") rechts **über** der Trennlinie; die Seite zeichnet

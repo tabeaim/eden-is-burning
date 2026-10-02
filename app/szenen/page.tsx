@@ -176,8 +176,8 @@ export default function ScenesPage() {
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8">
-      <PageHeader title="Szenen" subtitle="Alle Threads in Eden." width="max-w-5xl" />
+    <div className="max-w-6xl mx-auto px-8 py-8">
+      <PageHeader title="Szenen" subtitle="Alle Threads in Eden." width="max-w-6xl" />
 
       {/* Primäre Tabs */}
       <div className="flex gap-1.5 mb-4">

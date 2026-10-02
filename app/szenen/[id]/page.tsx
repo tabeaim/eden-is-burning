@@ -101,7 +101,7 @@ export default function ScenePage({
     scene?.title ?? "Szene",
     factsLine,
     scene?.header_url ?? undefined,
-    "max-w-5xl",
+    "max-w-6xl",
     scene?.status,
   );
 
@@ -137,7 +137,7 @@ export default function ScenePage({
 
   if (!scene) {
     return (
-      <div className="max-w-5xl mx-auto px-8 py-16 text-text-tertiary">
+      <div className="max-w-6xl mx-auto px-8 py-16 text-text-tertiary">
         Szene nicht gefunden.{" "}
         <Link href="/szenen" className="underline">
           Zur Übersicht
@@ -159,7 +159,7 @@ export default function ScenePage({
   const pagePosts = pages[safePage] ?? [];
 
   return (
-    <div className="max-w-5xl mx-auto px-8 pt-4 pb-8">
+    <div className="max-w-6xl mx-auto px-8 pt-4 pb-8">
       {/* Szenenkopf: Status + Charaktere + Aktions-Buttons, Datum/Ort/AU, Beschreibung */}
       <SceneHeader
         scene={scene}
