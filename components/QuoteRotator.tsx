@@ -35,9 +35,8 @@ export function QuoteRotator() {
   const arrow =
     "shrink-0 rounded p-1 text-text-tertiary hover:text-accent transition-colors";
 
-  // Linksbündig wie der Rest der Seite: Pfeil am linken Rand, direkt daneben das
-  // Zitat (mit deutschem Anführungszeichen unten), rechts dicht dahinter der
-  // zweite Pfeil.
+  // Linksbündig über die volle Breite: Pfeil am linken Rand, direkt daneben das
+  // Zitat (mit deutschem Anführungszeichen unten), zweiter Pfeil am rechten Rand.
   return (
     <div className="flex items-center gap-2 py-4 sm:gap-3">
       {quotes.length > 1 && (
@@ -46,7 +45,7 @@ export function QuoteRotator() {
         </button>
       )}
 
-      <div className="min-w-0 max-w-3xl">
+      <div className="min-w-0 flex-1">
         <blockquote
           key={q.id}
           className="prose-serif !text-left !text-[1rem] text-text-primary animate-[fadein_0.5s_ease]"
