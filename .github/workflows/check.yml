@@ -1,0 +1,35 @@
+# Prüft bei jedem Push und Pull Request, ob der Code fehlerfrei kompiliert.
+# Ergebnis: grüner Haken / rotes Kreuz am Commit auf GitHub (Reiter „Actions").
+name: Check
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Pakete installieren
+        run: npm ci
+
+      # Blockierend: Typfehler lassen den Check fehlschlagen (wie der Vercel-Build).
+      - name: Typ-Check
+        run: npm run typecheck
+
+      # Vorerst nur informativ: zeigt Lint-Meldungen, lässt den Check aber grün.
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
