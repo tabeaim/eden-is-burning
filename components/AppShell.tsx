@@ -14,7 +14,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/szenen", label: "Szenen", icon: "book" },
   { href: "/orte", label: "Karte", icon: "map" },
-  { href: "/kalender", label: "Kalender", icon: "calendar" },
+  { href: "/kalender", label: "Timeline", icon: "calendar" },
   { href: "/charaktere", label: "Charaktere", icon: "users" },
   { href: "/spieler", label: "Spieler", icon: "star" },
   { href: "/info", label: "Info", icon: "info" },

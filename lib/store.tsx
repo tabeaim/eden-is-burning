@@ -13,6 +13,7 @@ import type {
   Character,
   Location,
   Player,
+  Plot,
   Post,
   Scene,
   SceneQuote,
@@ -26,6 +27,7 @@ interface PersistedState {
   posts: Post[];
   quotes: SceneQuote[];
   locations: Location[];
+  plots: Plot[];
 }
 
 // `characters` enthält nach außen nur spielbare Charaktere; NPCs (Charaktere mit
@@ -74,6 +76,10 @@ interface StoreValue extends PersistedState {
   addLocation: (area: string, name: string, description?: string | null) => string | null;
   updateLocation: (id: string, patch: Partial<Location>) => void;
   addNpc: (npc: Pick<Character, "name" | "role" | "age">) => string;
+  addPlot: (name: string, tokens: string[], aus: string[]) => string;
+  updatePlot: (id: string, patch: Partial<Plot>) => void;
+  deletePlot: (id: string) => void;
+  canEditPlot: (plot: Plot) => boolean;
   updateCharacter: (id: string, patch: Partial<Character>) => void;
   addCharacter: (playerId: string) => string;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
@@ -95,6 +101,7 @@ const EMPTY: PersistedState = {
   posts: [],
   quotes: [],
   locations: [],
+  plots: [],
 };
 
 function uid(prefix: string) {
@@ -163,13 +170,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Lädt alle Welt-Daten (nur für freigeschaltete Nutzer*innen sichtbar; RLS).
   const loadWorld = useCallback(async () => {
-    const [pl, ch, sc, po, lo, qu] = await Promise.all([
+    const [pl, ch, sc, po, lo, qu, pt] = await Promise.all([
       supabase.from("players").select("*"),
       supabase.from("characters").select("*"),
       supabase.from("scenes").select("*"),
       supabase.from("posts").select("*"),
       supabase.from("locations").select("*"),
       supabase.from("quotes").select("*"),
+      supabase.from("plots").select("*"),
     ]);
     setState({
       players: (pl.data as Player[]) ?? [],
@@ -178,6 +186,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       posts: (po.data as Post[]) ?? [],
       locations: (lo.data as Location[]) ?? [],
       quotes: (qu.data as SceneQuote[]) ?? [],
+      plots: (pt.data as Plot[]) ?? [],
     });
   }, []);
 
@@ -685,6 +694,44 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [currentPlayer?.id],
   );
 
+  // --- Plots (Timeline) ------------------------------------------------------
+  const canEditPlot = useCallback(
+    (plot: Plot) =>
+      !!currentPlayer &&
+      (Boolean(currentPlayer.is_admin) || plot.created_by === currentPlayer.id),
+    [currentPlayer],
+  );
+  const addPlot = useCallback(
+    (name: string, tokens: string[], aus: string[]) => {
+      const plot: Plot = {
+        id: uid("plot"),
+        name: name.trim(),
+        tokens,
+        aus,
+        include_ids: [],
+        exclude_ids: [],
+        off_scenes: [],
+        created_by: currentPlayer?.id ?? null,
+        created_at: new Date().toISOString(),
+      };
+      persist("addPlot", supabase.from("plots").insert(plot));
+      setState((s) => ({ ...s, plots: [...s.plots, plot] }));
+      return plot.id;
+    },
+    [currentPlayer?.id],
+  );
+  const updatePlot = useCallback((id: string, patch: Partial<Plot>) => {
+    persist("updatePlot", supabase.from("plots").update(patch).eq("id", id));
+    setState((s) => ({
+      ...s,
+      plots: s.plots.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+    }));
+  }, []);
+  const deletePlot = useCallback((id: string) => {
+    persist("deletePlot", supabase.from("plots").delete().eq("id", id));
+    setState((s) => ({ ...s, plots: s.plots.filter((p) => p.id !== id) }));
+  }, []);
+
   const updatePlayer = useCallback((id: string, patch: Partial<Player>) => {
     persist("updatePlayer", supabase.from("players").update(patch).eq("id", id));
     setState((s) => ({
@@ -805,6 +852,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addLocation,
       updateLocation,
       addNpc,
+      addPlot,
+      updatePlot,
+      deletePlot,
+      canEditPlot,
       updateCharacter,
       addCharacter,
       updatePlayer,
@@ -851,6 +902,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addLocation,
       updateLocation,
       addNpc,
+      addPlot,
+      updatePlot,
+      deletePlot,
+      canEditPlot,
       updateCharacter,
       addCharacter,
       updatePlayer,

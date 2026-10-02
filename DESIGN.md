@@ -41,6 +41,14 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
    (Dashboard „letzte 24h", Bezirks-Panel der Karte): Ort · Datum numerisch, rechts
    letzter Poster + Zeitpunkt.
 
+## Timeline
+
+Der Zeitstrahl nutzt dieselben Bausteine wie die Szenenboxen (Karte mit Rahmen,
+`SceneMatch` als Knoten auf der Linie, Orts- und Charakter-Bubbles), ergänzt um
+Datum über dem Titel und den Beschreibungssatz. Off-Szenen eines Plots sind
+gestrichelt umrandet und tragen das Tag „im Off". AU-Szenen erscheinen nur, wenn
+ihr AU im Filter gewählt ist — ohne Auswahl zeigt die Timeline nur Canon.
+
 ## Seitenbreite
 
 Alle Seiten nutzen denselben Container `max-w-6xl mx-auto px-8` (auch als `width`

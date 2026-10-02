@@ -1,5 +1,8 @@
 import type { Scene } from "@/lib/types";
 
+// Filterwert für AU-Szenen ohne benanntes AU
+export const AU_UNNAMED = "__unnamed";
+
 // Alle bisher vergebenen AU-Namen, alphabetisch.
 export function auNames(scenes: Scene[]): string[] {
   const set = new Set<string>();

@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
 import { AREA_ORDER, AREAS, areaName, type AreaKey } from "@/lib/world";
 import { formatInplayDate } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
-import { Icon, type IconName } from "@/components/Icon";
+import { Icon } from "@/components/Icon";
+import { MultiSelect } from "@/components/MultiSelect";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import { SceneCard } from "@/components/SceneCard";
-import { auNames } from "@/components/AuNameField";
+import { AU_UNNAMED, auNames } from "@/components/AuNameField";
 import type { Character, Scene } from "@/lib/types";
 
 type Tab = "active" | "all" | "mine" | "archive";
@@ -21,9 +22,6 @@ const SORT_LABELS: Record<SortKey, string> = {
   created: "Erstellungsdatum",
   title: "Titel A–Z",
 };
-
-// Filterwert für AU-Szenen ohne benanntes AU
-const AU_UNNAMED = "__unnamed";
 
 const MONTHS_DE = [
   "Januar", "Februar", "März", "April", "Mai", "Juni",
@@ -353,92 +351,6 @@ export default function ScenesPage() {
       {sorted.length === 0 && (
         <div className="text-[0.875rem] text-text-tertiary">
           Keine Szenen für diese Filter.
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Mehrfach-Auswahl-Dropdown mit Checkboxen
-function MultiSelect({
-  label,
-  icon,
-  options,
-  selected,
-  onToggle,
-  onClear,
-}: {
-  label: string;
-  icon?: IconName; // optionales Icon vor dem Label
-  options: { value: string; label: string }[];
-  selected: string[];
-  onToggle: (v: string) => void;
-  onClear: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[0.8125rem] transition-colors ${
-          selected.length > 0
-            ? "border-accent/50 bg-accent-soft text-text-primary"
-            : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
-        }`}
-      >
-        {icon && <Icon name={icon} size={14} />}
-        {label}
-        {selected.length > 0 && (
-          <span className="rounded-full bg-accent text-black px-1.5 text-[0.8125rem] font-medium">
-            {selected.length}
-          </span>
-        )}
-        <span className={`transition-transform ${open ? "rotate-90" : ""}`}>
-          <Icon name="arrow-right" size={11} />
-        </span>
-      </button>
-
-      {open && (
-        <div className="absolute z-20 mt-1 w-56 max-h-72 overflow-auto rounded-lg border border-border-subtle bg-bg-surface-2 p-1.5 shadow-xl">
-          {options.map((o) => {
-            const on = selected.includes(o.value);
-            return (
-              <button
-                key={o.value}
-                onClick={() => onToggle(o.value)}
-                className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[0.8125rem] text-text-secondary hover:bg-white/[0.04]"
-              >
-                <span
-                  className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[0.75rem] ${
-                    on
-                      ? "bg-accent border-accent text-black"
-                      : "border-border-strong"
-                  }`}
-                >
-                  {on ? "✓" : ""}
-                </span>
-                <span className={on ? "text-text-primary" : ""}>{o.label}</span>
-              </button>
-            );
-          })}
-          {selected.length > 0 && (
-            <button
-              onClick={onClear}
-              className="w-full text-left px-2 py-1.5 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
-            >
-              Auswahl leeren
-            </button>
-          )}
         </div>
       )}
     </div>

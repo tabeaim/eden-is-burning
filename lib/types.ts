@@ -115,6 +115,32 @@ export interface LocationPerson {
   note: string | null; // warum die Person für den Ort relevant ist
 }
 
+// Plot-Punkt, der nicht ausgespielt wurde („im Off") — erscheint nur in der
+// Timeline des jeweiligen Plots.
+export interface OffScene {
+  id: string;
+  title: string;
+  inplay_date: string; // ISO date
+  inplay_time: string;
+  location_name: string | null;
+  summary: string | null; // Beschreibungssatz
+  participant_ids: string[];
+}
+
+// Ein Plot: gespeicherte Timeline-Filter plus von Hand ergänzte/entfernte Szenen
+// und Off-Szenen. Für alle sichtbar; bearbeiten dürfen Ersteller*in und Admins.
+export interface Plot {
+  id: string;
+  name: string;
+  tokens: string[]; // "char:<id>" | "player:<id>"
+  aus: string[]; // AU-Namen (leer = Canon)
+  include_ids: string[]; // zusätzlich aufgenommene Szenen
+  exclude_ids: string[]; // herausgenommene Szenen
+  off_scenes: OffScene[];
+  created_by?: string | null;
+  created_at: string;
+}
+
 // Ein aus einem Post markiertes Zitat — speist die rotierenden Dashboard-Zitate
 export interface SceneQuote {
   id: string;
