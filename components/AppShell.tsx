@@ -378,32 +378,31 @@ function Sidebar({
       </div>
 
       {/* Alter Egos (eigene Charaktere) — aufklappbares Dropdown */}
-      <div className="px-3 py-3 border-t border-border-subtle">
+      <div className="px-2 py-3 border-t border-border-subtle">
         <button
           onClick={() => setCharsOpen((o) => !o)}
-          className="flex w-full items-center justify-between text-[0.75rem] uppercase tracking-[0.2em] text-text-tertiary hover:text-text-secondary"
+          className="flex w-full items-center justify-between px-2.5 text-[0.75rem] uppercase tracking-[0.2em] text-text-tertiary hover:text-text-secondary"
         >
           <span>Alter Egos ({myChars.length})</span>
           <span className={`transition-transform ${charsOpen ? "rotate-180" : ""}`}>
             ▾
           </span>
         </button>
-        <div className={`flex flex-col gap-1.5 ${charsOpen ? "mt-2" : "hidden"}`}>
+        {/* Gleiche Zeilenhöhe und Abstände wie die Menüpunkte oben */}
+        <div className={`flex flex-col gap-0.5 ${charsOpen ? "mt-2" : "hidden"}`}>
           {myChars.map((c) => (
             <Link
               key={c.id}
               href={`/charaktere/${c.id}`}
-              className="flex items-center gap-2 group"
+              className="group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.875rem] text-text-secondary transition-colors hover:bg-white/[0.025] hover:text-text-primary"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={c.faceclaim_image_url ?? placeholder(c.name)}
                 alt={c.name}
-                className="w-6 h-6 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
+                className="h-[17px] w-[17px] shrink-0 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
               />
-              <span className="text-[0.875rem] text-text-secondary group-hover:text-text-primary truncate">
-                {c.name}
-              </span>
+              <span className="truncate">{c.name}</span>
             </Link>
           ))}
         </div>

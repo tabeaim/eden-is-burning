@@ -118,14 +118,19 @@ export default function DashboardPage() {
         bannerImage={currentPlayer.dashboard_header_url ?? undefined}
       />
 
-      <div className="grid lg:grid-cols-[1.6fr_1fr] gap-16 items-start">
+      {/* Handy: Zitat zuerst, dann die Szenen (am Desktop steht es rechts) */}
+      <div className="mb-8 lg:hidden">
+        <QuoteRotator />
+      </div>
+
+      <div className="grid lg:grid-cols-[1.6fr_1fr] gap-8 lg:gap-16 items-start">
         {/* LINKS: Szenenübersicht, nach Charakteren gruppiert */}
-        <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-6 lg:gap-10">
           <section>
             <button
               onClick={() => setShowDran(!dranOpen)}
               aria-expanded={dranOpen}
-              className="mb-4 flex w-full items-center gap-2 text-left"
+              className={`flex w-full items-center gap-2 text-left ${dranOpen ? "mb-4" : ""}`}
             >
               <h2 className="section-bar text-[0.875rem] text-text-primary">
                 Du bist dran{" "}
@@ -161,7 +166,7 @@ export default function DashboardPage() {
           <section>
             <button
               onClick={() => setShowWarten((v) => !v)}
-              className="mb-4 flex w-full items-center gap-2 text-left"
+              className={`flex w-full items-center gap-2 text-left ${showWarten ? "mb-4" : ""}`}
             >
               <h2 className="section-bar text-[0.875rem] text-text-tertiary">
                 Wartet auf andere{" "}
@@ -199,7 +204,9 @@ export default function DashboardPage() {
 
         {/* RECHTS: Zitate, 24h-Aktivität, Online */}
         <div className="flex flex-col gap-8 lg:sticky lg:top-6">
-          <QuoteRotator />
+          <div className="hidden lg:block">
+            <QuoteRotator />
+          </div>
 
           <section>
             <h2 className="section-bar text-[0.875rem] text-text-secondary mb-3">
