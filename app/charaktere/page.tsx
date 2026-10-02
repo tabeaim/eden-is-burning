@@ -5,15 +5,16 @@ import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { formatInplayDateShort } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
-import { CharacterBubble } from "@/components/Bubble";
+import { Bubble, CharacterBubble } from "@/components/Bubble";
 import { Icon } from "@/components/Icon";
-import type { Character } from "@/lib/types";
+import type { Character, Player } from "@/lib/types";
 
-type SortKey = "name" | "created" | "posts";
+type SortKey = "name" | "created" | "posts" | "active";
 const SORT_LABELS: Record<SortKey, string> = {
   name: "Name",
   created: "Anmeldedatum",
   posts: "Post-Anzahl",
+  active: "Letzte Aktivität",
 };
 
 export default function CharaktereePage() {
@@ -22,11 +23,17 @@ export default function CharaktereePage() {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
-  // Anzahl Posts pro Charakter
-  const postCounts = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const p of posts) map.set(p.character_id, (map.get(p.character_id) ?? 0) + 1);
-    return map;
+  // Anzahl Posts und Zeitpunkt des letzten Posts pro Charakter
+  const { postCounts, lastActive } = useMemo(() => {
+    const postCounts = new Map<string, number>();
+    const lastActive = new Map<string, string>();
+    for (const p of posts) {
+      postCounts.set(p.character_id, (postCounts.get(p.character_id) ?? 0) + 1);
+      if (p.created_at > (lastActive.get(p.character_id) ?? "")) {
+        lastActive.set(p.character_id, p.created_at);
+      }
+    }
+    return { postCounts, lastActive };
   }, [posts]);
 
   const q = query.trim().toLowerCase();
@@ -42,6 +49,12 @@ export default function CharaktereePage() {
       let cmp = 0;
       if (sortKey === "created") cmp = a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0;
       else if (sortKey === "posts") cmp = (postCounts.get(a.id) ?? 0) - (postCounts.get(b.id) ?? 0);
+      else if (sortKey === "active") {
+        // letzter Post; Charaktere ohne Post gelten als am längsten inaktiv
+        const la = lastActive.get(a.id) ?? "";
+        const lb = lastActive.get(b.id) ?? "";
+        cmp = la < lb ? -1 : la > lb ? 1 : 0;
+      }
       // Name als Hauptkriterium bzw. als Reihenfolge bei Gleichstand
       if (cmp === 0) return a.name.localeCompare(b.name, "de") * (sortKey === "name" && sortDir === "desc" ? -1 : 1);
       return sortDir === "asc" ? cmp : -cmp;
@@ -105,7 +118,7 @@ export default function CharaktereePage() {
           <CharacterCard
             key={c.id}
             c={c}
-            username={player(c.player_id)?.username}
+            player={player(c.player_id)}
             postCount={postCounts.get(c.id) ?? 0}
           />
         ))}
@@ -138,65 +151,91 @@ export default function CharaktereePage() {
   );
 }
 
-// Charakter-Karte: Name, Tagline, Avatar im Originalformat (600×502), darunter
-// Posts · played by und „dabei seit" (Anmeldedatum). Bei Hover erscheint die
-// Kurzbeschreibung über dem Bild.
+// Charakter-Karte: Name und Tagline im Stil der Charakterkarten in Szenen, Avatar
+// im Originalformat (600×502), darunter Posts · played by (Spieler-Bubble) und
+// „Lebendig seit" (Anmeldedatum). Bei Hover erscheint die Kurzbeschreibung über
+// dem Bild. Die ganze Karte führt zum Profil (Namens-Link, über die Karte gestreckt).
 function CharacterCard({
   c,
-  username,
+  player,
   postCount,
 }: {
   c: Character;
-  username?: string;
+  player?: Player;
   postCount: number;
 }) {
   return (
-    <Link
-      href={`/charaktere/${c.id}`}
-      className="group flex flex-col rounded-xl border border-border-subtle bg-bg-surface p-4 text-center transition-colors hover:bg-white/[0.03]"
-    >
-      <div className="font-display lowercase text-[1.625rem] leading-none text-text-primary">
-        {c.name}
+    <div className="group relative flex flex-col rounded-xl border border-border-subtle bg-bg-surface p-4 text-center transition-colors hover:bg-white/[0.03]">
+      <div className="font-serif font-bold text-[1.125rem] uppercase tracking-wide text-text-primary">
+        <Link href={`/charaktere/${c.id}`} className="after:absolute after:inset-0 after:content-['']">
+          {c.name}
+        </Link>
       </div>
-      <div className="mt-2.5 min-h-[1.75rem] bg-bg-primary px-2 py-1.5 text-[0.6875rem] uppercase tracking-[0.2em] text-text-secondary">
-        {c.tagline}
-      </div>
+      {c.tagline && (
+        <div className="mt-1.5 flex justify-center">
+          <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[0.6875rem] uppercase tracking-wider text-text-secondary">
+            {c.tagline}
+          </span>
+        </div>
+      )}
 
-      {/* Avatar im Originalformat, nie größer als das Bild selbst */}
-      <div className="relative mx-auto mt-3 aspect-[600/502] w-full max-w-[600px] overflow-hidden rounded-lg bg-bg-primary">
-        {c.faceclaim_image_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={c.faceclaim_image_url}
-            alt={c.name}
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        )}
-        {c.bio && (
-          <div className="pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-            <div className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-wider text-text-primary">
-              {[c.role, c.age ? `${c.age}` : null].filter(Boolean).join(" · ")}
+      {/* Avatar im Originalformat, nie größer als das Bild selbst; mt-auto hält die
+          Bilder einer Reihe auf gleicher Höhe, auch ohne Tagline */}
+      <div className="mt-auto w-full pt-3">
+        <div className="relative mx-auto aspect-[600/502] w-full max-w-[600px] overflow-hidden rounded-lg bg-bg-primary">
+          {c.faceclaim_image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={c.faceclaim_image_url}
+              alt={c.name}
+              loading="lazy"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )}
+          {c.bio && (
+            <div className="pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <div className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-wider text-text-primary">
+                {[c.role, c.age ? `${c.age}` : null].filter(Boolean).join(" · ")}
+              </div>
+              <p className="text-[0.8125rem] leading-relaxed text-text-primary/90 line-clamp-[8]">
+                {c.bio}
+              </p>
             </div>
-            <p className="text-[0.8125rem] leading-relaxed text-text-primary/90 line-clamp-[8]">
-              {c.bio}
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      <div className="mt-3 text-[0.8125rem] uppercase tracking-wider text-text-secondary">
-        <span className="font-bold text-text-primary">{postCount}</span>{" "}
-        {postCount === 1 ? "Post" : "Posts"}
-        {username && (
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[0.8125rem] uppercase tracking-wider text-text-secondary">
+        <span>
+          <span className="font-bold text-text-primary">{postCount}</span>{" "}
+          {postCount === 1 ? "Post" : "Posts"}
+        </span>
+        {player && (
           <>
-            {" · "}played by <span className="font-bold text-text-primary">{username}</span>
+            <span>· played by</span>
+            <span className="relative z-10 normal-case tracking-normal">
+              <Bubble
+                href={`/spieler/${player.username}`}
+                leading={
+                  player.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={player.avatar_url}
+                      alt=""
+                      className="h-5 w-5 rounded-full object-cover"
+                    />
+                  ) : undefined
+                }
+              >
+                {player.username}
+              </Bubble>
+            </span>
           </>
         )}
       </div>
-      <div className="mt-0.5 text-[0.8125rem] text-text-tertiary">
-        dabei seit {formatInplayDateShort(c.created_at.slice(0, 10))}
+      <div className="mt-1 text-[0.8125rem] text-text-tertiary">
+        Lebendig seit {formatInplayDateShort(c.created_at.slice(0, 10))}
       </div>
-    </Link>
+    </div>
   );
 }

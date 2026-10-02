@@ -445,7 +445,7 @@ export function seedCharacters(): Character[] {
       name: "Cassandra Hale",
       faceclaim: "Eva Green",
       faceclaim_image_url: "https://picsum.photos/seed/cassandrahale/400/600",
-      tagline: "verkauft schönheit, besitzt geheimnisse",
+      tagline: "schönheit & geheimnisse",
       role: "galeristin & erbin",
       age: 38,
       area: "belle_view",
