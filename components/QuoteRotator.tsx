@@ -35,40 +35,39 @@ export function QuoteRotator() {
   const arrow =
     "shrink-0 rounded p-1 text-text-tertiary hover:text-accent transition-colors";
 
-  // Pfeile links und rechts dicht am Text, Anführungszeichen links vor dem Zitat,
-  // Text linksbündig und etwas breiter.
+  // Linksbündig wie der Rest der Seite: Pfeil am linken Rand, direkt daneben das
+  // Zitat (mit deutschem Anführungszeichen unten), rechts dicht dahinter der
+  // zweite Pfeil.
   return (
-    <div className="mx-auto flex max-w-4xl items-center gap-2 py-4 sm:gap-4">
+    <div className="flex items-center gap-2 py-4 sm:gap-3">
       {quotes.length > 1 && (
-        <button onClick={() => go(-1)} title="Vorheriges Zitat" className={arrow}>
+        <button onClick={() => go(-1)} title="Vorheriges Zitat" className={`-ml-1 ${arrow}`}>
           <Icon name="arrow-right" size={18} className="rotate-180" />
         </button>
       )}
 
-      <div className="flex min-w-0 flex-1 items-start gap-3">
-        <span className="shrink-0 font-display text-[3.375rem] leading-[0.8] text-accent">“</span>
-        <div className="min-w-0">
-          <blockquote
-            key={q.id}
-            className="prose-serif !text-left !text-[1rem] text-text-primary animate-[fadein_0.5s_ease]"
-          >
-            {q.text}
-          </blockquote>
-          <div className="mt-2 text-[0.875rem] text-text-secondary">
-            {c && (
-              <Link href={`/charaktere/${c.id}`} className="text-text-primary hover:text-accent">
-                {c.name}
+      <div className="min-w-0 max-w-3xl">
+        <blockquote
+          key={q.id}
+          className="prose-serif !text-left !text-[1rem] text-text-primary animate-[fadein_0.5s_ease]"
+        >
+          <span className="mr-1.5 text-[2.125rem] leading-none text-accent">„</span>
+          {q.text}
+        </blockquote>
+        <div className="mt-2 text-[0.875rem] text-text-secondary">
+          {c && (
+            <Link href={`/charaktere/${c.id}`} className="text-text-primary hover:text-accent">
+              {c.name}
+            </Link>
+          )}
+          {scene && (
+            <>
+              {" "}in{" "}
+              <Link href={`/szenen/${scene.id}`} className="italic hover:text-accent">
+                {scene.title}
               </Link>
-            )}
-            {scene && (
-              <>
-                {" "}in{" "}
-                <Link href={`/szenen/${scene.id}`} className="italic hover:text-accent">
-                  {scene.title}
-                </Link>
-              </>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
 
