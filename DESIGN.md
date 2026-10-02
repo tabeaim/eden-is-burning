@@ -22,7 +22,8 @@ Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schre
 | `Bubble` | freier Inhalt | Basis für neue Bubble-Arten |
 
 - **Avatare:** rund (Charaktere, NPCs und Spieler*innen), als mittiger Ausschnitt
-  des echten Avatars (`rounded-full object-cover`).
+  des echten Avatars (`rounded-full object-cover`). Ausnahme: die Charakterliste
+  der Spieler-Übersicht nutzt kleine Rechtecke.
 - Ton `accent` nur für „am Zug".
 - Innerhalb einer verlinkten Karte `linked={false}` (keine Links in Links).
 

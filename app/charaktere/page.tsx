@@ -166,7 +166,7 @@ function CharacterCard({
 }) {
   return (
     <div className="group relative flex flex-col rounded-xl border border-border-subtle bg-bg-surface p-4 text-center transition-colors hover:bg-white/[0.03]">
-      <div className="font-serif font-bold text-[1.125rem] uppercase tracking-wide text-text-primary">
+      <div className="font-display lowercase text-[1.625rem] leading-none text-text-primary">
         <Link href={`/charaktere/${c.id}`} className="after:absolute after:inset-0 after:content-['']">
           {c.name}
         </Link>

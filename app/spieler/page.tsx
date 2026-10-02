@@ -119,7 +119,13 @@ function PlayerRow({
         {chars.length === 0 ? (
           <p className="text-[0.875rem] text-text-tertiary">Noch keine Charaktere.</p>
         ) : (
-          <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+          // Ab mehr als vier Charakteren scrollt die Liste in der Karte, damit
+          // Spieler*innen mit vielen Charakteren die Karte nicht sprengen.
+          <div
+            className={`grid grid-cols-1 gap-x-4 sm:grid-cols-2 ${
+              chars.length > 4 ? "max-h-[7rem] overflow-y-auto pr-1" : ""
+            }`}
+          >
             {chars.map((c) => (
               <CharacterRow key={c.id} c={c} />
             ))}
@@ -130,7 +136,8 @@ function PlayerRow({
   );
 }
 
-// Eine Zeile in der Charakter-Liste: kleiner Avatar, Name, Alter · Beruf
+// Eine Zeile in der Charakter-Liste: kleiner rechteckiger Avatar (Ausnahme vom
+// runden Standard, damit die Liste wie eine Galerie wirkt), Name, Alter · Beruf
 function CharacterRow({ c }: { c: Character }) {
   const facts = [c.age ? `${c.age}` : null, c.role].filter(Boolean).join(" · ");
   return (
@@ -145,10 +152,10 @@ function CharacterRow({ c }: { c: Character }) {
           src={c.faceclaim_image_url}
           alt=""
           loading="lazy"
-          className="h-7 w-7 shrink-0 rounded-full object-cover bg-bg-primary"
+          className="h-7 w-[34px] shrink-0 rounded object-cover bg-bg-primary"
         />
       ) : (
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-olive-soft text-[0.75rem] uppercase text-text-primary">
+        <span className="flex h-7 w-[34px] shrink-0 items-center justify-center rounded bg-olive-soft text-[0.75rem] uppercase text-text-primary">
           {c.name.charAt(0)}
         </span>
       )}
