@@ -8,8 +8,7 @@ import { formatInplayDate } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
-import { StatusBadge } from "@/components/StatusBadge";
-import { SceneTurnBar } from "@/components/SceneTurnBar";
+import { SceneCard } from "@/components/SceneCard";
 import type { Character, Scene } from "@/lib/types";
 
 type Tab = "active" | "all" | "mine" | "archive";
@@ -317,64 +316,17 @@ export default function ScenesPage() {
 
       <div className="grid sm:grid-cols-2 gap-4">
         {sorted.map((s) => {
-          const posts = postsOf(s.id);
-          const turnId = whoseTurn(s, posts);
-          const participants = s.participant_ids
-            .map((id) => character(id))
-            .filter(Boolean) as Character[];
           const matchId = postMatchId(s);
           return (
-            <Link
+            <SceneCard
               key={s.id}
+              scene={s}
               href={
                 matchId
-                  ? `/szenen/${s.id}?q=${encodeURIComponent(
-                      searchPost.trim(),
-                    )}#post-${matchId}`
-                  : `/szenen/${s.id}`
+                  ? `/szenen/${s.id}?q=${encodeURIComponent(searchPost.trim())}#post-${matchId}`
+                  : undefined
               }
-              className="rounded-xl border border-border-subtle bg-bg-surface p-5 hover:bg-white/[0.03] transition-colors flex flex-col"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <StatusBadge status={s.status} sceneId={s.id} isNew={isSceneNew(s.id)} />
-                  {s.paused && (
-                    <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
-                      pausiert
-                    </span>
-                  )}
-                </div>
-                {s.trigger_warning && (
-                  <span className="text-[0.8125rem] uppercase tracking-wider text-red-300/80">
-                    TW
-                  </span>
-                )}
-              </div>
-              <h3 className="font-serif text-[1rem] text-text-primary mt-2 leading-tight">
-                {s.title}
-              </h3>
-              <div className="text-[0.875rem] text-text-tertiary mt-1">
-                {s.location_name}
-              </div>
-              <div className="text-[0.875rem] text-text-tertiary">
-                {formatInplayDate(s.inplay_date)}, {s.inplay_time}
-                {s.au && (
-                  <>
-                    {" · "}
-                    <span className="italic">AU</span>
-                  </>
-                )}
-              </div>
-
-              <div className="mt-auto pt-4">
-                <SceneTurnBar
-                  participants={participants}
-                  activeCharId={turnId}
-                  active={s.status === "active"}
-                  firstNameOnly
-                />
-              </div>
-            </Link>
+            />
           );
         })}
       </div>

@@ -66,12 +66,12 @@ export default function PlacesPage() {
           die Fensterhöhe; das schmale Detail-Panel sitzt rechtsbündig und darf bei
           wenig Platz ein Stück über das auslaufende Wasser ragen. */}
       <div className="flex flex-col gap-8 lg:flex-row lg:gap-0 items-start">
-        <div className="map-fit w-full shrink-0 lg:-ml-4 lg:-mr-16">
+        <div className="map-fit w-full mx-auto lg:mx-0 lg:-ml-4 lg:-mr-12">
           <EdenMap selected={selected} onSelect={(k) => { setSelected(k); setAdding(false); }} areaStats={areaStats} />
         </div>
 
         {/* Detail-Panel */}
-        <div className="relative z-10 w-full lg:w-[360px] lg:shrink-0 lg:ml-auto lg:mt-10 rounded-xl border border-border-subtle bg-bg-surface/95 backdrop-blur-sm shadow-2xl shadow-black/60 min-h-[320px] overflow-hidden">
+        <div className="relative z-10 w-full lg:w-[410px] lg:shrink-0 lg:ml-auto lg:mt-10 rounded-xl border border-border-subtle bg-bg-surface/95 backdrop-blur-sm shadow-2xl shadow-black/60 min-h-[320px] overflow-hidden">
           {info || extra ? (
             <>
               {/* Titelbild-Banner mit Namen */}
@@ -83,7 +83,7 @@ export default function PlacesPage() {
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-bg-surface via-bg-surface/30 to-transparent" />
-                <h2 className="absolute bottom-3 left-5 right-5 font-display lowercase text-[1.625rem] text-text-primary">
+                <h2 className="absolute bottom-3 left-5 right-5 font-display lowercase text-[1.875rem] text-text-primary">
                   {info?.name ?? extra?.name}
                 </h2>
               </div>

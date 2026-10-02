@@ -169,7 +169,7 @@ export default function LocationPage({
             ) : (
               <div className="flex flex-col gap-2">
                 {scenesHere.map((s) => (
-                  <SceneCard key={s.id} scene={s} showStatus />
+                  <SceneCard key={s.id} scene={s} />
                 ))}
               </div>
             )}

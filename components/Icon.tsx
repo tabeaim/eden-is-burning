@@ -23,6 +23,10 @@ type IconName =
   | "upload"
   | "download"
   | "flame"
+  | "match"
+  | "match-lit"
+  | "match-burnt"
+  | "sidebar"
   | "search"
   | "check"
   | "trash"
@@ -144,6 +148,37 @@ const paths: Record<IconName, React.ReactNode> = {
   ),
   flame: (
     <path d="M12 3c.5 3-1.5 4-2.8 5.5C8 10 7 11.4 7 13.5A5 5 0 0 0 17 13.5c0-2-1-3.2-2-4.5-.8 1-1.5 1.5-2.4 1.6.7-2 .4-5-.6-7.6Z" />
+  ),
+  // Streichholz — Szenen-Status: unangezündet, brennend, abgebrannt
+  match: (
+    <>
+      <path d="M4 20.5 14.2 10.3" />
+      <ellipse cx="16" cy="8.5" rx="2.5" ry="2" transform="rotate(-45 16 8.5)" fill="currentColor" />
+    </>
+  ),
+  "match-lit": (
+    <>
+      <path d="M4 20.5 12.5 12" />
+      <path
+        d="M15.9 2.6c.4 2.1-1 2.8-2 3.9-.8.9-1.5 1.9-1.5 3.3a3.5 3.5 0 0 0 7 0c0-1.4-.7-2.2-1.4-3.1-.6.7-1 1-1.7 1.1.5-1.4.3-3.4-.4-5.2Z"
+        fill="currentColor"
+        fillOpacity="0.25"
+      />
+    </>
+  ),
+  "match-burnt": (
+    <>
+      <path d="M4 20.5 12.6 11.9" />
+      <circle cx="13.4" cy="11.1" r="1.1" fill="currentColor" />
+      <path d="M14.8 8.4c1.3-1.2-.9-2.1.3-3.5s-.5-1.9.3-3.1" strokeWidth={1.2} />
+    </>
+  ),
+  // Seitenleiste ein-/ausblenden
+  sidebar: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2.5" />
+      <path d="M9.5 4v16" />
+    </>
   ),
   search: (
     <>

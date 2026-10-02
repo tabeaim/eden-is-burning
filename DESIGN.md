@@ -26,16 +26,16 @@ Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schre
 
 ## Szenen-Boxen — `components/SceneCard.tsx`
 
-Status-Icon: aktiv = Flamme, nur orange solange der neueste Post ungelesen ist
-(sonst grau); geschlossen = Haken (`StatusBadge` mit `sceneId`, `SceneRow`).
-Szenen-Boxen nennen nur den Ort, nie den Bezirk. Kompakte Zeilen zeigen das Datum
-numerisch (`formatInplayDateShort`). Genau drei Varianten, keine weiteren:
+Status steht links als Streichholz (`SceneMatch`): brennend/orange bei ungelesenem
+neuestem Post, grau ohne Flamme wenn gelesen, abgebrannt mit Rauch bei geschlossener
+Szene. Die Tags „aktiv"/„geschlossen" (`StatusBadge`) gibt es nur in der Szene selbst.
+Szenen-Boxen nennen nur den Ort, nie den Bezirk. Genau zwei Varianten:
 
-1. **Szenen-Kachel** — Raster der Szenen-Übersicht (`app/szenen/page.tsx`).
-2. **`SceneCard`** — Key-Facts-Karte für Listen: Dashboard, Ortsprofil,
-   Charakterprofil. `showStatus`, wenn aktive und geschlossene Szenen gemischt sind.
-3. **`SceneRow`** — kompakte Zeile für schmale Spalten: Dashboard „letzte 24h",
-   Bezirks-Panel der Karte.
+1. **`SceneCard`** — ausführliche Karte: Titel, Ort · Datum in einer Zeile,
+   Beteiligte (wer dran ist, markiert), letzter Post. Szenen-Übersicht, Dashboard,
+   Ortsprofil, Charakterprofil.
+2. **`SceneRow`** — kompakte Zeile für schmale Spalten: Dashboard „letzte 24h",
+   Bezirks-Panel der Karte; Datum numerisch (`formatInplayDateShort`).
 
 ## Seitenbreite
 

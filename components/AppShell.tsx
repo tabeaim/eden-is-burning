@@ -35,7 +35,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
   }, []);
+  // Ausgeblendete Seitenleiste erscheint beim Hovern am linken Rand (wie eine Schublade)
+  const [navPeek, setNavPeek] = useState(false);
   function hideNav(hidden: boolean) {
+    setNavPeek(false);
     setNavHidden(hidden);
     try {
       localStorage.setItem("eden:nav-hidden", hidden ? "1" : "0");
@@ -74,18 +77,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           open={navOpen}
           onClose={() => setNavOpen(false)}
           hidden={navHidden}
-          onHide={() => hideNav(true)}
+          peek={navPeek}
+          onPeek={setNavPeek}
+          onToggleHidden={() => hideNav(!navHidden)}
         />
-        {/* Ausgeblendete Seitenleiste (größere Bildschirme) wieder einblenden */}
+        {/* Ausgeblendete Seitenleiste (größere Bildschirme): Hover am linken Rand
+            oder auf der Taste blendet sie ein, Klick fixiert sie wieder. */}
         {navHidden && (
-          <button
-            onClick={() => hideNav(false)}
-            title="Seitenleiste einblenden"
-            aria-label="Seitenleiste einblenden"
-            className="hidden md:flex fixed left-3 top-3 z-30 rounded-md border border-border-subtle bg-bg-sidebar/80 p-1.5 text-text-secondary backdrop-blur hover:text-text-primary"
-          >
-            <MenuIcon />
-          </button>
+          <>
+            <div
+              onMouseEnter={() => setNavPeek(true)}
+              className="hidden md:block fixed inset-y-0 left-0 z-30 w-2"
+            />
+            <button
+              onClick={() => hideNav(false)}
+              onMouseEnter={() => setNavPeek(true)}
+              title="Seitenleiste fixieren"
+              aria-label="Seitenleiste fixieren"
+              className="hidden md:flex fixed left-3 top-3 z-30 rounded-md border border-border-subtle bg-bg-sidebar/80 p-1.5 text-text-secondary backdrop-blur hover:text-text-primary"
+            >
+              <Icon name="sidebar" size={18} />
+            </button>
+          </>
         )}
         <div className="flex-1 min-w-0 flex flex-col">
           {/* Kopfleiste nur auf schmalen Bildschirmen: Logo + Menü-Taste */}
@@ -239,13 +252,17 @@ function Sidebar({
   open,
   onClose,
   hidden,
-  onHide,
+  peek,
+  onPeek,
+  onToggleHidden,
 }: {
   pathname: string;
   open: boolean; // nur auf schmalen Bildschirmen relevant (Schublade)
   onClose: () => void;
-  hidden: boolean; // auf größeren Bildschirmen ausgeblendet
-  onHide: () => void;
+  hidden: boolean; // auf größeren Bildschirmen nicht fixiert
+  peek: boolean; // nicht fixiert, aber gerade per Hover eingeblendet
+  onPeek: (v: boolean) => void;
+  onToggleHidden: () => void;
 }) {
   const { currentPlayer, charactersOf, logout } = useStore();
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
@@ -261,28 +278,35 @@ function Sidebar({
       <div onClick={onClose} className="fixed inset-0 z-40 bg-black/60 md:hidden" />
     )}
     <aside
+      onMouseLeave={() => hidden && onPeek(false)}
       className={`w-[230px] md:w-[190px] shrink-0 bg-bg-sidebar border-r border-border-subtle flex flex-col fixed inset-y-0 left-0 z-50 overflow-y-auto transition-transform ${
-        hidden ? "md:hidden" : "md:sticky md:top-0 md:h-screen md:translate-x-0"
+        hidden
+          ? peek
+            ? "md:translate-x-0 md:shadow-2xl md:shadow-black/70"
+            : ""
+          : "md:sticky md:top-0 md:h-screen md:translate-x-0"
       } ${open ? "translate-x-0" : "-translate-x-full"}`}
     >
-      <div className="relative px-4 pt-5 pb-5 border-b border-border-subtle">
+      <div className="px-4 pt-5 pb-5 border-b border-border-subtle">
         <Link href="/dashboard" className="block leading-none">
           <div className="font-display text-[1.25rem] text-text-primary">
             eden is burning<span className="text-accent">.</span>
           </div>
         </Link>
-        {/* Seitenleiste ausblenden (nur größere Bildschirme) */}
-        <button
-          onClick={onHide}
-          title="Seitenleiste ausblenden"
-          aria-label="Seitenleiste ausblenden"
-          className="hidden md:block absolute right-1 top-1 rounded p-1 text-text-tertiary hover:text-text-primary"
-        >
-          <Icon name="chevron-right" size={12} className="rotate-180" />
-        </button>
       </div>
 
-      <nav className="px-2 pt-3 flex-1 flex flex-col gap-0.5">
+      <nav className="px-2 pt-2 flex-1 flex flex-col gap-0.5">
+        {/* Seitenleiste fixieren / nur bei Hover zeigen (nur größere Bildschirme) */}
+        <button
+          onClick={onToggleHidden}
+          title={hidden ? "Seitenleiste fixieren" : "Seitenleiste ausblenden (erscheint beim Hovern)"}
+          aria-label={hidden ? "Seitenleiste fixieren" : "Seitenleiste ausblenden"}
+          className={`hidden md:flex self-start rounded-md px-2.5 py-1.5 transition-colors hover:bg-white/[0.04] hover:text-text-primary ${
+            hidden ? "text-text-tertiary" : "text-accent"
+          }`}
+        >
+          <Icon name="sidebar" size={17} />
+        </button>
         {NAV.map((item) => {
           const active = isActive(item.href);
           return (

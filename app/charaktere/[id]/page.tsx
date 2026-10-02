@@ -449,7 +449,7 @@ function InplayTab({ inScenes }: { inScenes: Scene[] }) {
       ) : (
         <div className="flex flex-col gap-2">
           {inScenes.map((s) => (
-            <SceneCard key={s.id} scene={s} showStatus />
+            <SceneCard key={s.id} scene={s} />
           ))}
         </div>
       )}

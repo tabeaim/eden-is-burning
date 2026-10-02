@@ -146,24 +146,23 @@ body {
   }
 }
 
-/* Karte ohne Kasten: Ränder (v.a. das Wasser rechts) laufen weich aus */
+/* Karte ohne Kasten: nur die Seiten (v.a. das Wasser rechts) laufen weich aus */
 .map-free {
-  -webkit-mask-image:
-    linear-gradient(to right, transparent 0, #000 3%, #000 84%, transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 6%, #000 93%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to right, transparent 0, #000 3%, #000 84%, transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 6%, #000 93%, transparent 100%);
-  mask-composite: intersect;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 3%, #000 84%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 3%, #000 84%, transparent 100%);
 }
 
-/* Kartenbreite aus der Fensterhöhe ableiten (Seitenverhältnis 608:654), damit die
-   ganze Karte ohne Scrollen sichtbar bleibt (die Kartenseite hat nur den
-   Seitentitel, kein Titelbild). */
+/* Karte passt sich dem Bildschirm an: so breit wie der Platz neben dem Detail-Panel,
+   höchstens aber so, dass sie (Seitenverhältnis 608:654) ohne Scrollen ins Fenster
+   passt. */
+.map-fit {
+  max-width: min(100%, max(300px, min(760px, calc((100vh - 150px) * 0.93))));
+}
 @media (min-width: 1024px) {
   .map-fit {
-    width: clamp(480px, calc((100vh - 150px) * 0.93), 760px);
+    flex: 1 1 0%;
+    min-width: 0;
+    max-width: max(300px, min(760px, calc((100vh - 150px) * 0.93)));
   }
 }
 
