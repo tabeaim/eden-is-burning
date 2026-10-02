@@ -54,6 +54,7 @@ export default function TimelinePage() {
   const [naming, setNaming] = useState(false);
   const [plotName, setPlotName] = useState("");
   const [addingOff, setAddingOff] = useState(false);
+  const [year, setYear] = useState<string | null>(null); // null = alle Jahre
 
   const plot = plots.find((p) => p.id === plotId) ?? null;
   const editable = plot ? canEditPlot(plot) : false;
@@ -115,10 +116,18 @@ export default function TimelinePage() {
       plotScenes(p, p.tokens, p.aus).some((s) => involvesMe(s.participant_ids)),
   );
 
-  const entries: Entry[] = [
+  const allEntries: Entry[] = [
     ...shownScenes.map((s): Entry => ({ kind: "scene", date: s.inplay_date, scene: s })),
     ...(plot?.off_scenes ?? []).map((o): Entry => ({ kind: "off", date: o.inplay_date, off: o })),
   ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
+  // Jahres-Schalter: erscheint, sobald Einträge aus mehr als einem Jahr da sind
+  // (z.B. Rückblenden nach 2014). Ein nicht mehr vorhandenes Jahr zählt als „Alle".
+  const years = Array.from(new Set(allEntries.map((e) => e.date.slice(0, 4))));
+  const activeYear = year && years.includes(year) ? year : null;
+  const entries = activeYear
+    ? allEntries.filter((e) => e.date.startsWith(activeYear))
+    : allEntries;
 
   // nach Monat gruppieren (neueste zuerst)
   const groups: { key: string; label: string; items: Entry[] }[] = [];
@@ -271,6 +280,23 @@ export default function TimelinePage() {
           {plot && <span className="text-text-primary">{plot.name} · </span>}
           {entries.length} {entries.length === 1 ? "Eintrag" : "Einträge"}
         </span>
+        {years.length > 1 && (
+          <div className="flex flex-wrap items-center gap-1">
+            {[null, ...years].map((y) => (
+              <button
+                key={y ?? "all"}
+                onClick={() => setYear(y)}
+                className={`rounded-full px-2.5 py-0.5 text-[0.8125rem] transition-colors ${
+                  activeYear === y
+                    ? "bg-accent text-black font-medium"
+                    : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                {y ?? "Alle Jahre"}
+              </button>
+            ))}
+          </div>
+        )}
         {filterCount > 0 && !plot && (
           <button
             onClick={() => {
@@ -345,8 +371,16 @@ export default function TimelinePage() {
           </p>
         ) : (
           <div className="flex flex-col gap-8">
-            {groups.map((g) => (
+            {groups.map((g, i) => (
               <section key={g.key}>
+                {/* Jahres-Überschrift, sobald mehrere Jahre untereinander stehen */}
+                {years.length > 1 &&
+                  !activeYear &&
+                  g.key.slice(0, 4) !== groups[i - 1]?.key.slice(0, 4) && (
+                    <div className="mb-4 font-display text-[1.75rem] leading-none text-accent">
+                      {g.key.slice(0, 4)}
+                    </div>
+                  )}
                 <h2 className="section-bar text-[0.875rem] text-text-secondary mb-4">
                   {g.label}
                 </h2>
