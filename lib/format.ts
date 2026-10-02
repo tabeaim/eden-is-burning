@@ -20,6 +20,13 @@ export function formatInplayDate(iso: string): string {
   return `${d}. ${MONTHS_DE[m - 1]} ${y}`;
 }
 
+// "2021-11-22" -> "22.11.2021" (für kompakte Zeilen)
+export function formatInplayDateShort(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}.${m}.${y}`;
+}
+
 // Absoluter Zeitpunkt mit Datum + Uhrzeit, z.B. "22. November 2021, 14:30 Uhr"
 export function formatDateTime(iso: string): string {
   const dt = new Date(iso);

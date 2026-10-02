@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Montserrat, New_Tegomin } from "next/font/google";
+import { Montserrat, Syne_Mono } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
@@ -11,7 +11,7 @@ const sans = Montserrat({
 });
 
 // Display-Schrift — Bildmarke (Logo) und Seiten-Überschriften
-const display = New_Tegomin({
+const display = Syne_Mono({
   variable: "--font-display",
   subsets: ["latin"],
   weight: "400",

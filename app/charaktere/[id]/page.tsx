@@ -168,7 +168,7 @@ export default function CharacterPage({
 // NPC hinterlegt ist. Wer ihn angelegt hat (oder Admin ist), kann das Profil in
 // den Einstellungen ausfüllen — dann erscheint die volle Profilansicht.
 function NpcFacts({ c }: { c: Character }) {
-  const { locations, player, canEditCharacter } = useStore();
+  const { locations, scenes, player, canEditCharacter } = useStore();
   const p = player(c.player_id);
   const foundAt = locations.filter((l) => l.people?.some((x) => x.id === c.id));
 
@@ -204,7 +204,14 @@ function NpcFacts({ c }: { c: Character }) {
             <Heading>spotted here.</Heading>
             <div className="flex flex-wrap gap-1.5">
               {foundAt.map((l) => (
-                <LocationBubble key={l.id} id={l.id} name={l.name} />
+                <LocationBubble
+                  key={l.id}
+                  id={l.id}
+                  name={l.name}
+                  played={scenes.some(
+                    (s) => s.location_area === l.area && s.location_name === l.name,
+                  )}
+                />
               ))}
             </div>
           </section>

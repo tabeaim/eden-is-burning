@@ -18,7 +18,7 @@ Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schre
 | Baustein | Inhalt | Einsatz |
 | --- | --- | --- |
 | `CharacterBubble` | Avatar + Name, bei NPCs „NPC" hinter dem Namen | Charaktere und NPCs überall |
-| `LocationBubble` | Karten-Icon + Ortsname | Orte auf der Karte und in der Szene |
+| `LocationBubble` | Karten-Icon + Ortsname; Ortsideen (`played={false}`) olive getönt | Orte auf der Karte und in der Szene |
 | `Bubble` | freier Inhalt | Basis für neue Bubble-Arten |
 
 - Ton `accent` nur für „am Zug".
@@ -26,7 +26,8 @@ Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schre
 
 ## Szenen-Boxen — `components/SceneCard.tsx`
 
-Genau drei Varianten, keine weiteren:
+Szenen-Boxen nennen nur den Ort, nie den Bezirk. Kompakte Zeilen zeigen das Datum
+numerisch (`formatInplayDateShort`). Genau drei Varianten, keine weiteren:
 
 1. **Szenen-Kachel** — Raster der Szenen-Übersicht (`app/szenen/page.tsx`).
 2. **`SceneCard`** — Key-Facts-Karte für Listen: Dashboard, Ortsprofil,

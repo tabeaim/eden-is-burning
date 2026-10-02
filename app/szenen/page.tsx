@@ -354,7 +354,7 @@ export default function ScenesPage() {
                 {s.title}
               </h3>
               <div className="text-[0.875rem] text-text-tertiary mt-1">
-                {s.location_name} · {areaName(s.location_area)}
+                {s.location_name}
               </div>
               <div className="text-[0.875rem] text-text-tertiary">
                 {formatInplayDate(s.inplay_date)}, {s.inplay_time}

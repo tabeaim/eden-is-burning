@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useStore } from "@/lib/store";
-import { areaName } from "@/lib/world";
 import { formatDateTime, formatInplayDate } from "@/lib/format";
 import type { Character, Scene } from "@/lib/types";
 import { Icon } from "./Icon";
@@ -13,7 +12,7 @@ import { StatusBadge } from "./StatusBadge";
 //  2. SceneCard — Key-Facts-Karte für Listen (Dashboard, Ortsprofil, Charakterprofil)
 //  3. SceneRow  — kompakte Zeile für schmale Spalten (Dashboard „letzte 24h", Karte)
 
-// Key-Facts einer Szene: Titel, Beteiligte, Ort · Bezirk · Datum, letzter Post.
+// Key-Facts einer Szene: Titel, Beteiligte, Ort · Datum, letzter Post.
 export function SceneCard({
   scene,
   muted = false,
@@ -63,8 +62,7 @@ export function SceneCard({
       </div>
 
       <div className="mt-1.5 text-[0.875rem] text-text-tertiary">
-        {scene.location_name} · {areaName(scene.location_area)} ·{" "}
-        {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
+        {scene.location_name} · {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
         {scene.au && (
           <>
             {" · "}

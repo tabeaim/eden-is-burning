@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
-import { areaName } from "@/lib/world";
 import { timeAgo, withinHours } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { QuoteRotator } from "@/components/QuoteRotator";
@@ -192,11 +191,7 @@ export default function DashboardPage() {
                     <SceneRow
                       key={scene.id}
                       scene={scene}
-                      sub={
-                        <>
-                          {scene.location_name} · {areaName(scene.location_area)}
-                        </>
-                      }
+                      sub={scene.location_name}
                       right={
                         last &&
                         lastChar && (

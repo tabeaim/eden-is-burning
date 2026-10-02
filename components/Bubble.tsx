@@ -11,6 +11,8 @@ const TONES = {
   default: "border-border-subtle bg-bg-primary text-text-secondary",
   // hervorgehoben, z.B. Charakter am Zug
   accent: "border-accent/70 bg-accent-soft text-text-primary",
+  // Ortsidee (noch nicht bespielt) — Olive statt neutral
+  idea: "border-olive/40 bg-olive-soft text-text-secondary",
 } as const;
 
 export function Bubble({
@@ -94,22 +96,30 @@ export function CharacterBubble({
   );
 }
 
-// Ort: Karten-Icon + Name. Mit `id` verlinkt aufs Ortsprofil.
+// Ort: Karten-Icon + Name. Mit `id` verlinkt aufs Ortsprofil. Unbespielte Orte
+// (Ortsideen, `played={false}`) sind olive getönt.
 export function LocationBubble({
   name,
   id,
   title,
+  played = true,
 }: {
   name: string;
   id?: string;
   title?: string;
+  played?: boolean;
 }) {
   return (
     <Bubble
       href={id ? `/orte/${id}` : undefined}
       title={title}
+      tone={played ? "default" : "idea"}
       leading={
-        <span className="flex h-5 w-5 items-center justify-center text-text-tertiary">
+        <span
+          className={`flex h-5 w-5 items-center justify-center ${
+            played ? "text-text-tertiary" : "text-olive"
+          }`}
+        >
           <Icon name="map" size={13} />
         </span>
       }

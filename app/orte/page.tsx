@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import { AREAS, EXTRA_AREAS, areaName, type AreaKey } from "@/lib/world";
-import { formatInplayDate, placeholderImg } from "@/lib/format";
+import { formatInplayDateShort, placeholderImg } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { EdenMap } from "@/components/EdenMap";
 import { Icon } from "@/components/Icon";
@@ -161,7 +161,7 @@ export default function PlacesPage() {
                         scene={s}
                         sub={
                           <>
-                            {s.location_name} · {formatInplayDate(s.inplay_date)}
+                            {s.location_name} · {formatInplayDateShort(s.inplay_date)}
                           </>
                         }
                       />
@@ -244,7 +244,13 @@ function LocationSection({
       <div className="flex flex-wrap items-center gap-1.5">
         {/* Jeder Ort führt auf sein Ortsprofil */}
         {locs.map((l) => (
-          <LocationBubble key={l.id} id={l.id} name={l.name} title={l.description ?? undefined} />
+          <LocationBubble
+            key={l.id}
+            id={l.id}
+            name={l.name}
+            title={l.description ?? undefined}
+            played={played}
+          />
         ))}
         {/* Orphans (bespielt, ohne Eintrag) */}
         {orphans.map((n) => (
