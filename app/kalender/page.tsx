@@ -44,6 +44,9 @@ export default function TimelinePage() {
     updatePlot,
     deletePlot,
     canEditPlot,
+    currentPlayer,
+    isAdmin,
+    charactersOf,
   } = useStore();
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED (leer = Canon)
@@ -77,21 +80,40 @@ export default function TimelinePage() {
 
   // AUs sind eigene Zeitlinien: Ohne AU-Auswahl zeigt die Timeline nur Canon,
   // mit Auswahl nur die Szenen der gewählten AUs.
-  const matchesFilters = (s: Scene) => {
-    if (aus.length === 0 ? s.au : !(s.au && aus.includes(s.au_name || AU_UNNAMED)))
+  const matches = (s: Scene, tk: string[], au: string[]) => {
+    if (au.length === 0 ? s.au : !(s.au && au.includes(s.au_name || AU_UNNAMED)))
       return false;
-    return tokens.every((t) => tokenMatches(t, s.participant_ids));
+    return tk.every((t) => tokenMatches(t, s.participant_ids));
   };
 
-  // Sichtbare Szenen: Filter; im Plot zusätzlich von Hand ergänzt/entfernt. Ein
+  // Szenen eines Plots: Filter plus von Hand ergänzte, minus entfernte Szenen. Ein
   // Plot ohne Filter besteht nur aus den von Hand aufgenommenen Szenen.
-  const noFilter = tokens.length === 0 && aus.length === 0;
-  const shownScenes = scenes.filter((s) => {
-    if (!plot) return matchesFilters(s);
-    if (plot.include_ids.includes(s.id)) return true;
-    if (plot.exclude_ids.includes(s.id)) return false;
-    return !noFilter && matchesFilters(s);
-  });
+  const plotScenes = (p: Plot, tk: string[], au: string[]) =>
+    scenes.filter((s) => {
+      if (p.include_ids.includes(s.id)) return true;
+      if (p.exclude_ids.includes(s.id)) return false;
+      return tk.length + au.length > 0 && matches(s, tk, au);
+    });
+
+  // Sichtbare Szenen: im offenen Plot mit den aktuell eingestellten Filtern
+  const shownScenes = plot
+    ? plotScenes(plot, tokens, aus)
+    : scenes.filter((s) => matches(s, tokens, aus));
+
+  // Plots sieht nur, wessen Charaktere betroffen sind: als Filter gewählt, in
+  // einer Szene oder Off-Szene des Plots beteiligt — außerdem wer den Plot
+  // angelegt hat, und Admins.
+  const myId = currentPlayer?.id ?? "";
+  const myCharIds = new Set(charactersOf(myId).map((c) => c.id));
+  const involvesMe = (ids: string[]) => ids.some((id) => myCharIds.has(id));
+  const visiblePlots = plots.filter(
+    (p) =>
+      isAdmin ||
+      p.created_by === myId ||
+      p.tokens.some((t) => t === `player:${myId}` || myCharIds.has(t.replace(/^char:/, ""))) ||
+      p.off_scenes.some((o) => involvesMe(o.participant_ids)) ||
+      plotScenes(p, p.tokens, p.aus).some((s) => involvesMe(s.participant_ids)),
+  );
 
   const entries: Entry[] = [
     ...shownScenes.map((s): Entry => ({ kind: "scene", date: s.inplay_date, scene: s })),
@@ -187,10 +209,10 @@ export default function TimelinePage() {
           <span className="text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
             Plots
           </span>
-          {plots.length === 0 && !naming && (
+          {visiblePlots.length === 0 && !naming && (
             <span className="text-[0.875rem] text-text-tertiary">— noch keine</span>
           )}
-          {plots.map((p) => (
+          {visiblePlots.map((p) => (
             <button
               key={p.id}
               onClick={() => activate(p)}
