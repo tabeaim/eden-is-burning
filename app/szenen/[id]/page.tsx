@@ -10,6 +10,7 @@ import { SceneCharacterCard } from "@/components/SceneCharacterCard";
 import { SceneEditPanel } from "@/components/SceneEditPanel";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Icon } from "@/components/Icon";
+import { CharacterBubble, LocationBubble } from "@/components/Bubble";
 import type { Character, Post, Scene } from "@/lib/types";
 
 function focusReplyEditor() {
@@ -348,25 +349,13 @@ function SceneHeader({
         {participants.map((c) => {
           const isTurn = scene.status === "active" && c.id === activeCharId;
           return (
-            <Link
+            <CharacterBubble
               key={c.id}
-              href={`/charaktere/${c.id}`}
-              title={isTurn ? "am Zug" : undefined}
-              className={`flex items-center gap-1.5 rounded-full border pl-1 pr-2.5 py-0.5 text-[0.8125rem] transition-colors ${
-                isTurn
-                  ? "border-accent/70 bg-accent-soft text-text-primary"
-                  : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={c.faceclaim_image_url ?? ""}
-                alt={c.name}
-                className={`w-5 h-5 rounded-full object-cover ${isTurn ? "ring-2 ring-accent" : ""}`}
-              />
-              {c.name.split(" ")[0]}
-              {isTurn && <Icon name="flame" size={12} className="text-accent" />}
-            </Link>
+              character={c}
+              firstNameOnly
+              tone={isTurn ? "accent" : undefined}
+              trailing={isTurn && <Icon name="flame" size={12} className="text-accent" />}
+            />
           );
         })}
         </div>
@@ -416,18 +405,7 @@ function SceneHeader({
         <span>
           {formatInplayDate(scene.inplay_date)}, {scene.inplay_time} ·
         </span>
-        {loc ? (
-          <Link
-            href={`/orte/${loc.id}`}
-            className="rounded-full border border-border-subtle bg-bg-primary px-2.5 py-0.5 text-[0.8125rem] text-text-secondary hover:text-text-primary transition-colors"
-          >
-            {scene.location_name}
-          </Link>
-        ) : (
-          <span className="rounded-full border border-border-subtle bg-bg-primary px-2.5 py-0.5 text-[0.8125rem] text-text-secondary">
-            {scene.location_name}
-          </span>
-        )}
+        <LocationBubble id={loc?.id} name={scene.location_name} />
         {scene.au && (
           <span>
             · <span className="italic">AU</span>

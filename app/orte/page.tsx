@@ -9,6 +9,8 @@ import { formatInplayDate, placeholderImg } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { EdenMap } from "@/components/EdenMap";
 import { Icon } from "@/components/Icon";
+import { CharacterBubble, LocationBubble } from "@/components/Bubble";
+import { SceneRow } from "@/components/SceneCard";
 import type { Location } from "@/lib/types";
 
 export default function PlacesPage() {
@@ -112,19 +114,7 @@ export default function PlacesPage() {
                 <AccordionSection key={`res-${selected}`} title="Bewohner*innen">
                   <div className="flex flex-wrap gap-1.5">
                     {residents.map((c) => (
-                      <Link
-                        key={c.id}
-                        href={`/charaktere/${c.id}`}
-                        className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={c.faceclaim_image_url ?? ""}
-                          alt={c.name}
-                          className="w-4 h-4 rounded-full object-cover"
-                        />
-                        {c.name}
-                      </Link>
+                      <CharacterBubble key={c.id} character={c} />
                     ))}
                   </div>
                 </AccordionSection>
@@ -166,18 +156,15 @@ export default function PlacesPage() {
                 ) : (
                   <div className="flex flex-col gap-1.5">
                     {activeScenes.map((s) => (
-                      <Link
+                      <SceneRow
                         key={s.id}
-                        href={`/szenen/${s.id}`}
-                        className="rounded-lg border border-border-subtle bg-bg-primary px-3 py-2 hover:bg-white/[0.03] transition-colors"
-                      >
-                        <div className="text-[0.875rem] text-text-primary font-serif">
-                          {s.title}
-                        </div>
-                        <div className="text-[0.875rem] text-text-tertiary">
-                          {s.location_name} · {formatInplayDate(s.inplay_date)}
-                        </div>
-                      </Link>
+                        scene={s}
+                        sub={
+                          <>
+                            {s.location_name} · {formatInplayDate(s.inplay_date)}
+                          </>
+                        }
+                      />
                     ))}
                   </div>
                 )}
@@ -257,27 +244,11 @@ function LocationSection({
       <div className="flex flex-wrap items-center gap-1.5">
         {/* Jeder Ort führt auf sein Ortsprofil */}
         {locs.map((l) => (
-          <Link
-            key={l.id}
-            href={`/orte/${l.id}`}
-            title={l.description ?? undefined}
-            className={`rounded-full border px-2.5 py-1 text-[0.8125rem] transition-colors ${
-              played
-                ? "bg-accent-soft border-accent/40 text-text-primary hover:border-accent"
-                : "bg-white/[0.03] border-border-subtle text-text-tertiary hover:text-text-primary hover:border-border-strong"
-            }`}
-          >
-            {l.name}
-          </Link>
+          <LocationBubble key={l.id} id={l.id} name={l.name} title={l.description ?? undefined} />
         ))}
         {/* Orphans (bespielt, ohne Eintrag) */}
         {orphans.map((n) => (
-          <span
-            key={n}
-            className="rounded-full bg-accent-soft border border-accent/40 px-2.5 py-1 text-[0.8125rem] text-text-primary"
-          >
-            {n}
-          </span>
+          <LocationBubble key={n} name={n} />
         ))}
         {played && locs.length === 0 && orphans.length === 0 && (
           <p className="text-[0.875rem] text-text-tertiary">
@@ -290,7 +261,7 @@ function LocationSection({
             onClick={onAdd}
             title="Neuen Ort erstellen"
             aria-label="Neuen Ort erstellen"
-            className="inline-flex h-[1.875rem] w-[1.875rem] items-center justify-center rounded-full border border-accent/50 bg-accent-soft text-text-primary hover:bg-accent hover:text-black hover:border-accent transition-colors"
+            className="inline-flex h-[1.625rem] w-[1.625rem] items-center justify-center rounded-full border border-accent/50 bg-accent-soft text-text-primary hover:bg-accent hover:text-black hover:border-accent transition-colors"
           >
             <Icon name="plus" size={13} />
           </button>

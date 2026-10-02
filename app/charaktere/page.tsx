@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { AREA_ORDER, AREAS, areaName, type AreaKey } from "@/lib/world";
 import { PageHeader } from "@/components/PageHeader";
+import { CharacterBubble } from "@/components/Bubble";
 
 export default function CharaktereePage() {
   const { characters, npcs, player } = useStore();
@@ -76,19 +77,13 @@ export default function CharaktereePage() {
           NPCs
         </div>
         <p className="mt-1 text-[0.875rem] text-text-tertiary">
-          Nebenfiguren ohne eigenes Profil. Aktuell lassen sie sich im Ortsprofil
+          Nebenfiguren mit optionalem Profil. Aktuell lassen sie sich im Ortsprofil
           anlegen — die Erstellung hier folgt.
         </p>
         {npcs.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {npcs.map((n) => (
-              <span
-                key={n.id}
-                className="rounded-full border border-border-subtle bg-white/[0.03] px-2.5 py-1 text-[0.8125rem] text-text-secondary"
-              >
-                {n.name}
-                {n.role && <span className="text-text-tertiary"> · {n.role}</span>}
-              </span>
+              <CharacterBubble key={n.id} character={n} />
             ))}
           </div>
         )}

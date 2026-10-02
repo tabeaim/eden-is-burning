@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
-import { formatDateTime, formatInplayDate, timeAgo, withinHours } from "@/lib/format";
+import { timeAgo, withinHours } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
-import { Icon } from "@/components/Icon";
 import { QuoteRotator } from "@/components/QuoteRotator";
+import { SceneCard, SceneRow } from "@/components/SceneCard";
 import type { Character, Player, Scene } from "@/lib/types";
 
 export default function DashboardPage() {
@@ -127,7 +127,6 @@ export default function DashboardPage() {
                       key={g.char.id}
                       char={g.char}
                       scenes={g.dran}
-                      store={store}
                     />
                   ))}
               </div>
@@ -165,7 +164,6 @@ export default function DashboardPage() {
                         key={g.char.id}
                         char={g.char}
                         scenes={g.warten}
-                        store={store}
                         muted
                       />
                     ))}
@@ -191,34 +189,28 @@ export default function DashboardPage() {
                     ? character(last.character_id)
                     : undefined;
                   return (
-                    <Link
+                    <SceneRow
                       key={scene.id}
-                      href={`/szenen/${scene.id}`}
-                      className="flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-surface px-3.5 py-2.5 hover:bg-white/[0.03] transition-colors"
-                    >
-                      <span className="text-accent shrink-0">
-                        <Icon name="flame" size={17} />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-serif text-[0.875rem] text-text-primary truncate">
-                          {scene.title}
-                        </div>
-                        <div className="text-[0.875rem] text-text-tertiary truncate">
-                          {scene.location_name} ·{" "}
-                          {areaName(scene.location_area)}
-                        </div>
-                      </div>
-                      {last && lastChar && (
-                        <div className="text-right shrink-0">
-                          <div className="text-[0.875rem] text-text-secondary">
-                            {lastChar.name.split(" ")[0]}
-                          </div>
-                          <div className="text-[0.875rem] text-text-tertiary">
-                            {timeAgo(last.created_at)}
-                          </div>
-                        </div>
-                      )}
-                    </Link>
+                      scene={scene}
+                      sub={
+                        <>
+                          {scene.location_name} · {areaName(scene.location_area)}
+                        </>
+                      }
+                      right={
+                        last &&
+                        lastChar && (
+                          <>
+                            <div className="text-[0.875rem] text-text-secondary">
+                              {lastChar.name.split(" ")[0]}
+                            </div>
+                            <div className="text-[0.875rem] text-text-tertiary">
+                              {timeAgo(last.created_at)}
+                            </div>
+                          </>
+                        )
+                      }
+                    />
                   );
                 })}
               </div>
@@ -298,12 +290,10 @@ function Empty({ children }: { children: React.ReactNode }) {
 function CharacterGroup({
   char,
   scenes,
-  store,
   muted = false,
 }: {
   char: Character;
   scenes: Scene[];
-  store: ReturnType<typeof useStore>;
   muted?: boolean;
 }) {
   return (
@@ -327,75 +317,9 @@ function CharacterGroup({
       </div>
       <div className="flex flex-col gap-2 pl-1">
         {scenes.map((s) => (
-          <SceneFacts key={s.id} scene={s} store={store} muted={muted} />
+          <SceneCard key={s.id} scene={s} muted={muted} />
         ))}
       </div>
     </div>
-  );
-}
-
-// Szenenkarte mit reinen Key-Facts (keine Textvorschau, kein "Weiterschreiben")
-function SceneFacts({
-  scene,
-  store,
-  muted,
-}: {
-  scene: Scene;
-  store: ReturnType<typeof useStore>;
-  muted?: boolean;
-}) {
-  const participants = scene.participant_ids
-    .map((id) => store.character(id))
-    .filter(Boolean) as Character[];
-
-  const posts = store.postsOf(scene.id);
-  const lastPost = posts.length ? posts[posts.length - 1] : null;
-
-  return (
-    <Link
-      href={`/szenen/${scene.id}`}
-      className={`block rounded-xl border border-border-subtle px-5 py-3.5 transition-colors hover:bg-white/[0.03] ${
-        muted ? "bg-bg-surface/60" : "bg-bg-surface"
-      }`}
-    >
-      <h3 className="font-serif text-[1rem] text-text-primary leading-tight">
-        {scene.title}
-      </h3>
-
-      <div className="mt-2 flex items-center gap-1.5">
-        <div className="flex -space-x-1.5">
-          {participants.map((c) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={c.id}
-              src={c.faceclaim_image_url ?? ""}
-              alt={c.name}
-              title={c.name}
-              className="w-5 h-5 rounded-full object-cover ring-1 ring-bg-surface"
-            />
-          ))}
-        </div>
-        <span className="text-[0.875rem] text-text-secondary">
-          {participants.map((c) => c.name.split(" ")[0]).join(" & ")}
-        </span>
-      </div>
-
-      <div className="mt-1.5 text-[0.875rem] text-text-tertiary">
-        {scene.location_name} · {areaName(scene.location_area)} ·{" "}
-        {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
-        {scene.au && (
-          <>
-            {" · "}
-            <span className="italic">AU</span>
-          </>
-        )}
-      </div>
-
-      <div className="mt-1 text-[0.8125rem] text-text-tertiary">
-        {lastPost
-          ? `Letzter Post am ${formatDateTime(lastPost.created_at)}`
-          : "Noch kein Post"}
-      </div>
-    </Link>
   );
 }

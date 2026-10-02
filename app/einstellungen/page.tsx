@@ -215,9 +215,12 @@ function ProfileTab() {
 }
 
 function CharactersTab() {
-  const { currentPlayer, charactersOf, addCharacter } = useStore();
+  const { currentPlayer, charactersOf, addCharacter, npcs, canEditCharacter } =
+    useStore();
   if (!currentPlayer) return null;
   const chars = charactersOf(currentPlayer.id);
+  // NPCs, die man selbst angelegt hat (Admins: alle) — Profil optional ausfüllbar
+  const myNpcs = npcs.filter(canEditCharacter);
 
   return (
     <div className="flex flex-col gap-3">
@@ -230,6 +233,17 @@ function CharactersTab() {
       >
         <Icon name="plus" size={16} /> Neuen Charakter anlegen
       </button>
+
+      {myNpcs.length > 0 && (
+        <>
+          <div className="mt-4 text-[0.875rem] uppercase tracking-wider font-semibold text-text-tertiary">
+            NPCs
+          </div>
+          {myNpcs.map((c) => (
+            <CharacterEditor key={c.id} character={c} />
+          ))}
+        </>
+      )}
     </div>
   );
 }
@@ -272,7 +286,14 @@ function CharacterEditor({ character }: { character: Character }) {
           className="w-10 h-10 rounded-full object-cover bg-bg-primary"
         />
         <div className="flex-1 min-w-0">
-          <div className="text-[0.875rem] text-text-primary">{draft.name}</div>
+          <div className="text-[0.875rem] text-text-primary">
+            {draft.name}
+            {character.is_npc && (
+              <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
+                NPC
+              </span>
+            )}
+          </div>
           <div className="text-[0.875rem] text-text-tertiary">{draft.role}</div>
         </div>
         <span className="text-text-tertiary text-[0.875rem]">
@@ -362,6 +383,11 @@ function CharacterEditor({ character }: { character: Character }) {
                   onChange={(e) => set("area", e.target.value as AreaKey)}
                   className={field}
                 >
+                  {character.is_npc && (
+                    <option value="" className="bg-bg-surface">
+                      —
+                    </option>
+                  )}
                   {AREA_ORDER.map((k) => (
                     <option key={k} value={k} className="bg-bg-surface">
                       {AREAS[k].name}

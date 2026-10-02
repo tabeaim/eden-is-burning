@@ -12,7 +12,6 @@ import type { Session } from "@supabase/supabase-js";
 import type {
   Character,
   Location,
-  Npc,
   Player,
   Post,
   Scene,
@@ -27,10 +26,12 @@ interface PersistedState {
   posts: Post[];
   quotes: SceneQuote[];
   locations: Location[];
-  npcs: Npc[];
 }
 
+// `characters` enthält nach außen nur spielbare Charaktere; NPCs (Charaktere mit
+// is_npc) stehen getrennt in `npcs`. `character(id)` findet beide.
 interface StoreValue extends PersistedState {
+  npcs: Character[];
   ready: boolean;
   configured: boolean;
   // Auth / Login
@@ -52,8 +53,8 @@ interface StoreValue extends PersistedState {
   quotesOf: (sceneId: string) => SceneQuote[];
   locationsOf: (area: string) => Location[];
   location: (id: string) => Location | undefined;
-  npc: (id: string) => Npc | undefined;
   canEditLocation: (loc: Location) => boolean;
+  canEditCharacter: (c: Character) => boolean;
   // mutations
   addPost: (sceneId: string, characterId: string, content: string) => void;
   updatePost: (postId: string, content: string) => void;
@@ -65,7 +66,7 @@ interface StoreValue extends PersistedState {
   // Legt den Ort an (oder findet den bestehenden) und gibt seine ID zurück.
   addLocation: (area: string, name: string, description?: string | null) => string | null;
   updateLocation: (id: string, patch: Partial<Location>) => void;
-  addNpc: (npc: Pick<Npc, "name" | "role" | "age">) => string;
+  addNpc: (npc: Pick<Character, "name" | "role" | "age">) => string;
   updateCharacter: (id: string, patch: Partial<Character>) => void;
   addCharacter: (playerId: string) => string;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
@@ -86,7 +87,6 @@ const EMPTY: PersistedState = {
   posts: [],
   quotes: [],
   locations: [],
-  npcs: [],
 };
 
 function uid(prefix: string) {
@@ -114,14 +114,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Lädt alle Welt-Daten (nur für freigeschaltete Nutzer*innen sichtbar; RLS).
   const loadWorld = useCallback(async () => {
-    const [pl, ch, sc, po, lo, qu, np] = await Promise.all([
+    const [pl, ch, sc, po, lo, qu] = await Promise.all([
       supabase.from("players").select("*"),
       supabase.from("characters").select("*"),
       supabase.from("scenes").select("*"),
       supabase.from("posts").select("*"),
       supabase.from("locations").select("*"),
       supabase.from("quotes").select("*"),
-      supabase.from("npcs").select("*"),
     ]);
     setState({
       players: (pl.data as Player[]) ?? [],
@@ -130,7 +129,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       posts: (po.data as Post[]) ?? [],
       locations: (lo.data as Location[]) ?? [],
       quotes: (qu.data as SceneQuote[]) ?? [],
-      npcs: (np.data as Npc[]) ?? [],
     });
   }, []);
 
@@ -220,9 +218,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [loadForSession]);
 
   // --- Selektoren -----------------------------------------------------------
-  const charactersOf = useCallback(
-    (playerId: string) => state.characters.filter((c) => c.player_id === playerId),
+  // state.characters hält alle Zeilen; nach außen getrennt in spielbare und NPCs.
+  const playable = useMemo(
+    () => state.characters.filter((c) => !c.is_npc),
     [state.characters],
+  );
+  const npcs = useMemo(
+    () => state.characters.filter((c) => c.is_npc),
+    [state.characters],
+  );
+  const charactersOf = useCallback(
+    (playerId: string) => playable.filter((c) => c.player_id === playerId),
+    [playable],
   );
   const postsOf = useCallback(
     (sceneId: string) =>
@@ -258,9 +265,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     (id: string) => state.locations.find((l) => l.id === id),
     [state.locations],
   );
-  const npc = useCallback(
-    (id: string) => state.npcs.find((n) => n.id === id),
-    [state.npcs],
+  // Charaktere/NPCs bearbeiten dürfen Admins und wer sie angelegt hat.
+  const canEditCharacter = useCallback(
+    (c: Character) =>
+      !!currentPlayer &&
+      (Boolean(currentPlayer.is_admin) || c.player_id === currentPlayer.id),
+    [currentPlayer],
   );
   // Orte bearbeiten dürfen Admins und wer den Ort erstellt hat.
   const canEditLocation = useCallback(
@@ -464,23 +474,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const addNpc = useCallback(
-    (input: Pick<Npc, "name" | "role" | "age">) => {
-      const newNpc: Npc = {
-        id: uid("npc"),
-        name: input.name.trim(),
-        role: input.role,
-        age: input.age,
-        created_by: currentPlayer?.id ?? null,
-        created_at: new Date().toISOString(),
-      };
-      persist("addNpc", supabase.from("npcs").insert(newNpc));
-      setState((s) => ({ ...s, npcs: [...s.npcs, newNpc] }));
-      return newNpc.id;
-    },
-    [currentPlayer?.id],
-  );
-
   const updateCharacter = useCallback((id: string, patch: Partial<Character>) => {
     persist(
       "updateCharacter",
@@ -525,6 +518,45 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({ ...s, characters: [...s.characters, newChar] }));
     return id;
   }, []);
+
+  // NPC = Charakter mit is_npc; Profil ist optional ausfüllbar.
+  const addNpc = useCallback(
+    (input: Pick<Character, "name" | "role" | "age">) => {
+      const id = uid("npc");
+      const newNpc: Character = {
+        id,
+        player_id: currentPlayer?.id ?? "",
+        name: input.name.trim(),
+        faceclaim: null,
+        faceclaim_image_url: null,
+        tagline: null,
+        role: input.role,
+        age: input.age,
+        area: "",
+        bio: null,
+        pinterest_url: null,
+        created_at: new Date().toISOString(),
+        height: null,
+        figure: null,
+        hair: null,
+        eyes: null,
+        full_name: null,
+        sexuality: null,
+        status: null,
+        origin: null,
+        job: null,
+        company: null,
+        quote: null,
+        personality: null,
+        relationships: {},
+        is_npc: true,
+      };
+      persist("addNpc", supabase.from("characters").insert(newNpc));
+      setState((s) => ({ ...s, characters: [...s.characters, newNpc] }));
+      return id;
+    },
+    [currentPlayer?.id],
+  );
 
   const updatePlayer = useCallback((id: string, patch: Partial<Player>) => {
     persist("updatePlayer", supabase.from("players").update(patch).eq("id", id));
@@ -592,6 +624,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<StoreValue>(
     () => ({
       ...state,
+      characters: playable,
+      npcs,
       ready,
       configured: supabaseConfigured,
       currentPlayerId: currentPlayer?.id ?? null,
@@ -611,8 +645,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       quotesOf,
       locationsOf,
       location,
-      npc,
       canEditLocation,
+      canEditCharacter,
       addPost,
       updatePost,
       deletePost,
@@ -650,8 +684,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       quotesOf,
       locationsOf,
       location,
-      npc,
+      playable,
+      npcs,
       canEditLocation,
+      canEditCharacter,
       addPost,
       updatePost,
       deletePost,

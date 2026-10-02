@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
-import { formatInplayDate } from "@/lib/format";
 import { pageHeader } from "@/lib/headers";
 import { Icon } from "@/components/Icon";
-import { SceneTurnBar } from "@/components/SceneTurnBar";
-import type { Character, Location, LocationPerson } from "@/lib/types";
+import { CharacterBubble } from "@/components/Bubble";
+import { SceneCard } from "@/components/SceneCard";
+import type { Location, LocationPerson } from "@/lib/types";
 
 const MAX_IMAGES = 12;
 
@@ -169,35 +169,7 @@ export default function LocationPage({
             ) : (
               <div className="flex flex-col gap-2">
                 {scenesHere.map((s) => (
-                  <Link
-                    key={s.id}
-                    href={`/szenen/${s.id}`}
-                    className="rounded-lg border border-border-subtle bg-bg-surface px-4 py-3 hover:bg-white/[0.03] transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-serif text-[1rem] text-text-primary">
-                        {s.title}
-                      </span>
-                      {s.status === "active" && (
-                        <span className="text-[0.8125rem] uppercase tracking-wider text-accent">
-                          aktiv
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[0.875rem] text-text-tertiary">
-                      {formatInplayDate(s.inplay_date)} · {postsOf(s.id).length} Posts
-                    </div>
-                    <div className="mt-2">
-                      <SceneTurnBar
-                        participants={characters.filter((c) =>
-                          s.participant_ids.includes(c.id),
-                        )}
-                        activeCharId={null}
-                        active={false}
-                        firstNameOnly
-                      />
-                    </div>
-                  </Link>
+                  <SceneCard key={s.id} scene={s} showStatus />
                 ))}
               </div>
             )}
@@ -240,7 +212,7 @@ export default function LocationPage({
               <Heading>spotted here.</Heading>
               <div className="flex flex-wrap gap-1.5">
                 {visitors.map((c) => (
-                  <CharacterChip key={c.id} c={c} />
+                  <CharacterBubble key={c.id} character={c} />
                 ))}
               </div>
             </section>
@@ -281,67 +253,19 @@ function Heading({ children }: { children: React.ReactNode }) {
   );
 }
 
-function CharacterChip({ c }: { c: Character }) {
-  return (
-    <Link
-      href={`/charaktere/${c.id}`}
-      className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={c.faceclaim_image_url ?? ""}
-        alt={c.name}
-        className="w-4 h-4 rounded-full object-cover"
-      />
-      {c.name}
-    </Link>
-  );
-}
-
-// Runde Namens-Bubble eines NPCs (kein Profil, daher kein Link)
-function NpcBubble({ name }: { name: string }) {
-  return (
-    <span className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[0.8125rem] text-text-secondary">
-      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-olive-soft text-[0.6875rem] uppercase text-text-primary">
-        {name.charAt(0)}
-      </span>
-      {name}
-    </span>
-  );
-}
-
 // Ein am Ort hinterlegter Charakter/NPC — Aufbau wie die Relations im Charakterprofil:
 // Bubble + Alter | Beruf in Caps, darunter der Bezug zum Ort.
 function PersonCard({ person }: { person: LocationPerson }) {
-  const { character, npc } = useStore();
-  const c = person.kind === "character" ? character(person.id) : undefined;
-  const n = person.kind === "npc" ? npc(person.id) : undefined;
-  const who = c ?? n;
-  if (!who) return null;
+  const { character } = useStore();
+  const c = character(person.id);
+  if (!c) return null;
 
-  const facts = [who.age ? `${who.age}` : null, who.role, n ? "(NPC)" : null]
-    .filter(Boolean)
-    .join(" | ");
+  const facts = [c.age ? `${c.age}` : null, c.role].filter(Boolean).join(" | ");
 
   return (
     <div className="rounded-lg border border-border-subtle bg-bg-surface p-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        {c ? (
-          <Link
-            href={`/charaktere/${c.id}`}
-            className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={c.faceclaim_image_url ?? ""}
-              alt={c.name}
-              className="w-5 h-5 rounded-full object-cover"
-            />
-            {c.name}
-          </Link>
-        ) : (
-          <NpcBubble name={who.name} />
-        )}
+        <CharacterBubble character={c} />
         {facts && (
           <span className="text-[0.875rem] uppercase tracking-wider text-text-secondary">
             {facts}
@@ -358,7 +282,8 @@ function PersonCard({ person }: { person: LocationPerson }) {
 }
 
 // Bearbeiten der „Characters & NPCs" eines Orts: bestehende Charaktere/NPCs
-// auswählen oder einen neuen NPC (nur Basis-Infos) direkt anlegen.
+// auswählen oder einen neuen NPC direkt anlegen (Basis-Infos; das Profil lässt
+// sich später in den Einstellungen ausfüllen).
 function PeopleEditor({
   people,
   setPeople,
@@ -366,7 +291,7 @@ function PeopleEditor({
   people: LocationPerson[];
   setPeople: React.Dispatch<React.SetStateAction<LocationPerson[]>>;
 }) {
-  const { characters, npcs, character, npc, addNpc } = useStore();
+  const { characters, npcs, character, addNpc } = useStore();
   const [pick, setPick] = useState("");
   const [creating, setCreating] = useState(false);
   const [npcName, setNpcName] = useState("");
@@ -412,21 +337,15 @@ function PeopleEditor({
       {people.length > 0 && (
         <div className="mb-2 flex flex-col gap-2">
           {people.map((p, i) => {
-            const c = p.kind === "character" ? character(p.id) : undefined;
-            const name = c?.name ?? npc(p.id)?.name;
-            if (!name) return null;
+            const c = character(p.id);
+            if (!c) return null;
             return (
               <div
                 key={`${p.kind}:${p.id}`}
                 className="rounded-lg border border-border-subtle bg-bg-primary p-3"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-[0.875rem] text-text-primary">{name}</span>
-                  {p.kind === "npc" && (
-                    <span className="text-[0.75rem] uppercase tracking-wider text-text-tertiary">
-                      NPC
-                    </span>
-                  )}
+                  <CharacterBubble character={c} linked={false} />
                   <button
                     type="button"
                     onClick={() => setPeople((cur) => cur.filter((_, j) => j !== i))}
@@ -502,7 +421,10 @@ function PeopleEditor({
       {creating && (
         <div className="mt-2 rounded-lg border border-border-subtle bg-bg-primary p-3 flex flex-col gap-2">
           <div className="text-[0.875rem] text-text-secondary">
-            Neuer NPC <span className="text-text-tertiary">— nur Basis-Infos, kein Profil</span>
+            Neuer NPC{" "}
+            <span className="text-text-tertiary">
+              — Basis-Infos; das Profil kannst du später in den Einstellungen ausfüllen
+            </span>
           </div>
           <div className="grid sm:grid-cols-[1fr_1fr_90px] gap-2">
             <input

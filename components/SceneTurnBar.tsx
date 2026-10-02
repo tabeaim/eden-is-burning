@@ -1,9 +1,10 @@
 import type { Character } from "@/lib/types";
+import { CharacterBubble } from "./Bubble";
 import { Icon } from "./Icon";
 
-// Teilnehmende Charaktere als Pills; der Charakter, der am Zug ist, wird mit
-// Akzent-Ring + Flamme markiert (wie in der Szenenansicht). Rendert bewusst
-// <span> (keine Links), damit es innerhalb einer verlinkten Karte gültig ist.
+// Teilnehmende Charaktere als Bubbles; der Charakter, der am Zug ist, wird mit
+// Akzent-Ring + Flamme markiert (wie in der Szenenansicht). Bewusst ohne Links,
+// damit es innerhalb einer verlinkten Karte gültig ist.
 export function SceneTurnBar({
   participants,
   activeCharId,
@@ -19,28 +20,15 @@ export function SceneTurnBar({
     <div className="flex flex-wrap items-center gap-1.5">
       {participants.map((c) => {
         const isTurn = active && c.id === activeCharId;
-        const name = firstNameOnly ? c.name.split(" ")[0] : c.name;
         return (
-          <span
+          <CharacterBubble
             key={c.id}
-            title={isTurn ? `${c.name} · am Zug` : c.name}
-            className={`flex items-center gap-1.5 rounded-full border pl-1 pr-2.5 py-0.5 text-[0.8125rem] ${
-              isTurn
-                ? "border-accent/70 bg-accent-soft text-text-primary"
-                : "border-border-subtle bg-bg-primary text-text-secondary"
-            }`}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={c.faceclaim_image_url ?? ""}
-              alt={c.name}
-              className={`w-5 h-5 rounded-full object-cover ${
-                isTurn ? "ring-2 ring-accent" : ""
-              }`}
-            />
-            {name}
-            {isTurn && <Icon name="flame" size={12} className="text-accent" />}
-          </span>
+            character={c}
+            linked={false}
+            firstNameOnly={firstNameOnly}
+            tone={isTurn ? "accent" : undefined}
+            trailing={isTurn && <Icon name="flame" size={12} className="text-accent" />}
+          />
         );
       })}
     </div>

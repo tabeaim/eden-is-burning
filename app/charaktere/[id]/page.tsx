@@ -7,7 +7,9 @@ import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
 import { formatInplayDate, timeAgo } from "@/lib/format";
 import { Icon } from "@/components/Icon";
-import type { Character } from "@/lib/types";
+import { CharacterBubble, LocationBubble } from "@/components/Bubble";
+import { SceneCard } from "@/components/SceneCard";
+import type { Character, Scene } from "@/lib/types";
 
 type Tab = "general" | "character" | "inplay" | "relations";
 
@@ -31,8 +33,14 @@ export default function CharacterPage({
   const c = character(id);
   const [tab, setTab] = useState<Tab>("general");
 
-  // Charaktername als Unterseiten-Titel in den Banner-Header heben
-  useSetPageMeta(c?.name ?? "Charakter", undefined, undefined, "max-w-5xl");
+  // Charaktername als Unterseiten-Titel in den Banner-Header heben; NPCs sind
+  // dort als solche gekennzeichnet.
+  useSetPageMeta(
+    c ? `${c.name}${c.is_npc ? " (NPC)" : ""}` : "Charakter",
+    undefined,
+    undefined,
+    "max-w-5xl",
+  );
 
   if (!c) {
     return (
@@ -43,6 +51,11 @@ export default function CharacterPage({
         </Link>
       </div>
     );
+  }
+
+  // NPC ohne ausgefülltes Profil → nur die wichtigsten Facts
+  if (c.is_npc && !c.bio && !c.personality && !c.banner_url && !c.quote) {
+    return <NpcFacts c={c} />;
   }
 
   const p = player(c.player_id);
@@ -108,9 +121,7 @@ export default function CharacterPage({
 
           {tab === "general" && <GeneralTab c={c} />}
           {tab === "character" && <CharacterTab c={c} />}
-          {tab === "inplay" && (
-            <InplayTab inScenes={inScenes} postsOf={postsOf} />
-          )}
+          {tab === "inplay" && <InplayTab inScenes={inScenes} />}
           {tab === "relations" && (
             <RelationsTab
               c={c}
@@ -149,6 +160,62 @@ export default function CharacterPage({
         </div>
       </div>
       </div>
+    </div>
+  );
+}
+
+// Kompaktansicht für NPCs ohne ausgefülltes Profil: Facts + Orte, an denen der
+// NPC hinterlegt ist. Wer ihn angelegt hat (oder Admin ist), kann das Profil in
+// den Einstellungen ausfüllen — dann erscheint die volle Profilansicht.
+function NpcFacts({ c }: { c: Character }) {
+  const { locations, player, canEditCharacter } = useStore();
+  const p = player(c.player_id);
+  const foundAt = locations.filter((l) => l.people?.some((x) => x.id === c.id));
+
+  return (
+    <div className="max-w-5xl mx-auto px-8 pt-4 pb-8">
+      {canEditCharacter(c) && (
+        <div className="mb-4 flex justify-end">
+          <Link
+            href="/einstellungen"
+            className="flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
+          >
+            <Icon name="edit" size={14} /> Profil ausfüllen
+          </Link>
+        </div>
+      )}
+
+      {/* Trennlinie zur Seite */}
+      <div className="border-b border-border-subtle mb-6" />
+
+      <div className="grid sm:grid-cols-2 gap-x-8 gap-y-7 items-start max-w-4xl">
+        <section>
+          <Heading>facts.</Heading>
+          <div className="flex flex-col gap-2">
+            <FactRow label="Name" value={c.full_name ?? c.name} />
+            <FactRow label="Age" value={c.age ? `${c.age} Jahre` : null} />
+            <FactRow label="Occupation" value={c.role} />
+            <FactRow label="Residence" value={areaName(c.area)} />
+          </div>
+        </section>
+
+        {foundAt.length > 0 && (
+          <section>
+            <Heading>spotted here.</Heading>
+            <div className="flex flex-wrap gap-1.5">
+              {foundAt.map((l) => (
+                <LocationBubble key={l.id} id={l.id} name={l.name} />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+
+      {p && (
+        <div className="mt-10 text-[0.875rem] uppercase tracking-[0.12em] text-text-tertiary">
+          NPC · angelegt von {p.username}
+        </div>
+      )}
     </div>
   );
 }
@@ -366,13 +433,7 @@ function CharacterTab({ c }: { c: Character }) {
   );
 }
 
-function InplayTab({
-  inScenes,
-  postsOf,
-}: {
-  inScenes: ReturnType<typeof useStore>["scenes"];
-  postsOf: ReturnType<typeof useStore>["postsOf"];
-}) {
+function InplayTab({ inScenes }: { inScenes: Scene[] }) {
   return (
     <section>
       <Heading>scenes.</Heading>
@@ -381,19 +442,7 @@ function InplayTab({
       ) : (
         <div className="flex flex-col gap-2">
           {inScenes.map((s) => (
-            <Link
-              key={s.id}
-              href={`/szenen/${s.id}`}
-              className="rounded-lg border border-border-subtle bg-bg-surface px-4 py-3 hover:bg-white/[0.03] transition-colors"
-            >
-              <div className="font-serif text-[1rem] text-text-primary">
-                {s.title}
-              </div>
-              <div className="text-[0.875rem] text-text-tertiary">
-                {s.location_name} · {areaName(s.location_area)} ·{" "}
-                {formatInplayDate(s.inplay_date)} · {postsOf(s.id).length} Posts
-              </div>
-            </Link>
+            <SceneCard key={s.id} scene={s} showStatus />
           ))}
         </div>
       )}
@@ -472,18 +521,7 @@ function RelationRow({
     <div className="rounded-lg border border-border-subtle bg-bg-surface p-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         {/* Charakter-Bubble (wie global) */}
-        <Link
-          href={`/charaktere/${rc.id}`}
-          className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={rc.faceclaim_image_url ?? ""}
-            alt={rc.name}
-            className="w-5 h-5 rounded-full object-cover"
-          />
-          {rc.name}
-        </Link>
+        <CharacterBubble character={rc} />
 
         {/* Alter | Beruf | (Beziehung) — Caps-Montserrat */}
         {facts && (

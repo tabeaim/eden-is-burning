@@ -56,6 +56,9 @@ export interface Character {
   personality: string | null; // CHARACTER-Tab
   // Beziehungen zu anderen Charakteren (RELATIONS-Tab), keyed by Charakter-ID
   relationships?: Record<string, { label?: string | null; note?: string | null }>;
+  // NPC: Nebenfigur mit optional ausfüllbarem Profil; gehört (player_id) dem/der
+  // Ersteller*in, zählt aber nicht zu deren spielbaren Charakteren.
+  is_npc?: boolean;
 }
 
 export interface Scene {
@@ -106,18 +109,8 @@ export interface Location {
 // Ein am Ort hinterlegter Charakter oder NPC samt Bezug zum Ort.
 export interface LocationPerson {
   kind: "character" | "npc";
-  id: string; // Charakter- bzw. NPC-ID
+  id: string; // Charakter-ID (NPCs sind Charaktere mit is_npc)
   note: string | null; // warum die Person für den Ort relevant ist
-}
-
-// Nebenfigur ohne eigenes Profil — nur Basis-Infos.
-export interface Npc {
-  id: string;
-  name: string;
-  role: string | null;
-  age: number | null;
-  created_by?: string | null; // Spieler-ID
-  created_at: string;
 }
 
 // Ein aus einem Post markiertes Zitat — speist die rotierenden Dashboard-Zitate
