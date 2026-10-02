@@ -32,6 +32,9 @@ interface PersistedState {
 // is_npc) stehen getrennt in `npcs`. `character(id)` findet beide.
 interface StoreValue extends PersistedState {
   npcs: Character[];
+  // Letzter fehlgeschlagener Speichervorgang (für den Hinweis in der AppShell)
+  saveError: string | null;
+  clearSaveError: () => void;
   ready: boolean;
   configured: boolean;
   // Auth / Login
@@ -94,12 +97,25 @@ function uid(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-// Schreibt asynchron in Supabase; Fehler werden geloggt, ohne die UI zu blockieren
-// (die Änderung ist lokal bereits sichtbar — "optimistic update").
+// Schreibt asynchron in Supabase (die Änderung ist lokal bereits sichtbar —
+// "optimistic update"). Schlägt das Speichern fehl, wird das sichtbar gemeldet:
+// sonst sähe die Änderung gespeichert aus und wäre nach dem Neuladen weg.
+let reportSaveError: ((message: string) => void) | null = null;
+// Reine Anwesenheits-Updates melden wir nicht — da geht kein Inhalt verloren.
+const SILENT = new Set(["touchPresence", "setLocation"]);
 function persist(label: string, p: unknown) {
-  Promise.resolve(p as PromiseLike<{ error: unknown }>).then(({ error }) => {
-    if (error) console.warn(`[store] ${label}:`, error);
-  });
+  Promise.resolve(p as PromiseLike<{ error: unknown }>).then(
+    ({ error }) => {
+      if (!error) return;
+      console.warn(`[store] ${label}:`, error);
+      const detail = (error as { message?: string }).message ?? "unbekannter Fehler";
+      if (!SILENT.has(label)) reportSaveError?.(`${label}: ${detail}`);
+    },
+    (err) => {
+      console.warn(`[store] ${label}:`, err);
+      if (!SILENT.has(label)) reportSaveError?.(`${label}: keine Verbindung`);
+    },
+  );
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
@@ -109,6 +125,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Lese-Status pro Szene (wann zuletzt geöffnet). Eine Szene gilt als "neu",
   // wenn ihr jüngster Post neuer ist als der letzte Besuch (oder nie geöffnet).
   const [reads, setReads] = useState<Record<string, string>>({});
+
+  const [saveError, setSaveError] = useState<string | null>(null);
+  useEffect(() => {
+    reportSaveError = setSaveError;
+    return () => {
+      reportSaveError = null;
+    };
+  }, []);
+  const clearSaveError = useCallback(() => setSaveError(null), []);
 
   const isApproved = Boolean(currentPlayer?.approved);
   const isAdmin = Boolean(currentPlayer?.is_admin);
@@ -644,6 +669,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ...state,
       characters: playable,
       npcs,
+      saveError,
+      clearSaveError,
       ready,
       configured: supabaseConfigured,
       currentPlayerId: currentPlayer?.id ?? null,
@@ -705,6 +732,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       location,
       playable,
       npcs,
+      saveError,
+      clearSaveError,
       canEditLocation,
       canEditCharacter,
       addPost,

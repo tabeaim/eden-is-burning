@@ -21,7 +21,8 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { ready, currentPlayer, isApproved, touchPresence } = useStore();
+  const { ready, currentPlayer, isApproved, touchPresence, saveError, clearSaveError, refresh } =
+    useStore();
   const pathname = usePathname();
   // Handy: Navigation als Schublade, die über die Menü-Taste aufgeht
   const [navOpen, setNavOpen] = useState(false);
@@ -71,6 +72,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <PageMetaProvider>
+      {/* Speichern fehlgeschlagen — die Änderung ist nur lokal sichtbar */}
+      {saveError && (
+        <div
+          role="alert"
+          className="fixed bottom-4 left-1/2 z-[60] w-[min(92vw,560px)] -translate-x-1/2 rounded-lg border border-red-400/50 bg-bg-surface-2 px-4 py-3 text-[0.875rem] text-text-primary shadow-2xl shadow-black/70"
+        >
+          <div className="font-semibold text-red-300">Änderung wurde nicht gespeichert</div>
+          <div className="mt-0.5 break-words text-text-secondary">{saveError}</div>
+          <div className="mt-2 flex justify-end gap-3 text-[0.8125rem]">
+            <button onClick={clearSaveError} className="text-text-tertiary hover:text-text-primary">
+              Schließen
+            </button>
+            <button
+              onClick={() => {
+                clearSaveError();
+                void refresh();
+              }}
+              className="text-accent hover:underline"
+            >
+              Gespeicherten Stand neu laden
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex min-h-screen">
         <Sidebar
           pathname={pathname}
