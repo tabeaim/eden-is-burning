@@ -411,24 +411,27 @@ function SceneHeader({
         )}
       </div>
 
-      {/* Datum, Tageszeit · Ort (+ AU) */}
-      <div className="mt-2 text-[0.875rem] text-text-tertiary">
-        {formatInplayDate(scene.inplay_date)}, {scene.inplay_time} ·{" "}
+      {/* Datum, Tageszeit · Ort als Bubble (+ AU) */}
+      <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.875rem] text-text-tertiary">
+        <span>
+          {formatInplayDate(scene.inplay_date)}, {scene.inplay_time} ·
+        </span>
         {loc ? (
           <Link
             href={`/orte/${loc.id}`}
-            className="underline decoration-border-strong underline-offset-2 hover:text-accent hover:decoration-accent transition-colors"
+            className="rounded-full border border-border-subtle bg-bg-primary px-2.5 py-0.5 text-[0.8125rem] text-text-secondary hover:text-text-primary transition-colors"
           >
             {scene.location_name}
           </Link>
         ) : (
-          scene.location_name
+          <span className="rounded-full border border-border-subtle bg-bg-primary px-2.5 py-0.5 text-[0.8125rem] text-text-secondary">
+            {scene.location_name}
+          </span>
         )}
         {scene.au && (
-          <>
-            {" · "}
-            <span className="italic">AU</span>
-          </>
+          <span>
+            · <span className="italic">AU</span>
+          </span>
         )}
       </div>
 
