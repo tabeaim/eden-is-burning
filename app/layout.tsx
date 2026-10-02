@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Montserrat, Barriecito } from "next/font/google";
+import { Montserrat, New_Tegomin } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
@@ -11,7 +11,7 @@ const sans = Montserrat({
 });
 
 // Display-Schrift — Bildmarke (Logo) und Seiten-Überschriften
-const display = Barriecito({
+const display = New_Tegomin({
   variable: "--font-display",
   subsets: ["latin"],
   weight: "400",
