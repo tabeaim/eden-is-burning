@@ -126,19 +126,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </>
         )}
         <div className="flex-1 min-w-0 flex flex-col">
-          {/* Kopfleiste nur auf schmalen Bildschirmen: Logo + Menü-Taste */}
-          <div className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border-subtle bg-bg-sidebar px-4 py-3">
+          {/* Schmale Bildschirme: Die Wortmarke steht oben und scrollt mit weg; nur
+              die Menü-Taste bleibt beim Scrollen stehen. */}
+          <div className="md:hidden flex items-center border-b border-border-subtle bg-bg-sidebar px-4 py-3.5">
             <Link href="/dashboard" className="font-display text-[1.25rem] leading-none text-text-primary">
               eden is burning<span className="text-accent">.</span>
             </Link>
-            <button
-              onClick={() => setNavOpen(true)}
-              aria-label="Menü öffnen"
-              className="rounded-md border border-border-subtle p-1.5 text-text-secondary hover:text-text-primary"
-            >
-              <MenuIcon />
-            </button>
           </div>
+          <button
+            onClick={() => setNavOpen(true)}
+            aria-label="Menü öffnen"
+            className="md:hidden fixed right-3 top-2 z-30 rounded-md border border-border-subtle bg-bg-sidebar/85 p-1.5 text-text-secondary backdrop-blur hover:text-text-primary"
+          >
+            <MenuIcon />
+          </button>
           {/* Die Karte bekommt ausnahmsweise kein Titelbild — nur den Seitentitel;
               der Platz gehört der Karte. */}
           <BannerHeader
@@ -376,13 +377,13 @@ function Sidebar({
         </button>
       </div>
 
-      {/* Meine Charaktere — aufklappbares Dropdown */}
+      {/* Alter Egos (eigene Charaktere) — aufklappbares Dropdown */}
       <div className="px-3 py-3 border-t border-border-subtle">
         <button
           onClick={() => setCharsOpen((o) => !o)}
           className="flex w-full items-center justify-between text-[0.75rem] uppercase tracking-[0.2em] text-text-tertiary hover:text-text-secondary"
         >
-          <span>Meine Charaktere ({myChars.length})</span>
+          <span>Alter Egos ({myChars.length})</span>
           <span className={`transition-transform ${charsOpen ? "rotate-180" : ""}`}>
             ▾
           </span>

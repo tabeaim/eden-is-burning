@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
 import { timeAgo, withinHours } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
@@ -14,6 +14,16 @@ export default function DashboardPage() {
   const { currentPlayer, scenes, players, charactersOf, postsOf, onlineIds, idleIds } =
     store;
   const [showWarten, setShowWarten] = useState(false);
+  // "Du bist dran": null = noch nicht selbst umgeschaltet → Standard (s.u.)
+  const [showDran, setShowDran] = useState<boolean | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
   if (!currentPlayer) return null;
 
   const myChars = charactersOf(currentPlayer.id);
@@ -67,6 +77,8 @@ export default function DashboardPage() {
     return t != null && myCharIds.has(t);
   }).length;
   const wartenCount = totalOpen - dranCount;
+  // Standard: bei mehr als 3 Szenen und auf dem Handy eingeklappt
+  const dranOpen = showDran ?? !(dranCount > 3 || isMobile);
 
   // Allgemein aktive Szenen der letzten 24h (über alle Spieler)
   const recentScenes = scenes
@@ -110,13 +122,26 @@ export default function DashboardPage() {
         {/* LINKS: Szenenübersicht, nach Charakteren gruppiert */}
         <div className="flex flex-col gap-10">
           <section>
-            <h2 className="section-bar text-[0.875rem] text-text-primary mb-4">
-              Du bist dran{" "}
-              <span className="text-accent">
-                {dranCount}/{totalOpen}
+            <button
+              onClick={() => setShowDran(!dranOpen)}
+              aria-expanded={dranOpen}
+              className="mb-4 flex w-full items-center gap-2 text-left"
+            >
+              <h2 className="section-bar text-[0.875rem] text-text-primary">
+                Du bist dran{" "}
+                <span className="text-accent">
+                  {dranCount}/{totalOpen}
+                </span>
+              </h2>
+              <span
+                className={`text-text-tertiary transition-transform ${
+                  dranOpen ? "rotate-180" : ""
+                }`}
+              >
+                ▾
               </span>
-            </h2>
-            {!hasDran ? (
+            </button>
+            {!dranOpen ? null : !hasDran ? (
               <Empty>Gerade bist du in keiner Szene am Zug.</Empty>
             ) : (
               <div className="flex flex-col gap-6">
