@@ -6,7 +6,9 @@ import { useStore } from "@/lib/store";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
 import { formatInplayDate } from "@/lib/format";
+import { pageHeader } from "@/lib/headers";
 import { Icon } from "@/components/Icon";
+import { SceneTurnBar } from "@/components/SceneTurnBar";
 import type { Character, Location, LocationPerson } from "@/lib/types";
 
 const MAX_IMAGES = 12;
@@ -53,7 +55,8 @@ export default function LocationPage({
   const [editing, setEditing] = useState(false);
   const [zoom, setZoom] = useState<string | null>(null);
 
-  // Ortsname als Seitentitel, Titelbild des Orts als Banner
+  // Ortsname als Seitentitel; Banner ist standardmäßig der der Karte, bis ein
+  // eigenes Bild hinterlegt wird.
   useSetPageMeta(loc?.name ?? "Ort", undefined, loc?.image_url ?? undefined, "max-w-5xl");
 
   useEffect(() => {
@@ -89,19 +92,26 @@ export default function LocationPage({
   const people = loc.people ?? [];
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8">
-      {canEdit && !editing && (
-        <div className="flex justify-end -mt-1 mb-5">
-          <button
-            onClick={() => setEditing(true)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[0.8125rem] uppercase tracking-wider text-text-secondary hover:text-text-primary"
-          >
-            <Icon name="edit" size={13} /> Bearbeiten
-          </button>
-        </div>
+    <div className="max-w-5xl mx-auto px-8 pt-4 pb-8">
+      {/* Kopf über der Trennlinie (wie in der Szenenansicht): Bearbeiten-Button
+          bzw. das Editier-Panel */}
+      {editing ? (
+        <LocationEditPanel loc={loc} onClose={() => setEditing(false)} />
+      ) : (
+        canEdit && (
+          <div className="mb-4 flex justify-end">
+            <button
+              onClick={() => setEditing(true)}
+              className="flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
+            >
+              <Icon name="edit" size={14} /> Bearbeiten
+            </button>
+          </div>
+        )
       )}
 
-      {editing && <LocationEditPanel loc={loc} onClose={() => setEditing(false)} />}
+      {/* Trennlinie zur Seite */}
+      <div className="border-b border-border-subtle mb-6" />
 
       <div className="grid md:grid-cols-[1fr_260px] gap-10 items-start">
         <div className="flex flex-col gap-9 min-w-0">
@@ -175,6 +185,16 @@ export default function LocationPage({
                     </div>
                     <div className="text-[0.875rem] text-text-tertiary">
                       {formatInplayDate(s.inplay_date)} · {postsOf(s.id).length} Posts
+                    </div>
+                    <div className="mt-2">
+                      <SceneTurnBar
+                        participants={characters.filter((c) =>
+                          s.participant_ids.includes(c.id),
+                        )}
+                        activeCharId={null}
+                        active={false}
+                        firstNameOnly
+                      />
                     </div>
                   </Link>
                 ))}
@@ -585,10 +605,13 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
         Ort bearbeiten
       </div>
 
-      {/* Titelbild */}
+      {/* Banner — ohne eigenes Bild gilt der Banner der Karte */}
       <div>
         <div className="flex items-center justify-between text-[0.875rem] text-text-secondary mb-1">
-          <span>Titelbild</span>
+          <span>
+            Banner{" "}
+            {!imageUrl && <span className="text-text-tertiary">(Standard: wie Karte)</span>}
+          </span>
           {imageUrl && (
             <button
               type="button"
@@ -601,7 +624,7 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
         </div>
         <div
           className="relative h-28 w-full rounded-md overflow-hidden border border-border-subtle bg-bg-primary bg-center bg-cover"
-          style={imageUrl ? { backgroundImage: `url("${imageUrl}")` } : undefined}
+          style={{ backgroundImage: `url("${imageUrl || pageHeader("orte")}")` }}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           <button

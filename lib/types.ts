@@ -97,7 +97,7 @@ export interface Location {
   created_at: string;
   // --- Ortsprofil ---
   created_by?: string | null; // Spieler-ID; darf den Ort (neben Admins) bearbeiten
-  image_url?: string | null; // Titelbild
+  image_url?: string | null; // eigener Banner (sonst der der Karte)
   images?: string[] | null; // Vibes-Fotos (URLs bzw. Data-URLs)
   pinterest_url?: string | null;
   people?: LocationPerson[] | null; // „Characters & NPCs" am Ort

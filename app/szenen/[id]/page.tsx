@@ -258,7 +258,11 @@ function SceneHeader({
   myTurn: boolean;
   isParticipant: boolean;
 }) {
-  const { character, updateScene } = useStore();
+  const { character, updateScene, locationsOf } = useStore();
+  // Ortsprofil zum Szenen-Ort (falls ein Eintrag existiert) → Ort anklickbar
+  const loc = locationsOf(scene.location_area).find(
+    (l) => l.name === scene.location_name,
+  );
   const [closing, setClosing] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -410,7 +414,17 @@ function SceneHeader({
       {/* Datum, Tageszeit · Ort · Bezirk (+ AU) */}
       <div className="mt-2 text-[0.875rem] text-text-tertiary">
         {formatInplayDate(scene.inplay_date)}, {scene.inplay_time} ·{" "}
-        {scene.location_name} · {areaName(scene.location_area)}
+        {loc ? (
+          <Link
+            href={`/orte/${loc.id}`}
+            className="underline decoration-border-strong underline-offset-2 hover:text-accent hover:decoration-accent transition-colors"
+          >
+            {scene.location_name}
+          </Link>
+        ) : (
+          scene.location_name
+        )}{" "}
+        · {areaName(scene.location_area)}
         {scene.au && (
           <>
             {" · "}

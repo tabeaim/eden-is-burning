@@ -86,11 +86,13 @@ function BannerHeader({ pathname }: { pathname: string }) {
   // Einheitliche Seitenbreite: alle Seiten teilen dieselbe Container-Breite, damit
   // Titel und linksbündiger Inhalt beim Seitenwechsel nicht horizontal springen.
   const width = (onThisPage && meta.width) || "max-w-5xl";
-  // Detailseiten (Szene, Charakter) zeichnen ihre eigene Trennlinie unter dem
-  // Inhalt (Zusammenfassung bzw. Zitat), damit der noch über der Linie steht.
+  // Detailseiten (Szene, Charakter, Ort) zeichnen ihre eigene Trennlinie unter dem
+  // Inhalt (Zusammenfassung, Zitat bzw. Bearbeiten-Button), damit der noch über
+  // der Linie steht.
   const ownsDivider =
     (/^\/szenen\/[^/]+$/.test(pathname) && pathname !== "/szenen/neu") ||
-    /^\/charaktere\/[^/]+$/.test(pathname);
+    /^\/charaktere\/[^/]+$/.test(pathname) ||
+    /^\/orte\/[^/]+$/.test(pathname);
   // Jede Seite bekommt einen eigenen, generierten Header (dunkle Skyline-Optik).
   // Szenen-Detailseiten variieren zusätzlich pro Szene; ein echtes header_url der
   // Szene (falls gesetzt) überschreibt die Vorlage.
