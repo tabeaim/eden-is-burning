@@ -159,10 +159,11 @@ body {
 }
 
 /* Kartenbreite aus der Fensterhöhe ableiten (Seitenverhältnis 608:654), damit die
-   ganze Karte ohne Scrollen sichtbar bleibt (die Kartenseite hat keinen Banner). */
+   ganze Karte ohne Scrollen sichtbar bleibt (die Kartenseite hat nur den
+   Seitentitel, kein Titelbild). */
 @media (min-width: 1024px) {
   .map-fit {
-    width: clamp(480px, calc((100vh - 64px) * 0.93), 760px);
+    width: clamp(480px, calc((100vh - 150px) * 0.93), 760px);
   }
 }
 

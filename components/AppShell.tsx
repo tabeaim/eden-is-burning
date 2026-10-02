@@ -51,9 +51,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen">
         <Sidebar pathname={pathname} />
         <div className="flex-1 min-w-0 flex flex-col">
-          {/* Die Karte bekommt ausnahmsweise keinen Banner-Header — der Platz
-              gehört der Karte. */}
-          {pathname !== "/orte" && <BannerHeader pathname={pathname} />}
+          {/* Die Karte bekommt ausnahmsweise kein Titelbild — nur den Seitentitel;
+              der Platz gehört der Karte. */}
+          <BannerHeader pathname={pathname} noBanner={pathname === "/orte"} />
           <main className="flex-1 min-w-0">{children}</main>
         </div>
       </div>
@@ -77,7 +77,13 @@ function bannerForPath(pathname: string): string {
 
 // Banner-Header: Titelbild pro Seite (Foto über Glut-Verlauf). Der Seitentitel
 // ragt halb über die Banner-Unterkante in die Seite; darunter die Aktions-Leiste.
-function BannerHeader({ pathname }: { pathname: string }) {
+function BannerHeader({
+  pathname,
+  noBanner = false,
+}: {
+  pathname: string;
+  noBanner?: boolean; // Titel ohne Titelbild darüber
+}) {
   const meta = usePageMeta();
 
   const navMatch = NAV.find(
@@ -104,6 +110,7 @@ function BannerHeader({ pathname }: { pathname: string }) {
     <header className="relative">
       {/* Titelbild — Foto über Glut-Verlauf. background-image statt <img>, damit ein
           fehlgeschlagener Ladevorgang kein kaputtes Icon zeigt, sondern den Verlauf. */}
+      {!noBanner && (
       <div className="relative h-40 w-full overflow-hidden" style={{ backgroundImage: EMBER_BG }}>
         <div
           className="absolute inset-0 bg-center bg-cover"
@@ -111,11 +118,12 @@ function BannerHeader({ pathname }: { pathname: string }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/35 to-transparent" />
       </div>
+      )}
 
       {/* Titel — ragt halb über die Banner-Unterkante in die Seite (nicht beschnitten).
           Container in der Seitenbreite zentriert → Titel startet bündig mit dem Inhalt. */}
       <div className={`relative ${width} mx-auto px-8`}>
-        <h1 className="page-title inline-block -mt-8 font-display lowercase text-[2.625rem] sm:text-[3.375rem] leading-none text-text-primary">
+        <h1 className={`page-title inline-block ${noBanner ? "mt-7" : "-mt-8"} font-display lowercase text-[2.625rem] sm:text-[3.375rem] leading-none text-text-primary`}>
           {title}
           <span className="text-accent">.</span>
         </h1>
