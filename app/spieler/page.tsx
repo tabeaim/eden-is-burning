@@ -7,9 +7,10 @@ import { formatDateTimeShort, formatInplayDateShort } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import type { Character, Player } from "@/lib/types";
 
-// Spieler-Übersicht: pro Spieler*in eine Zeile — links die Person (führt zum
-// Spielerprofil), rechts alle ihre Charaktere als kleine Karten (führen zu den
-// Charakterprofilen). Meistbespielter Charakter zuerst.
+// Spieler-Übersicht: zwei Spielerkarten nebeneinander. Oben die Person (führt zum
+// Spielerprofil), darunter ihre Charaktere als kompakte Liste mit kleinem Avatar
+// (führen zu den Charakterprofilen) — auch zehn Charaktere bleiben übersichtlich.
+// Meistbespielter Charakter zuerst.
 export default function SpielerOverviewPage() {
   const { players, posts, charactersOf, currentPlayer, onlineIds, idleIds } = useStore();
   const sorted = [...players].sort((a, b) =>
@@ -31,7 +32,7 @@ export default function SpielerOverviewPage() {
         width="max-w-6xl"
       />
 
-      <div className="flex flex-col gap-5">
+      <div className="grid gap-5 lg:grid-cols-2 items-start">
         {sorted.map((p) => {
           const chars = [...charactersOf(p.id)].sort(
             (a, b) =>
@@ -74,12 +75,9 @@ function PlayerRow({
   const totalPosts = chars.reduce((n, c) => n + (postCounts.get(c.id) ?? 0), 0);
 
   return (
-    <section className="grid gap-5 rounded-xl border border-border-subtle bg-bg-surface p-4 md:grid-cols-[210px_1fr]">
+    <section className="rounded-xl border border-border-subtle bg-bg-surface p-4">
       {/* Spieler*in */}
-      <Link
-        href={`/spieler/${player.username}`}
-        className="group flex items-center gap-3 md:flex-col md:items-start md:gap-2.5"
-      >
+      <Link href={`/spieler/${player.username}`} className="group flex items-center gap-3">
         <span className="relative shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -102,65 +100,65 @@ function PlayerRow({
             <span className="text-accent">.</span>
           </span>
           <span className="mt-1.5 block text-[0.8125rem] text-text-tertiary">
-            Mitglied seit {formatInplayDateShort(player.created_at.slice(0, 10))}
-          </span>
-          <span className="block text-[0.8125rem] text-text-tertiary">
+            Mitglied seit {formatInplayDateShort(player.created_at.slice(0, 10))} ·{" "}
             {presence === "online"
               ? "gerade online"
               : presence === "idle"
                 ? "online, gerade anderswo"
                 : `zuletzt online ${formatDateTimeShort(player.last_seen)}`}
           </span>
-          <span className="mt-1.5 block text-[0.8125rem] uppercase tracking-wider text-text-secondary">
-            {chars.length} {chars.length === 1 ? "Charakter" : "Charaktere"} · {totalPosts}{" "}
-            {totalPosts === 1 ? "Post" : "Posts"}
-          </span>
         </span>
       </Link>
 
       {/* Charaktere */}
-      {chars.length === 0 ? (
-        <p className="self-center text-[0.875rem] text-text-tertiary">Noch keine Charaktere.</p>
-      ) : (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {chars.map((c) => (
-            <CharacterTile key={c.id} c={c} postCount={postCounts.get(c.id) ?? 0} />
-          ))}
+      <div className="mt-4 border-t border-border-subtle pt-3">
+        <div className="mb-1.5 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
+          {chars.length} {chars.length === 1 ? "Charakter" : "Charaktere"} · {totalPosts}{" "}
+          {totalPosts === 1 ? "Post" : "Posts"}
         </div>
-      )}
+        {chars.length === 0 ? (
+          <p className="text-[0.875rem] text-text-tertiary">Noch keine Charaktere.</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+            {chars.map((c) => (
+              <CharacterRow key={c.id} c={c} />
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
 
-// Kleine Charakter-Karte: Avatar im Originalformat, Name, Alter · Beruf, Posts
-function CharacterTile({ c, postCount }: { c: Character; postCount: number }) {
+// Eine Zeile in der Charakter-Liste: kleiner Avatar, Name, Alter · Beruf
+function CharacterRow({ c }: { c: Character }) {
   const facts = [c.age ? `${c.age}` : null, c.role].filter(Boolean).join(" · ");
   return (
     <Link
       href={`/charaktere/${c.id}`}
-      className="flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-primary p-2 transition-colors hover:bg-white/[0.03]"
+      title={facts ? `${c.name} — ${facts}` : c.name}
+      className="group flex items-center gap-2.5 rounded-md px-1.5 py-1.5 transition-colors hover:bg-white/[0.04]"
     >
-      <span className="relative block aspect-[600/502] w-24 shrink-0 overflow-hidden rounded-md bg-bg-surface">
-        {c.faceclaim_image_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={c.faceclaim_image_url}
-            alt=""
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        )}
-      </span>
+      {c.faceclaim_image_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={c.faceclaim_image_url}
+          alt=""
+          loading="lazy"
+          className="h-7 w-7 shrink-0 rounded-full object-cover bg-bg-primary"
+        />
+      ) : (
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-olive-soft text-[0.75rem] uppercase text-text-primary">
+          {c.name.charAt(0)}
+        </span>
+      )}
       <span className="min-w-0">
-        <span className="block truncate font-serif text-[0.875rem] font-bold uppercase tracking-wide text-text-primary">
+        <span className="block truncate text-[0.875rem] text-text-secondary group-hover:text-text-primary">
           {c.name}
         </span>
         {facts && (
-          <span className="block truncate text-[0.8125rem] text-text-secondary">{facts}</span>
+          <span className="block truncate text-[0.75rem] text-text-tertiary">{facts}</span>
         )}
-        <span className="block text-[0.8125rem] text-text-tertiary">
-          {postCount} {postCount === 1 ? "Post" : "Posts"}
-        </span>
       </span>
     </Link>
   );
