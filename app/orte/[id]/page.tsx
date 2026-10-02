@@ -185,7 +185,7 @@ export default function LocationPage({
               <dd className="text-text-secondary">{areaName(loc.area)}</dd>
               <dt className="text-text-tertiary">Status:</dt>
               <dd className="text-text-secondary">
-                {scenesHere.length > 0 ? "Bespielt" : "Idee"}
+                {scenesHere.length > 0 ? "Bespielt" : "Noch unbespielt"}
               </dd>
               <dt className="text-text-tertiary">Szenen:</dt>
               <dd className="text-text-secondary">{scenesHere.length}</dd>

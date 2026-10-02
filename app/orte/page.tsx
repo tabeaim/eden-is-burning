@@ -71,7 +71,7 @@ export default function PlacesPage() {
         </div>
 
         {/* Detail-Panel */}
-        <div className="relative z-10 w-full lg:w-[410px] lg:shrink-0 lg:ml-auto lg:mt-10 rounded-xl border border-border-subtle bg-bg-surface/95 backdrop-blur-sm shadow-2xl shadow-black/60 min-h-[320px] overflow-hidden">
+        <div className="relative z-10 w-full lg:w-[410px] lg:shrink-0 lg:ml-auto rounded-xl border border-border-subtle bg-bg-surface/95 backdrop-blur-sm shadow-2xl shadow-black/60 min-h-[320px] overflow-hidden">
           {info || extra ? (
             <>
               {/* Titelbild-Banner mit Namen */}
@@ -132,12 +132,13 @@ export default function PlacesPage() {
                 played
               />
 
-              {/* Ortsideen */}
+              {/* Weitere Orte (noch nicht bespielt) */}
               <LocationSection
                 key={`ideas-${selected}`}
-                title="Ortsideen"
+                title="Weitere Orte"
                 locs={ideaLocs}
                 onAdd={() => setAdding(true)}
+                adding={adding}
               />
 
               {/* Formular: neuen Ort anlegen */}
@@ -233,12 +234,14 @@ function LocationSection({
   orphans = [],
   played = false,
   onAdd,
+  adding = false,
 }: {
   title: string;
   locs: Location[];
   orphans?: string[];
   played?: boolean;
   onAdd?: () => void; // zeigt den „+"-Button am Listenende (neuen Ort erstellen)
+  adding?: boolean; // Formular offen → „+" in blassem Orange
 }) {
   return (
     <AccordionSection title={title}>
@@ -268,7 +271,11 @@ function LocationSection({
             onClick={onAdd}
             title="Neuen Ort erstellen"
             aria-label="Neuen Ort erstellen"
-            className="inline-flex h-[1.625rem] w-[1.625rem] items-center justify-center rounded-full border border-accent/50 bg-accent-soft text-text-primary hover:bg-accent hover:text-black hover:border-accent transition-colors"
+            className={`inline-flex h-[1.625rem] w-[1.625rem] items-center justify-center rounded-full border transition-colors ${
+              adding
+                ? "border-accent/50 bg-accent-soft text-text-primary"
+                : "border-border-subtle bg-white/[0.04] text-text-secondary hover:text-text-primary"
+            }`}
           >
             <Icon name="plus" size={13} />
           </button>
@@ -327,7 +334,7 @@ function AddLocationForm({
         </button>
       </div>
       <p className="text-[0.875rem] text-text-tertiary">
-        Bleibt unter „Ortsideen", bis eine Szene hier spielt.
+        Bleibt unter „Weitere Orte", bis eine Szene hier spielt.
       </p>
     </div>
   );

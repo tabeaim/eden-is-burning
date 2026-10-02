@@ -18,7 +18,7 @@ Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schre
 | Baustein | Inhalt | Einsatz |
 | --- | --- | --- |
 | `CharacterBubble` | Avatar + Name, bei NPCs „NPC" hinter dem Namen | Charaktere und NPCs überall |
-| `LocationBubble` | Karten-Icon + Ortsname; Ortsideen (`played={false}`) olive getönt | Orte auf der Karte und in der Szene |
+| `LocationBubble` | Karten-Icon + Ortsname; Icon orange bei bespielten Orten, grau bei „Weiteren Orten" (`played={false}`) | Orte auf der Karte und in der Szene |
 | `Bubble` | freier Inhalt | Basis für neue Bubble-Arten |
 
 - Ton `accent` nur für „am Zug".
