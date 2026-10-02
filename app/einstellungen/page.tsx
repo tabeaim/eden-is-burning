@@ -350,7 +350,7 @@ function CharacterEditor({ character }: { character: Character }) {
         <img
           src={draft.faceclaim_image_url ?? ""}
           alt={draft.name}
-          className="w-10 h-10 rounded-full object-cover bg-bg-primary"
+          className="h-10 w-12 rounded-md object-cover bg-bg-primary"
         />
         <div className="flex-1 min-w-0">
           <div className="text-[0.875rem] text-text-primary">

@@ -77,12 +77,12 @@ export function CharacterBubble({
           <img
             src={c.faceclaim_image_url}
             alt=""
-            className={`h-5 w-5 rounded-full object-cover ${
+            className={`h-5 w-6 rounded-[3px] object-cover ${
               tone === "accent" ? "ring-2 ring-accent" : ""
             }`}
           />
         ) : (
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-olive-soft text-[0.6875rem] uppercase text-text-primary">
+          <span className="flex h-5 w-6 items-center justify-center rounded-[3px] bg-olive-soft text-[0.6875rem] uppercase text-text-primary">
             {c.name.charAt(0)}
           </span>
         )

@@ -400,7 +400,7 @@ function Sidebar({
               <img
                 src={c.faceclaim_image_url ?? placeholder(c.name)}
                 alt={c.name}
-                className="h-[17px] w-[17px] shrink-0 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
+                className="h-[17px] w-5 shrink-0 rounded-[3px] object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
               />
               <span className="truncate">{c.name}</span>
             </Link>

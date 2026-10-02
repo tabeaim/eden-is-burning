@@ -61,7 +61,7 @@ export default function PlayerPage({
             <img
               src={c.faceclaim_image_url ?? ""}
               alt={c.name}
-              className="w-16 h-24 rounded-lg object-cover shrink-0"
+              className="h-[72px] w-[86px] rounded-md object-cover shrink-0"
             />
             <div className="min-w-0">
               <div className="font-serif text-[0.875rem] text-text-primary">

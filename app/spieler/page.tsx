@@ -145,10 +145,10 @@ function CharacterRow({ c }: { c: Character }) {
           src={c.faceclaim_image_url}
           alt=""
           loading="lazy"
-          className="h-7 w-7 shrink-0 rounded-full object-cover bg-bg-primary"
+          className="h-7 w-[34px] shrink-0 rounded object-cover bg-bg-primary"
         />
       ) : (
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-olive-soft text-[0.75rem] uppercase text-text-primary">
+        <span className="flex h-7 w-[34px] shrink-0 items-center justify-center rounded bg-olive-soft text-[0.75rem] uppercase text-text-primary">
           {c.name.charAt(0)}
         </span>
       )}
