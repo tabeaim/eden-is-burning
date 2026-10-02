@@ -35,8 +35,10 @@ interface StoreValue extends PersistedState {
   // Letzter fehlgeschlagener Speichervorgang (für den Hinweis in der AppShell)
   saveError: string | null;
   clearSaveError: () => void;
-  // Spieler-IDs, die gerade (live) mit offener App online sind
+  // Spieler-IDs, die gerade (live) die App offen haben …
   onlineIds: string[];
+  // … und davon jene, deren Tab gerade nicht im Vordergrund ist („anderswo")
+  idleIds: string[];
   ready: boolean;
   configured: boolean;
   // Auth / Login
@@ -223,10 +225,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Realtime herein; wer gerade online ist, läuft über einen Presence-Kanal.
   // Zusätzlich wird beim Zurückkehren in den Tab alles frisch geladen.
   const [onlineIds, setOnlineIds] = useState<string[]>([]);
+  const [idleIds, setIdleIds] = useState<string[]>([]);
   const approvedId = currentPlayer?.approved ? currentPlayer.id : null;
   useEffect(() => {
     if (!approvedId) {
       setOnlineIds([]);
+      setIdleIds([]);
       return;
     }
     const world = supabase
@@ -251,16 +255,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const presence = supabase.channel("eden-online", {
       config: { presence: { key: approvedId } },
     });
-    presence
-      .on("presence", { event: "sync" }, () =>
-        setOnlineIds(Object.keys(presence.presenceState())),
-      )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") void presence.track({ at: Date.now() });
+    // Aktiv = Tab sichtbar und Fenster im Vordergrund; sonst „anderswo". Bei
+    // mehreren offenen Tabs zählt eine Person als aktiv, sobald einer aktiv ist.
+    let subscribed = false;
+    const trackNow = () => {
+      if (!subscribed) return;
+      void presence.track({
+        active: document.visibilityState === "visible" && document.hasFocus(),
       });
+    };
+    presence
+      .on("presence", { event: "sync" }, () => {
+        const st = presence.presenceState() as Record<string, { active?: boolean }[]>;
+        const ids = Object.keys(st);
+        setOnlineIds(ids);
+        setIdleIds(ids.filter((id) => !st[id].some((m) => m.active)));
+      })
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED") return;
+        subscribed = true;
+        trackNow();
+      });
+    window.addEventListener("focus", trackNow);
+    window.addEventListener("blur", trackNow);
 
     let lastLoad = Date.now();
     const onVisible = () => {
+      trackNow();
       if (document.visibilityState !== "visible") return;
       if (Date.now() - lastLoad < 30_000) return;
       lastLoad = Date.now();
@@ -270,6 +291,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", trackNow);
+      window.removeEventListener("blur", trackNow);
       void supabase.removeChannel(world);
       void supabase.removeChannel(presence);
     };
@@ -750,6 +773,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       saveError,
       clearSaveError,
       onlineIds,
+      idleIds,
       ready,
       configured: supabaseConfigured,
       currentPlayerId: currentPlayer?.id ?? null,
@@ -814,6 +838,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       saveError,
       clearSaveError,
       onlineIds,
+      idleIds,
       canEditLocation,
       canEditCharacter,
       addPost,

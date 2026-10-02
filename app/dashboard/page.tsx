@@ -11,7 +11,8 @@ import type { Character, Player, Scene } from "@/lib/types";
 
 export default function DashboardPage() {
   const store = useStore();
-  const { currentPlayer, scenes, players, charactersOf, postsOf, onlineIds } = store;
+  const { currentPlayer, scenes, players, charactersOf, postsOf, onlineIds, idleIds } =
+    store;
   const [showWarten, setShowWarten] = useState(false);
   if (!currentPlayer) return null;
 
@@ -191,7 +192,11 @@ export default function DashboardPage() {
             <h2 className="section-bar text-[0.875rem] text-text-secondary mb-3">
               Spieler online · jetzt
             </h2>
-            <PlayerPresenceList players={onlineNow} now />
+            <PlayerPresenceList
+              players={onlineNow}
+              now
+              idleIds={idleIds.filter((id) => id !== currentPlayer.id)}
+            />
           </section>
 
           <section>
@@ -213,7 +218,9 @@ export default function DashboardPage() {
 function PlayerPresenceList({
   players,
   now = false,
+  idleIds = [],
 }: {
+  idleIds?: string[]; // online, aber Tab gerade nicht im Vordergrund → gelber Punkt
   players: Player[];
   now?: boolean;
 }) {
@@ -233,13 +240,17 @@ function PlayerPresenceList({
               className="w-7 h-7 rounded-full object-cover bg-bg-primary"
             />
             {now && (
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-bg-surface" />
+              <span
+                className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-bg-surface ${
+                  idleIds.includes(p.id) ? "bg-yellow-400" : "bg-green-500"
+                }`}
+              />
             )}
           </span>
           <div className="leading-tight">
             <div className="text-[0.8125rem] text-text-primary">{p.username}</div>
             <div className="text-[0.8125rem] text-text-tertiary">
-              {now ? "online" : timeAgo(p.last_seen)}
+              {now ? (idleIds.includes(p.id) ? "anderswo" : "online") : timeAgo(p.last_seen)}
             </div>
           </div>
         </Link>
