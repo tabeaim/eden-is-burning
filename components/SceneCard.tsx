@@ -37,13 +37,13 @@ function lastPostLabel(iso: string): string {
 }
 
 // Alternate Universe in der Faktenzeile: AU-Icon (gespaltener Zeitstrahl) + Name
-// des AUs; ohne Namen steht „AU".
+// des AUs in Kursiv; ohne Namen steht „AU".
 export function AuTag({ scene }: { scene: Scene }) {
   if (!scene.au) return null;
   return (
     <span title="Alternate Universe" className="inline-flex items-center gap-1 align-bottom">
       <Icon name="au" size={14} />
-      {scene.au_name || "AU"}
+      <span className="italic">{scene.au_name || "AU"}</span>
     </span>
   );
 }
