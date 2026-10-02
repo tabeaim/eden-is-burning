@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Character } from "@/lib/types";
 import { Icon } from "./Icon";
+import { characterImage } from "@/lib/avatar";
 
 // Bubbles — die EINE runde Pill-Form der App (siehe DESIGN.md). Charaktere, NPCs
 // und Orte sehen überall gleich aus; nur der Inhalt (Avatar bzw. Icon) wechselt.
@@ -72,10 +73,10 @@ export function CharacterBubble({
       title={c.name}
       className={className}
       leading={
-        c.faceclaim_image_url ? (
+        c.faceclaim_image_url || c.is_npc ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={c.faceclaim_image_url}
+            src={characterImage(c)}
             alt=""
             className={`h-5 w-5 rounded-full object-cover ${
               tone === "accent" ? "ring-2 ring-accent" : ""

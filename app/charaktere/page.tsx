@@ -5,9 +5,17 @@ import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { formatInplayDateShort } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
-import { Bubble, CharacterBubble } from "@/components/Bubble";
+import { Bubble } from "@/components/Bubble";
+import { characterImage } from "@/lib/avatar";
 import { Icon } from "@/components/Icon";
 import type { Character, Player } from "@/lib/types";
+
+type Tab = "played" | "npcs" | "all";
+const TABS: [Tab, string][] = [
+  ["played", "Bespielte"],
+  ["npcs", "NPCs"],
+  ["all", "Alle"],
+];
 
 type SortKey = "name" | "created" | "posts" | "active";
 const SORT_LABELS: Record<SortKey, string> = {
@@ -20,6 +28,7 @@ const SORT_LABELS: Record<SortKey, string> = {
 export default function CharaktereePage() {
   const { characters, npcs, posts, player } = useStore();
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<Tab>("played");
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
@@ -37,7 +46,9 @@ export default function CharaktereePage() {
   }, [posts]);
 
   const q = query.trim().toLowerCase();
-  const list = characters
+  const pool =
+    tab === "played" ? characters : tab === "npcs" ? npcs : [...characters, ...npcs];
+  const list = pool
     .filter(
       (c) =>
         !q ||
@@ -67,6 +78,23 @@ export default function CharaktereePage() {
         subtitle="Das Charakterverzeichnis von Eden."
         width="max-w-6xl"
       />
+
+      {/* Reiter wie in der Szenen-Übersicht */}
+      <div className="flex gap-1.5 mb-4">
+        {TABS.map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
+              tab === key
+                ? "bg-accent text-black font-medium"
+                : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {/* Textsuche links, Sortierung rechts */}
       <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -126,27 +154,14 @@ export default function CharaktereePage() {
 
       {list.length === 0 && (
         <p className="text-[0.875rem] text-text-tertiary">
-          Kein Charakter passt zu „{query.trim()}“.
+          {q
+            ? `Kein Charakter passt zu „${query.trim()}“.`
+            : tab === "npcs"
+              ? "Noch keine NPCs — sie lassen sich im Ortsprofil anlegen."
+              : "Noch keine Charaktere."}
         </p>
       )}
 
-      {/* NPCs — vorerst nur angedeutet; anlegen geht aktuell im Ortsprofil */}
-      <div className="mt-10 rounded-xl border border-dashed border-border-strong px-5 py-4">
-        <div className="text-[0.875rem] uppercase tracking-wider font-semibold text-text-tertiary">
-          NPCs
-        </div>
-        <p className="mt-1 text-[0.875rem] text-text-tertiary">
-          Nebenfiguren mit optionalem Profil. Aktuell lassen sie sich im Ortsprofil
-          anlegen — die Erstellung hier folgt.
-        </p>
-        {npcs.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {npcs.map((n) => (
-              <CharacterBubble key={n.id} character={n} />
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -183,15 +198,13 @@ function CharacterCard({
           Bilder einer Reihe auf gleicher Höhe, auch ohne Tagline */}
       <div className="mt-auto w-full pt-3">
         <div className="relative mx-auto aspect-[600/502] w-full max-w-[600px] overflow-hidden rounded-lg bg-bg-primary">
-          {c.faceclaim_image_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={c.faceclaim_image_url}
-              alt={c.name}
-              loading="lazy"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={characterImage(c)}
+            alt={c.name}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
           {c.bio && (
             <div className="pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
               <div className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-wider text-text-primary">
@@ -212,7 +225,7 @@ function CharacterCard({
         </span>
         {player && (
           <>
-            <span>· played by</span>
+            <span>· {c.is_npc ? "NPC von" : "played by"}</span>
             <span className="relative z-10 normal-case tracking-normal">
               <Bubble
                 href={`/spieler/${player.username}`}

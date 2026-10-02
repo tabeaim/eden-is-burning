@@ -6,6 +6,7 @@ import { useStore } from "@/lib/store";
 import { formatDateTimeShort, formatInplayDateShort } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import type { Character, Player } from "@/lib/types";
+import { characterImage } from "@/lib/avatar";
 
 // Spieler-Übersicht: zwei Spielerkarten nebeneinander. Oben die Person (führt zum
 // Spielerprofil), darunter ihre Charaktere als kompakte Liste mit kleinem Avatar
@@ -146,10 +147,10 @@ function CharacterRow({ c }: { c: Character }) {
       title={facts ? `${c.name} — ${facts}` : c.name}
       className="group flex items-center gap-2.5 rounded-md px-1.5 py-1.5 transition-colors hover:bg-white/[0.04]"
     >
-      {c.faceclaim_image_url ? (
+      {c.faceclaim_image_url || c.is_npc ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={c.faceclaim_image_url}
+          src={characterImage(c)}
           alt=""
           loading="lazy"
           className="h-7 w-[34px] shrink-0 rounded object-cover bg-bg-primary"
