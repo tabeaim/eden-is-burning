@@ -11,8 +11,7 @@ import type { Character, Player, Scene } from "@/lib/types";
 
 export default function DashboardPage() {
   const store = useStore();
-  const { currentPlayer, scenes, players, charactersOf, postsOf, character } =
-    store;
+  const { currentPlayer, scenes, players, charactersOf, postsOf, onlineIds } = store;
   const [showWarten, setShowWarten] = useState(false);
   if (!currentPlayer) return null;
 
@@ -81,21 +80,19 @@ export default function DashboardPage() {
         new Date(a.last!.created_at).getTime(),
     );
 
-  // Anwesenheit: "jetzt" (letzte 15 Min) vs. "letzte 24h" (ohne die jetzt-Online)
+  // Anwesenheit: "jetzt" (live) vs. "letzte 24h" (ohne die jetzt-Online)
   const byLastSeen = (a: (typeof players)[number], b: (typeof players)[number]) =>
     new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime();
 
-  // Man selbst ist immer "jetzt online"; andere, wenn in den letzten 15 Min aktiv.
-  const onlineNow = players
-    .filter((p) => p.id === currentPlayer.id || withinHours(p.last_seen, 0.25))
-    .sort(byLastSeen);
+  // "Jetzt online" ist live: wer die App gerade offen hat (Presence-Kanal).
+  // Man selbst zählt immer dazu.
+  const isOnline = (id: string) => id === currentPlayer.id || onlineIds.includes(id);
+  const onlineNow = players.filter((p) => isOnline(p.id)).sort(byLastSeen);
 
   const onlineRecent = players
     .filter(
       (p) =>
-        p.id !== currentPlayer.id &&
-        withinHours(p.last_seen, 24) &&
-        !withinHours(p.last_seen, 0.25),
+        !isOnline(p.id) && withinHours(p.last_seen, 24),
     )
     .sort(byLastSeen);
 
@@ -183,14 +180,9 @@ export default function DashboardPage() {
               <Empty>Keine.</Empty>
             ) : (
               <div className="flex flex-col gap-2">
-                {recentScenes.map(({ scene, last }) => {
-                  const lastChar = last
-                    ? character(last.character_id)
-                    : undefined;
-                  return (
-                    <SceneRow key={scene.id} scene={scene} />
-                  );
-                })}
+                {recentScenes.map(({ scene }) => (
+                  <SceneRow key={scene.id} scene={scene} />
+                ))}
               </div>
             )}
           </section>

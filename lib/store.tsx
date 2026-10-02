@@ -35,6 +35,8 @@ interface StoreValue extends PersistedState {
   // Letzter fehlgeschlagener Speichervorgang (für den Hinweis in der AppShell)
   saveError: string | null;
   clearSaveError: () => void;
+  // Spieler-IDs, die gerade (live) mit offener App online sind
+  onlineIds: string[];
   ready: boolean;
   configured: boolean;
   // Auth / Login
@@ -100,6 +102,25 @@ function uid(prefix: string) {
 // Schreibt asynchron in Supabase (die Änderung ist lokal bereits sichtbar —
 // "optimistic update"). Schlägt das Speichern fehl, wird das sichtbar gemeldet:
 // sonst sähe die Änderung gespeichert aus und wäre nach dem Neuladen weg.
+// Übernimmt eine Live-Änderung (Supabase Realtime) in eine Liste. Felder, die in
+// der Nachricht fehlen (sehr große Zeilen werden gekürzt), behalten ihren Wert.
+function applyChange<T extends { id: string }>(
+  list: T[],
+  payload: { eventType: string; new: unknown; old: unknown },
+): T[] {
+  if (payload.eventType === "DELETE") {
+    const id = (payload.old as { id?: string } | null)?.id;
+    return id ? list.filter((x) => x.id !== id) : list;
+  }
+  const row = payload.new as T | null;
+  if (!row?.id) return list;
+  const i = list.findIndex((x) => x.id === row.id);
+  if (i === -1) return [...list, row];
+  const copy = list.slice();
+  copy[i] = { ...copy[i], ...row };
+  return copy;
+}
+
 let reportSaveError: ((message: string) => void) | null = null;
 // Reine Anwesenheits-Updates melden wir nicht — da geht kein Inhalt verloren.
 const SILENT = new Set(["touchPresence", "setLocation"]);
@@ -196,6 +217,63 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
     return () => sub.subscription.unsubscribe();
   }, [loadForSession]);
+
+  // --- Live-Abgleich ---------------------------------------------------------
+  // Neue/aktualisierte Posts, Szenen, Zitate und Spieler kommen per Supabase
+  // Realtime herein; wer gerade online ist, läuft über einen Presence-Kanal.
+  // Zusätzlich wird beim Zurückkehren in den Tab alles frisch geladen.
+  const [onlineIds, setOnlineIds] = useState<string[]>([]);
+  const approvedId = currentPlayer?.approved ? currentPlayer.id : null;
+  useEffect(() => {
+    if (!approvedId) {
+      setOnlineIds([]);
+      return;
+    }
+    const world = supabase
+      .channel("eden-world")
+      .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, (p) =>
+        setState((s) => ({ ...s, posts: applyChange(s.posts, p) })),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "scenes" }, (p) =>
+        setState((s) => ({ ...s, scenes: applyChange(s.scenes, p) })),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "quotes" }, (p) =>
+        setState((s) => ({ ...s, quotes: applyChange(s.quotes, p) })),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "players" }, (p) => {
+        setState((s) => ({ ...s, players: applyChange(s.players, p) }));
+        // eigene Zeile (z.B. Freischaltung) mitziehen
+        const row = p.new as Partial<Player> | null;
+        if (row?.id === approvedId) setCurrentPlayer((cp) => (cp ? { ...cp, ...row } : cp));
+      })
+      .subscribe();
+
+    const presence = supabase.channel("eden-online", {
+      config: { presence: { key: approvedId } },
+    });
+    presence
+      .on("presence", { event: "sync" }, () =>
+        setOnlineIds(Object.keys(presence.presenceState())),
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") void presence.track({ at: Date.now() });
+      });
+
+    let lastLoad = Date.now();
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - lastLoad < 30_000) return;
+      lastLoad = Date.now();
+      void loadWorld();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      void supabase.removeChannel(world);
+      void supabase.removeChannel(presence);
+    };
+  }, [approvedId, loadWorld]);
 
   // Lese-Status des aktuellen Nutzers laden (localStorage, pro Gerät)
   useEffect(() => {
@@ -671,6 +749,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       npcs,
       saveError,
       clearSaveError,
+      onlineIds,
       ready,
       configured: supabaseConfigured,
       currentPlayerId: currentPlayer?.id ?? null,
@@ -734,6 +813,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       npcs,
       saveError,
       clearSaveError,
+      onlineIds,
       canEditLocation,
       canEditCharacter,
       addPost,
