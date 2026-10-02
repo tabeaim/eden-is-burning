@@ -1,69 +1,50 @@
 "use client";
 
-import { AREA_ORDER, AREAS } from "@/lib/world";
+import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
+import { Icon, type IconName } from "@/components/Icon";
+
+// Info: Einstieg zu den Unterseiten, als Karten
+const SECTIONS: { href: string; title: string; text: string; icon: IconName }[] = [
+  {
+    href: "/info/eden",
+    title: "Alles über Eden & D.C", // der Punkt kommt aus der Überschrift
+    text: "Die Stadt, ihre Gegenden und Washington D.C. — alles, was man zum Spielen wissen muss.",
+    icon: "map",
+  },
+  {
+    href: "/info/grafikregeln",
+    title: "Grafikregeln",
+    text: "Formate und Regeln für Avatare, Banner und andere Grafiken.",
+    icon: "photo",
+  },
+];
 
 export default function InfoPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader title="Info" subtitle="Die Welt von Eden" width="max-w-6xl" />
 
-      {/* Inhalt linksbündig in Lesebreite — Container-Breite bleibt einheitlich */}
-      <div className="max-w-2xl">
-      <div className="prose-serif !text-left text-text-secondary space-y-3">
-        <p>
-          <strong className="text-text-primary">Eden</strong> ist eine fiktive
-          Stadt im Norden Virginias, etwa 50&nbsp;km südlich von Washington,
-          D.C., direkt am Potomac River. Rund 120.000 Einwohner*innen und eine
-          der wohlhabendsten Städte Virginias. Washington&nbsp;D.C. ist
-          ebenfalls bespielbar.
-        </p>
-      </div>
-
-      <h2 className="text-[0.875rem] uppercase tracking-[0.16em] text-text-secondary mt-8 mb-3">
-        Die Bezirke
-      </h2>
-      <div className="flex flex-col gap-3">
-        {AREA_ORDER.map((k) => (
-          <div
-            key={k}
-            className="rounded-xl border border-border-subtle bg-bg-surface p-4"
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {SECTIONS.map((s) => (
+          <Link
+            key={s.href}
+            href={s.href}
+            className="group flex flex-col rounded-xl border border-border-subtle bg-bg-surface p-5 transition-colors hover:bg-white/[0.03]"
           >
-            <div className="flex items-baseline justify-between">
-              <h3 className="font-serif text-[1rem] text-text-primary">
-                {AREAS[k].name}
-              </h3>
-              <span className="text-[0.875rem] text-text-tertiary">
-                {AREAS[k].priceLevel}
-              </span>
-            </div>
-            <p className="text-[0.875rem] text-text-secondary mt-1 leading-relaxed">
-              {AREAS[k].character}
-            </p>
-          </div>
+            <span className="text-accent">
+              <Icon name={s.icon} size={22} />
+            </span>
+            <h2 className="mt-3 font-display lowercase text-[1.625rem] leading-none text-text-primary">
+              {s.title}
+              <span className="text-accent">.</span>
+            </h2>
+            <p className="mt-2 text-[0.875rem] leading-relaxed text-text-secondary">{s.text}</p>
+            <span className="mt-4 inline-flex items-center gap-1 text-[0.8125rem] text-text-tertiary group-hover:text-accent">
+              Öffnen <Icon name="arrow-right" size={12} />
+            </span>
+          </Link>
         ))}
-      </div>
-
-      <h2 className="text-[0.875rem] uppercase tracking-[0.16em] text-text-secondary mt-8 mb-3">
-        Bildung
-      </h2>
-      <div className="prose-serif !text-left text-text-secondary space-y-3">
-        <p>
-          <strong className="text-text-primary">Byron University</strong> —
-          fiktive Ivy League, ~15.000 Studierende, riesiger Campus mit Locker
-          Room, Library, Football Field und Cafeteria.
-        </p>
-        <p>
-          <strong className="text-text-primary">Sutton Academy</strong> —
-          Privatschule mit Internat und Schuluniform. Früher „Abercrombie
-          Academy“, 2019 umbenannt nach einem Amoklauf durch Nathan Abercrombie.
-        </p>
-        <p>
-          <strong className="text-text-primary">Eden High School</strong> —
-          öffentliche High School, chronischer Geldmangel, aber enormer
-          Schüler-Spirit.
-        </p>
-      </div>
       </div>
     </div>
   );
