@@ -667,7 +667,7 @@ export function seedScenes(): Scene[] {
       title: "Ein Kaffee, keine Namen",
       location_area: "downtown",
       location_name: "Café Verlaine",
-      inplay_date: "1947-11-22",
+      inplay_date: "2014-11-22",
       inplay_time: "Vormittag",
       status: "active",
       trigger_warning: false,
