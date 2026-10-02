@@ -113,7 +113,7 @@ function BannerHeader({ pathname }: { pathname: string }) {
       {/* Titel — ragt halb über die Banner-Unterkante in die Seite (nicht beschnitten).
           Container in der Seitenbreite zentriert → Titel startet bündig mit dem Inhalt. */}
       <div className={`relative ${width} mx-auto px-8`}>
-        <h1 className="inline-block -mt-8 font-display lowercase text-[2.625rem] sm:text-[3.375rem] leading-none tracking-tight text-text-primary">
+        <h1 className="page-title inline-block -mt-8 font-display lowercase text-[2.625rem] sm:text-[3.375rem] leading-none text-text-primary">
           {title}
           <span className="text-accent">.</span>
         </h1>

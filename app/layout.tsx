@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Montserrat, Special_Elite } from "next/font/google";
+import { Montserrat, ZCOOL_KuaiLe } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
@@ -11,7 +11,7 @@ const sans = Montserrat({
 });
 
 // Display-Schrift — Bildmarke (Logo) und Seiten-Überschriften
-const display = Special_Elite({
+const display = ZCOOL_KuaiLe({
   variable: "--font-display",
   subsets: ["latin"],
   weight: "400",
