@@ -1,18 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { AREA_ORDER, AREAS, areaName, type AreaKey } from "@/lib/world";
+import { formatDateTimeShort } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { CharacterBubble } from "@/components/Bubble";
+import { Icon } from "@/components/Icon";
+import type { Character } from "@/lib/types";
 
 export default function CharaktereePage() {
-  const { characters, npcs, player } = useStore();
-  const [area, setArea] = useState<AreaKey | "all">("all");
+  const { characters, npcs, posts, player } = useStore();
+  const [query, setQuery] = useState("");
 
-  const list =
-    area === "all" ? characters : characters.filter((c) => c.area === area);
+  // Pro Charakter: Anzahl Posts und Zeitpunkt des letzten Posts
+  const stats = useMemo(() => {
+    const map = new Map<string, { count: number; last: string }>();
+    for (const p of posts) {
+      const cur = map.get(p.character_id);
+      if (!cur) map.set(p.character_id, { count: 1, last: p.created_at });
+      else {
+        cur.count += 1;
+        if (p.created_at > cur.last) cur.last = p.created_at;
+      }
+    }
+    return map;
+  }, [posts]);
+
+  const q = query.trim().toLowerCase();
+  const list = characters
+    .filter(
+      (c) =>
+        !q ||
+        c.name.toLowerCase().includes(q) ||
+        (c.full_name ?? "").toLowerCase().includes(q) ||
+        (c.faceclaim ?? "").toLowerCase().includes(q),
+    )
+    .sort((a, b) => a.name.localeCompare(b.name, "de"));
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
@@ -22,52 +46,35 @@ export default function CharaktereePage() {
         width="max-w-6xl"
       />
 
-      <div className="flex flex-wrap gap-1.5 mb-6">
-        <Chip active={area === "all"} onClick={() => setArea("all")}>
-          Alle
-        </Chip>
-        {AREA_ORDER.map((k) => (
-          <Chip key={k} active={area === k} onClick={() => setArea(k)}>
-            {AREAS[k].name}
-          </Chip>
-        ))}
+      {/* Textsuche */}
+      <div className="relative mb-6 max-w-sm">
+        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary">
+          <Icon name="search" size={14} />
+        </span>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Charakter suchen…"
+          aria-label="Charakter suchen"
+          className="w-full bg-bg-primary border border-border-subtle rounded-md pl-8 pr-3 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+        />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {list.map((c) => {
-          const p = player(c.player_id);
-          return (
-            <Link
-              key={c.id}
-              href={`/charaktere/${c.id}`}
-              className="group rounded-xl border border-border-subtle bg-bg-surface overflow-hidden hover:bg-white/[0.03] transition-colors"
-            >
-              <div className="relative aspect-[3/4] bg-bg-primary">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={c.faceclaim_image_url ?? ""}
-                  alt={c.name}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent pt-10 px-3 pb-2">
-                  <div className="font-serif text-[0.875rem] text-white">
-                    {c.name}
-                  </div>
-                  <div className="text-[0.875rem] text-white/70">{c.role}</div>
-                </div>
-              </div>
-              <div className="px-3 py-2 text-[0.875rem] text-text-tertiary flex items-center justify-between">
-                <span>{areaName(c.area)}</span>
-                {p && <span>by {p.username}</span>}
-              </div>
-            </Link>
-          );
-        })}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {list.map((c) => (
+          <CharacterCard
+            key={c.id}
+            c={c}
+            username={player(c.player_id)?.username}
+            postCount={stats.get(c.id)?.count ?? 0}
+            lastPost={stats.get(c.id)?.last}
+          />
+        ))}
       </div>
 
       {list.length === 0 && (
         <p className="text-[0.875rem] text-text-tertiary">
-          Keine Charaktere in diesem Bezirk.
+          Kein Charakter passt zu „{query.trim()}“.
         </p>
       )}
 
@@ -92,25 +99,67 @@ export default function CharaktereePage() {
   );
 }
 
-function Chip({
-  active,
-  onClick,
-  children,
+// Charakter-Karte: Name, Tagline, Avatar im Originalformat (600×502), darunter
+// Posts · played by und der Zeitpunkt des letzten Posts. Bei Hover erscheint die
+// Kurzbeschreibung über dem Bild.
+function CharacterCard({
+  c,
+  username,
+  postCount,
+  lastPost,
 }: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
+  c: Character;
+  username?: string;
+  postCount: number;
+  lastPost?: string;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={`rounded-full px-3 py-1 text-[0.8125rem] transition-colors ${
-        active
-          ? "bg-white/[0.1] text-text-primary"
-          : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
-      }`}
+    <Link
+      href={`/charaktere/${c.id}`}
+      className="group flex flex-col rounded-xl border border-border-subtle bg-bg-surface p-4 text-center transition-colors hover:bg-white/[0.03]"
     >
-      {children}
-    </button>
+      <div className="font-display lowercase text-[1.625rem] leading-none text-text-primary">
+        {c.name}
+      </div>
+      <div className="mt-2.5 min-h-[1.75rem] bg-bg-primary px-2 py-1.5 text-[0.6875rem] uppercase tracking-[0.2em] text-text-secondary">
+        {c.tagline}
+      </div>
+
+      {/* Avatar im Originalformat, nie größer als das Bild selbst */}
+      <div className="relative mx-auto mt-3 aspect-[600/502] w-full max-w-[600px] overflow-hidden rounded-lg bg-bg-primary">
+        {c.faceclaim_image_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={c.faceclaim_image_url}
+            alt={c.name}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+        {c.bio && (
+          <div className="pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <div className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-wider text-text-primary">
+              {[c.role, c.age ? `${c.age}` : null].filter(Boolean).join(" · ")}
+            </div>
+            <p className="text-[0.8125rem] leading-relaxed text-text-primary/90 line-clamp-[8]">
+              {c.bio}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 text-[0.8125rem] uppercase tracking-wider text-text-secondary">
+        <span className="font-bold text-text-primary">{postCount}</span>{" "}
+        {postCount === 1 ? "Post" : "Posts"}
+        {username && (
+          <>
+            {" · "}played by <span className="font-bold text-text-primary">{username}</span>
+          </>
+        )}
+      </div>
+      <div className="mt-0.5 text-[0.8125rem] text-text-tertiary" title="Letzter Post">
+        {lastPost ? formatDateTimeShort(lastPost) : "noch kein Post"}
+      </div>
+    </Link>
   );
 }
