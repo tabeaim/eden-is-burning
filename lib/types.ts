@@ -100,6 +100,24 @@ export interface Location {
   image_url?: string | null; // Titelbild
   images?: string[] | null; // Vibes-Fotos (URLs bzw. Data-URLs)
   pinterest_url?: string | null;
+  people?: LocationPerson[] | null; // „Characters & NPCs" am Ort
+}
+
+// Ein am Ort hinterlegter Charakter oder NPC samt Bezug zum Ort.
+export interface LocationPerson {
+  kind: "character" | "npc";
+  id: string; // Charakter- bzw. NPC-ID
+  note: string | null; // warum die Person für den Ort relevant ist
+}
+
+// Nebenfigur ohne eigenes Profil — nur Basis-Infos.
+export interface Npc {
+  id: string;
+  name: string;
+  role: string | null;
+  age: number | null;
+  created_by?: string | null; // Spieler-ID
+  created_at: string;
 }
 
 // Ein aus einem Post markiertes Zitat — speist die rotierenden Dashboard-Zitate

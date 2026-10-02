@@ -7,7 +7,7 @@ import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
 import { formatInplayDate } from "@/lib/format";
 import { Icon } from "@/components/Icon";
-import type { Character, Location } from "@/lib/types";
+import type { Character, Location, LocationPerson } from "@/lib/types";
 
 const MAX_IMAGES = 12;
 
@@ -39,7 +39,7 @@ function readImageFile(file: File, maxSide = 1400): Promise<string> {
   });
 }
 
-// Ortsprofil: Beschreibung, Vibes-Fotos, Szenen und Charaktere an diesem Ort.
+// Ortsprofil: Beschreibung, Vibes-Fotos, Characters & NPCs, Szenen und Charaktere an diesem Ort.
 // Bearbeiten dürfen Admins und wer den Ort erstellt hat.
 export default function LocationPage({
   params,
@@ -86,6 +86,7 @@ export default function LocationPage({
   const visitors = characters.filter((c) => visitorIds.has(c.id));
   const creator = loc.created_by ? player(loc.created_by) : undefined;
   const images = loc.images ?? [];
+  const people = loc.people ?? [];
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-8">
@@ -131,6 +132,18 @@ export default function LocationPage({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={src} alt="" loading="lazy" className="block w-full h-auto" />
                   </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Characters & NPCs — nur wenn welche hinterlegt sind */}
+          {people.length > 0 && (
+            <section>
+              <Heading>characters &amp; npcs.</Heading>
+              <div className="flex flex-col gap-4">
+                {people.map((p) => (
+                  <PersonCard key={`${p.kind}:${p.id}`} person={p} />
                 ))}
               </div>
             </section>
@@ -201,7 +214,7 @@ export default function LocationPage({
 
           {visitors.length > 0 && (
             <section>
-              <Heading>seen here.</Heading>
+              <Heading>spotted here.</Heading>
               <div className="flex flex-wrap gap-1.5">
                 {visitors.map((c) => (
                   <CharacterChip key={c.id} c={c} />
@@ -262,6 +275,257 @@ function CharacterChip({ c }: { c: Character }) {
   );
 }
 
+// Runde Namens-Bubble eines NPCs (kein Profil, daher kein Link)
+function NpcBubble({ name }: { name: string }) {
+  return (
+    <span className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[0.8125rem] text-text-secondary">
+      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-olive-soft text-[0.6875rem] uppercase text-text-primary">
+        {name.charAt(0)}
+      </span>
+      {name}
+    </span>
+  );
+}
+
+// Ein am Ort hinterlegter Charakter/NPC — Aufbau wie die Relations im Charakterprofil:
+// Bubble + Alter | Beruf in Caps, darunter der Bezug zum Ort.
+function PersonCard({ person }: { person: LocationPerson }) {
+  const { character, npc } = useStore();
+  const c = person.kind === "character" ? character(person.id) : undefined;
+  const n = person.kind === "npc" ? npc(person.id) : undefined;
+  const who = c ?? n;
+  if (!who) return null;
+
+  const facts = [who.age ? `${who.age}` : null, who.role, n ? "(NPC)" : null]
+    .filter(Boolean)
+    .join(" | ");
+
+  return (
+    <div className="rounded-lg border border-border-subtle bg-bg-surface p-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        {c ? (
+          <Link
+            href={`/charaktere/${c.id}`}
+            className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary pl-1 pr-2.5 py-0.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={c.faceclaim_image_url ?? ""}
+              alt={c.name}
+              className="w-5 h-5 rounded-full object-cover"
+            />
+            {c.name}
+          </Link>
+        ) : (
+          <NpcBubble name={who.name} />
+        )}
+        {facts && (
+          <span className="text-[0.875rem] uppercase tracking-wider text-text-secondary">
+            {facts}
+          </span>
+        )}
+      </div>
+      {person.note && (
+        <p className="mt-2 text-[0.875rem] text-text-secondary leading-relaxed">
+          {person.note}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Bearbeiten der „Characters & NPCs" eines Orts: bestehende Charaktere/NPCs
+// auswählen oder einen neuen NPC (nur Basis-Infos) direkt anlegen.
+function PeopleEditor({
+  people,
+  setPeople,
+}: {
+  people: LocationPerson[];
+  setPeople: React.Dispatch<React.SetStateAction<LocationPerson[]>>;
+}) {
+  const { characters, npcs, character, npc, addNpc } = useStore();
+  const [pick, setPick] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [npcName, setNpcName] = useState("");
+  const [npcRole, setNpcRole] = useState("");
+  const [npcAge, setNpcAge] = useState("");
+
+  const has = (kind: LocationPerson["kind"], id: string) =>
+    people.some((p) => p.kind === kind && p.id === id);
+  const freeChars = characters
+    .filter((c) => !has("character", c.id))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const freeNpcs = npcs
+    .filter((n) => !has("npc", n.id))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  function addPicked() {
+    const [kind, id] = pick.split(":") as [LocationPerson["kind"], string];
+    if (!id) return;
+    setPeople((cur) => [...cur, { kind, id, note: null }]);
+    setPick("");
+  }
+
+  // Der NPC wird sofort angelegt (auch für andere Orte nutzbar) und hier hinterlegt.
+  function createNpc() {
+    if (!npcName.trim()) return;
+    const age = parseInt(npcAge, 10);
+    const id = addNpc({
+      name: npcName,
+      role: npcRole.trim() || null,
+      age: Number.isFinite(age) ? age : null,
+    });
+    setPeople((cur) => [...cur, { kind: "npc", id, note: null }]);
+    setNpcName("");
+    setNpcRole("");
+    setNpcAge("");
+    setCreating(false);
+  }
+
+  return (
+    <div>
+      <div className="text-[0.875rem] text-text-secondary mb-1">Characters &amp; NPCs</div>
+
+      {people.length > 0 && (
+        <div className="mb-2 flex flex-col gap-2">
+          {people.map((p, i) => {
+            const c = p.kind === "character" ? character(p.id) : undefined;
+            const name = c?.name ?? npc(p.id)?.name;
+            if (!name) return null;
+            return (
+              <div
+                key={`${p.kind}:${p.id}`}
+                className="rounded-lg border border-border-subtle bg-bg-primary p-3"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-[0.875rem] text-text-primary">{name}</span>
+                  {p.kind === "npc" && (
+                    <span className="text-[0.75rem] uppercase tracking-wider text-text-tertiary">
+                      NPC
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setPeople((cur) => cur.filter((_, j) => j !== i))}
+                    title="Entfernen"
+                    className="ml-auto text-text-tertiary hover:text-accent"
+                  >
+                    <Icon name="trash" size={14} />
+                  </button>
+                </div>
+                <textarea
+                  value={p.note ?? ""}
+                  onChange={(e) =>
+                    setPeople((cur) =>
+                      cur.map((x, j) => (j === i ? { ...x, note: e.target.value } : x)),
+                    )
+                  }
+                  placeholder="Was hat die Person mit diesem Ort zu tun?"
+                  rows={2}
+                  className={`mt-2 ${field} resize-y`}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          value={pick}
+          onChange={(e) => setPick(e.target.value)}
+          className={`${field} flex-1 min-w-[200px]`}
+        >
+          <option value="">Charakter oder NPC auswählen…</option>
+          {freeChars.length > 0 && (
+            <optgroup label="Charaktere">
+              {freeChars.map((c) => (
+                <option key={c.id} value={`character:${c.id}`}>
+                  {c.name}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          {freeNpcs.length > 0 && (
+            <optgroup label="NPCs">
+              {freeNpcs.map((n) => (
+                <option key={n.id} value={`npc:${n.id}`}>
+                  {n.name}
+                  {n.role ? ` (${n.role})` : ""}
+                </option>
+              ))}
+            </optgroup>
+          )}
+        </select>
+        <button
+          type="button"
+          onClick={addPicked}
+          disabled={!pick}
+          className="rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-2 text-[0.8125rem] text-text-primary disabled:opacity-40"
+        >
+          Hinzufügen
+        </button>
+        {!creating && (
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-2 text-[0.8125rem] text-text-primary"
+          >
+            <Icon name="plus" size={13} /> Neuer NPC
+          </button>
+        )}
+      </div>
+
+      {creating && (
+        <div className="mt-2 rounded-lg border border-border-subtle bg-bg-primary p-3 flex flex-col gap-2">
+          <div className="text-[0.875rem] text-text-secondary">
+            Neuer NPC <span className="text-text-tertiary">— nur Basis-Infos, kein Profil</span>
+          </div>
+          <div className="grid sm:grid-cols-[1fr_1fr_90px] gap-2">
+            <input
+              value={npcName}
+              onChange={(e) => setNpcName(e.target.value)}
+              placeholder="Name"
+              autoFocus
+              className={field}
+            />
+            <input
+              value={npcRole}
+              onChange={(e) => setNpcRole(e.target.value)}
+              placeholder="Rolle / Beruf (optional)"
+              className={field}
+            />
+            <input
+              value={npcAge}
+              onChange={(e) => setNpcAge(e.target.value.replace(/\D/g, ""))}
+              placeholder="Alter"
+              inputMode="numeric"
+              className={field}
+            />
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setCreating(false)}
+              className="text-[0.8125rem] text-text-tertiary hover:text-text-primary px-2"
+            >
+              Abbrechen
+            </button>
+            <button
+              type="button"
+              onClick={createNpc}
+              disabled={!npcName.trim()}
+              className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-3 py-1.5 disabled:opacity-40"
+            >
+              NPC anlegen
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Editiermodus des Ortsprofils (Admins + Ersteller*in).
 function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => void }) {
   const { updateLocation, locationsOf } = useStore();
@@ -270,6 +534,7 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
   const [imageUrl, setImageUrl] = useState(loc.image_url ?? "");
   const [images, setImages] = useState<string[]>(loc.images ?? []);
   const [pinterest, setPinterest] = useState(loc.pinterest_url ?? "");
+  const [people, setPeople] = useState<LocationPerson[]>(loc.people ?? []);
   const [newUrl, setNewUrl] = useState("");
   const coverRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
@@ -309,6 +574,7 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
       image_url: imageUrl || null,
       images,
       pinterest_url: pinterest.trim() || null,
+      people: people.map((p) => ({ ...p, note: p.note?.trim() || null })),
     });
     onClose();
   }
@@ -449,6 +715,8 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
           />
         </div>
       </div>
+
+      <PeopleEditor people={people} setPeople={setPeople} />
 
       <label className="text-[0.875rem] text-text-secondary">
         Pinterest-Board

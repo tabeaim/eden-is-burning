@@ -7,7 +7,7 @@ import { AREA_ORDER, AREAS, areaName, type AreaKey } from "@/lib/world";
 import { PageHeader } from "@/components/PageHeader";
 
 export default function CharaktereePage() {
-  const { characters, player } = useStore();
+  const { characters, npcs, player } = useStore();
   const [area, setArea] = useState<AreaKey | "all">("all");
 
   const list =
@@ -69,6 +69,30 @@ export default function CharaktereePage() {
           Keine Charaktere in diesem Bezirk.
         </p>
       )}
+
+      {/* NPCs — vorerst nur angedeutet; anlegen geht aktuell im Ortsprofil */}
+      <div className="mt-10 rounded-xl border border-dashed border-border-strong px-5 py-4">
+        <div className="text-[0.875rem] uppercase tracking-wider font-semibold text-text-tertiary">
+          NPCs
+        </div>
+        <p className="mt-1 text-[0.875rem] text-text-tertiary">
+          Nebenfiguren ohne eigenes Profil. Aktuell lassen sie sich im Ortsprofil
+          anlegen — die Erstellung hier folgt.
+        </p>
+        {npcs.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {npcs.map((n) => (
+              <span
+                key={n.id}
+                className="rounded-full border border-border-subtle bg-white/[0.03] px-2.5 py-1 text-[0.8125rem] text-text-secondary"
+              >
+                {n.name}
+                {n.role && <span className="text-text-tertiary"> · {n.role}</span>}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
