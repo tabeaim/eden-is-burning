@@ -7,6 +7,7 @@ import { areaName } from "@/lib/world";
 import { formatInplayDate } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
+import { AuTag } from "@/components/SceneCard";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 
 const MONTHS_DE = [
@@ -264,7 +265,7 @@ export default function CalendarPage() {
                         {s.au && (
                           <>
                             {" · "}
-                            <span className="italic">AU</span>
+                            <AuTag scene={s} />
                           </>
                         )}
                       </div>
