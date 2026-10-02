@@ -57,11 +57,12 @@ export function SceneCard({
   return (
     <Link
       href={href ?? `/szenen/${scene.id}`}
-      className={`flex gap-3 rounded-xl border border-border-subtle px-4 py-3.5 transition-colors hover:bg-white/[0.03] ${
+      className={`flex items-center gap-4 rounded-xl border border-border-subtle px-4 py-3.5 transition-colors hover:bg-white/[0.03] ${
         muted ? "bg-bg-surface/60" : "bg-bg-surface"
       }`}
     >
-      <SceneMatch scene={scene} />
+      {/* Streichholz groß, vertikal mittig über die ganze Karte */}
+      <SceneMatch scene={scene} size={38} />
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-serif text-[1rem] text-text-primary leading-tight">
@@ -123,7 +124,7 @@ export function SceneRow({
       href={`/szenen/${scene.id}`}
       className="flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-surface px-3.5 py-2.5 hover:bg-white/[0.03] transition-colors"
     >
-      <SceneMatch scene={scene} size={18} />
+      <SceneMatch scene={scene} size={24} />
       <div className="min-w-0 flex-1">
         <div className="font-serif text-[0.875rem] text-text-primary truncate">
           {scene.title}
