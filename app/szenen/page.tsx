@@ -10,8 +10,10 @@ import { Icon } from "@/components/Icon";
 import { MultiSelect } from "@/components/MultiSelect";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import { SceneCard } from "@/components/SceneCard";
+import { PlotBar } from "@/components/PlotBar";
+import { plotScenes, visiblePlots } from "@/lib/plots";
 import { AU_UNNAMED, auNames } from "@/components/AuNameField";
-import type { Character, Scene } from "@/lib/types";
+import type { Plot, Scene } from "@/lib/types";
 
 type Tab = "active" | "all" | "mine" | "archive";
 type SortKey = "active" | "inplay" | "created" | "title";
@@ -40,12 +42,16 @@ export default function ScenesPage() {
     charactersOf,
     isSceneNew,
     markAllScenesSeen,
+    plots,
+    addPlot,
+    isAdmin,
   } = store;
 
   const [tab, setTab] = useState<Tab>("all");
   const [searchTitle, setSearchTitle] = useState("");
   const [searchPost, setSearchPost] = useState("");
   const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED
+  const [plotId, setPlotId] = useState<string | null>(null); // geöffneter Plot
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [areas, setAreas] = useState<string[]>([]); // AreaKey | "rest"
   const [periods, setPeriods] = useState<string[]>([]); // "YYYY-MM"
@@ -117,20 +123,49 @@ export default function ScenesPage() {
     return null;
   };
 
+  // Geöffneter Plot: seine Szenen (aktuelle Filter für Charaktere/AU/Gegend plus
+  // von Hand ergänzte, minus entfernte) ersetzen diese drei Filter.
+  const plot = plots.find((p) => p.id === plotId) ?? null;
+  const plotIds = plot
+    ? new Set(plotScenes(plot, scenes, { tokens, aus, areas }, character).map((s) => s.id))
+    : null;
+  const myPlots = visiblePlots(
+    plots,
+    scenes,
+    { playerId: currentPlayer?.id ?? "", isAdmin, charIds: myCharIds },
+    character,
+  );
+  function togglePlot(p: Plot) {
+    if (plotId === p.id) {
+      setPlotId(null);
+      return;
+    }
+    setPlotId(p.id);
+    setTokens([...p.tokens]);
+    setAus([...p.aus]);
+    setAreas([...(p.areas ?? [])]);
+  }
+
   const filtered = scenes.filter((s) => {
+    if (plotIds && !plotIds.has(s.id)) return false;
     if (tab === "active" && s.status !== "active") return false;
     if (tab === "archive" && s.status !== "closed") return false;
     if (tab === "mine" && !s.participant_ids.some((id) => myCharIds.has(id)))
       return false;
     // AUs (Mehrfach): Szene muss in einem der gewählten AUs spielen
-    if (aus.length > 0 && !(s.au && aus.includes(s.au_name || AU_UNNAMED))) return false;
+    if (!plotIds && aus.length > 0 && !(s.au && aus.includes(s.au_name || AU_UNNAMED)))
+      return false;
     if (qTitle && !s.title.toLowerCase().includes(qTitle)) return false;
     if (qPost && !postMatchId(s)) return false;
     // Charaktere/Spieler: Szene muss zu ALLEN gewählten Tokens passen
-    if (tokens.length > 0 && !tokens.every((t) => tokenMatches(t, s.participant_ids)))
+    if (
+      !plotIds &&
+      tokens.length > 0 &&
+      !tokens.every((t) => tokenMatches(t, s.participant_ids))
+    )
       return false;
     // Gegend (Mehrfach): mind. eine muss passen
-    if (areas.length > 0) {
+    if (!plotIds && areas.length > 0) {
       const inArea = areas.includes("rest")
         ? !AREA_ORDER.includes(s.location_area as AreaKey)
         : false;
@@ -176,6 +211,7 @@ export default function ScenesPage() {
     (qTitle ? 1 : 0) +
     (qPost ? 1 : 0) +
     aus.length +
+    (plot ? 1 : 0) +
     tokens.length +
     areas.length +
     periods.length;
@@ -184,6 +220,7 @@ export default function ScenesPage() {
     setSearchTitle("");
     setSearchPost("");
     setAus([]);
+    setPlotId(null);
     setTokens([]);
     setAreas([]);
     setPeriods([]);
@@ -283,6 +320,13 @@ export default function ScenesPage() {
             />
           ))}
         </div>
+
+        <PlotBar
+          plots={myPlots}
+          activeId={plotId}
+          onToggle={togglePlot}
+          onSave={(name) => setPlotId(addPlot(name, [...tokens], [...aus], [...areas]))}
+        />
       </div>
 
       {/* Über den Ergebnissen: links Filter zurücksetzen, rechts „Alle gelesen" + Sortierung */}

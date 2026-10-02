@@ -134,6 +134,7 @@ export interface Plot {
   name: string;
   tokens: string[]; // "char:<id>" | "player:<id>"
   aus: string[]; // AU-Namen (leer = Canon)
+  areas?: string[]; // Gegend-Filter (AreaKey | "rest")
   include_ids: string[]; // zusätzlich aufgenommene Szenen
   exclude_ids: string[]; // herausgenommene Szenen
   off_scenes: OffScene[];

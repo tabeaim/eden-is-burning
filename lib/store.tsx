@@ -76,7 +76,7 @@ interface StoreValue extends PersistedState {
   addLocation: (area: string, name: string, description?: string | null) => string | null;
   updateLocation: (id: string, patch: Partial<Location>) => void;
   addNpc: (npc: Pick<Character, "name" | "role" | "age">) => string;
-  addPlot: (name: string, tokens: string[], aus: string[]) => string;
+  addPlot: (name: string, tokens: string[], aus: string[], areas?: string[]) => string;
   updatePlot: (id: string, patch: Partial<Plot>) => void;
   deletePlot: (id: string) => void;
   canEditPlot: (plot: Plot) => boolean;
@@ -702,12 +702,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [currentPlayer],
   );
   const addPlot = useCallback(
-    (name: string, tokens: string[], aus: string[]) => {
+    (name: string, tokens: string[], aus: string[], areas: string[] = []) => {
       const plot: Plot = {
         id: uid("plot"),
         name: name.trim(),
         tokens,
         aus,
+        // nur mitschicken, wenn gesetzt (Spalte kommt aus schema-plots-areas.sql)
+        ...(areas.length > 0 ? { areas } : {}),
         include_ids: [],
         exclude_ids: [],
         off_scenes: [],

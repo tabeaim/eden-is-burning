@@ -54,8 +54,11 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
 ## Timeline
 
 Der Zeitstrahl nutzt dieselben Bausteine wie die Szenenboxen (Karte mit Rahmen,
-`SceneMatch` als Knoten auf der Linie, Orts- und Charakter-Bubbles), ergänzt um
-Datum über dem Titel und den Beschreibungssatz. Off-Szenen eines Plots sind
+`SceneMatch` als Knoten auf der Linie), ergänzt um Datum über dem Titel und den
+Beschreibungssatz. Die Faktenzeile ist reiner Text mit Punkten dazwischen:
+zusammengerückte Profilbilder + Vornamen · Ort · AU — nichts davon anklickbar.
+Plot-Logik (Filter, Sichtbarkeit) liegt in `lib/plots.ts`, die Plot-Zeile in
+`components/PlotBar.tsx`; Timeline und Szenen-Übersicht nutzen beides. Off-Szenen eines Plots sind
 gestrichelt umrandet und tragen das Tag „im Off". AU-Szenen erscheinen nur, wenn
 ihr AU im Filter gewählt ist — ohne Auswahl zeigt die Timeline nur Canon.
 

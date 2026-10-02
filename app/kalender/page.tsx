@@ -2,18 +2,25 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useStore, whoseTurn } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import { formatInplayDate } from "@/lib/format";
+import {
+  AU_UNNAMED,
+  areaFilterOptions,
+  matchesFilters,
+  plotScenes,
+  visiblePlots,
+  type PlotFilters,
+} from "@/lib/plots";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
-import { LocationBubble } from "@/components/Bubble";
 import { MultiSelect } from "@/components/MultiSelect";
 import { AuTag, SceneMatch } from "@/components/SceneCard";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DatePicker } from "@/components/DatePicker";
-import { SceneTurnBar } from "@/components/SceneTurnBar";
+import { PlotBar } from "@/components/PlotBar";
 import { CharacterPicker } from "@/components/CharacterPicker";
-import { AU_UNNAMED, auNames } from "@/components/AuNameField";
+import { auNames } from "@/components/AuNameField";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import type { Character, OffScene, Plot, Scene } from "@/lib/types";
 
@@ -52,26 +59,20 @@ export default function TimelinePage() {
   } = useStore();
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED (leer = Canon)
-  const [plotId, setPlotId] = useState<string | null>(null);
-  const [naming, setNaming] = useState(false);
-  const [plotName, setPlotName] = useState("");
-  const [addingOff, setAddingOff] = useState(false);
+  const [areas, setAreas] = useState<string[]>([]); // Gegend
   const [yearSel, setYearSel] = useState<string[]>([]); // leer = alle Jahre
+  const [plotId, setPlotId] = useState<string | null>(null);
+  const [addingOff, setAddingOff] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const plot = plots.find((p) => p.id === plotId) ?? null;
   const editable = plot ? canEditPlot(plot) : false;
+  const filters: PlotFilters = { tokens, aus, areas };
 
   const toggle = (arr: string[], set: (v: string[]) => void, v: string) =>
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
-
-  function tokenMatches(token: string, participantIds: string[]): boolean {
-    const [type, id] = token.split(":");
-    if (type === "char") return participantIds.includes(id);
-    return participantIds.some((pid) => character(pid)?.player_id === id);
-  }
 
   const charsByPlayer = players
     .map((p) => ({ player: p, chars: characters.filter((c) => c.player_id === p.id) }))
@@ -84,41 +85,17 @@ export default function TimelinePage() {
     return opts;
   }, [scenes]);
 
-  // AUs sind eigene Zeitlinien: Ohne AU-Auswahl zeigt die Timeline nur Canon,
-  // mit Auswahl nur die Szenen der gewählten AUs.
-  const matches = (s: Scene, tk: string[], au: string[]) => {
-    if (au.length === 0 ? s.au : !(s.au && au.includes(s.au_name || AU_UNNAMED)))
-      return false;
-    return tk.every((t) => tokenMatches(t, s.participant_ids));
-  };
-
-  // Szenen eines Plots: Filter plus von Hand ergänzte, minus entfernte Szenen. Ein
-  // Plot ohne Filter besteht nur aus den von Hand aufgenommenen Szenen.
-  const plotScenes = (p: Plot, tk: string[], au: string[]) =>
-    scenes.filter((s) => {
-      if (p.include_ids.includes(s.id)) return true;
-      if (p.exclude_ids.includes(s.id)) return false;
-      return tk.length + au.length > 0 && matches(s, tk, au);
-    });
-
   // Sichtbare Szenen: im offenen Plot mit den aktuell eingestellten Filtern
   const shownScenes = plot
-    ? plotScenes(plot, tokens, aus)
-    : scenes.filter((s) => matches(s, tokens, aus));
+    ? plotScenes(plot, scenes, filters, character)
+    : scenes.filter((s) => matchesFilters(s, filters, character));
 
-  // Plots sieht nur, wessen Charaktere betroffen sind: als Filter gewählt, in
-  // einer Szene oder Off-Szene des Plots beteiligt — außerdem wer den Plot
-  // angelegt hat, und Admins.
   const myId = currentPlayer?.id ?? "";
-  const myCharIds = new Set(charactersOf(myId).map((c) => c.id));
-  const involvesMe = (ids: string[]) => ids.some((id) => myCharIds.has(id));
-  const visiblePlots = plots.filter(
-    (p) =>
-      isAdmin ||
-      p.created_by === myId ||
-      p.tokens.some((t) => t === `player:${myId}` || myCharIds.has(t.replace(/^char:/, ""))) ||
-      p.off_scenes.some((o) => involvesMe(o.participant_ids)) ||
-      plotScenes(p, p.tokens, p.aus).some((s) => involvesMe(s.participant_ids)),
+  const myPlots = visiblePlots(
+    plots,
+    scenes,
+    { playerId: myId, isAdmin, charIds: new Set(charactersOf(myId).map((c) => c.id)) },
+    character,
   );
 
   const allEntries: Entry[] = [
@@ -148,30 +125,25 @@ export default function TimelinePage() {
     g.items.push(e);
   }
 
-  const filterCount = tokens.length + aus.length + activeYears.length;
-  const filterChanged = plot ? !sameSet(plot.tokens, tokens) || !sameSet(plot.aus, aus) : false;
-  const addable = scenes
-    .filter((s) => !shownScenes.includes(s))
-    .sort((a, b) => a.title.localeCompare(b.title, "de"));
+  const filterCount = tokens.length + aus.length + areas.length + activeYears.length;
+  const filterChanged = plot
+    ? !sameSet(plot.tokens, tokens) ||
+      !sameSet(plot.aus, aus) ||
+      !sameSet(plot.areas ?? [], areas)
+    : false;
+  const addable = scenes.filter((s) => !shownScenes.includes(s));
 
-  function activate(p: Plot) {
+  function togglePlot(p: Plot) {
+    setRenaming(false);
+    setAddingOff(false);
     if (plotId === p.id) {
       setPlotId(null);
       return;
     }
     setPlotId(p.id);
-    setRenaming(false);
     setTokens([...p.tokens]);
     setAus([...p.aus]);
-    setAddingOff(false);
-  }
-
-  function saveAsPlot() {
-    const name = plotName.trim();
-    if (!name) return;
-    setPlotId(addPlot(name, [...tokens], [...aus]));
-    setPlotName("");
-    setNaming(false);
+    setAreas([...(p.areas ?? [])]);
   }
 
   function removeScene(id: string) {
@@ -182,11 +154,17 @@ export default function TimelinePage() {
   }
 
   function addScene(id: string) {
-    if (!plot || !id) return;
+    if (!plot) return;
     updatePlot(plot.id, {
       include_ids: [...plot.include_ids.filter((x) => x !== id), id],
       exclude_ids: plot.exclude_ids.filter((x) => x !== id),
     });
+  }
+
+  function rename() {
+    if (!plot || !renameValue.trim()) return;
+    updatePlot(plot.id, { name: renameValue.trim() });
+    setRenaming(false);
   }
 
   return (
@@ -210,6 +188,13 @@ export default function TimelinePage() {
             />
           ))}
           <MultiSelect
+            label="Gegend"
+            options={areaFilterOptions()}
+            selected={areas}
+            onToggle={(v) => toggle(areas, setAreas, v)}
+            onClear={() => setAreas([])}
+          />
+          <MultiSelect
             label="AU"
             icon="au"
             options={auOptions}
@@ -227,71 +212,17 @@ export default function TimelinePage() {
           />
         </div>
 
-        {/* Plots: gespeicherte Filter mit Namen */}
-        <div className="flex flex-wrap items-center gap-2 border-t border-border-subtle pt-3">
-          <span className="text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
-            Plots
-          </span>
-          {visiblePlots.length === 0 && !naming && (
-            <span className="text-[0.875rem] text-text-tertiary">— noch keine</span>
-          )}
-          {visiblePlots.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => activate(p)}
-              title={plotId === p.id ? "Plot schließen" : "Plot öffnen"}
-              className={`rounded-full border px-2.5 py-0.5 text-[0.8125rem] transition-colors ${
-                plotId === p.id
-                  ? "border-accent/60 bg-accent-soft text-text-primary"
-                  : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              {p.name}
-            </button>
-          ))}
-          {naming ? (
-            <span className="flex flex-wrap items-center gap-1.5">
-              <input
-                value={plotName}
-                onChange={(e) => setPlotName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && saveAsPlot()}
-                placeholder="Name des Plots…"
-                autoFocus
-                className="w-44 bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
-              />
-              <button
-                onClick={saveAsPlot}
-                disabled={!plotName.trim()}
-                className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-2 py-1 disabled:opacity-40"
-              >
-                Speichern
-              </button>
-              <button
-                onClick={() => {
-                  setNaming(false);
-                  setPlotName("");
-                }}
-                className="text-[0.8125rem] text-text-tertiary hover:text-text-primary px-1"
-              >
-                Abbrechen
-              </button>
-            </span>
-          ) : (
-            <button
-              onClick={() => setNaming(true)}
-              title="Aktuelle Filter als neuen Plot speichern"
-              className="flex items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-0.5 text-[0.8125rem] text-text-tertiary hover:text-accent hover:border-accent/50"
-            >
-              <Icon name="plus" size={11} /> Als Plot speichern
-            </button>
-          )}
-        </div>
+        <PlotBar
+          plots={myPlots}
+          activeId={plotId}
+          onToggle={togglePlot}
+          onSave={(name) => setPlotId(addPlot(name, [...tokens], [...aus], [...areas]))}
+        />
       </div>
 
       {/* Über dem Zeitstrahl: Anzahl, Filter zurücksetzen, Plot-Werkzeuge */}
       <div className="mt-4 mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="text-[0.875rem] text-text-tertiary">
-          {plot && <span className="text-text-primary">{plot.name} · </span>}
           {entries.length} {entries.length === 1 ? "Eintrag" : "Einträge"}
         </span>
         {filterCount > 0 && !plot && (
@@ -299,6 +230,7 @@ export default function TimelinePage() {
             onClick={() => {
               setTokens([]);
               setAus([]);
+              setAreas([]);
               setYearSel([]);
             }}
             className="text-[0.8125rem] text-text-tertiary hover:text-text-primary underline"
@@ -311,24 +243,15 @@ export default function TimelinePage() {
           <div className="ml-auto flex flex-wrap items-center gap-2">
             {filterChanged && (
               <button
-                onClick={() => updatePlot(plot.id, { tokens: [...tokens], aus: [...aus] })}
+                onClick={() =>
+                  updatePlot(plot.id, { tokens: [...tokens], aus: [...aus], areas: [...areas] })
+                }
                 className={smallBtn}
               >
                 <Icon name="check" size={13} /> Filter im Plot speichern
               </button>
             )}
-            <select
-              value=""
-              onChange={(e) => addScene(e.target.value)}
-              className="max-w-[220px] bg-bg-primary border border-border-subtle rounded-md px-2.5 py-1.5 text-[0.8125rem] text-text-secondary outline-none focus:border-white/20"
-            >
-              <option value="">+ Szene hinzufügen…</option>
-              {addable.map((s) => (
-                <option key={s.id} value={s.id} className="bg-bg-surface">
-                  {s.title}
-                </option>
-              ))}
-            </select>
+            <SceneSearchAdd scenes={addable} onAdd={addScene} />
             <button onClick={() => setAddingOff((v) => !v)} className={smallBtn}>
               <Icon name="plus" size={13} /> Off-Szene
             </button>
@@ -338,10 +261,7 @@ export default function TimelinePage() {
                   value={renameValue}
                   onChange={(e) => setRenameValue(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && renameValue.trim()) {
-                      updatePlot(plot.id, { name: renameValue.trim() });
-                      setRenaming(false);
-                    }
+                    if (e.key === "Enter") rename();
                     if (e.key === "Escape") setRenaming(false);
                   }}
                   autoFocus
@@ -349,11 +269,7 @@ export default function TimelinePage() {
                   className="w-44 bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
                 />
                 <button
-                  onClick={() => {
-                    if (!renameValue.trim()) return;
-                    updatePlot(plot.id, { name: renameValue.trim() });
-                    setRenaming(false);
-                  }}
+                  onClick={rename}
                   disabled={!renameValue.trim()}
                   className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-2 py-1 disabled:opacity-40"
                 >
@@ -469,6 +385,56 @@ export default function TimelinePage() {
   );
 }
 
+// Szene per Suche in den Plot aufnehmen: Titel eintippen, Treffer anklicken.
+function SceneSearchAdd({ scenes, onAdd }: { scenes: Scene[]; onAdd: (id: string) => void }) {
+  const [q, setQ] = useState("");
+  const query = q.trim().toLowerCase();
+  const hits = query
+    ? scenes.filter((s) => s.title.toLowerCase().includes(query)).slice(0, 8)
+    : [];
+
+  return (
+    <div className="relative">
+      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary">
+        <Icon name="search" size={13} />
+      </span>
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        onKeyDown={(e) => e.key === "Escape" && setQ("")}
+        placeholder="Szene hinzufügen…"
+        aria-label="Szene suchen und zum Plot hinzufügen"
+        className="w-52 bg-bg-primary border border-border-subtle rounded-md pl-8 pr-2.5 py-1.5 text-[0.8125rem] text-text-primary outline-none focus:border-white/20"
+      />
+      {query && (
+        <div className="absolute right-0 z-20 mt-1 w-72 max-w-[calc(100vw-2rem)] rounded-lg border border-border-subtle bg-bg-surface-2 p-1.5 shadow-xl">
+          {hits.length === 0 ? (
+            <div className="px-2 py-1.5 text-[0.8125rem] text-text-tertiary">
+              Keine passende Szene außerhalb des Plots.
+            </div>
+          ) : (
+            hits.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => {
+                  onAdd(s.id);
+                  setQ("");
+                }}
+                className="w-full rounded-md px-2 py-1.5 text-left hover:bg-white/[0.04]"
+              >
+                <div className="text-[0.8125rem] text-text-primary">{s.title}</div>
+                <div className="text-[0.75rem] text-text-tertiary">
+                  {s.location_name} · {formatInplayDate(s.inplay_date)}
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Knoten auf der Zeitlinie (sitzt mittig auf der Linie links der Karte)
 function Node({ children }: { children: React.ReactNode }) {
   return (
@@ -490,14 +456,57 @@ function RemoveButton({ onRemove, title }: { onRemove: () => void; title: string
   );
 }
 
-// Gespielte Szene im Zeitstrahl: Datum, Titel, Ort, Beteiligte, Beschreibungssatz —
+// Faktenzeile eines Eintrags: Profilbilder zusammengerückt + Vornamen · Ort (· AU)
+// — reiner Text mit Punkten dazwischen, nichts davon anklickbar.
+function FactsLine({
+  participants,
+  location,
+  children,
+}: {
+  participants: Character[];
+  location: string | null;
+  children?: React.ReactNode;
+}) {
+  if (participants.length === 0 && !location && !children) return null;
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.875rem] text-text-tertiary">
+      {participants.length > 0 && (
+        <span className="flex items-center gap-1.5">
+          <span className="flex -space-x-1.5">
+            {participants.map((c) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={c.id}
+                src={c.faceclaim_image_url ?? ""}
+                alt={c.name}
+                title={c.name}
+                className="h-5 w-5 rounded-full object-cover ring-1 ring-bg-surface"
+              />
+            ))}
+          </span>
+          <span className="text-text-secondary">
+            {participants.map((c) => c.name.split(" ")[0]).join(" & ")}
+          </span>
+        </span>
+      )}
+      {location && (
+        <span>
+          {participants.length > 0 && "· "}
+          {location}
+        </span>
+      )}
+      {children}
+    </div>
+  );
+}
+
+// Gespielte Szene im Zeitstrahl: Datum, Titel, Beteiligte · Ort, Beschreibungssatz —
 // im Stil der Szenenboxen, mit dem Streichholz als Knoten auf der Linie.
 function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }) {
-  const { character, postsOf, locationsOf } = useStore();
+  const { character } = useStore();
   const participants = scene.participant_ids
     .map((id) => character(id))
     .filter(Boolean) as Character[];
-  const loc = locationsOf(scene.location_area).find((l) => l.name === scene.location_name);
 
   return (
     <div className="relative">
@@ -516,22 +525,13 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
             {scene.title}
           </Link>
         </h3>
-        {/* Eine Reihe: erst die Charaktere, dann der Ort (+ AU) */}
-        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[0.875rem] text-text-tertiary">
-          <SceneTurnBar
-            participants={participants}
-            activeCharId={whoseTurn(scene, postsOf(scene.id))}
-            active={scene.status === "active"}
-            firstNameOnly
-            linked
-          />
-          <LocationBubble id={loc?.id} name={scene.location_name} />
+        <FactsLine participants={participants} location={scene.location_name}>
           {scene.au && (
             <span>
               · <AuTag scene={scene} />
             </span>
           )}
-        </div>
+        </FactsLine>
         {scene.summary && (
           <p className="mt-2 text-[0.875rem] italic text-text-secondary">{scene.summary}</p>
         )}
@@ -542,13 +542,7 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
 
 // Off-Szene: Plot-Punkt, der nicht ausgespielt wurde — gestrichelt, ohne Link.
 function OffEntry({ off, onRemove }: { off: OffScene; onRemove?: () => void }) {
-  const { character, locations, scenes } = useStore();
-  // Vorhandener Ort → Bubble führt aufs Ortsprofil
-  const loc = off.location_name
-    ? locations.find((l) => l.name === off.location_name)
-    : undefined;
-  const locPlayed =
-    !!loc && scenes.some((s) => s.location_area === loc.area && s.location_name === loc.name);
+  const { character } = useStore();
   const participants = off.participant_ids
     .map((id) => character(id))
     .filter(Boolean) as Character[];
@@ -570,20 +564,7 @@ function OffEntry({ off, onRemove }: { off: OffScene; onRemove?: () => void }) {
         <h3 className="mt-0.5 font-serif text-[1rem] leading-tight text-text-primary">
           {off.title}
         </h3>
-        {(participants.length > 0 || off.location_name) && (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[0.875rem] text-text-tertiary">
-            <SceneTurnBar
-              participants={participants}
-              activeCharId={null}
-              active={false}
-              firstNameOnly
-              linked
-            />
-            {off.location_name && (
-              <LocationBubble id={loc?.id} name={off.location_name} played={locPlayed} />
-            )}
-          </div>
-        )}
+        <FactsLine participants={participants} location={off.location_name} />
         {off.summary && (
           <p className="mt-2 text-[0.875rem] italic text-text-secondary">{off.summary}</p>
         )}
