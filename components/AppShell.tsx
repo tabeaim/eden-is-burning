@@ -51,7 +51,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen">
         <Sidebar pathname={pathname} />
         <div className="flex-1 min-w-0 flex flex-col">
-          <BannerHeader pathname={pathname} />
+          {/* Die Karte bekommt ausnahmsweise keinen Banner-Header — der Platz
+              gehört der Karte. */}
+          {pathname !== "/orte" && <BannerHeader pathname={pathname} />}
           <main className="flex-1 min-w-0">{children}</main>
         </div>
       </div>
