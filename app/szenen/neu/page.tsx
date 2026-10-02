@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { CharacterPicker } from "@/components/CharacterPicker";
 import { sceneHeader } from "@/lib/headers";
 import { AuNameField, auNames } from "@/components/AuNameField";
+import { DatePicker } from "@/components/DatePicker";
 
 // Pflichtfeld-Stern
 function Req() {
@@ -160,15 +161,10 @@ export default function NewScenePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label className="text-[0.875rem] text-text-secondary">
+          <div className="text-[0.875rem] text-text-secondary">
             In-Game-Datum <Req />
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className={`mt-1 ${field}`}
-            />
-          </label>
+            <DatePicker value={date} onChange={setDate} className="mt-1" />
+          </div>
           <label className="text-[0.875rem] text-text-secondary">
             Tageszeit
             <input

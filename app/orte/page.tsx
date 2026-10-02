@@ -262,14 +262,13 @@ function LocationSection({
           <button
             onClick={onAdd}
             title="Neuen Ort erstellen"
-            aria-label="Neuen Ort erstellen"
-            className={`inline-flex h-[1.625rem] w-[1.625rem] items-center justify-center rounded-full border transition-colors ${
+            className={`flex items-center gap-1 rounded-full border border-dashed px-2.5 py-0.5 text-[0.8125rem] transition-colors ${
               adding
-                ? "border-accent/50 bg-accent-soft text-text-primary"
-                : "border-border-subtle bg-white/[0.04] text-text-secondary hover:text-text-primary"
+                ? "border-accent/50 text-accent"
+                : "border-border-strong text-text-tertiary hover:text-accent hover:border-accent/50"
             }`}
           >
-            <Icon name="plus" size={13} />
+            <Icon name="plus" size={11} /> Neuer Ort
           </button>
         )}
       </div>

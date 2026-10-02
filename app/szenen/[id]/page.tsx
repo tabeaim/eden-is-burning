@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Icon } from "@/components/Icon";
 import { CharacterBubble, LocationBubble } from "@/components/Bubble";
 import { AuTag } from "@/components/SceneCard";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import type { Character, Post, Scene } from "@/lib/types";
 
 function focusReplyEditor() {
@@ -557,8 +558,9 @@ function PostRow({
     setEditing(false);
   }
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
   function remove() {
-    if (window.confirm("Diesen Post wirklich löschen?")) deletePost(post.id);
+    setConfirmDelete(true);
   }
 
   const card = <SceneCharacterCard character={character} player={player} />;
@@ -624,6 +626,18 @@ function PostRow({
 
   return (
     <div className="group">
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Post löschen?"
+          text={`Der Post von ${character.name} wird endgültig gelöscht. Das lässt sich nicht rückgängig machen.`}
+          confirmLabel="Post löschen"
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            setConfirmDelete(false);
+            deletePost(post.id);
+          }}
+        />
+      )}
       {canModify && !editing && (
         <div className="mb-1 flex justify-end gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
           <button

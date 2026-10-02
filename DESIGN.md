@@ -41,6 +41,16 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
    (Dashboard „letzte 24h", Bezirks-Panel der Karte): Ort · Datum numerisch, rechts
    letzter Poster + Zeitpunkt.
 
+## Formulare & Nachfragen
+
+- **Datum:** immer `components/DatePicker.tsx` (kleiner Kalender, öffnet ohne Wert
+  im Jahr 2021), nie `<input type="date">`.
+- **Endgültige Aktionen** (löschen): `components/ConfirmDialog.tsx` mit klar
+  benanntem Knopf („Plot löschen"), nie `window.confirm`.
+- **Mehrfach-Filter:** `components/MultiSelect.tsx`.
+- **„Neu anlegen" in einer Bubble-Reihe:** gestrichelte Pill mit Plus und Text
+  („+ Neuer Ort", „+ Als Plot speichern").
+
 ## Timeline
 
 Der Zeitstrahl nutzt dieselben Bausteine wie die Szenenboxen (Karte mit Rahmen,

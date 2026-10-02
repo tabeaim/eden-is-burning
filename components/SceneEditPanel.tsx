@@ -13,6 +13,7 @@ import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { Icon } from "@/components/Icon";
 import { CharacterPicker } from "@/components/CharacterPicker";
 import { AuNameField, auNames } from "@/components/AuNameField";
+import { DatePicker } from "@/components/DatePicker";
 import type { Scene } from "@/lib/types";
 
 const field =
@@ -192,15 +193,10 @@ export function SceneEditPanel({
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <label className="text-[0.875rem] text-text-secondary">
+        <div className="text-[0.875rem] text-text-secondary">
           In-Game-Datum <Req />
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className={`mt-1 ${field}`}
-          />
-        </label>
+          <DatePicker value={date} onChange={setDate} className="mt-1" />
+        </div>
         <label className="text-[0.875rem] text-text-secondary">
           Tageszeit
           <input

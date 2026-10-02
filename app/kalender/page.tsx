@@ -9,6 +9,8 @@ import { Icon } from "@/components/Icon";
 import { LocationBubble } from "@/components/Bubble";
 import { MultiSelect } from "@/components/MultiSelect";
 import { AuTag, SceneMatch } from "@/components/SceneCard";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { DatePicker } from "@/components/DatePicker";
 import { SceneTurnBar } from "@/components/SceneTurnBar";
 import { CharacterPicker } from "@/components/CharacterPicker";
 import { AU_UNNAMED, auNames } from "@/components/AuNameField";
@@ -54,7 +56,10 @@ export default function TimelinePage() {
   const [naming, setNaming] = useState(false);
   const [plotName, setPlotName] = useState("");
   const [addingOff, setAddingOff] = useState(false);
-  const [year, setYear] = useState<string | null>(null); // null = alle Jahre
+  const [yearSel, setYearSel] = useState<string[]>([]); // leer = alle Jahre
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const plot = plots.find((p) => p.id === plotId) ?? null;
   const editable = plot ? canEditPlot(plot) : false;
@@ -121,13 +126,14 @@ export default function TimelinePage() {
     ...(plot?.off_scenes ?? []).map((o): Entry => ({ kind: "off", date: o.inplay_date, off: o })),
   ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
-  // Jahres-Schalter: erscheint, sobald Einträge aus mehr als einem Jahr da sind
-  // (z.B. Rückblenden nach 2014). Ein nicht mehr vorhandenes Jahr zählt als „Alle".
+  // Jahres-Filter (z.B. Rückblenden nach 2014): Auswahl aus den vorhandenen
+  // Jahren; nicht mehr vorhandene Jahre in der Auswahl zählen nicht.
   const years = Array.from(new Set(allEntries.map((e) => e.date.slice(0, 4))));
-  const activeYear = year && years.includes(year) ? year : null;
-  const entries = activeYear
-    ? allEntries.filter((e) => e.date.startsWith(activeYear))
-    : allEntries;
+  const activeYears = yearSel.filter((y) => years.includes(y));
+  const entries =
+    activeYears.length > 0
+      ? allEntries.filter((e) => activeYears.includes(e.date.slice(0, 4)))
+      : allEntries;
 
   // nach Monat gruppieren (neueste zuerst)
   const groups: { key: string; label: string; items: Entry[] }[] = [];
@@ -142,7 +148,7 @@ export default function TimelinePage() {
     g.items.push(e);
   }
 
-  const filterCount = tokens.length + aus.length;
+  const filterCount = tokens.length + aus.length + activeYears.length;
   const filterChanged = plot ? !sameSet(plot.tokens, tokens) || !sameSet(plot.aus, aus) : false;
   const addable = scenes
     .filter((s) => !shownScenes.includes(s))
@@ -154,6 +160,7 @@ export default function TimelinePage() {
       return;
     }
     setPlotId(p.id);
+    setRenaming(false);
     setTokens([...p.tokens]);
     setAus([...p.aus]);
     setAddingOff(false);
@@ -209,6 +216,14 @@ export default function TimelinePage() {
             selected={aus}
             onToggle={(v) => toggle(aus, setAus, v)}
             onClear={() => setAus([])}
+          />
+          <MultiSelect
+            label="Jahr"
+            icon="calendar"
+            options={years.map((y) => ({ value: y, label: y }))}
+            selected={activeYears}
+            onToggle={(v) => toggle(activeYears, setYearSel, v)}
+            onClear={() => setYearSel([])}
           />
         </div>
 
@@ -279,28 +294,12 @@ export default function TimelinePage() {
           {plot && <span className="text-text-primary">{plot.name} · </span>}
           {entries.length} {entries.length === 1 ? "Eintrag" : "Einträge"}
         </span>
-        {years.length > 1 && (
-          <div className="flex flex-wrap items-center gap-1">
-            {[null, ...years].map((y) => (
-              <button
-                key={y ?? "all"}
-                onClick={() => setYear(y)}
-                className={`rounded-full px-2.5 py-0.5 text-[0.8125rem] transition-colors ${
-                  activeYear === y
-                    ? "bg-accent text-black font-medium"
-                    : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
-                }`}
-              >
-                {y ?? "Alle Jahre"}
-              </button>
-            ))}
-          </div>
-        )}
         {filterCount > 0 && !plot && (
           <button
             onClick={() => {
               setTokens([]);
               setAus([]);
+              setYearSel([]);
             }}
             className="text-[0.8125rem] text-text-tertiary hover:text-text-primary underline"
           >
@@ -333,21 +332,71 @@ export default function TimelinePage() {
             <button onClick={() => setAddingOff((v) => !v)} className={smallBtn}>
               <Icon name="plus" size={13} /> Off-Szene
             </button>
-            <button
-              onClick={() => {
-                if (window.confirm(`Plot „${plot.name}“ wirklich löschen?`)) {
-                  deletePlot(plot.id);
-                  setPlotId(null);
-                }
-              }}
-              title="Plot löschen"
-              className={smallBtn}
-            >
-              <Icon name="trash" size={13} />
+            {renaming ? (
+              <span className="flex items-center gap-1.5">
+                <input
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && renameValue.trim()) {
+                      updatePlot(plot.id, { name: renameValue.trim() });
+                      setRenaming(false);
+                    }
+                    if (e.key === "Escape") setRenaming(false);
+                  }}
+                  autoFocus
+                  aria-label="Neuer Name des Plots"
+                  className="w-44 bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+                />
+                <button
+                  onClick={() => {
+                    if (!renameValue.trim()) return;
+                    updatePlot(plot.id, { name: renameValue.trim() });
+                    setRenaming(false);
+                  }}
+                  disabled={!renameValue.trim()}
+                  className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-2 py-1 disabled:opacity-40"
+                >
+                  Speichern
+                </button>
+                <button
+                  onClick={() => setRenaming(false)}
+                  className="text-[0.8125rem] text-text-tertiary hover:text-text-primary px-1"
+                >
+                  Abbrechen
+                </button>
+              </span>
+            ) : (
+              <button
+                onClick={() => {
+                  setRenameValue(plot.name);
+                  setRenaming(true);
+                }}
+                className={smallBtn}
+              >
+                <Icon name="edit" size={13} /> Umbenennen
+              </button>
+            )}
+            <button onClick={() => setConfirmDelete(true)} className={smallBtn}>
+              <Icon name="trash" size={13} /> Plot löschen
             </button>
           </div>
         )}
       </div>
+
+      {plot && confirmDelete && (
+        <ConfirmDialog
+          title={`Plot „${plot.name}“ löschen?`}
+          text="Der Plot mit seinen Off-Szenen wird endgültig gelöscht. Die gespielten Szenen selbst bleiben erhalten."
+          confirmLabel="Plot löschen"
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            setConfirmDelete(false);
+            deletePlot(plot.id);
+            setPlotId(null);
+          }}
+        />
+      )}
 
       {plot && editable && addingOff && (
         <OffSceneForm
@@ -373,8 +422,7 @@ export default function TimelinePage() {
             {groups.map((g, i) => (
               <section key={g.key}>
                 {/* Jahres-Überschrift, sobald mehrere Jahre untereinander stehen */}
-                {years.length > 1 &&
-                  !activeYear &&
+                {groups[0].key.slice(0, 4) !== groups[groups.length - 1].key.slice(0, 4) &&
                   g.key.slice(0, 4) !== groups[i - 1]?.key.slice(0, 4) && (
                     <div className="mb-4 font-display text-[1.75rem] leading-none text-accent">
                       {g.key.slice(0, 4)}
@@ -494,7 +542,13 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
 
 // Off-Szene: Plot-Punkt, der nicht ausgespielt wurde — gestrichelt, ohne Link.
 function OffEntry({ off, onRemove }: { off: OffScene; onRemove?: () => void }) {
-  const { character } = useStore();
+  const { character, locations, scenes } = useStore();
+  // Vorhandener Ort → Bubble führt aufs Ortsprofil
+  const loc = off.location_name
+    ? locations.find((l) => l.name === off.location_name)
+    : undefined;
+  const locPlayed =
+    !!loc && scenes.some((s) => s.location_area === loc.area && s.location_name === loc.name);
   const participants = off.participant_ids
     .map((id) => character(id))
     .filter(Boolean) as Character[];
@@ -525,7 +579,9 @@ function OffEntry({ off, onRemove }: { off: OffScene; onRemove?: () => void }) {
               firstNameOnly
               linked
             />
-            {off.location_name && <LocationBubble name={off.location_name} played={false} />}
+            {off.location_name && (
+              <LocationBubble id={loc?.id} name={off.location_name} played={locPlayed} />
+            )}
           </div>
         )}
         {off.summary && (
@@ -552,6 +608,10 @@ function OffSceneForm({
   const [location, setLocation] = useState("");
   const [summary, setSummary] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const { locations } = useStore();
+  const locationNames = Array.from(new Set(locations.map((l) => l.name))).sort((a, b) =>
+    a.localeCompare(b, "de"),
+  );
   const valid = title.trim() && date;
 
   function submit() {
@@ -579,12 +639,23 @@ function OffSceneForm({
         </label>
         <label className="text-[0.875rem] text-text-secondary">
           Ort
-          <input value={location} onChange={(e) => setLocation(e.target.value)} className={`mt-1 ${field}`} />
+          <input
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            list="off-scene-locations"
+            placeholder="Vorhandenen Ort wählen oder neu eintippen"
+            className={`mt-1 ${field}`}
+          />
+          <datalist id="off-scene-locations">
+            {locationNames.map((n) => (
+              <option key={n} value={n} />
+            ))}
+          </datalist>
         </label>
-        <label className="text-[0.875rem] text-text-secondary">
+        <div className="text-[0.875rem] text-text-secondary">
           Datum <span className="text-accent">*</span>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`mt-1 ${field}`} />
-        </label>
+          <DatePicker value={date} onChange={setDate} className="mt-1" />
+        </div>
         <label className="text-[0.875rem] text-text-secondary">
           Tageszeit
           <input
