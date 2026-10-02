@@ -9,7 +9,6 @@ import {
   formatInplayDateShort,
 } from "@/lib/format";
 import type { Character, Scene } from "@/lib/types";
-import { LocationBubble } from "./Bubble";
 import { Icon } from "./Icon";
 import { SceneTurnBar } from "./SceneTurnBar";
 
@@ -37,12 +36,6 @@ export function SceneMatch({ scene, size = 20 }: { scene: Scene; size?: number }
   );
 }
 
-// Ortsprofil zum Szenen-Ort (falls ein Eintrag existiert)
-function useSceneLocation(scene: Scene) {
-  const { locationsOf } = useStore();
-  return locationsOf(scene.location_area).find((l) => l.name === scene.location_name);
-}
-
 // Alternate Universe in der Faktenzeile: AU-Icon (gespaltener Zeitstrahl) + Name
 // des AUs in Kursiv; ohne Namen steht „AU".
 export function AuTag({ scene }: { scene: Scene }) {
@@ -59,7 +52,7 @@ export function AuTag({ scene }: { scene: Scene }) {
 // Stellen darin können eigene Ziele haben (z.B. „Letzter Post" → neuester Post).
 const STRETCHED = "after:absolute after:inset-0 after:content-['']";
 
-// Ausführliche Karte: Streichholz, Titel, Orts-Bubble · Datum in einer Zeile,
+// Ausführliche Karte: Streichholz, Titel, Ort · Datum in einer Zeile,
 // Beteiligte (anklickbar; wer dran ist, ist markiert), letzter Post mit Datum und
 // Uhrzeit (Klick springt zum neuesten Post).
 export function SceneCard({
@@ -77,7 +70,6 @@ export function SceneCard({
     .filter(Boolean) as Character[];
   const posts = postsOf(scene.id);
   const lastPost = posts.length ? posts[posts.length - 1] : null;
-  const loc = useSceneLocation(scene);
 
   return (
     <div
@@ -108,15 +100,13 @@ export function SceneCard({
           </div>
         </div>
 
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.875rem] text-text-tertiary">
-          <LocationBubble id={loc?.id} name={scene.location_name} className="relative z-10" />
-          <span>
-            · {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
-          </span>
+        <div className="mt-1 text-[0.875rem] text-text-tertiary">
+          {scene.location_name} · {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
           {scene.au && (
-            <span>
-              · <AuTag scene={scene} />
-            </span>
+            <>
+              {" · "}
+              <AuTag scene={scene} />
+            </>
           )}
         </div>
 

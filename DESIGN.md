@@ -33,7 +33,7 @@ Szenen-Boxen nennen nur den Ort, nie den Bezirk. Genau zwei Varianten:
 
 Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden").
 
-1. **`SceneCard`** — ausführliche Karte: Titel, Orts-Bubble · Datum in einer Zeile,
+1. **`SceneCard`** — ausführliche Karte: Titel, Ort (reiner Text) · Datum in einer Zeile,
    Beteiligte als anklickbare Bubbles (wer dran ist, markiert), letzter Post. Szenen-Übersicht, Dashboard,
    Ortsprofil, Charakterprofil.
    Die ganze Box führt zur Szene; „Letzter Post" springt zum neuesten Post.
