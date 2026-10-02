@@ -77,8 +77,8 @@ export default function DashboardPage() {
     return t != null && myCharIds.has(t);
   }).length;
   const wartenCount = totalOpen - dranCount;
-  // Standard: bei mehr als 3 Szenen und auf dem Handy eingeklappt
-  const dranOpen = showDran ?? !(dranCount > 3 || isMobile);
+  // Standard: aufgeklappt, nur auf dem Handy eingeklappt
+  const dranOpen = showDran ?? !isMobile;
 
   // Allgemein aktive Szenen der letzten 24h (über alle Spieler)
   const recentScenes = scenes
