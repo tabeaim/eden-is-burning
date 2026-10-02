@@ -76,7 +76,10 @@ export default function TimelinePage() {
 
   const charsByPlayer = players
     .map((p) => ({ player: p, chars: characters.filter((c) => c.player_id === p.id) }))
-    .filter((g) => g.chars.length > 0);
+    .filter((g) => g.chars.length > 0)
+    .sort((a, b) =>
+      a.player.username.localeCompare(b.player.username, "de", { sensitivity: "base" }),
+    );
 
   const auOptions = useMemo(() => {
     const opts = auNames(scenes).map((n) => ({ value: n, label: n }));
