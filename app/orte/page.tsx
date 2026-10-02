@@ -80,7 +80,7 @@ export default function PlacesPage() {
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-bg-surface via-bg-surface/30 to-transparent" />
-                <h2 className="absolute bottom-3 left-5 right-5 font-display text-[1.625rem] text-text-primary">
+                <h2 className="absolute bottom-3 left-5 right-5 font-display lowercase text-[1.625rem] text-text-primary">
                   {info?.name ?? extra?.name}
                 </h2>
               </div>
@@ -129,13 +129,12 @@ export default function PlacesPage() {
                 played
               />
 
-              {/* Ortsideen — standardmäßig eingeklappt */}
+              {/* Ortsideen */}
               <LocationSection
                 key={`ideas-${selected}`}
                 title="Ortsideen"
                 locs={ideaLocs}
                 onAdd={() => setAdding(true)}
-                defaultOpen={false}
               />
 
               {/* Formular: neuen Ort anlegen */}
@@ -193,9 +192,10 @@ export default function PlacesPage() {
   );
 }
 
+// Aufklappbarer Abschnitt im Bezirks-Panel — standardmäßig eingeklappt.
 function AccordionSection({
   title,
-  defaultOpen = true,
+  defaultOpen = false,
   children,
 }: {
   title: string;
@@ -230,17 +230,15 @@ function LocationSection({
   orphans = [],
   played = false,
   onAdd,
-  defaultOpen = true,
 }: {
   title: string;
   locs: Location[];
   orphans?: string[];
   played?: boolean;
   onAdd?: () => void; // zeigt den „+"-Button am Listenende (neuen Ort erstellen)
-  defaultOpen?: boolean;
 }) {
   return (
-    <AccordionSection title={title} defaultOpen={defaultOpen}>
+    <AccordionSection title={title}>
       <div className="flex flex-wrap items-center gap-1.5">
         {/* Jeder Ort führt auf sein Ortsprofil */}
         {locs.map((l) => (

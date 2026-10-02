@@ -324,12 +324,13 @@ export function EdenMap({
   );
 }
 
-// Runder oranger Zähler aktiver Szenen.
+// Runder oranger Zähler aktiver Szenen; der Ring dahinter pulsiert langsam (globals.css).
 function Ticker({ x, y, count }: { x: number; y: number; count: number }) {
   if (count <= 0) return null;
   return (
     <g className="pointer-events-none">
       <title>{`${count} aktive ${count === 1 ? "Szene" : "Szenen"}`}</title>
+      <circle cx={x} cy={y} r="9" fill="var(--accent)" className="map-ticker-pulse" />
       <circle cx={x} cy={y} r="9" fill="var(--accent)" />
       <text x={x} y={y + 3.8} textAnchor="middle" fontSize="11" fontWeight="700" fill="#14100a">
         {count}
