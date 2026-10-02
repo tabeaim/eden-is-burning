@@ -37,8 +37,8 @@
   --font-sans: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
   /* Georgia-Serifenschrift entfernt -> serifenlos (Content-Titel, Prosa, Zitate) */
   --font-serif: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
-  /* Display-Font (Syne Mono) für Bildmarke & Seiten-Überschriften */
-  --font-display: var(--font-display), "Syne Mono", monospace;
+  /* Display-Font (Special Elite) für Bildmarke & Seiten-Überschriften */
+  --font-display: var(--font-display), "Special Elite", monospace;
 }
 
 * {
@@ -88,9 +88,9 @@ body {
   background-attachment: fixed;
 }
 
-/* Display-Font (Syne Mono) — Bildmarke & Seiten-Überschriften */
+/* Display-Font (Special Elite) — Bildmarke & Seiten-Überschriften */
 .font-display {
-  font-family: var(--font-display), "Syne Mono", monospace;
+  font-family: var(--font-display), "Special Elite", monospace;
   font-weight: 400; /* die Schrift hat nur einen Schnitt */
   letter-spacing: 0.01em;
 }

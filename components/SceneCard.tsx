@@ -40,7 +40,7 @@ export function SceneCard({
         <h3 className="font-serif text-[1rem] text-text-primary leading-tight">
           {scene.title}
         </h3>
-        {showStatus && <StatusBadge status={scene.status} />}
+        {showStatus && <StatusBadge status={scene.status} sceneId={scene.id} />}
       </div>
 
       <div className="mt-2 flex items-center gap-1.5">
@@ -80,7 +80,8 @@ export function SceneCard({
   );
 }
 
-// Kompakte Zeile: Flamme, Titel, eine Unterzeile, optional Infos rechts.
+// Kompakte Zeile: Status-Icon, Titel, eine Unterzeile, optional Infos rechts.
+// Aktiv = Flamme (orange nur bei ungelesenem neuestem Post), geschlossen = Haken.
 export function SceneRow({
   scene,
   sub,
@@ -90,15 +91,19 @@ export function SceneRow({
   sub: React.ReactNode;
   right?: React.ReactNode;
 }) {
+  const { isSceneNew } = useStore();
+  const active = scene.status === "active";
   return (
     <Link
       href={`/szenen/${scene.id}`}
       className="flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-surface px-3.5 py-2.5 hover:bg-white/[0.03] transition-colors"
     >
       <span
-        className={`shrink-0 ${scene.status === "active" ? "text-accent" : "text-text-tertiary"}`}
+        className={`shrink-0 ${
+          active && isSceneNew(scene.id) ? "text-accent" : "text-text-tertiary"
+        }`}
       >
-        <Icon name="flame" size={17} />
+        <Icon name={active ? "flame" : "check"} size={17} />
       </span>
       <div className="min-w-0 flex-1">
         <div className="font-serif text-[0.875rem] text-text-primary truncate">

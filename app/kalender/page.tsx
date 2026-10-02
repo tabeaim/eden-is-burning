@@ -19,7 +19,7 @@ const PRESET_KEY = "eden:kalender-presets";
 type Preset = { id: string; name: string; tokens: string[] };
 
 export default function CalendarPage() {
-  const { scenes, characters, players, character } = useStore();
+  const { scenes, characters, players, character, isSceneNew } = useStore();
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [presets, setPresets] = useState<Preset[]>([]);
   const [saving, setSaving] = useState(false);
@@ -241,8 +241,13 @@ export default function CalendarPage() {
                       <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary flex items-center gap-1.5">
                         {formatInplayDate(s.inplay_date)} · {s.inplay_time}
                         {active && (
-                          <span className="inline-flex items-center gap-1 text-accent">
-                            <Icon name="flame" size={12} /> aktiv
+                          <span className="inline-flex items-center gap-1">
+                            <Icon
+                              name="flame"
+                              size={12}
+                              className={isSceneNew(s.id) ? "text-accent" : ""}
+                            />{" "}
+                            aktiv
                           </span>
                         )}
                       </div>

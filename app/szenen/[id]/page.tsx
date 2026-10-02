@@ -335,7 +335,7 @@ function SceneHeader({
       {/* Status + Charaktere links, Aktions-Buttons rechts (gleiche Höhe) */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
-        <StatusBadge status={scene.status} />
+        <StatusBadge status={scene.status} sceneId={scene.id} />
         {scene.paused && (
           <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
             pausiert

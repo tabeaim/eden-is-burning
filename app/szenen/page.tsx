@@ -337,7 +337,7 @@ export default function ScenesPage() {
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
-                  <StatusBadge status={s.status} isNew={isSceneNew(s.id)} />
+                  <StatusBadge status={s.status} sceneId={s.id} isNew={isSceneNew(s.id)} />
                   {s.paused && (
                     <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
                       pausiert

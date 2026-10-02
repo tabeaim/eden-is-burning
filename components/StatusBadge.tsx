@@ -1,23 +1,36 @@
+"use client";
+
+import { useStore } from "@/lib/store";
 import { Icon } from "./Icon";
 
-// Status einer Szene als Bubble-Tag — aktiv mit Flamme in Akzentfarbe,
-// geschlossen gedämpft. Optional ein "neu"-Tag, wenn es ungelesene Posts gibt.
+// Status einer Szene als Tag. Aktiv = Flamme, geschlossen = Haken. Die Flamme ist
+// nur orange, solange der neueste Post der Szene noch ungelesen ist (dafür
+// `sceneId` mitgeben), sonst grau. Optional ein "neu"-Tag bei ungelesenen Posts.
 export function StatusBadge({
   status,
+  sceneId,
   isNew = false,
 }: {
   status: "active" | "closed";
+  sceneId?: string;
   isNew?: boolean;
 }) {
+  const { isSceneNew } = useStore();
+  const unread = sceneId ? isSceneNew(sceneId) : false;
   return (
     <span className="inline-flex items-center gap-1.5">
       {status === "active" ? (
-        <span className="inline-flex items-center gap-1 rounded bg-bg-surface-2 px-2 py-0.5 text-[0.8125rem] font-medium uppercase tracking-wider text-accent">
-          <Icon name="flame" size={11} />
+        <span className="inline-flex items-center gap-1 rounded bg-bg-surface-2 px-2 py-0.5 text-[0.8125rem] font-medium uppercase tracking-wider text-text-secondary">
+          <Icon
+            name="flame"
+            size={11}
+            className={unread ? "text-accent" : "text-text-tertiary"}
+          />
           aktiv
         </span>
       ) : (
-        <span className="inline-flex items-center rounded bg-bg-surface-2 px-2 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
+        <span className="inline-flex items-center gap-1 rounded bg-bg-surface-2 px-2 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
+          <Icon name="check" size={11} />
           geschlossen
         </span>
       )}

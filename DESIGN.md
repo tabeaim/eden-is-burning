@@ -26,6 +26,8 @@ Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schre
 
 ## Szenen-Boxen — `components/SceneCard.tsx`
 
+Status-Icon: aktiv = Flamme, nur orange solange der neueste Post ungelesen ist
+(sonst grau); geschlossen = Haken (`StatusBadge` mit `sceneId`, `SceneRow`).
 Szenen-Boxen nennen nur den Ort, nie den Bezirk. Kompakte Zeilen zeigen das Datum
 numerisch (`formatInplayDateShort`). Genau drei Varianten, keine weiteren:
 
