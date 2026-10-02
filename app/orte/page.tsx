@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import { AREAS, EXTRA_AREAS, areaName, type AreaKey } from "@/lib/world";
-import { formatInplayDateShort, placeholderImg } from "@/lib/format";
+import { placeholderImg } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { EdenMap } from "@/components/EdenMap";
 import { Icon } from "@/components/Icon";
@@ -159,15 +159,7 @@ export default function PlacesPage() {
                 ) : (
                   <div className="flex flex-col gap-1.5">
                     {activeScenes.map((s) => (
-                      <SceneRow
-                        key={s.id}
-                        scene={s}
-                        sub={
-                          <>
-                            {s.location_name} · {formatInplayDateShort(s.inplay_date)}
-                          </>
-                        }
-                      />
+                      <SceneRow key={s.id} scene={s} />
                     ))}
                   </div>
                 )}

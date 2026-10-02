@@ -18,15 +18,17 @@ export function Bubble({
   tone = "default",
   leading,
   title,
+  className = "",
   children,
 }: {
   href?: string;
   tone?: keyof typeof TONES;
   leading?: React.ReactNode; // Avatar oder Icon links
   title?: string;
+  className?: string;
   children: React.ReactNode;
 }) {
-  const cls = `inline-flex items-center gap-1.5 rounded-full border ${
+  const cls = `${className} inline-flex items-center gap-1.5 rounded-full border ${
     leading ? "pl-1" : "pl-2.5"
   } pr-2.5 py-0.5 text-[0.8125rem] transition-colors ${TONES[tone]}`;
   if (href) {
@@ -53,12 +55,14 @@ export function CharacterBubble({
   linked = true,
   tone,
   trailing,
+  className,
 }: {
   character: Character;
   firstNameOnly?: boolean;
   linked?: boolean;
   tone?: keyof typeof TONES;
   trailing?: React.ReactNode;
+  className?: string;
 }) {
   const c = character;
   return (
@@ -66,6 +70,7 @@ export function CharacterBubble({
       href={linked ? `/charaktere/${c.id}` : undefined}
       tone={tone}
       title={c.name}
+      className={className}
       leading={
         c.faceclaim_image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -101,16 +106,19 @@ export function LocationBubble({
   id,
   title,
   played = true,
+  className,
 }: {
   name: string;
   id?: string;
   title?: string;
   played?: boolean;
+  className?: string;
 }) {
   return (
     <Bubble
       href={id ? `/orte/${id}` : undefined}
       title={title}
+      className={className}
       leading={
         <span
           className={`flex h-5 w-5 items-center justify-center ${

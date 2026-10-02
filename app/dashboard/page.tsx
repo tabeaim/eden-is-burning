@@ -188,24 +188,7 @@ export default function DashboardPage() {
                     ? character(last.character_id)
                     : undefined;
                   return (
-                    <SceneRow
-                      key={scene.id}
-                      scene={scene}
-                      sub={scene.location_name}
-                      right={
-                        last &&
-                        lastChar && (
-                          <>
-                            <div className="text-[0.875rem] text-text-secondary">
-                              {lastChar.name.split(" ")[0]}
-                            </div>
-                            <div className="text-[0.875rem] text-text-tertiary">
-                              {timeAgo(last.created_at)}
-                            </div>
-                          </>
-                        )
-                      }
-                    />
+                    <SceneRow key={scene.id} scene={scene} />
                   );
                 })}
               </div>

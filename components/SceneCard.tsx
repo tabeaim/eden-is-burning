@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import { useStore, whoseTurn } from "@/lib/store";
-import { formatDateTime, formatInplayDate, timeAgo, withinHours } from "@/lib/format";
+import {
+  formatDateTime,
+  formatDateTimeShort,
+  formatInplayDate,
+  formatInplayDateShort,
+} from "@/lib/format";
 import type { Character, Scene } from "@/lib/types";
+import { LocationBubble } from "./Bubble";
 import { Icon } from "./Icon";
 import { SceneTurnBar } from "./SceneTurnBar";
 
@@ -31,9 +37,10 @@ export function SceneMatch({ scene, size = 20 }: { scene: Scene; size?: number }
   );
 }
 
-// "vor 2 Stunden" für frische Posts, sonst das Datum.
-function lastPostLabel(iso: string): string {
-  return withinHours(iso, 24 * 7) ? timeAgo(iso) : `am ${formatDateTime(iso)}`;
+// Ortsprofil zum Szenen-Ort (falls ein Eintrag existiert)
+function useSceneLocation(scene: Scene) {
+  const { locationsOf } = useStore();
+  return locationsOf(scene.location_area).find((l) => l.name === scene.location_name);
 }
 
 // Alternate Universe in der Faktenzeile: AU-Icon (gespaltener Zeitstrahl) + Name
@@ -52,8 +59,9 @@ export function AuTag({ scene }: { scene: Scene }) {
 // Stellen darin können eigene Ziele haben (z.B. „Letzter Post" → neuester Post).
 const STRETCHED = "after:absolute after:inset-0 after:content-['']";
 
-// Ausführliche Karte: Streichholz, Titel, Ort · Datum in einer Zeile, Beteiligte
-// (wer dran ist, ist markiert), letzter Post (Klick springt zum neuesten Post).
+// Ausführliche Karte: Streichholz, Titel, Orts-Bubble · Datum in einer Zeile,
+// Beteiligte (anklickbar; wer dran ist, ist markiert), letzter Post mit Datum und
+// Uhrzeit (Klick springt zum neuesten Post).
 export function SceneCard({
   scene,
   href,
@@ -69,6 +77,7 @@ export function SceneCard({
     .filter(Boolean) as Character[];
   const posts = postsOf(scene.id);
   const lastPost = posts.length ? posts[posts.length - 1] : null;
+  const loc = useSceneLocation(scene);
 
   return (
     <div
@@ -99,13 +108,15 @@ export function SceneCard({
           </div>
         </div>
 
-        <div className="mt-1 text-[0.875rem] text-text-tertiary">
-          {scene.location_name} · {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.875rem] text-text-tertiary">
+          <LocationBubble id={loc?.id} name={scene.location_name} className="relative z-10" />
+          <span>
+            · {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
+          </span>
           {scene.au && (
-            <>
-              {" · "}
-              <AuTag scene={scene} />
-            </>
+            <span>
+              · <AuTag scene={scene} />
+            </span>
           )}
         </div>
 
@@ -115,6 +126,7 @@ export function SceneCard({
             activeCharId={whoseTurn(scene, posts)}
             active={scene.status === "active"}
             firstNameOnly
+            linked
           />
         </div>
 
@@ -125,7 +137,7 @@ export function SceneCard({
               title="Zum neuesten Post springen"
               className="relative z-10 hover:text-accent hover:underline"
             >
-              Letzter Post {lastPostLabel(lastPost.created_at)}
+              Letzter Post am {formatDateTime(lastPost.created_at)}
             </Link>
           ) : (
             "Noch kein Post"
@@ -136,20 +148,14 @@ export function SceneCard({
   );
 }
 
-// Kompakte Zeile: Streichholz, Titel, eine Unterzeile, optional Infos rechts
-// (z.B. Zeitangabe — Klick darauf springt zum neuesten Post).
-export function SceneRow({
-  scene,
-  sub,
-  right,
-}: {
-  scene: Scene;
-  sub: React.ReactNode;
-  right?: React.ReactNode;
-}) {
-  const { postsOf } = useStore();
+// Kompakte Zeile, überall gleich aufgebaut: Streichholz, Titel, Ort · Datum
+// (numerisch); rechts wer zuletzt gepostet hat und wann (Klick springt zum
+// neuesten Post).
+export function SceneRow({ scene }: { scene: Scene }) {
+  const { postsOf, character } = useStore();
   const posts = postsOf(scene.id);
   const lastPost = posts.length ? posts[posts.length - 1] : null;
+  const lastChar = lastPost ? character(lastPost.character_id) : undefined;
 
   return (
     <div className="relative flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-surface px-3.5 py-2.5 hover:bg-white/[0.03] transition-colors">
@@ -160,20 +166,26 @@ export function SceneRow({
             {scene.title}
           </Link>
         </div>
-        <div className="text-[0.875rem] text-text-tertiary truncate">{sub}</div>
+        <div className="text-[0.875rem] text-text-tertiary truncate">
+          {scene.location_name} · {formatInplayDateShort(scene.inplay_date)}
+        </div>
       </div>
-      {right &&
-        (lastPost ? (
-          <Link
-            href={`/szenen/${scene.id}#post-${lastPost.id}`}
-            title="Zum neuesten Post springen"
-            className="relative z-10 text-right shrink-0 hover:[&_*]:text-accent"
-          >
-            {right}
-          </Link>
-        ) : (
-          <div className="text-right shrink-0">{right}</div>
-        ))}
+      {lastPost && (
+        <Link
+          href={`/szenen/${scene.id}#post-${lastPost.id}`}
+          title="Zum neuesten Post springen"
+          className="group/last relative z-10 shrink-0 text-right text-[0.875rem]"
+        >
+          {lastChar && (
+            <div className="text-text-secondary group-hover/last:text-accent group-hover/last:underline">
+              {lastChar.name.split(" ")[0]}
+            </div>
+          )}
+          <div className="text-text-tertiary group-hover/last:text-accent group-hover/last:underline">
+            {formatDateTimeShort(lastPost.created_at)}
+          </div>
+        </Link>
+      )}
     </div>
   );
 }

@@ -124,12 +124,17 @@ export default function ScenePage({
       setTimeout(() => {
         const el = document.getElementById(anchorId);
         if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          el.classList.add("ring-2", "ring-accent", "rounded-lg");
-          setTimeout(
-            () => el.classList.remove("ring-2", "ring-accent", "rounded-lg"),
-            2200,
-          );
+          // Suchtreffer: mittig + kurz umrahmt. Sprung zum neuesten Post: nur
+          // hinscrollen, ohne Rahmen.
+          const isSearchHit = params.has("q");
+          el.scrollIntoView({ behavior: "smooth", block: isSearchHit ? "center" : "start" });
+          if (isSearchHit) {
+            el.classList.add("ring-2", "ring-accent", "rounded-lg");
+            setTimeout(
+              () => el.classList.remove("ring-2", "ring-accent", "rounded-lg"),
+              2200,
+            );
+          }
         }
       }, 320);
     }
@@ -401,12 +406,12 @@ function SceneHeader({
         )}
       </div>
 
-      {/* Datum, Tageszeit · Ort als Bubble (+ AU) */}
+      {/* Ort als Bubble · Datum, Tageszeit (+ AU) */}
       <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.875rem] text-text-tertiary">
-        <span>
-          {formatInplayDate(scene.inplay_date)}, {scene.inplay_time} ·
-        </span>
         <LocationBubble id={loc?.id} name={scene.location_name} />
+        <span>
+          · {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
+        </span>
         {scene.au && (
           <span>
             · <AuTag scene={scene} />

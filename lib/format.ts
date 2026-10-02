@@ -27,6 +27,14 @@ export function formatInplayDateShort(iso: string): string {
   return `${d}.${m}.${y}`;
 }
 
+// Zeitpunkt numerisch, z.B. "22.11.2021, 14:30" (für kompakte Zeilen)
+export function formatDateTimeShort(iso: string): string {
+  const dt = new Date(iso);
+  if (isNaN(dt.getTime())) return iso;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(dt.getDate())}.${p(dt.getMonth() + 1)}.${dt.getFullYear()}, ${p(dt.getHours())}:${p(dt.getMinutes())}`;
+}
+
 // Absoluter Zeitpunkt mit Datum + Uhrzeit, z.B. "22. November 2021, 14:30 Uhr"
 export function formatDateTime(iso: string): string {
   const dt = new Date(iso);

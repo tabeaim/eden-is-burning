@@ -31,12 +31,15 @@ neuestem Post, grau ohne Flamme wenn gelesen, abgebrannt mit Rauch bei geschloss
 Szene. Die Tags „aktiv"/„geschlossen" (`StatusBadge`) gibt es nur in der Szene selbst.
 Szenen-Boxen nennen nur den Ort, nie den Bezirk. Genau zwei Varianten:
 
-1. **`SceneCard`** — ausführliche Karte: Titel, Ort · Datum in einer Zeile,
-   Beteiligte (wer dran ist, markiert), letzter Post. Szenen-Übersicht, Dashboard,
+Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden").
+
+1. **`SceneCard`** — ausführliche Karte: Titel, Orts-Bubble · Datum in einer Zeile,
+   Beteiligte als anklickbare Bubbles (wer dran ist, markiert), letzter Post. Szenen-Übersicht, Dashboard,
    Ortsprofil, Charakterprofil.
    Die ganze Box führt zur Szene; „Letzter Post" springt zum neuesten Post.
-2. **`SceneRow`** — kompakte Zeile für schmale Spalten: Dashboard „letzte 24h",
-   Bezirks-Panel der Karte; Datum numerisch (`formatInplayDateShort`).
+2. **`SceneRow`** — kompakte Zeile für schmale Spalten, überall identisch
+   (Dashboard „letzte 24h", Bezirks-Panel der Karte): Ort · Datum numerisch, rechts
+   letzter Poster + Zeitpunkt.
 
 ## Seitenbreite
 
