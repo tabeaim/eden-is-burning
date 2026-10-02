@@ -62,13 +62,15 @@ export default function PlacesPage() {
         title="Karte"
         subtitle="Eden, Virginia — fünf Bezirke, ein Fluss, und alles dahinter." width="max-w-5xl" />
 
-      <div className="grid lg:grid-cols-[1.7fr_1fr] gap-12 items-start">
-        <div className="rounded-xl border border-border-subtle bg-bg-surface p-3">
+      {/* Karte liegt frei (ohne Kasten) und größer auf der Seite; das Detail-Panel
+          ragt rechts ein Stück in sie hinein. */}
+      <div className="grid gap-8 lg:gap-0 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
+        <div className="lg:-mr-16 lg:-ml-4">
           <EdenMap selected={selected} onSelect={(k) => { setSelected(k); setAdding(false); }} areaStats={areaStats} />
         </div>
 
         {/* Detail-Panel */}
-        <div className="rounded-xl border border-border-subtle bg-bg-surface min-h-[320px] overflow-hidden">
+        <div className="relative z-10 lg:mt-6 rounded-xl border border-border-subtle bg-bg-surface/95 backdrop-blur-sm shadow-2xl shadow-black/60 min-h-[320px] overflow-hidden">
           {info || extra ? (
             <>
               {/* Titelbild-Banner mit Namen */}

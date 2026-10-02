@@ -130,7 +130,7 @@ interface Pill {
 
 const PILLS: Pill[] = [
   { key: "washington", label: "Washington D.C.", x: 179, y: 27, w: 192, h: 32 },
-  { key: "rest", label: "Rest der Welt", x: 436, y: 613, w: 158, h: 32 },
+  { key: "rest", label: "Rest der Welt", x: 372, y: 613, w: 158, h: 32 },
 ];
 
 // Byron: Ticker an der Campus-Ecke (unter dem Label läge er auf der Strichellinie)
@@ -189,10 +189,11 @@ export function EdenMap({
   }, []);
 
   return (
-    <svg viewBox="0 0 608 654" className="w-full h-auto select-none" style={{ maxHeight: 760 }}>
-      {/* Frame-Hintergrund — zugleich klickbares "Umland" (deckt die dunklen Ränder) */}
+    <svg viewBox="0 0 608 654" className="map-free w-full h-auto select-none">
+      {/* Unsichtbarer Hintergrund — die Karte liegt frei auf der Seite; die Fläche
+          bleibt als klickbares "Umland" erhalten. */}
       <g onClick={() => onSelect("umland")} className="cursor-pointer">
-        <rect x="0" y="0" width="608" height="654" rx="10" fill="#18181b" />
+        <rect x="0" y="0" width="608" height="654" fill="transparent" />
       </g>
 
       {/* Wasser: Potomac → Chesapeake Bay (dekorativ) */}
@@ -204,23 +205,23 @@ export function EdenMap({
 
       {/* Fluss-/Bay-Beschriftung */}
       <text
-        x="559"
-        y="79"
+        x="530"
+        y="92"
         fill="#4a6080"
         fontSize="12"
         textAnchor="middle"
-        transform="rotate(-91.02 559 79)"
+        transform="rotate(-91.02 530 92)"
         style={{ letterSpacing: "2.5px", pointerEvents: "none" }}
       >
         POTOMAC RIVER
       </text>
       <text
-        x="576"
-        y="440"
+        x="540"
+        y="470"
         fill="#4a6080"
         fontSize="12"
         textAnchor="middle"
-        transform="rotate(-90 576 440)"
+        transform="rotate(-90 540 470)"
         style={{ letterSpacing: "2.5px", pointerEvents: "none" }}
       >
         CHESAPEAKE BAY
