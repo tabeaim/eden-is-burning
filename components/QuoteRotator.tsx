@@ -50,7 +50,10 @@ export function QuoteRotator() {
           key={q.id}
           className="prose-serif !text-left !text-[1rem] text-text-primary animate-[fadein_0.5s_ease]"
         >
-          <span className="mr-1.5 text-[2.125rem] leading-none text-accent">„</span>
+          {/* großes „ links, über zwei Textzeilen (wie eine Initiale) */}
+          <span aria-hidden className="float-left mr-2 h-[3.6rem] text-[3.6rem] leading-none text-accent">
+            „
+          </span>
           {q.text}
         </blockquote>
         <div className="mt-2 text-[0.875rem] text-text-secondary">
