@@ -411,7 +411,7 @@ function SceneHeader({
         )}
       </div>
 
-      {/* Datum, Tageszeit · Ort · Bezirk (+ AU) */}
+      {/* Datum, Tageszeit · Ort (+ AU) */}
       <div className="mt-2 text-[0.875rem] text-text-tertiary">
         {formatInplayDate(scene.inplay_date)}, {scene.inplay_time} ·{" "}
         {loc ? (
@@ -423,8 +423,7 @@ function SceneHeader({
           </Link>
         ) : (
           scene.location_name
-        )}{" "}
-        · {areaName(scene.location_area)}
+        )}
         {scene.au && (
           <>
             {" · "}

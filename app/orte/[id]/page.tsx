@@ -85,6 +85,7 @@ export default function LocationPage({
         Number(b.status === "active") - Number(a.status === "active") ||
         b.inplay_date.localeCompare(a.inplay_date),
     );
+  const postCount = scenesHere.reduce((sum, s) => sum + postsOf(s.id).length, 0);
   const visitorIds = new Set(scenesHere.flatMap((s) => s.participant_ids));
   const visitors = characters.filter((c) => visitorIds.has(c.id));
   const creator = loc.created_by ? player(loc.created_by) : undefined;
@@ -216,6 +217,8 @@ export default function LocationPage({
               </dd>
               <dt className="text-text-tertiary">Szenen:</dt>
               <dd className="text-text-secondary">{scenesHere.length}</dd>
+              <dt className="text-text-tertiary">Posts:</dt>
+              <dd className="text-text-secondary">{postCount}</dd>
               {creator && (
                 <>
                   <dt className="text-text-tertiary">Erstellt von:</dt>
