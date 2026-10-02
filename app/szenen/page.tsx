@@ -52,6 +52,12 @@ export default function ScenesPage() {
   const [searchPost, setSearchPost] = useState("");
   const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED
   const [plotId, setPlotId] = useState<string | null>(null); // geöffneter Plot
+  // Filter vor dem Öffnen eines Plots — beim Schließen kommen sie zurück
+  const [beforePlot, setBeforePlot] = useState<{
+    tokens: string[];
+    aus: string[];
+    areas: string[];
+  } | null>(null);
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [areas, setAreas] = useState<string[]>([]); // AreaKey | "rest"
   const [periods, setPeriods] = useState<string[]>([]); // "YYYY-MM"
@@ -138,8 +144,13 @@ export default function ScenesPage() {
   function togglePlot(p: Plot) {
     if (plotId === p.id) {
       setPlotId(null);
+      setTokens(beforePlot?.tokens ?? []);
+      setAus(beforePlot?.aus ?? []);
+      setAreas(beforePlot?.areas ?? []);
+      setBeforePlot(null);
       return;
     }
+    if (!plotId) setBeforePlot({ tokens, aus, areas });
     setPlotId(p.id);
     setTokens([...p.tokens]);
     setAus([...p.aus]);
@@ -221,6 +232,7 @@ export default function ScenesPage() {
     setSearchPost("");
     setAus([]);
     setPlotId(null);
+    setBeforePlot(null);
     setTokens([]);
     setAreas([]);
     setPeriods([]);

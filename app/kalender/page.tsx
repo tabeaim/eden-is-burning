@@ -66,6 +66,9 @@ export default function TimelinePage() {
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Filter, die vor dem Öffnen eines Plots aktiv waren — beim Schließen kommen
+  // sie zurück (waren keine aktiv, ist danach auch keiner aktiv).
+  const [beforePlot, setBeforePlot] = useState<PlotFilters | null>(null);
 
   const plot = plots.find((p) => p.id === plotId) ?? null;
   const editable = plot ? canEditPlot(plot) : false;
@@ -141,8 +144,14 @@ export default function TimelinePage() {
     setAddingOff(false);
     if (plotId === p.id) {
       setPlotId(null);
+      setTokens(beforePlot?.tokens ?? []);
+      setAus(beforePlot?.aus ?? []);
+      setAreas(beforePlot?.areas ?? []);
+      setBeforePlot(null);
       return;
     }
+    // Beim Wechsel von Plot zu Plot bleibt der ursprüngliche Stand gemerkt
+    if (!plotId) setBeforePlot({ tokens, aus, areas });
     setPlotId(p.id);
     setTokens([...p.tokens]);
     setAus([...p.aus]);
@@ -516,15 +525,23 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
       <Node>
         <SceneMatch scene={scene} size={22} />
       </Node>
-      <div className="rounded-xl border border-border-subtle bg-bg-surface px-4 py-3">
+      {/* Die ganze Karte führt zur Szene (Titel-Link, über die Karte gestreckt) */}
+      <div className="relative rounded-xl border border-border-subtle bg-bg-surface px-4 py-3 transition-colors hover:bg-white/[0.03]">
         <div className="flex items-start justify-between gap-3">
           <div className="text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
             {formatInplayDate(scene.inplay_date)} · {scene.inplay_time}
           </div>
-          {onRemove && <RemoveButton onRemove={onRemove} title="Aus dem Plot entfernen" />}
+          {onRemove && (
+            <span className="relative z-10">
+              <RemoveButton onRemove={onRemove} title="Aus dem Plot entfernen" />
+            </span>
+          )}
         </div>
         <h3 className="mt-0.5 font-serif text-[1rem] leading-tight text-text-primary">
-          <Link href={`/szenen/${scene.id}`} className="hover:underline">
+          <Link
+            href={`/szenen/${scene.id}`}
+            className="after:absolute after:inset-0 after:content-['']"
+          >
             {scene.title}
           </Link>
         </h3>
