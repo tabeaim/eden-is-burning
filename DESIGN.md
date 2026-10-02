@@ -34,6 +34,7 @@ Szenen-Boxen nennen nur den Ort, nie den Bezirk. Genau zwei Varianten:
 1. **`SceneCard`** — ausführliche Karte: Titel, Ort · Datum in einer Zeile,
    Beteiligte (wer dran ist, markiert), letzter Post. Szenen-Übersicht, Dashboard,
    Ortsprofil, Charakterprofil.
+   Die ganze Box führt zur Szene; „Letzter Post" springt zum neuesten Post.
 2. **`SceneRow`** — kompakte Zeile für schmale Spalten: Dashboard „letzte 24h",
    Bezirks-Panel der Karte; Datum numerisch (`formatInplayDateShort`).
 

@@ -71,6 +71,7 @@ export interface Scene {
   status: "active" | "closed";
   trigger_warning: boolean;
   au?: boolean; // "Alternate Universe" — Szene in einem Nicht-Canon-Plot
+  au_name?: string | null; // Name des AUs (mehrere Szenen können dasselbe AU teilen)
   next_up?: string | null; // manuelle Zug-Übergabe (Charakter-ID); sonst Reihenfolge
   paused?: boolean; // pausiert -> nicht im Dashboard-Tracker
   created_at: string;

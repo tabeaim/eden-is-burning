@@ -11,6 +11,7 @@ import { SceneEditPanel } from "@/components/SceneEditPanel";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Icon } from "@/components/Icon";
 import { CharacterBubble, LocationBubble } from "@/components/Bubble";
+import { AuTag } from "@/components/SceneCard";
 import type { Character, Post, Scene } from "@/lib/types";
 
 function focusReplyEditor() {
@@ -408,7 +409,7 @@ function SceneHeader({
         <LocationBubble id={loc?.id} name={scene.location_name} />
         {scene.au && (
           <span>
-            · <span className="italic">AU</span>
+            · <AuTag scene={scene} />
           </span>
         )}
       </div>

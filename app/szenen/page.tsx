@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import { SceneCard } from "@/components/SceneCard";
+import { auNames } from "@/components/AuNameField";
 import type { Character, Scene } from "@/lib/types";
 
 type Tab = "active" | "all" | "mine" | "archive";
@@ -21,6 +22,9 @@ const SORT_LABELS: Record<SortKey, string> = {
   title: "Titel A–Z",
 };
 
+// Filterwert für AU-Szenen ohne benanntes AU
+const AU_UNNAMED = "__unnamed";
+
 const MONTHS_DE = [
   "Januar", "Februar", "März", "April", "Mai", "Juni",
   "Juli", "August", "September", "Oktober", "November", "Dezember",
@@ -28,13 +32,22 @@ const MONTHS_DE = [
 
 export default function ScenesPage() {
   const store = useStore();
-  const { scenes, characters, players, character, postsOf, currentPlayer, charactersOf, isSceneNew } =
-    store;
+  const {
+    scenes,
+    characters,
+    players,
+    character,
+    postsOf,
+    currentPlayer,
+    charactersOf,
+    isSceneNew,
+    markAllScenesSeen,
+  } = store;
 
   const [tab, setTab] = useState<Tab>("all");
   const [searchTitle, setSearchTitle] = useState("");
   const [searchPost, setSearchPost] = useState("");
-  const [auOnly, setAuOnly] = useState(false);
+  const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [areas, setAreas] = useState<string[]>([]); // AreaKey | "rest"
   const [periods, setPeriods] = useState<string[]>([]); // "YYYY-MM"
@@ -70,6 +83,12 @@ export default function ScenesPage() {
     ...AREA_ORDER.map((k) => ({ value: k as string, label: AREAS[k].name })),
     { value: "rest", label: "Rest der Welt" },
   ].sort((a, b) => a.label.localeCompare(b.label, "de"));
+  const auOptions = useMemo(() => {
+    const opts = auNames(scenes).map((n) => ({ value: n, label: n }));
+    if (scenes.some((s) => s.au && !s.au_name))
+      opts.push({ value: AU_UNNAMED, label: "Ohne Namen" });
+    return opts;
+  }, [scenes]);
   const periodOptions = useMemo(() => {
     const set = new Set<string>();
     for (const s of scenes) set.add(s.inplay_date.slice(0, 7));
@@ -105,13 +124,14 @@ export default function ScenesPage() {
     if (tab === "archive" && s.status !== "closed") return false;
     if (tab === "mine" && !s.participant_ids.some((id) => myCharIds.has(id)))
       return false;
-    if (auOnly && !s.au) return false;
+    // AUs (Mehrfach): Szene muss in einem der gewählten AUs spielen
+    if (aus.length > 0 && !(s.au && aus.includes(s.au_name || AU_UNNAMED))) return false;
     if (qTitle && !s.title.toLowerCase().includes(qTitle)) return false;
     if (qPost && !postMatchId(s)) return false;
     // Charaktere/Spieler: Szene muss zu ALLEN gewählten Tokens passen
     if (tokens.length > 0 && !tokens.every((t) => tokenMatches(t, s.participant_ids)))
       return false;
-    // Bezirke (Mehrfach): mind. einer muss passen
+    // Gegend (Mehrfach): mind. eine muss passen
     if (areas.length > 0) {
       const inArea = areas.includes("rest")
         ? !AREA_ORDER.includes(s.location_area as AreaKey)
@@ -157,7 +177,7 @@ export default function ScenesPage() {
   const activeFilters =
     (qTitle ? 1 : 0) +
     (qPost ? 1 : 0) +
-    (auOnly ? 1 : 0) +
+    aus.length +
     tokens.length +
     areas.length +
     periods.length;
@@ -165,7 +185,7 @@ export default function ScenesPage() {
   function resetFilters() {
     setSearchTitle("");
     setSearchPost("");
-    setAuOnly(false);
+    setAus([]);
     setTokens([]);
     setAreas([]);
     setPeriods([]);
@@ -229,7 +249,7 @@ export default function ScenesPage() {
           </div>
 
           <MultiSelect
-            label="Bezirke"
+            label="Gegend"
             options={areaOptions}
             selected={areas}
             onToggle={(v) => toggle(areas, setAreas, v)}
@@ -243,31 +263,13 @@ export default function ScenesPage() {
             onClear={() => setPeriods([])}
           />
 
-          <label
-            title="Nur Alternate-Universe-Szenen"
-            className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[0.8125rem] cursor-pointer select-none transition-colors ${
-              auOnly
-                ? "border-accent/60 bg-accent-soft text-text-primary"
-                : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={auOnly}
-              onChange={(e) => setAuOnly(e.target.checked)}
-              className="accent-accent"
-            />
-            AU
-          </label>
-
-          {activeFilters > 0 && (
-            <button
-              onClick={resetFilters}
-              className="text-[0.8125rem] text-text-tertiary hover:text-text-primary underline"
-            >
-              zurücksetzen ({activeFilters})
-            </button>
-          )}
+          <MultiSelect
+            label="AU"
+            options={auOptions}
+            selected={aus}
+            onToggle={(v) => toggle(aus, setAus, v)}
+            onClear={() => setAus([])}
+          />
         </div>
 
         {/* Charaktere: pro Spieler gebündelt, aufklappbar */}
@@ -285,8 +287,24 @@ export default function ScenesPage() {
         </div>
       </div>
 
-      {/* Sortierung — rechtsbündig, direkt über den Ergebnissen */}
-      <div className="flex items-center justify-end gap-1.5 mt-4 mb-2">
+      {/* Über den Ergebnissen: links Filter zurücksetzen, rechts „Alle gelesen" + Sortierung */}
+      <div className="flex flex-wrap items-center gap-1.5 mt-4 mb-2">
+        {activeFilters > 0 && (
+          <button
+            onClick={resetFilters}
+            className="text-[0.8125rem] text-text-tertiary hover:text-text-primary underline"
+          >
+            Filter zurücksetzen ({activeFilters})
+          </button>
+        )}
+        <button
+          onClick={markAllScenesSeen}
+          disabled={!scenes.some((s) => isSceneNew(s.id))}
+          title="Alle Szenen als gelesen markieren"
+          className="ml-auto mr-2 inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-bg-primary px-2.5 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary disabled:opacity-40 disabled:hover:text-text-secondary"
+        >
+          <Icon name="check" size={13} /> Alle gelesen
+        </button>
         <span className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
           Sortieren
         </span>

@@ -12,6 +12,7 @@ import {
 import { PageHeader } from "@/components/PageHeader";
 import { CharacterPicker } from "@/components/CharacterPicker";
 import { sceneHeader } from "@/lib/headers";
+import { AuNameField, auNames } from "@/components/AuNameField";
 
 // Pflichtfeld-Stern
 function Req() {
@@ -20,7 +21,7 @@ function Req() {
 
 export default function NewScenePage() {
   const router = useRouter();
-  const { addScene, addLocation, addPost, characters, currentPlayer, charactersOf } =
+  const { addScene, addLocation, addPost, characters, scenes, currentPlayer, charactersOf } =
     useStore();
 
   const [title, setTitle] = useState("");
@@ -30,6 +31,7 @@ export default function NewScenePage() {
   const [time, setTime] = useState("Nachmittag");
   const [tw, setTw] = useState(false);
   const [au, setAu] = useState(false);
+  const [auName, setAuName] = useState("");
   const [summary, setSummary] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [firstPost, setFirstPost] = useState("");
@@ -62,6 +64,7 @@ export default function NewScenePage() {
       status: "active",
       trigger_warning: tw,
       au,
+      ...(au && auName.trim() ? { au_name: auName.trim() } : {}),
       participant_ids: selected,
       summary: summary.trim() || null,
     });
@@ -187,6 +190,9 @@ export default function NewScenePage() {
           <span className="italic">AU</span> — spielt in einem Alternate
           Universe (Nicht-Canon)
         </label>
+        {au && (
+          <AuNameField value={auName} onChange={setAuName} names={auNames(scenes)} />
+        )}
 
         <div>
           <div className="text-[0.875rem] text-text-secondary mb-2">

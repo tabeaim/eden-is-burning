@@ -76,6 +76,7 @@ interface StoreValue extends PersistedState {
   // Ungelesene Posts ("neu"-Tag) — pro Gerät/Nutzer in localStorage
   isSceneNew: (sceneId: string) => boolean;
   markSceneSeen: (sceneId: string) => void;
+  markAllScenesSeen: () => void;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -605,6 +606,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [currentPlayer?.id],
   );
 
+  const markAllScenesSeen = useCallback(() => {
+    if (!currentPlayer) return;
+    const pid = currentPlayer.id;
+    const now = new Date().toISOString();
+    setReads((r) => {
+      const next = { ...r };
+      for (const s of state.scenes) next[s.id] = now;
+      try {
+        localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPlayer?.id, state.scenes]);
+
   const isSceneNew = useCallback(
     (sceneId: string) => {
       if (!currentPlayer) return false;
@@ -665,6 +683,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       resetData,
       isSceneNew,
       markSceneSeen,
+      markAllScenesSeen,
     }),
     [
       state,
@@ -706,6 +725,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       resetData,
       isSceneNew,
       markSceneSeen,
+      markAllScenesSeen,
     ],
   );
 

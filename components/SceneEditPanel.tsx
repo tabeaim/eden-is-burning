@@ -11,6 +11,7 @@ import {
 import { sceneHeader } from "@/lib/headers";
 import { Icon } from "@/components/Icon";
 import { CharacterPicker } from "@/components/CharacterPicker";
+import { AuNameField, auNames } from "@/components/AuNameField";
 import type { Scene } from "@/lib/types";
 
 const field =
@@ -38,7 +39,7 @@ export function SceneEditPanel({
   scene: Scene;
   onClose: () => void;
 }) {
-  const { updateScene, addLocation, characters, currentPlayer, charactersOf } =
+  const { updateScene, addLocation, characters, scenes, currentPlayer, charactersOf } =
     useStore();
 
   const [title, setTitle] = useState(scene.title);
@@ -49,6 +50,7 @@ export function SceneEditPanel({
   const [time, setTime] = useState(scene.inplay_time);
   const [tw, setTw] = useState(scene.trigger_warning);
   const [au, setAu] = useState(Boolean(scene.au));
+  const [auName, setAuName] = useState(scene.au_name ?? "");
   const [headerUrl, setHeaderUrl] = useState(scene.header_url ?? "");
   const [selected, setSelected] = useState<string[]>(scene.participant_ids);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -77,6 +79,12 @@ export function SceneEditPanel({
       inplay_time: time,
       trigger_warning: tw,
       au,
+      // au_name nur mitschicken, wenn es etwas zu setzen oder zu löschen gibt
+      ...(au && auName.trim()
+        ? { au_name: auName.trim() }
+        : scene.au_name
+          ? { au_name: null }
+          : {}),
       header_url: headerUrl || null,
       participant_ids: selected,
       summary: summary.trim() || null,
@@ -229,6 +237,7 @@ export function SceneEditPanel({
         />
         <span className="italic">AU</span> — Alternate Universe
       </label>
+      {au && <AuNameField value={auName} onChange={setAuName} names={auNames(scenes)} />}
 
       <div>
         <div className="text-[0.875rem] text-text-secondary mb-2">
