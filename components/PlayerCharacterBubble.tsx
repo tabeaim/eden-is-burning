@@ -5,19 +5,19 @@ import { Icon } from "./Icon";
 import type { Character, Player } from "@/lib/types";
 
 // Spieler-Bubble, die zu einzelnen Charakteren ausfächert.
-// Tokens: "player:<id>" | "char:<id>". Geteilt von Szenen- und Kalender-Seite.
+// Tokens: "player:<id>" | "char:<id>". Geteilt von Szenen-Übersicht und Timeline.
+// Klick auf den Namen schaltet alle Charaktere der Person an — und, sobald
+// irgendetwas von ihr gewählt ist, wieder komplett aus.
 export function PlayerCharacterBubble({
   player,
   chars,
   tokens,
-  onTogglePlayer,
-  onToggleChar,
+  setTokens,
 }: {
   player: Player;
   chars: Character[];
   tokens: string[];
-  onTogglePlayer: () => void;
-  onToggleChar: (id: string) => void;
+  setTokens: (next: string[]) => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -35,6 +35,22 @@ export function PlayerCharacterBubble({
   }, []);
 
   const active = playerOn || selectedCharCount > 0;
+
+  const playerToken = `player:${player.id}`;
+  const ownTokens = new Set([playerToken, ...chars.map((c) => `char:${c.id}`)]);
+  const withoutOwn = tokens.filter((t) => !ownTokens.has(t));
+
+  // Name: alles von dieser Person an bzw. wieder aus
+  function onTogglePlayer() {
+    setTokens(active ? withoutOwn : [...withoutOwn, playerToken]);
+  }
+  // Einzelner Charakter: an/aus; war „alle" gewählt, wird auf diesen einen eingegrenzt
+  function onToggleChar(id: string) {
+    const token = `char:${id}`;
+    if (playerOn) setTokens([...withoutOwn, token]);
+    else if (tokens.includes(token)) setTokens(tokens.filter((t) => t !== token));
+    else setTokens([...tokens, token]);
+  }
 
   return (
     <div ref={ref} className="relative">
@@ -93,7 +109,7 @@ export function PlayerCharacterBubble({
           </button>
           <div className="my-1 border-t border-border-subtle" />
           {chars.map((c) => {
-            const on = tokens.includes(`char:${c.id}`);
+            const on = playerOn || tokens.includes(`char:${c.id}`);
             return (
               <button
                 key={c.id}

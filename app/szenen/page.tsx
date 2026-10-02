@@ -279,8 +279,7 @@ export default function ScenesPage() {
               player={player}
               chars={chars}
               tokens={tokens}
-              onTogglePlayer={() => toggle(tokens, setTokens, `player:${player.id}`)}
-              onToggleChar={(id) => toggle(tokens, setTokens, `char:${id}`)}
+              setTokens={setTokens}
             />
           ))}
         </div>

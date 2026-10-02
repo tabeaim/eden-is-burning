@@ -193,6 +193,15 @@ export default function TimelinePage() {
       {/* Filterleiste — aufgebaut wie in der Szenen-Übersicht */}
       <div className="rounded-xl border border-border-subtle bg-bg-surface p-4 flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
+          {charsByPlayer.map(({ player, chars }) => (
+            <PlayerCharacterBubble
+              key={player.id}
+              player={player}
+              chars={chars}
+              tokens={tokens}
+              setTokens={setTokens}
+            />
+          ))}
           <MultiSelect
             label="AU"
             icon="au"
@@ -201,16 +210,6 @@ export default function TimelinePage() {
             onToggle={(v) => toggle(aus, setAus, v)}
             onClear={() => setAus([])}
           />
-          {charsByPlayer.map(({ player, chars }) => (
-            <PlayerCharacterBubble
-              key={player.id}
-              player={player}
-              chars={chars}
-              tokens={tokens}
-              onTogglePlayer={() => toggle(tokens, setTokens, `player:${player.id}`)}
-              onToggleChar={(id) => toggle(tokens, setTokens, `char:${id}`)}
-            />
-          ))}
         </div>
 
         {/* Plots: gespeicherte Filter mit Namen */}
@@ -469,15 +468,8 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
             {scene.title}
           </Link>
         </h3>
+        {/* Eine Reihe: erst die Charaktere, dann der Ort (+ AU) */}
         <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[0.875rem] text-text-tertiary">
-          <LocationBubble id={loc?.id} name={scene.location_name} />
-          {scene.au && (
-            <span>
-              · <AuTag scene={scene} />
-            </span>
-          )}
-        </div>
-        <div className="mt-2">
           <SceneTurnBar
             participants={participants}
             activeCharId={whoseTurn(scene, postsOf(scene.id))}
@@ -485,6 +477,12 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
             firstNameOnly
             linked
           />
+          <LocationBubble id={loc?.id} name={scene.location_name} />
+          {scene.au && (
+            <span>
+              · <AuTag scene={scene} />
+            </span>
+          )}
         </div>
         {scene.summary && (
           <p className="mt-2 text-[0.875rem] italic text-text-secondary">{scene.summary}</p>
@@ -518,11 +516,8 @@ function OffEntry({ off, onRemove }: { off: OffScene; onRemove?: () => void }) {
         <h3 className="mt-0.5 font-serif text-[1rem] leading-tight text-text-primary">
           {off.title}
         </h3>
-        {off.location_name && (
-          <div className="mt-1 text-[0.875rem] text-text-tertiary">{off.location_name}</div>
-        )}
-        {participants.length > 0 && (
-          <div className="mt-2">
+        {(participants.length > 0 || off.location_name) && (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[0.875rem] text-text-tertiary">
             <SceneTurnBar
               participants={participants}
               activeCharId={null}
@@ -530,6 +525,7 @@ function OffEntry({ off, onRemove }: { off: OffScene; onRemove?: () => void }) {
               firstNameOnly
               linked
             />
+            {off.location_name && <LocationBubble name={off.location_name} played={false} />}
           </div>
         )}
         {off.summary && (
