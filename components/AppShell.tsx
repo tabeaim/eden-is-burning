@@ -26,6 +26,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Handy: Navigation als Schublade, die über die Menü-Taste aufgeht
   const [navOpen, setNavOpen] = useState(false);
   useEffect(() => setNavOpen(false), [pathname]);
+  // Größere Bildschirme: Seitenleiste lässt sich dauerhaft ausblenden (pro Gerät gemerkt)
+  const [navHidden, setNavHidden] = useState(false);
+  useEffect(() => {
+    try {
+      setNavHidden(localStorage.getItem("eden:nav-hidden") === "1");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  function hideNav(hidden: boolean) {
+    setNavHidden(hidden);
+    try {
+      localStorage.setItem("eden:nav-hidden", hidden ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }
 
   // "Zuletzt online" aktuell halten: bei jedem Seitenwechsel last_seen setzen.
   useEffect(() => {
@@ -52,7 +69,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <PageMetaProvider>
       <div className="flex min-h-screen">
-        <Sidebar pathname={pathname} open={navOpen} onClose={() => setNavOpen(false)} />
+        <Sidebar
+          pathname={pathname}
+          open={navOpen}
+          onClose={() => setNavOpen(false)}
+          hidden={navHidden}
+          onHide={() => hideNav(true)}
+        />
+        {/* Ausgeblendete Seitenleiste (größere Bildschirme) wieder einblenden */}
+        {navHidden && (
+          <button
+            onClick={() => hideNav(false)}
+            title="Seitenleiste einblenden"
+            aria-label="Seitenleiste einblenden"
+            className="hidden md:flex fixed left-3 top-3 z-30 rounded-md border border-border-subtle bg-bg-sidebar/80 p-1.5 text-text-secondary backdrop-blur hover:text-text-primary"
+          >
+            <MenuIcon />
+          </button>
+        )}
         <div className="flex-1 min-w-0 flex flex-col">
           {/* Kopfleiste nur auf schmalen Bildschirmen: Logo + Menü-Taste */}
           <div className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border-subtle bg-bg-sidebar px-4 py-3">
@@ -64,18 +98,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               aria-label="Menü öffnen"
               className="rounded-md border border-border-subtle p-1.5 text-text-secondary hover:text-text-primary"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round">
-                <path d="M4 7h16M4 12h16M4 17h16" />
-              </svg>
+              <MenuIcon />
             </button>
           </div>
           {/* Die Karte bekommt ausnahmsweise kein Titelbild — nur den Seitentitel;
               der Platz gehört der Karte. */}
-          <BannerHeader pathname={pathname} noBanner={pathname === "/orte"} />
+          <BannerHeader
+            pathname={pathname}
+            noBanner={pathname === "/orte"}
+            navHidden={navHidden}
+          />
           <main className="flex-1 min-w-0">{children}</main>
         </div>
       </div>
     </PageMetaProvider>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round">
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
   );
 }
 
@@ -98,9 +142,11 @@ function bannerForPath(pathname: string): string {
 function BannerHeader({
   pathname,
   noBanner = false,
+  navHidden = false,
 }: {
   pathname: string;
   noBanner?: boolean; // Titel ohne Titelbild darüber
+  navHidden?: boolean; // dann sitzt oben links die Einblenden-Taste
 }) {
   const meta = usePageMeta();
 
@@ -141,7 +187,9 @@ function BannerHeader({
       {/* Titel — ragt halb über die Banner-Unterkante in die Seite (nicht beschnitten).
           Container in der Seitenbreite zentriert → Titel startet bündig mit dem Inhalt. */}
       <div className={`relative ${width} mx-auto px-4 sm:px-8`}>
-        <h1 className={`page-title inline-block ${noBanner ? "mt-7" : "-mt-8"} max-w-full break-words font-display lowercase text-[2.125rem] sm:text-[3.375rem] leading-none text-text-primary`}>
+        <h1 className={`page-title inline-block ${
+          noBanner ? (navHidden ? "mt-7 md:mt-14" : "mt-7") : "-mt-8"
+        } max-w-full break-words font-display lowercase text-[2.125rem] sm:text-[3.375rem] leading-none text-text-primary`}>
           {title}
           <span className="text-accent">.</span>
         </h1>
@@ -190,10 +238,14 @@ function Sidebar({
   pathname,
   open,
   onClose,
+  hidden,
+  onHide,
 }: {
   pathname: string;
   open: boolean; // nur auf schmalen Bildschirmen relevant (Schublade)
   onClose: () => void;
+  hidden: boolean; // auf größeren Bildschirmen ausgeblendet
+  onHide: () => void;
 }) {
   const { currentPlayer, charactersOf, logout } = useStore();
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
@@ -209,16 +261,25 @@ function Sidebar({
       <div onClick={onClose} className="fixed inset-0 z-40 bg-black/60 md:hidden" />
     )}
     <aside
-      className={`w-[230px] md:w-[190px] shrink-0 bg-bg-sidebar border-r border-border-subtle flex flex-col fixed inset-y-0 left-0 z-50 overflow-y-auto transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0 ${
-        open ? "translate-x-0" : "-translate-x-full"
-      }`}
+      className={`w-[230px] md:w-[190px] shrink-0 bg-bg-sidebar border-r border-border-subtle flex flex-col fixed inset-y-0 left-0 z-50 overflow-y-auto transition-transform ${
+        hidden ? "md:hidden" : "md:sticky md:top-0 md:h-screen md:translate-x-0"
+      } ${open ? "translate-x-0" : "-translate-x-full"}`}
     >
-      <div className="px-4 pt-5 pb-5 border-b border-border-subtle">
+      <div className="relative px-4 pt-5 pb-5 border-b border-border-subtle">
         <Link href="/dashboard" className="block leading-none">
           <div className="font-display text-[1.25rem] text-text-primary">
             eden is burning<span className="text-accent">.</span>
           </div>
         </Link>
+        {/* Seitenleiste ausblenden (nur größere Bildschirme) */}
+        <button
+          onClick={onHide}
+          title="Seitenleiste ausblenden"
+          aria-label="Seitenleiste ausblenden"
+          className="hidden md:block absolute right-1 top-1 rounded p-1 text-text-tertiary hover:text-text-primary"
+        >
+          <Icon name="chevron-right" size={12} className="rotate-180" />
+        </button>
       </div>
 
       <nav className="px-2 pt-3 flex-1 flex flex-col gap-0.5">
