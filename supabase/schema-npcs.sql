@@ -42,3 +42,22 @@ create policy "npcs delete" on npcs for delete to authenticated
     public.is_admin()
     or created_by = (select id from players where auth_user_id = auth.uid())
   );
+
+-- === Test-NPCs (je einem Ort zugeordnet) ====================================
+insert into npcs (id, name, role, age, created_by) values
+  ('npc_ron',       'Ron Kowalski',   'Diner-Besitzer', 58, 'p_tabs'),
+  ('npc_dex',       'Dex',            'Türsteher',      34, 'p_tabs'),
+  ('npc_abernathy', 'Mrs. Abernathy', 'Concierge',      61, 'p_tabs')
+on conflict (id) do nothing;
+
+update locations set people =
+  '[{"kind":"npc","id":"npc_ron","note":"Steht seit dreißig Jahren selbst am Grill. Merkt sich jede Bestellung — und jedes Gesicht, das nachts um drei hier sitzt."}]'::jsonb
+  where id = 'loc_rivers_edge_ron_s_diner' and people = '[]'::jsonb;
+
+update locations set people =
+  '[{"kind":"npc","id":"npc_dex","note":"Steht jeden Abend an der Tür. Redet wenig, sieht alles und entscheidet, wer reinkommt."}]'::jsonb
+  where id = 'loc_rivers_edge_the_ember' and people = '[]'::jsonb;
+
+update locations set people =
+  '[{"kind":"npc","id":"npc_abernathy","note":"Seit Jahrzehnten an der Rezeption. Weiß, wer mit wem eincheckt, und verliert darüber kein Wort — meistens."}]'::jsonb
+  where id = 'loc_belle_view_belle_view_hotel' and people = '[]'::jsonb;

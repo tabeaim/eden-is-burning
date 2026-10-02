@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 // Neu ggü. der alten Karte: eigener Bezirk "Central" (Downtown-Fläche), abgesetzter
 // "Industrial District & Eden Port", Byron University als Highlight in Rivers Edge.
 // Die Auswahl-, Bespielt- und Aktive-Szenen-Logik der App liegt darüber.
-// Pro Bereich zeigt ein pulsierender oranger Ticker die Zahl der aktiven Szenen:
+// Pro Bereich zeigt ein oranger Ticker die Zahl der aktiven Szenen:
 // zentriert unter dem Bezirksnamen bzw. rechts neben dem Label in den Pills.
 
 interface District {
@@ -324,13 +324,12 @@ export function EdenMap({
   );
 }
 
-// Runder oranger Zähler aktiver Szenen; der Ring dahinter pulsiert (globals.css).
+// Runder oranger Zähler aktiver Szenen.
 function Ticker({ x, y, count }: { x: number; y: number; count: number }) {
   if (count <= 0) return null;
   return (
     <g className="pointer-events-none">
       <title>{`${count} aktive ${count === 1 ? "Szene" : "Szenen"}`}</title>
-      <circle cx={x} cy={y} r="9" fill="var(--accent)" className="map-ticker-pulse" />
       <circle cx={x} cy={y} r="9" fill="var(--accent)" />
       <text x={x} y={y + 3.8} textAnchor="middle" fontSize="11" fontWeight="700" fill="#14100a">
         {count}

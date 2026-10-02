@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Montserrat, Grenze_Gotisch } from "next/font/google";
+import { Montserrat, Palette_Mosaic } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
@@ -10,11 +10,11 @@ const sans = Montserrat({
   subsets: ["latin"],
 });
 
-// Blackletter/Fraktur — Bildmarke (Logo) und Seiten-Überschriften
-const display = Grenze_Gotisch({
+// Display-Schrift — Bildmarke (Logo) und Seiten-Überschriften
+const display = Palette_Mosaic({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "500", "700", "900"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
