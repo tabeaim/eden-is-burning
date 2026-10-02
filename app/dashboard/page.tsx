@@ -118,8 +118,8 @@ export default function DashboardPage() {
         bannerImage={currentPlayer.dashboard_header_url ?? undefined}
       />
 
-      {/* Handy: Zitat zuerst, dann die Szenen (am Desktop steht es rechts) */}
-      <div className="mb-8 lg:hidden">
+      {/* Zitat über die volle Breite, über allem anderen */}
+      <div className="mb-8">
         <QuoteRotator />
       </div>
 
@@ -204,9 +204,6 @@ export default function DashboardPage() {
 
         {/* RECHTS: Zitate, 24h-Aktivität, Online */}
         <div className="flex flex-col gap-8 lg:sticky lg:top-6">
-          <div className="hidden lg:block">
-            <QuoteRotator />
-          </div>
 
           <section>
             <h2 className="section-bar text-[0.875rem] text-text-secondary mb-3">
