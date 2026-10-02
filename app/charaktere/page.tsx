@@ -3,27 +3,29 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { formatDateTimeShort } from "@/lib/format";
+import { formatInplayDateShort } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { CharacterBubble } from "@/components/Bubble";
 import { Icon } from "@/components/Icon";
 import type { Character } from "@/lib/types";
 
+type SortKey = "name" | "created" | "posts";
+const SORT_LABELS: Record<SortKey, string> = {
+  name: "Name",
+  created: "Anmeldedatum",
+  posts: "Post-Anzahl",
+};
+
 export default function CharaktereePage() {
   const { characters, npcs, posts, player } = useStore();
   const [query, setQuery] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
-  // Pro Charakter: Anzahl Posts und Zeitpunkt des letzten Posts
-  const stats = useMemo(() => {
-    const map = new Map<string, { count: number; last: string }>();
-    for (const p of posts) {
-      const cur = map.get(p.character_id);
-      if (!cur) map.set(p.character_id, { count: 1, last: p.created_at });
-      else {
-        cur.count += 1;
-        if (p.created_at > cur.last) cur.last = p.created_at;
-      }
-    }
+  // Anzahl Posts pro Charakter
+  const postCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of posts) map.set(p.character_id, (map.get(p.character_id) ?? 0) + 1);
     return map;
   }, [posts]);
 
@@ -36,7 +38,14 @@ export default function CharaktereePage() {
         (c.full_name ?? "").toLowerCase().includes(q) ||
         (c.faceclaim ?? "").toLowerCase().includes(q),
     )
-    .sort((a, b) => a.name.localeCompare(b.name, "de"));
+    .sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "created") cmp = a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0;
+      else if (sortKey === "posts") cmp = (postCounts.get(a.id) ?? 0) - (postCounts.get(b.id) ?? 0);
+      // Name als Hauptkriterium bzw. als Reihenfolge bei Gleichstand
+      if (cmp === 0) return a.name.localeCompare(b.name, "de") * (sortKey === "name" && sortDir === "desc" ? -1 : 1);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
@@ -46,18 +55,49 @@ export default function CharaktereePage() {
         width="max-w-6xl"
       />
 
-      {/* Textsuche */}
-      <div className="relative mb-6 max-w-sm">
-        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary">
-          <Icon name="search" size={14} />
-        </span>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Charakter suchen…"
-          aria-label="Charakter suchen"
-          className="w-full bg-bg-primary border border-border-subtle rounded-md pl-8 pr-3 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
-        />
+      {/* Textsuche links, Sortierung rechts */}
+      <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="relative w-full max-w-sm">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary">
+            <Icon name="search" size={14} />
+          </span>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Charakter suchen…"
+            aria-label="Charakter suchen"
+            className="w-full bg-bg-primary border border-border-subtle rounded-md pl-8 pr-3 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+          />
+        </div>
+        <div className="ml-auto flex items-center gap-1.5">
+          <span className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
+            Sortieren
+          </span>
+          <select
+            value={sortKey}
+            onChange={(e) => {
+              const k = e.target.value as SortKey;
+              setSortKey(k);
+              // sinnvolle Startrichtung: Name A–Z, sonst neueste/meiste zuerst
+              setSortDir(k === "name" ? "asc" : "desc");
+            }}
+            aria-label="Sortieren nach"
+            className="bg-bg-primary border border-border-subtle rounded-md px-2.5 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+          >
+            {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+              <option key={k} value={k} className="bg-bg-surface">
+                {SORT_LABELS[k]}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+            title={sortDir === "asc" ? "Aufsteigend" : "Absteigend"}
+            className="rounded-md border border-border-subtle bg-bg-primary px-2 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
+          >
+            {sortDir === "asc" ? "↑" : "↓"}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -66,8 +106,7 @@ export default function CharaktereePage() {
             key={c.id}
             c={c}
             username={player(c.player_id)?.username}
-            postCount={stats.get(c.id)?.count ?? 0}
-            lastPost={stats.get(c.id)?.last}
+            postCount={postCounts.get(c.id) ?? 0}
           />
         ))}
       </div>
@@ -100,18 +139,16 @@ export default function CharaktereePage() {
 }
 
 // Charakter-Karte: Name, Tagline, Avatar im Originalformat (600×502), darunter
-// Posts · played by und der Zeitpunkt des letzten Posts. Bei Hover erscheint die
+// Posts · played by und „dabei seit" (Anmeldedatum). Bei Hover erscheint die
 // Kurzbeschreibung über dem Bild.
 function CharacterCard({
   c,
   username,
   postCount,
-  lastPost,
 }: {
   c: Character;
   username?: string;
   postCount: number;
-  lastPost?: string;
 }) {
   return (
     <Link
@@ -157,8 +194,8 @@ function CharacterCard({
           </>
         )}
       </div>
-      <div className="mt-0.5 text-[0.8125rem] text-text-tertiary" title="Letzter Post">
-        {lastPost ? formatDateTimeShort(lastPost) : "noch kein Post"}
+      <div className="mt-0.5 text-[0.8125rem] text-text-tertiary">
+        dabei seit {formatInplayDateShort(c.created_at.slice(0, 10))}
       </div>
     </Link>
   );
