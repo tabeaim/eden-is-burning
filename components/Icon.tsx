@@ -27,6 +27,7 @@ type IconName =
   | "match-lit"
   | "match-burnt"
   | "sidebar"
+  | "au"
   | "search"
   | "check"
   | "trash"
@@ -171,6 +172,14 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="M4 20.5 12.6 11.9" />
       <circle cx="13.4" cy="11.1" r="1.1" fill="currentColor" />
       <path d="M14.8 8.4c1.3-1.2-.9-2.1.3-3.5s-.5-1.9.3-3.1" strokeWidth={1.2} />
+    </>
+  ),
+  // Alternate Universe: ein Zeitstrahl, der sich spaltet
+  au: (
+    <>
+      <path d="M3 12h6" />
+      <path d="M9 12c4.5 0 3.5-5.5 8-5.5h4" />
+      <path d="M9 12c4.5 0 3.5 5.5 8 5.5h4" />
     </>
   ),
   // Seitenleiste ein-/ausblenden

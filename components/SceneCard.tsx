@@ -36,10 +36,16 @@ function lastPostLabel(iso: string): string {
   return withinHours(iso, 24 * 7) ? timeAgo(iso) : `am ${formatDateTime(iso)}`;
 }
 
-// „AU" bzw. „AU: Name" als kursiver Zusatz in der Faktenzeile
+// Alternate Universe in der Faktenzeile: AU-Icon (gespaltener Zeitstrahl) + Name
+// des AUs; ohne Namen steht „AU".
 export function AuTag({ scene }: { scene: Scene }) {
   if (!scene.au) return null;
-  return <span className="italic">AU{scene.au_name ? `: ${scene.au_name}` : ""}</span>;
+  return (
+    <span title="Alternate Universe" className="inline-flex items-center gap-1 align-bottom">
+      <Icon name="au" size={14} />
+      {scene.au_name || "AU"}
+    </span>
+  );
 }
 
 // Die ganze Box führt zur Szene (Titel-Link, über die Box gestreckt); einzelne

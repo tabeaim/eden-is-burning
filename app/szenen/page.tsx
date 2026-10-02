@@ -6,7 +6,7 @@ import { useStore, whoseTurn } from "@/lib/store";
 import { AREA_ORDER, AREAS, areaName, type AreaKey } from "@/lib/world";
 import { formatInplayDate } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
-import { Icon } from "@/components/Icon";
+import { Icon, type IconName } from "@/components/Icon";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import { SceneCard } from "@/components/SceneCard";
 import { auNames } from "@/components/AuNameField";
@@ -265,6 +265,7 @@ export default function ScenesPage() {
 
           <MultiSelect
             label="AU"
+            icon="au"
             options={auOptions}
             selected={aus}
             onToggle={(v) => toggle(aus, setAus, v)}
@@ -361,12 +362,14 @@ export default function ScenesPage() {
 // Mehrfach-Auswahl-Dropdown mit Checkboxen
 function MultiSelect({
   label,
+  icon,
   options,
   selected,
   onToggle,
   onClear,
 }: {
   label: string;
+  icon?: IconName; // optionales Icon vor dem Label
   options: { value: string; label: string }[];
   selected: string[];
   onToggle: (v: string) => void;
@@ -393,6 +396,7 @@ function MultiSelect({
             : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
         }`}
       >
+        {icon && <Icon name={icon} size={14} />}
         {label}
         {selected.length > 0 && (
           <span className="rounded-full bg-accent text-black px-1.5 text-[0.8125rem] font-medium">
