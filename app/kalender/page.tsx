@@ -492,7 +492,7 @@ function FactsLine({
                 src={c.faceclaim_image_url ?? ""}
                 alt={c.name}
                 title={c.name}
-                className="h-5 w-6 rounded-[3px] object-cover ring-1 ring-bg-surface"
+                className="h-5 w-5 rounded-full object-cover ring-1 ring-bg-surface"
               />
             ))}
           </span>

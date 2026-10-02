@@ -50,7 +50,7 @@ export function CharacterPicker({
               <img
                 src={c.faceclaim_image_url ?? ""}
                 alt={c.name}
-                className="h-5 w-6 rounded-[3px] object-cover"
+                className="w-5 h-5 rounded-full object-cover"
               />
               <span className="text-text-tertiary">#{i + 1}</span>
               {c.name}
@@ -87,7 +87,7 @@ export function CharacterPicker({
                 <img
                   src={c.faceclaim_image_url ?? ""}
                   alt={c.name}
-                  className="h-6 w-7 rounded object-cover"
+                  className="w-6 h-6 rounded-full object-cover"
                 />
                 <span className="min-w-0 flex-1 truncate">
                   {c.name}{" "}

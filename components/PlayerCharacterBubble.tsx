@@ -127,7 +127,7 @@ export function PlayerCharacterBubble({
                 <img
                   src={c.faceclaim_image_url ?? ""}
                   alt={c.name}
-                  className="h-4 w-5 rounded-[2px] object-cover"
+                  className="w-4 h-4 rounded-full object-cover"
                 />
                 <span className={on ? "text-text-primary" : "text-text-secondary"}>
                   {c.name}

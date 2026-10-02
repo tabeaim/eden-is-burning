@@ -319,7 +319,7 @@ function CharacterGroup({
         <img
           src={char.faceclaim_image_url ?? ""}
           alt={char.name}
-          className="h-7 w-[34px] rounded object-cover bg-bg-surface ring-1 ring-border-subtle"
+          className="w-7 h-7 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle"
         />
         <Link
           href={`/charaktere/${char.id}`}

@@ -21,8 +21,8 @@ Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schre
 | `LocationBubble` | Karten-Icon + Ortsname; Icon orange bei bespielten Orten, grau bei „Weiteren Orten" (`played={false}`) | Orte auf der Karte und in der Szene |
 | `Bubble` | freier Inhalt | Basis für neue Bubble-Arten |
 
-- **Avatare:** Charaktere (auch NPCs) immer rechteckig als Miniatur des echten
-  Avatars (Format 600:502, z. B. `h-5 w-6 rounded-[3px]`), Spieler*innen immer rund.
+- **Avatare:** rund (Charaktere, NPCs und Spieler*innen), als mittiger Ausschnitt
+  des echten Avatars (`rounded-full object-cover`).
 - Ton `accent` nur für „am Zug".
 - Innerhalb einer verlinkten Karte `linked={false}` (keine Links in Links).
 

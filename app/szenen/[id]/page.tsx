@@ -749,7 +749,7 @@ function ReplyBox({
           <img
             src={activeChar?.faceclaim_image_url ?? ""}
             alt={activeChar?.name}
-            className="h-8 w-[38px] rounded object-cover bg-bg-primary"
+            className="w-8 h-8 rounded-full object-cover bg-bg-primary"
           />
           <div>
             <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
