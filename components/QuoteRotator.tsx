@@ -35,15 +35,11 @@ export function QuoteRotator() {
   const arrow =
     "shrink-0 rounded p-1 text-text-tertiary hover:text-accent transition-colors";
 
-  // Linksbündig über die volle Breite: Pfeil am linken Rand, direkt daneben das
-  // Zitat (mit deutschem Anführungszeichen unten), zweiter Pfeil am rechten Rand.
+  // Linksbündig über die volle Breite: das Zitat (mit großem deutschem
+  // Anführungszeichen) beginnt an der Spaltenkante, rechts ein Knopf für ein
+  // anderes Zitat.
   return (
     <div className="flex items-center gap-2 py-4 sm:gap-3">
-      {quotes.length > 1 && (
-        <button onClick={() => go(-1)} title="Vorheriges Zitat" className={`-ml-1 ${arrow}`}>
-          <Icon name="arrow-right" size={18} className="rotate-180" />
-        </button>
-      )}
 
       <div className="min-w-0 flex-1">
         <blockquote
@@ -74,8 +70,8 @@ export function QuoteRotator() {
       </div>
 
       {quotes.length > 1 && (
-        <button onClick={() => go(1)} title="Nächstes Zitat" className={arrow}>
-          <Icon name="arrow-right" size={18} />
+        <button onClick={() => go(1)} title="Anderes Zitat" aria-label="Anderes Zitat" className={arrow}>
+          <Icon name="refresh" size={18} />
         </button>
       )}
     </div>

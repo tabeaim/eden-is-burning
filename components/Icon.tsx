@@ -28,6 +28,7 @@ type IconName =
   | "match-burnt"
   | "sidebar"
   | "au"
+  | "refresh"
   | "search"
   | "check"
   | "trash"
@@ -172,6 +173,14 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="M4 20.5 12.6 11.9" />
       <circle cx="13.4" cy="11.1" r="1.1" fill="currentColor" />
       <path d="M14.8 8.4c1.3-1.2-.9-2.1.3-3.5s-.5-1.9.3-3.1" strokeWidth={1.2} />
+    </>
+  ),
+  refresh: (
+    <>
+      <path d="M20 11a8 8 0 0 0-14.6-4.6L4 8" />
+      <path d="M4 4v4h4" />
+      <path d="M4 13a8 8 0 0 0 14.6 4.6L20 16" />
+      <path d="M20 20v-4h-4" />
     </>
   ),
   // Alternate Universe: ein Zeitstrahl, der sich spaltet
