@@ -45,6 +45,8 @@ interface StoreValue extends PersistedState {
   mobileIds: string[];
   ready: boolean;
   configured: boolean;
+  // Angemeldet, aber ohne (ladbaren) Spieler-Eintrag — Hinweis für den Login-Bildschirm
+  loginProblem: string | null;
   // Auth / Login
   currentPlayerId: string | null;
   currentPlayer: Player | null;
@@ -194,20 +196,30 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Reagiert auf eine (geänderte) Auth-Session: eigenen Spieler laden,
   // bei Freischaltung die ganze Welt.
+  const [loginProblem, setLoginProblem] = useState<string | null>(null);
   const loadForSession = useCallback(
     async (session: Session | null) => {
       if (!session) {
+        setLoginProblem(null);
         setCurrentPlayer(null);
         setState(EMPTY);
         setReady(true);
         return;
       }
-      const { data: me } = await supabase
+      const { data: me, error: meError } = await supabase
         .from("players")
         .select("*")
         .eq("auth_user_id", session.user.id)
         .maybeSingle();
       const player = (me as Player | null) ?? null;
+      // Ohne Spieler-Eintrag bliebe man kommentarlos auf dem Login-Bildschirm
+      setLoginProblem(
+        player
+          ? null
+          : meError
+            ? `Angemeldet, aber der Spieler-Eintrag ließ sich nicht laden: ${meError.message}`
+            : `Angemeldet als ${session.user.email ?? "?"}, aber in dieser Datenbank gibt es keinen Spieler-Eintrag zu diesem Konto.`,
+      );
       setCurrentPlayer(player);
       if (player?.approved) {
         await loadWorld();
@@ -843,6 +855,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       mobileIds,
       ready,
       configured: supabaseConfigured,
+      loginProblem,
       currentPlayerId: currentPlayer?.id ?? null,
       currentPlayer,
       isApproved,
@@ -911,6 +924,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       onlineIds,
       idleIds,
       mobileIds,
+      loginProblem,
       canEditLocation,
       canEditCharacter,
       addPost,
