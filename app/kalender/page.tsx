@@ -132,7 +132,6 @@ export default function TimelinePage() {
   const addable = scenes.filter((s) => !shownScenes.includes(s));
 
   function togglePlot(p: Plot) {
-    setRenaming(false);
     setAddingOff(false);
     if (plotId === p.id) {
       setPlotId(null);
