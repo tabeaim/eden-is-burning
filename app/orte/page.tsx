@@ -59,7 +59,7 @@ export default function PlacesPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-6">
       <PageHeader
-        title="Karte"
+        title="Eden, Virginia"
         subtitle="Eden, Virginia — fünf Bezirke, ein Fluss, und alles dahinter." width="max-w-6xl" />
 
       {/* Karte liegt frei (ohne Kasten, ohne Banner-Header) auf der Seite und füllt
@@ -114,7 +114,7 @@ export default function PlacesPage() {
 
               {/* Bewohner*innen (echte Charaktere) */}
               {residents.length > 0 && (
-                <AccordionSection key={`res-${selected}`} title="Bewohner*innen">
+                <AccordionSection key={`res-${selected}`} title="Bewohner*innen" defaultOpen>
                   <div className="flex flex-wrap gap-1.5">
                     {residents.map((c) => (
                       <CharacterBubble key={c.id} character={c} />
@@ -130,6 +130,7 @@ export default function PlacesPage() {
                 locs={playedLocs}
                 orphans={orphanPlayed}
                 played
+                defaultOpen
               />
 
               {/* Weitere Orte (noch nicht bespielt) */}
@@ -188,7 +189,8 @@ export default function PlacesPage() {
   );
 }
 
-// Aufklappbarer Abschnitt im Bezirks-Panel — standardmäßig eingeklappt.
+// Aufklappbarer Abschnitt im Bezirks-Panel — eingeklappt, außer mit `defaultOpen`
+// (Bewohner*innen und bespielte Orte).
 function AccordionSection({
   title,
   defaultOpen = false,
@@ -225,6 +227,7 @@ function LocationSection({
   locs,
   orphans = [],
   played = false,
+  defaultOpen = false,
   onAdd,
   adding = false,
 }: {
@@ -232,11 +235,12 @@ function LocationSection({
   locs: Location[];
   orphans?: string[];
   played?: boolean;
+  defaultOpen?: boolean;
   onAdd?: () => void; // zeigt den „+"-Button am Listenende (neuen Ort erstellen)
   adding?: boolean; // Formular offen → „+" in blassem Orange
 }) {
   return (
-    <AccordionSection title={title}>
+    <AccordionSection title={title} defaultOpen={defaultOpen}>
       <div className="flex flex-wrap items-center gap-1.5">
         {/* Jeder Ort führt auf sein Ortsprofil */}
         {locs.map((l) => (

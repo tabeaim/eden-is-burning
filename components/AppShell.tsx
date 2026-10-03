@@ -10,10 +10,11 @@ import { LoginScreen } from "./LoginScreen";
 import { PendingScreen } from "./PendingScreen";
 import { pageHeader, sceneHeader } from "@/lib/headers";
 
-const NAV: { href: string; label: string; icon: IconName }[] = [
+// `title` weicht nur ab, wenn der Seitentitel anders heißt als der Menüpunkt.
+const NAV: { href: string; label: string; icon: IconName; title?: string }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/szenen", label: "Szenen", icon: "book" },
-  { href: "/orte", label: "Karte", icon: "map" },
+  { href: "/orte", label: "Karte", icon: "map", title: "Eden, Virginia" },
   { href: "/kalender", label: "Timeline", icon: "calendar" },
   { href: "/charaktere", label: "Charaktere", icon: "users" },
   { href: "/spieler", label: "Spieler", icon: "star" },
@@ -193,7 +194,7 @@ function BannerHeader({
     (n) => pathname === n.href || pathname.startsWith(n.href + "/"),
   );
   const onThisPage = meta.path === pathname;
-  const title = (onThisPage && meta.title) || navMatch?.label || "Eden is burning";
+  const title = (onThisPage && meta.title) || navMatch?.title || navMatch?.label || "Eden is burning";
   // Einheitliche Seitenbreite: alle Seiten teilen dieselbe Container-Breite, damit
   // Titel und linksbündiger Inhalt beim Seitenwechsel nicht horizontal springen.
   const width = (onThisPage && meta.width) || "max-w-6xl";

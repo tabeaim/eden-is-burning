@@ -52,6 +52,23 @@ export function AuTag({ scene }: { scene: Scene }) {
 // Stellen darin können eigene Ziele haben (z.B. „Letzter Post" → neuester Post).
 const STRETCHED = "after:absolute after:inset-0 after:content-['']";
 
+// Ort in der Faktenzeile: bleibt reiner Text, führt aber aufs Ortsprofil. Orte
+// ohne eigenen Eintrag (Altbestand) sind nicht anklickbar.
+function SceneLocation({ scene }: { scene: Scene }) {
+  const { locationsOf } = useStore();
+  const loc = locationsOf(scene.location_area).find((l) => l.name === scene.location_name);
+  if (!loc) return <>{scene.location_name}</>;
+  return (
+    <Link
+      href={`/orte/${loc.id}`}
+      title="Zum Ortsprofil"
+      className="relative z-10 hover:text-accent hover:underline"
+    >
+      {scene.location_name}
+    </Link>
+  );
+}
+
 // Ausführliche Karte: Streichholz, Titel, Ort · Datum in einer Zeile,
 // Beteiligte (anklickbar; wer dran ist, ist markiert), letzter Post mit Datum und
 // Uhrzeit (Klick springt zum neuesten Post).
@@ -101,7 +118,7 @@ export function SceneCard({
         </div>
 
         <div className="mt-1 text-[0.875rem] text-text-tertiary">
-          {scene.location_name} · {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
+          <SceneLocation scene={scene} /> · {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
           {scene.au && (
             <>
               {" · "}
@@ -157,7 +174,7 @@ export function SceneRow({ scene }: { scene: Scene }) {
           </Link>
         </div>
         <div className="text-[0.875rem] text-text-tertiary truncate">
-          {scene.location_name} · {formatInplayDateShort(scene.inplay_date)}
+          <SceneLocation scene={scene} /> · {formatInplayDateShort(scene.inplay_date)}
         </div>
       </div>
       {lastPost && (
