@@ -18,7 +18,7 @@ const TEST_PLAYERS: { label: string; email: string }[] = [
 ];
 
 export function LoginScreen() {
-  const { signIn, signUp, configured } = useStore();
+  const { signIn, signUp, signOut, configured, loginProblem } = useStore();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,6 +56,9 @@ export function LoginScreen() {
           setPassword("");
         }
       }
+    } catch (e) {
+      // z. B. Datenbank nicht erreichbar oder falsch konfiguriert
+      setError(`Anmeldung fehlgeschlagen: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setBusy(false);
     }
@@ -68,6 +71,8 @@ export function LoginScreen() {
     try {
       const { error } = await signIn(email, TEST_PASSWORD);
       if (error) setError(uebersetze(error));
+    } catch (e) {
+      setError(`Anmeldung fehlgeschlagen: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setBusy(false);
     }
@@ -139,6 +144,15 @@ export function LoginScreen() {
           </label>
 
           {error && <p className="text-[0.875rem] text-red-400/80">{error}</p>}
+          {/* Anmeldung hat geklappt, aber es fehlt der Spieler-Eintrag */}
+          {!error && loginProblem && (
+            <p className="text-[0.875rem] text-red-400/80">
+              {loginProblem}{" "}
+              <button type="button" onClick={() => signOut()} className="underline">
+                Abmelden
+              </button>
+            </p>
+          )}
           {notice && <p className="text-[0.875rem] text-accent">{notice}</p>}
 
           <button
