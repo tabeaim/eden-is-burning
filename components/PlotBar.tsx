@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { Plot } from "@/lib/types";
+import { useStore } from "@/lib/store";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { Icon } from "./Icon";
 
 // Plot-Zeile in den Filterleisten (Timeline und Szenen-Übersicht): Plots öffnen/
@@ -84,5 +86,82 @@ export function PlotBar({
         </button>
       )}
     </div>
+  );
+}
+
+export const plotToolBtn =
+  "inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
+
+// Werkzeuge für den geöffneten Plot (Timeline und Szenen-Übersicht): umbenennen und
+// löschen. Nur zeigen, wenn der Plot bearbeitet werden darf (`canEditPlot`).
+export function PlotTools({ plot, onDeleted }: { plot: Plot; onDeleted: () => void }) {
+  const { updatePlot, deletePlot } = useStore();
+  const [renaming, setRenaming] = useState(false);
+  const [name, setName] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  function rename() {
+    if (!name.trim()) return;
+    updatePlot(plot.id, { name: name.trim() });
+    setRenaming(false);
+  }
+
+  return (
+    <>
+      {renaming ? (
+        <span className="flex flex-wrap items-center gap-1.5">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") rename();
+              if (e.key === "Escape") setRenaming(false);
+            }}
+            autoFocus
+            aria-label="Neuer Name des Plots"
+            className="w-44 bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+          />
+          <button
+            onClick={rename}
+            disabled={!name.trim()}
+            className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-2 py-1 disabled:opacity-40"
+          >
+            Speichern
+          </button>
+          <button
+            onClick={() => setRenaming(false)}
+            className="text-[0.8125rem] text-text-tertiary hover:text-text-primary px-1"
+          >
+            Abbrechen
+          </button>
+        </span>
+      ) : (
+        <button
+          onClick={() => {
+            setName(plot.name);
+            setRenaming(true);
+          }}
+          className={plotToolBtn}
+        >
+          <Icon name="edit" size={13} /> Umbenennen
+        </button>
+      )}
+      <button onClick={() => setConfirmDelete(true)} className={plotToolBtn}>
+        <Icon name="trash" size={13} /> Plot löschen
+      </button>
+      {confirmDelete && (
+        <ConfirmDialog
+          title={`Plot „${plot.name}“ löschen?`}
+          text="Der Plot mit seinen Off-Szenen wird endgültig gelöscht. Die gespielten Szenen selbst bleiben erhalten."
+          confirmLabel="Plot löschen"
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            setConfirmDelete(false);
+            deletePlot(plot.id);
+            onDeleted();
+          }}
+        />
+      )}
+    </>
   );
 }

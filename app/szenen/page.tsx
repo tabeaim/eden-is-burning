@@ -10,7 +10,7 @@ import { Icon } from "@/components/Icon";
 import { MultiSelect } from "@/components/MultiSelect";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import { SceneCard } from "@/components/SceneCard";
-import { PlotBar } from "@/components/PlotBar";
+import { PlotBar, PlotTools } from "@/components/PlotBar";
 import { plotScenes, visiblePlots } from "@/lib/plots";
 import { AU_UNNAMED, auNames } from "@/components/AuNameField";
 import type { Plot, Scene } from "@/lib/types";
@@ -44,6 +44,7 @@ export default function ScenesPage() {
     markAllScenesSeen,
     plots,
     addPlot,
+    canEditPlot,
     isAdmin,
   } = store;
 
@@ -350,6 +351,10 @@ export default function ScenesPage() {
           >
             Filter zurücksetzen ({activeFilters})
           </button>
+        )}
+        {/* Geöffneter Plot: umbenennen / löschen (wie in der Timeline) */}
+        {plot && canEditPlot(plot) && (
+          <PlotTools key={plot.id} plot={plot} onDeleted={() => togglePlot(plot)} />
         )}
         <button
           onClick={markAllScenesSeen}

@@ -16,9 +16,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { MultiSelect } from "@/components/MultiSelect";
 import { AuTag, SceneMatch } from "@/components/SceneCard";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DatePicker } from "@/components/DatePicker";
-import { PlotBar } from "@/components/PlotBar";
+import { PlotBar, PlotTools, plotToolBtn as smallBtn } from "@/components/PlotBar";
 import { CharacterPicker } from "@/components/CharacterPicker";
 import { auNames } from "@/components/AuNameField";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
@@ -31,9 +30,6 @@ const MONTHS_DE = [
 
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
-const smallBtn =
-  "inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
-
 // Ein Eintrag im Zeitstrahl: gespielte Szene oder Off-Szene eines Plots
 type Entry =
   | { kind: "scene"; date: string; scene: Scene }
@@ -51,7 +47,6 @@ export default function TimelinePage() {
     character,
     addPlot,
     updatePlot,
-    deletePlot,
     canEditPlot,
     currentPlayer,
     isAdmin,
@@ -63,9 +58,6 @@ export default function TimelinePage() {
   const [yearSel, setYearSel] = useState<string[]>([]); // leer = alle Jahre
   const [plotId, setPlotId] = useState<string | null>(null);
   const [addingOff, setAddingOff] = useState(false);
-  const [renaming, setRenaming] = useState(false);
-  const [renameValue, setRenameValue] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
   // Filter, die vor dem Öffnen eines Plots aktiv waren — beim Schließen kommen
   // sie zurück (waren keine aktiv, ist danach auch keiner aktiv).
   const [beforePlot, setBeforePlot] = useState<PlotFilters | null>(null);
@@ -173,12 +165,6 @@ export default function TimelinePage() {
     });
   }
 
-  function rename() {
-    if (!plot || !renameValue.trim()) return;
-    updatePlot(plot.id, { name: renameValue.trim() });
-    setRenaming(false);
-  }
-
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader
@@ -267,64 +253,10 @@ export default function TimelinePage() {
             <button onClick={() => setAddingOff((v) => !v)} className={smallBtn}>
               <Icon name="plus" size={13} /> Off-Szene
             </button>
-            {renaming ? (
-              <span className="flex items-center gap-1.5">
-                <input
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") rename();
-                    if (e.key === "Escape") setRenaming(false);
-                  }}
-                  autoFocus
-                  aria-label="Neuer Name des Plots"
-                  className="w-44 bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
-                />
-                <button
-                  onClick={rename}
-                  disabled={!renameValue.trim()}
-                  className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-2 py-1 disabled:opacity-40"
-                >
-                  Speichern
-                </button>
-                <button
-                  onClick={() => setRenaming(false)}
-                  className="text-[0.8125rem] text-text-tertiary hover:text-text-primary px-1"
-                >
-                  Abbrechen
-                </button>
-              </span>
-            ) : (
-              <button
-                onClick={() => {
-                  setRenameValue(plot.name);
-                  setRenaming(true);
-                }}
-                className={smallBtn}
-              >
-                <Icon name="edit" size={13} /> Umbenennen
-              </button>
-            )}
-            <button onClick={() => setConfirmDelete(true)} className={smallBtn}>
-              <Icon name="trash" size={13} /> Plot löschen
-            </button>
+            <PlotTools key={plot.id} plot={plot} onDeleted={() => setPlotId(null)} />
           </div>
         )}
       </div>
-
-      {plot && confirmDelete && (
-        <ConfirmDialog
-          title={`Plot „${plot.name}“ löschen?`}
-          text="Der Plot mit seinen Off-Szenen wird endgültig gelöscht. Die gespielten Szenen selbst bleiben erhalten."
-          confirmLabel="Plot löschen"
-          onCancel={() => setConfirmDelete(false)}
-          onConfirm={() => {
-            setConfirmDelete(false);
-            deletePlot(plot.id);
-            setPlotId(null);
-          }}
-        />
-      )}
 
       {plot && editable && addingOff && (
         <OffSceneForm

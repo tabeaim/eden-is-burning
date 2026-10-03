@@ -61,7 +61,8 @@ Der Zeitstrahl nutzt dieselben Bausteine wie die Szenenboxen (Karte mit Rahmen,
 Beschreibungssatz. Die Faktenzeile ist reiner Text mit Punkten dazwischen:
 zusammengerückte Profilbilder + Vornamen · Ort · AU — nichts davon anklickbar.
 Plot-Logik (Filter, Sichtbarkeit) liegt in `lib/plots.ts`, die Plot-Zeile in
-`components/PlotBar.tsx`; Timeline und Szenen-Übersicht nutzen beides. Off-Szenen eines Plots sind
+`components/PlotBar.tsx`; Timeline und Szenen-Übersicht nutzen beides. Umbenennen und
+Löschen des geöffneten Plots kommen auf beiden Seiten aus `PlotTools` (ebenfalls `PlotBar.tsx`). Off-Szenen eines Plots sind
 gestrichelt umrandet und tragen das Tag „im Off". AU-Szenen erscheinen nur, wenn
 ihr AU im Filter gewählt ist — ohne Auswahl zeigt die Timeline nur Canon.
 
