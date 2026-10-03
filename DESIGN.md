@@ -88,10 +88,15 @@ Seitenleiste ist unter `md` eine Schublade (Menü-Taste in der Kopfleiste).
   leere Abschnitte ausblenden statt Platzhaltertext zu zeigen.
 - **Fakten** („facts.", „looks."): `<dl>` mit grauem Label samt Doppelpunkt und Wert
   daneben (`grid-cols-[max-content_minmax(0,1fr)]`, `0.875rem`), lange Werte brechen
-  um. Keine eckigen Tags, keine Großbuchstaben-Zeilen.
+  um. Im Charakterprofil sind die Labels fett und in Großbuchstaben (`0.75rem`).
+  Keine eckigen Tags.
 - **Tabs:** runde Pills wie in der Szenen-Übersicht (aktiv `bg-accent text-black`).
-- **Personen-Karten** (Relations im Charakterprofil, „characters & npcs." am Ort):
-  `CharacterBubble` + Faktenzeile als reiner Text mit Punkten (Alter · Beruf ·
-  Beziehung), Buttons rechts oben, Erläuterung darunter.
-- **Charakterprofil:** Der runde Avatar sitzt mittig auf der Unterkante des
-  Profil-Banners, darunter der Usertag als `Bubble`.
+- **Personen-Karten** („characters & npcs." am Ort): `CharacterBubble` +
+  Faktenzeile als reiner Text mit Punkten (Alter · Beruf · Beziehung), Buttons
+  rechts oben, Erläuterung darunter.
+- **Relations im Charakterprofil:** gleiche Karte, aber statt der Bubble links ein
+  eckiger Avatar (`h-20 w-20 rounded-md object-cover`), daneben Name, Faktenzeile,
+  Buttons und Erläuterung.
+- **Charakterprofil:** Kein Avatar am Profil-Banner; darunter mittig der Usertag
+  als `Bubble`. Das Pinterest-Board steht nur im Reiter „General", als normaler
+  Button.

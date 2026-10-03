@@ -7,7 +7,7 @@ import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
 import { formatInplayDate, timeAgo } from "@/lib/format";
 import { Icon } from "@/components/Icon";
-import { Bubble, CharacterBubble, LocationBubble } from "@/components/Bubble";
+import { Bubble, LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
 import { SceneCard } from "@/components/SceneCard";
 import type { Character, Scene } from "@/lib/types";
@@ -93,16 +93,11 @@ export default function CharacterPage({
         {/* LINKS: Profil-Banner + Usertag */}
         <div>
           <ProfileBanner c={c} />
-          {/* Avatar — rund, ragt über die Banner-Unterkante; darunter der Usertag */}
-          <div className="-mt-10 flex flex-col items-center gap-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={characterImage(c)}
-              alt={`Avatar von ${c.name}`}
-              className="relative h-20 w-20 rounded-full object-cover bg-bg-surface ring-4 ring-bg-primary"
-            />
-            {c.tagline && <Bubble>{c.tagline}</Bubble>}
-          </div>
+          {c.tagline && (
+            <div className="mt-3 flex justify-center">
+              <Bubble>{c.tagline}</Bubble>
+            </div>
+          )}
         </div>
 
         {/* RECHTS: Tabs + Inhalt */}
@@ -131,7 +126,21 @@ export default function CharacterPage({
             ))}
           </div>
 
-          {tab === "general" && <GeneralTab c={c} />}
+          {tab === "general" && (
+            <>
+              <GeneralTab c={c} />
+              {c.pinterest_url && (
+                <a
+                  href={c.pinterest_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`${btn} mt-7`}
+                >
+                  <Icon name="pinterest" size={14} /> Pinterest-Board
+                </a>
+              )}
+            </>
+          )}
           {tab === "character" && <CharacterTab c={c} />}
           {tab === "inplay" && <InplayTab inScenes={inScenes} />}
           {tab === "relations" && (
@@ -140,18 +149,6 @@ export default function CharacterPage({
               coChars={coChars}
               canEdit={canEditCharacter(c)}
             />
-          )}
-
-          {/* Pinterest */}
-          {c.pinterest_url && (
-            <a
-              href={c.pinterest_url}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-8 inline-flex items-center gap-2 text-[0.875rem] text-olive hover:text-accent"
-            >
-              <Icon name="pinterest" size={20} /> Pinterest-Board
-            </a>
           )}
 
           {/* Footer */}
@@ -355,12 +352,12 @@ function QuoteBlock({ c, canEdit }: { c: Character; canEdit: boolean }) {
   );
 }
 
-// Fakten-Liste wie im Ortsprofil: Label in Grau mit Doppelpunkt, Wert daneben;
+// Fakten-Liste: Label fett in Großbuchstaben mit Doppelpunkt, Wert daneben;
 // lange Werte brechen um, statt aus der Spalte zu laufen.
 function Facts({ className = "", children }: { className?: string; children: React.ReactNode }) {
   return (
     <dl
-      className={`${className} grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-[0.875rem]`}
+      className={`${className} grid grid-cols-[max-content_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1.5 text-[0.875rem]`}
     >
       {children}
     </dl>
@@ -371,7 +368,7 @@ function FactRow({ label, value }: { label: string; value: React.ReactNode }) {
   if (!value) return null;
   return (
     <>
-      <dt className="text-text-tertiary">{label}:</dt>
+      <dt className="text-[0.75rem] font-bold uppercase tracking-wider text-text-tertiary">{label}:</dt>
       <dd className="break-words text-text-secondary">{value}</dd>
     </>
   );
@@ -509,9 +506,9 @@ function RelationsTab({
   );
 }
 
-// Eine Beziehung: Charakter-Bubble + Alter · Beruf · Beziehung als Faktenzeile,
-// rechts oben die Buttons („Szenen" = gefilterte Suche mit beiden), darunter die
-// anpassbare Erläuterung.
+// Eine Beziehung: links der eckige Avatar, daneben Name + Alter · Beruf ·
+// Beziehung als Faktenzeile, rechts oben die Buttons („Szenen" = gefilterte
+// Suche mit beiden), darunter die anpassbare Erläuterung.
 function RelationRow({
   c,
   rc,
@@ -540,12 +537,32 @@ function RelationRow({
   const facts = [rc.age ? `${rc.age}` : null, rc.role, rel.label].filter(Boolean).join(" · ");
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-bg-surface p-3">
-      {/* Links Bubble + Faktenzeile (bricht bei Bedarf um), rechts die Buttons */}
+    <div className="flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-surface p-3">
+      <Link href={`/charaktere/${rc.id}`} className="shrink-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={characterImage(rc)}
+          alt={`Avatar von ${rc.name}`}
+          className="h-20 w-20 rounded-md object-cover bg-bg-primary"
+        />
+      </Link>
+
+      <div className="min-w-0 flex-1">
+      {/* Name + Faktenzeile (bricht bei Bedarf um), rechts die Buttons */}
       <div className="flex items-start gap-3">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1.5">
-          <CharacterBubble character={rc} />
-          {facts && <span className="text-[0.875rem] text-text-tertiary">{facts}</span>}
+        <div className="min-w-0 flex-1">
+          <Link
+            href={`/charaktere/${rc.id}`}
+            className="text-[0.875rem] font-medium text-text-primary hover:text-accent"
+          >
+            {rc.name}
+            {rc.is_npc && (
+              <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
+                NPC
+              </span>
+            )}
+          </Link>
+          {facts && <div className="text-[0.8125rem] text-text-tertiary">{facts}</div>}
         </div>
         <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
           <Link href={`/szenen?chars=${c.id},${rc.id}`} className={btn}>
@@ -596,6 +613,7 @@ function RelationRow({
           {rel.note || <span className="text-text-tertiary">Noch keine Beschreibung.</span>}
         </p>
       )}
+      </div>
     </div>
   );
 }
