@@ -148,7 +148,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             noBanner={pathname === "/orte"}
             navHidden={navHidden}
           />
-          <main className="flex-1 min-w-0">{children}</main>
+          {/* Der Kopfbereich ist deckend dunkel; ab der Trennlinie blendet das
+              Hintergrundfoto weich ein (Verlauf liegt hinter dem Seiteninhalt). */}
+          <main className="flex-1 min-w-0 bg-[linear-gradient(to_bottom,var(--bg-primary),transparent_14rem)]">
+            {children}
+          </main>
         </div>
       </div>
     </PageMetaProvider>
@@ -211,7 +215,7 @@ function BannerHeader({
   const banner = (onThisPage && meta.bannerImage) || bannerForPath(pathname);
 
   return (
-    <header className="relative">
+    <header className="relative bg-bg-primary">
       {/* Titelbild — Foto über Glut-Verlauf. background-image statt <img>, damit ein
           fehlgeschlagener Ladevorgang kein kaputtes Icon zeigt, sondern den Verlauf. */}
       {!noBanner && (
