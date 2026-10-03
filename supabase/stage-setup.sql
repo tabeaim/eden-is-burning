@@ -532,3 +532,32 @@ begin
     end if;
   end loop;
 end $$;
+
+
+-- ############################################################
+-- ## Zugriffsrechte (Grants)
+-- ############################################################
+
+-- Neue Supabase-Projekte geben den API-Rollen nicht mehr automatisch Rechte auf
+-- Tabellen in `public` – ohne diese Grants scheitert jede Abfrage mit
+-- „permission denied for table …", noch bevor die RLS-Policies greifen.
+-- Was eine angemeldete Person tatsächlich sehen/ändern darf, regeln weiterhin
+-- die Policies oben. `anon` bekommt bewusst keine Tabellenrechte (nur
+-- email_for_login). Wiederholbar (idempotent).
+
+grant usage on schema public to anon, authenticated, service_role;
+
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant all on all tables in schema public to service_role;
+grant usage, select on all sequences in schema public to authenticated, service_role;
+
+grant execute on function public.is_approved() to authenticated;
+grant execute on function public.is_admin() to authenticated;
+
+-- Auch für Tabellen, die später angelegt werden
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to authenticated;
+alter default privileges in schema public
+  grant all on tables to service_role;
+alter default privileges in schema public
+  grant usage, select on sequences to authenticated, service_role;
