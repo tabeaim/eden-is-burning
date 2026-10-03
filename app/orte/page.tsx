@@ -11,6 +11,7 @@ import { EdenMap } from "@/components/EdenMap";
 import { Icon } from "@/components/Icon";
 import { CharacterBubble, LocationBubble } from "@/components/Bubble";
 import { SceneRow } from "@/components/SceneCard";
+import { Facts, FactRow } from "@/components/Facts";
 import type { Location } from "@/lib/types";
 
 export default function PlacesPage() {
@@ -96,20 +97,14 @@ export default function PlacesPage() {
 
               {/* Steckbrief */}
               {info && (info.priceLevel !== "—" || info.residents !== "—") && (
-                <dl className="mt-4 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-[0.875rem]">
+                <Facts className="mt-4">
                   {info.priceLevel !== "—" && (
-                    <>
-                      <dt className="text-text-tertiary">Preislevel:</dt>
-                      <dd className="text-text-secondary">{info.priceLevel}</dd>
-                    </>
+                    <FactRow label="Preislevel" value={info.priceLevel} />
                   )}
                   {info.residents !== "—" && (
-                    <>
-                      <dt className="text-text-tertiary">Hier wohnen:</dt>
-                      <dd className="text-text-secondary">{info.residents}</dd>
-                    </>
+                    <FactRow label="Hier wohnen" value={info.residents} />
                   )}
-                </dl>
+                </Facts>
               )}
 
               {/* Bewohner*innen (echte Charaktere) */}

@@ -10,6 +10,7 @@ import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { Icon } from "@/components/Icon";
 import { CharacterBubble } from "@/components/Bubble";
 import { SceneCard } from "@/components/SceneCard";
+import { Facts, FactRow } from "@/components/Facts";
 import type { Location, LocationPerson } from "@/lib/types";
 
 const MAX_IMAGES = 12;
@@ -156,31 +157,25 @@ export default function LocationPage({
         <aside className="flex flex-col gap-7">
           <section>
             <Heading>facts.</Heading>
-            <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-[0.875rem]">
-              <dt className="text-text-tertiary">Bezirk:</dt>
-              <dd className="text-text-secondary">{areaName(loc.area)}</dd>
-              <dt className="text-text-tertiary">Status:</dt>
-              <dd className="text-text-secondary">
-                {scenesHere.length > 0 ? "Bespielt" : "Noch unbespielt"}
-              </dd>
-              <dt className="text-text-tertiary">Szenen:</dt>
-              <dd className="text-text-secondary">{scenesHere.length}</dd>
-              <dt className="text-text-tertiary">Posts:</dt>
-              <dd className="text-text-secondary">{postCount}</dd>
+            <Facts>
+              <FactRow label="Bezirk" value={areaName(loc.area)} />
+              <FactRow
+                label="Status"
+                value={scenesHere.length > 0 ? "Bespielt" : "Noch unbespielt"}
+              />
+              <FactRow label="Szenen" value={scenesHere.length} />
+              <FactRow label="Posts" value={postCount} />
               {creator && (
-                <>
-                  <dt className="text-text-tertiary">Erstellt von:</dt>
-                  <dd>
-                    <Link
-                      href={`/spieler/${creator.username}`}
-                      className="text-text-secondary hover:text-accent"
-                    >
+                <FactRow
+                  label="Erstellt von"
+                  value={
+                    <Link href={`/spieler/${creator.username}`} className="hover:text-accent">
                       {creator.username}
                     </Link>
-                  </dd>
-                </>
+                  }
+                />
               )}
-            </dl>
+            </Facts>
           </section>
 
           {visitors.length > 0 && (

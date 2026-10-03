@@ -86,10 +86,10 @@ Seitenleiste ist unter `md` eine Schublade (Menü-Taste in der Kopfleiste).
   text-[0.8125rem]`; Primär-Aktion `bg-accent/90 text-black`.
 - Abschnitte mit `font-display lowercase text-[2rem] text-accent` überschreiben;
   leere Abschnitte ausblenden statt Platzhaltertext zu zeigen.
-- **Fakten** („facts.", „looks."): `<dl>` mit grauem Label samt Doppelpunkt und Wert
-  daneben (`grid-cols-[max-content_minmax(0,1fr)]`, `0.875rem`), lange Werte brechen
-  um. Im Charakterprofil sind die Labels fett und in Großbuchstaben (`0.75rem`).
-  Keine eckigen Tags.
+- **Fakten** („facts.", „looks.", Steckbrief der Karte): immer `Facts` + `FactRow`
+  aus `components/Facts.tsx` — graues Label fett in Großbuchstaben (`0.75rem`) samt
+  Doppelpunkt, Wert daneben (`0.875rem`), lange Werte brechen um. Nie eigene
+  `<dl>`-Klassen schreiben. Keine eckigen Tags.
 - **Tabs:** runde Pills wie in der Szenen-Übersicht (aktiv `bg-accent text-black`).
 - **Personen-Karten** („characters & npcs." am Ort): `CharacterBubble` +
   Faktenzeile als reiner Text mit Punkten (Alter · Beruf · Beziehung), Buttons

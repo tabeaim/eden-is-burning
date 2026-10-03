@@ -10,6 +10,7 @@ import { Icon } from "@/components/Icon";
 import { Bubble, LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
 import { SceneCard } from "@/components/SceneCard";
+import { Facts, FactRow } from "@/components/Facts";
 import type { Character, Scene } from "@/lib/types";
 
 type Tab = "general" | "character" | "inplay" | "relations";
@@ -349,28 +350,6 @@ function QuoteBlock({ c, canEdit }: { c: Character; canEdit: boolean }) {
     >
       <Icon name="plus" size={11} /> Zitat hinzufügen
     </button>
-  );
-}
-
-// Fakten-Liste: Label fett in Großbuchstaben mit Doppelpunkt, Wert daneben;
-// lange Werte brechen um, statt aus der Spalte zu laufen.
-function Facts({ className = "", children }: { className?: string; children: React.ReactNode }) {
-  return (
-    <dl
-      className={`${className} grid grid-cols-[max-content_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1.5 text-[0.875rem]`}
-    >
-      {children}
-    </dl>
-  );
-}
-
-function FactRow({ label, value }: { label: string; value: React.ReactNode }) {
-  if (!value) return null;
-  return (
-    <>
-      <dt className="text-[0.75rem] font-bold uppercase tracking-wider text-text-tertiary">{label}:</dt>
-      <dd className="break-words text-text-secondary">{value}</dd>
-    </>
   );
 }
 
