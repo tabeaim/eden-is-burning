@@ -7,11 +7,21 @@ import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
 import { formatInplayDate, timeAgo } from "@/lib/format";
 import { Icon } from "@/components/Icon";
-import { CharacterBubble, LocationBubble } from "@/components/Bubble";
+import { Bubble, CharacterBubble, LocationBubble } from "@/components/Bubble";
+import { characterImage } from "@/lib/avatar";
 import { SceneCard } from "@/components/SceneCard";
 import type { Character, Scene } from "@/lib/types";
 
 type Tab = "general" | "character" | "inplay" | "relations";
+
+// Bausteine aus DESIGN.md: Buttons, Primär-Aktion, Formularfelder
+const btn =
+  "inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
+const btnPrimary =
+  "rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-3 py-1.5";
+const btnQuiet = "text-[0.8125rem] text-text-tertiary hover:text-text-primary px-2";
+const field =
+  "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
 export default function CharacterPage({
   params,
@@ -23,12 +33,11 @@ export default function CharacterPage({
   const {
     character,
     player,
-    players,
     characters,
     scenes,
     postsOf,
     posts,
-    currentPlayer,
+    canEditCharacter,
   } = store;
   const c = character(id);
   const [tab, setTab] = useState<Tab>("general");
@@ -75,7 +84,7 @@ export default function CharacterPage({
       {/* Inhalt linksbündig in gewohnter Breite — Container-Breite bleibt einheitlich */}
       <div className="max-w-4xl">
       {/* Zitat — direkt unter dem Seitentitel, über der Trennlinie */}
-      <QuoteBlock c={c} />
+      <QuoteBlock c={c} canEdit={canEditCharacter(c)} />
 
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mt-4 mb-6" />
@@ -84,19 +93,22 @@ export default function CharacterPage({
         {/* LINKS: Profil-Banner + Usertag */}
         <div>
           <ProfileBanner c={c} />
-          {c.tagline && (
-            <div className="mt-3 flex justify-center">
-              <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-secondary">
-                {c.tagline}
-              </span>
-            </div>
-          )}
+          {/* Avatar — rund, ragt über die Banner-Unterkante; darunter der Usertag */}
+          <div className="-mt-10 flex flex-col items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={characterImage(c)}
+              alt={`Avatar von ${c.name}`}
+              className="relative h-20 w-20 rounded-full object-cover bg-bg-surface ring-4 ring-bg-primary"
+            />
+            {c.tagline && <Bubble>{c.tagline}</Bubble>}
+          </div>
         </div>
 
         {/* RECHTS: Tabs + Inhalt */}
         <div>
           {/* Tabs */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-6">
+          <div className="flex flex-wrap gap-1.5 mb-6">
             {(
               [
                 ["general", "General"],
@@ -108,10 +120,10 @@ export default function CharacterPage({
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`rounded-lg py-2 text-[0.8125rem] uppercase tracking-[0.14em] transition-colors ${
+                className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
                   tab === key
-                    ? "bg-olive-soft text-text-primary border border-olive/40"
-                    : "bg-white/[0.03] text-text-tertiary hover:text-text-secondary border border-transparent"
+                    ? "bg-accent text-black font-medium"
+                    : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
                 }`}
               >
                 {label}
@@ -126,32 +138,36 @@ export default function CharacterPage({
             <RelationsTab
               c={c}
               coChars={coChars}
-              canEdit={!!currentPlayer && currentPlayer.id === c.player_id}
+              canEdit={canEditCharacter(c)}
             />
           )}
 
           {/* Pinterest */}
           {c.pinterest_url && (
-            <div className="mt-8 flex justify-center">
-              <a
-                href={c.pinterest_url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-olive hover:text-accent"
-                title="Pinterest"
-              >
-                <Icon name="pinterest" size={26} />
-              </a>
-            </div>
+            <a
+              href={c.pinterest_url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-8 inline-flex items-center gap-2 text-[0.875rem] text-olive hover:text-accent"
+            >
+              <Icon name="pinterest" size={20} /> Pinterest-Board
+            </a>
           )}
 
           {/* Footer */}
-          <div className="mt-6 text-center">
-            <div className="font-display lowercase text-[1.625rem] text-accent">
-              brought to you by {p?.username ?? "—"}
-              <span className="text-accent">.</span>
+          <div className="mt-8 border-t border-border-subtle pt-4">
+            <div className="font-display lowercase text-[1.625rem] leading-none text-accent">
+              brought to you by{" "}
+              {p ? (
+                <Link href={`/spieler/${p.username}`} className="hover:underline">
+                  {p.username}
+                </Link>
+              ) : (
+                "—"
+              )}
+              .
             </div>
-            <div className="mt-1 text-[0.875rem] uppercase tracking-[0.12em] text-text-tertiary">
+            <div className="mt-2 text-[0.8125rem] text-text-tertiary">
               {postCount} {postCount === 1 ? "Post" : "Posts"} · registriert am{" "}
               {formatInplayDate(c.created_at.slice(0, 10))}
               {p && <> · zuletzt online {timeAgo(p.last_seen)}</>}
@@ -178,7 +194,7 @@ function NpcFacts({ c }: { c: Character }) {
         <div className="mb-4 flex justify-end">
           <Link
             href="/einstellungen"
-            className="flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
+            className={btn}
           >
             <Icon name="edit" size={14} /> Profil ausfüllen
           </Link>
@@ -191,12 +207,12 @@ function NpcFacts({ c }: { c: Character }) {
       <div className="grid sm:grid-cols-2 gap-x-8 gap-y-7 items-start max-w-4xl">
         <section>
           <Heading>facts.</Heading>
-          <div className="flex flex-col gap-2">
+          <Facts>
             <FactRow label="Name" value={c.full_name ?? c.name} />
             <FactRow label="Age" value={c.age ? `${c.age} Jahre` : null} />
             <FactRow label="Occupation" value={c.role} />
             <FactRow label="Residence" value={areaName(c.area)} />
-          </div>
+          </Facts>
         </section>
 
         {foundAt.length > 0 && (
@@ -219,7 +235,7 @@ function NpcFacts({ c }: { c: Character }) {
       </div>
 
       {p && (
-        <div className="mt-10 text-[0.875rem] uppercase tracking-[0.12em] text-text-tertiary">
+        <div className="mt-10 text-[0.8125rem] text-text-tertiary">
           NPC · angelegt von {p.username}
         </div>
       )}
@@ -248,7 +264,7 @@ function ProfileBanner({ c }: { c: Character }) {
         />
       )}
       {!c.banner_url && (
-        <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-[0.875rem] uppercase tracking-wider text-text-tertiary">
+        <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-[0.875rem] text-text-tertiary">
           Profil-Banner
         </div>
       )}
@@ -256,20 +272,20 @@ function ProfileBanner({ c }: { c: Character }) {
       {/* Looks-Overlay bei Hover */}
       <div className="absolute inset-0 flex flex-col bg-black/80 px-4 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
         <h2 className="font-display lowercase text-[2rem] text-accent leading-none">looks.</h2>
-        <div className="mt-3 flex flex-col gap-2">
+        <Facts className="mt-3">
           <FactRow label="Height" value={c.height} />
           <FactRow label="Figure" value={c.figure} />
           <FactRow label="Hair" value={c.hair} />
           <FactRow label="Eyes" value={c.eyes} />
           <FactRow label="Face" value={c.faceclaim} />
-        </div>
+        </Facts>
       </div>
     </div>
   );
 }
 
 // Zitat anzeigen/hinzufügen — volle Breite über "facts".
-function QuoteBlock({ c }: { c: Character }) {
+function QuoteBlock({ c, canEdit }: { c: Character; canEdit: boolean }) {
   const { updateCharacter } = useStore();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -281,26 +297,20 @@ function QuoteBlock({ c }: { c: Character }) {
 
   if (editing) {
     return (
-      <div className="border border-border-subtle bg-black/30 p-3">
+      <div className="rounded-lg border border-border-subtle bg-bg-surface p-3">
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Ein Zitat des Charakters…"
           autoFocus
           rows={2}
-          className="w-full resize-y bg-bg-primary border border-border-subtle px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+          className={`${field} resize-y`}
         />
-        <div className="mt-2 flex items-center justify-end gap-3">
-          <button
-            onClick={() => setEditing(false)}
-            className="text-[0.8125rem] text-text-tertiary hover:text-text-primary px-2"
-          >
+        <div className="mt-2 flex items-center justify-end gap-2">
+          <button onClick={() => setEditing(false)} className={btnQuiet}>
             Abbrechen
           </button>
-          <button
-            onClick={save}
-            className="bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-3 py-1.5"
-          >
+          <button onClick={save} className={btnPrimary}>
             Speichern
           </button>
         </div>
@@ -310,23 +320,27 @@ function QuoteBlock({ c }: { c: Character }) {
 
   if (c.quote) {
     return (
-      <div className="group/q relative">
-        <p className="text-left text-[1.125rem] leading-snug text-text-primary">
+      <div className="flex items-start gap-3">
+        <p className="min-w-0 flex-1 text-left text-[1.125rem] leading-snug text-text-primary">
           <span className="mr-1.5 text-[2.125rem] leading-none text-accent">„</span>
           {c.quote}
         </p>
-        <button
-          onClick={() => {
-            setDraft(c.quote ?? "");
-            setEditing(true);
-          }}
-          className="absolute right-0 top-0 text-[0.8125rem] uppercase tracking-wider text-text-tertiary opacity-0 transition-opacity hover:text-accent group-hover/q:opacity-100"
-        >
-          bearbeiten
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => {
+              setDraft(c.quote ?? "");
+              setEditing(true);
+            }}
+            className={`${btn} shrink-0`}
+          >
+            <Icon name="edit" size={14} /> Bearbeiten
+          </button>
+        )}
       </div>
     );
   }
+
+  if (!canEdit) return null;
 
   return (
     <button
@@ -334,31 +348,38 @@ function QuoteBlock({ c }: { c: Character }) {
         setDraft("");
         setEditing(true);
       }}
-      className="w-full border border-dashed border-border-strong px-5 py-2.5 text-[0.8125rem] text-text-tertiary hover:text-accent hover:border-accent/50"
+      className="flex items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-0.5 text-[0.8125rem] text-text-tertiary hover:text-accent hover:border-accent/50"
     >
-      + Zitat hinzufügen
+      <Icon name="plus" size={11} /> Zitat hinzufügen
     </button>
   );
 }
 
-// Label/Value-Reihe wie im "facts."-Block
+// Fakten-Liste wie im Ortsprofil: Label in Grau mit Doppelpunkt, Wert daneben;
+// lange Werte brechen um, statt aus der Spalte zu laufen.
+function Facts({ className = "", children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <dl
+      className={`${className} grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-[0.875rem]`}
+    >
+      {children}
+    </dl>
+  );
+}
+
 function FactRow({ label, value }: { label: string; value: React.ReactNode }) {
   if (!value) return null;
   return (
-    <div className="flex items-center gap-2.5">
-      <span className="shrink-0 w-24 text-right bg-white/[0.06] px-2 py-1 text-[0.875rem] uppercase tracking-wider text-text-primary">
-        {label}
-      </span>
-      <span className="text-[0.875rem] text-text-primary uppercase tracking-wide">
-        {value}
-      </span>
-    </div>
+    <>
+      <dt className="text-text-tertiary">{label}:</dt>
+      <dd className="break-words text-text-secondary">{value}</dd>
+    </>
   );
 }
 
 function Heading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="font-display lowercase text-[2rem] text-accent leading-none mb-3 mt-1">
+    <h2 className="font-display lowercase text-[2rem] text-accent leading-none mb-3">
       {children}
     </h2>
   );
@@ -384,7 +405,7 @@ function GeneralTab({ c }: { c: Character }) {
       <div className="flex flex-col gap-7">
         <section>
           <Heading>facts.</Heading>
-          <div className="flex flex-col gap-2">
+          <Facts>
             <FactRow label="Name" value={c.full_name ?? c.name} />
             <FactRow label="Age" value={c.age ? `${c.age} Jahre` : null} />
             <FactRow label="Occupation" value={c.role} />
@@ -392,16 +413,16 @@ function GeneralTab({ c }: { c: Character }) {
             <FactRow label="Sexuality" value={c.sexuality} />
             <FactRow label="Status" value={c.status} />
             <FactRow label="Origin" value={c.origin} />
-          </div>
+          </Facts>
         </section>
 
         {(c.job || c.company) && (
           <section>
             <Heading>occupation.</Heading>
-            <div className="flex flex-col gap-2">
+            <Facts>
               <FactRow label="Job" value={c.job} />
               <FactRow label="Company" value={c.company} />
-            </div>
+            </Facts>
           </section>
         )}
         </div>
@@ -412,11 +433,6 @@ function GeneralTab({ c }: { c: Character }) {
 function CharacterTab({ c }: { c: Character }) {
   return (
     <div className="flex flex-col gap-7">
-      {c.tagline && (
-        <div className="inline-block self-start rounded-full bg-white/[0.05] px-3 py-1 text-[0.875rem] text-text-secondary">
-          {c.tagline}
-        </div>
-      )}
       {c.personality && (
         <section>
           <Heading>personality.</Heading>
@@ -476,7 +492,7 @@ function RelationsTab({
         </p>
       ) : (
         <>
-          <p className="mb-4 text-[0.75rem] text-text-tertiary">
+          <p className="mb-4 text-[0.8125rem] text-text-tertiary">
             Verbindungen werden automatisch aus gemeinsamen Szenen erkannt.
             {canEdit
               ? " Trag ein, um was für eine Beziehung es sich handelt."
@@ -493,8 +509,9 @@ function RelationsTab({
   );
 }
 
-// Eine Beziehung: Charakter-Bubble + Alter | Beruf | (Label) in Caps-Montserrat,
-// anpassbare Erläuterung, und ein "Szenen"-Button (gefilterte Suche mit beiden).
+// Eine Beziehung: Charakter-Bubble + Alter · Beruf · Beziehung als Faktenzeile,
+// rechts oben die Buttons („Szenen" = gefilterte Suche mit beiden), darunter die
+// anpassbare Erläuterung.
 function RelationRow({
   c,
   rc,
@@ -520,30 +537,33 @@ function RelationRow({
     setEditing(false);
   }
 
-  const facts = [rc.age ? `${rc.age}` : null, rc.role, rel.label ? `(${rel.label})` : null]
-    .filter(Boolean)
-    .join(" | ");
+  const facts = [rc.age ? `${rc.age}` : null, rc.role, rel.label].filter(Boolean).join(" · ");
 
   return (
     <div className="rounded-lg border border-border-subtle bg-bg-surface p-3">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        {/* Charakter-Bubble (wie global) */}
-        <CharacterBubble character={rc} />
-
-        {/* Alter | Beruf | (Beziehung) — Caps-Montserrat */}
-        {facts && (
-          <span className="text-[0.875rem] uppercase tracking-wider text-text-secondary">
-            {facts}
-          </span>
-        )}
-
-        {/* Szenen-Button → gefilterte Suche mit beiden Charakteren */}
-        <Link
-          href={`/szenen?chars=${c.id},${rc.id}`}
-          className="ml-auto rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[0.875rem] uppercase tracking-wider text-text-secondary hover:text-text-primary"
-        >
-          Szenen
-        </Link>
+      {/* Links Bubble + Faktenzeile (bricht bei Bedarf um), rechts die Buttons */}
+      <div className="flex items-start gap-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1.5">
+          <CharacterBubble character={rc} />
+          {facts && <span className="text-[0.875rem] text-text-tertiary">{facts}</span>}
+        </div>
+        <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+          <Link href={`/szenen?chars=${c.id},${rc.id}`} className={btn}>
+            Szenen
+          </Link>
+          {canEdit && !editing && (
+            <button
+              onClick={() => {
+                setLabel(rel.label ?? "");
+                setNote(rel.note ?? "");
+                setEditing(true);
+              }}
+              className={btn}
+            >
+              <Icon name="edit" size={14} /> Bearbeiten
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Anpassbare Erläuterung zur Beziehung */}
@@ -553,54 +573,28 @@ function RelationRow({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="Beziehung (z. B. Freunde, Ex, Rivalen)"
-            className="w-full bg-bg-primary border border-border-subtle px-3 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+            className={field}
           />
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Kurze Erläuterung zur Beziehung…"
             rows={2}
-            className="w-full resize-y bg-bg-primary border border-border-subtle px-3 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+            className={`${field} resize-y`}
           />
-          <div className="flex items-center justify-end gap-3">
-            <button
-              onClick={() => setEditing(false)}
-              className="text-[0.8125rem] text-text-tertiary hover:text-text-primary px-2"
-            >
+          <div className="flex items-center justify-end gap-2">
+            <button onClick={() => setEditing(false)} className={btnQuiet}>
               Abbrechen
             </button>
-            <button
-              onClick={save}
-              className="bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-3 py-1.5"
-            >
+            <button onClick={save} className={btnPrimary}>
               Speichern
             </button>
           </div>
         </div>
       ) : (
-        <div className="mt-2 flex items-start gap-2">
-          <p className="flex-1 text-[0.875rem] text-text-secondary leading-relaxed">
-            {rel.note || (
-              <span className="text-text-tertiary">
-                {canEdit
-                  ? "Noch keine Beschreibung."
-                  : "Noch keine Beschreibung hinterlegt."}
-              </span>
-            )}
-          </p>
-          {canEdit && (
-            <button
-              onClick={() => {
-                setLabel(rel.label ?? "");
-                setNote(rel.note ?? "");
-                setEditing(true);
-              }}
-              className="shrink-0 text-[0.8125rem] uppercase tracking-wider text-text-tertiary hover:text-accent"
-            >
-              bearbeiten
-            </button>
-          )}
-        </div>
+        <p className="mt-2 text-[0.875rem] text-text-secondary leading-relaxed">
+          {rel.note || <span className="text-text-tertiary">Noch keine Beschreibung.</span>}
+        </p>
       )}
     </div>
   );
