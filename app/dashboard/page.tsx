@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
 import { timeAgo, withinHours } from "@/lib/format";
+import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import { QuoteRotator } from "@/components/QuoteRotator";
 import { SceneCard, SceneRow } from "@/components/SceneCard";
@@ -11,7 +12,7 @@ import type { Character, Player, Scene } from "@/lib/types";
 
 export default function DashboardPage() {
   const store = useStore();
-  const { currentPlayer, scenes, players, charactersOf, postsOf, onlineIds, idleIds } =
+  const { currentPlayer, scenes, players, charactersOf, postsOf, onlineIds, idleIds, mobileIds } =
     store;
   const [showWarten, setShowWarten] = useState(false);
   // "Du bist dran": null = noch nicht selbst umgeschaltet → Standard (s.u.)
@@ -228,6 +229,7 @@ export default function DashboardPage() {
               players={onlineNow}
               now
               idleIds={idleIds.filter((id) => id !== currentPlayer.id)}
+              mobileIds={mobileIds}
             />
           </section>
 
@@ -251,7 +253,9 @@ function PlayerPresenceList({
   players,
   now = false,
   idleIds = [],
+  mobileIds = [],
 }: {
+  mobileIds?: string[]; // mit dem Handy online → kleines Handy-Icon am Namen
   idleIds?: string[]; // online, aber Tab gerade nicht im Vordergrund → gelber Punkt
   players: Player[];
   now?: boolean;
@@ -280,7 +284,14 @@ function PlayerPresenceList({
             )}
           </span>
           <div className="leading-tight">
-            <div className="text-[0.8125rem] text-text-primary">{p.username}</div>
+            <div className="flex items-center gap-1 text-[0.8125rem] text-text-primary">
+              {p.username}
+              {now && mobileIds.includes(p.id) && (
+                <span title="mit dem Handy online" className="text-text-tertiary">
+                  <Icon name="phone" size={12} aria-label="mit dem Handy online" />
+                </span>
+              )}
+            </div>
             <div className="text-[0.8125rem] text-text-tertiary">
               {now ? (idleIds.includes(p.id) ? "anderswo" : "online") : timeAgo(p.last_seen)}
             </div>

@@ -41,6 +41,8 @@ interface StoreValue extends PersistedState {
   onlineIds: string[];
   // … und davon jene, deren Tab gerade nicht im Vordergrund ist („anderswo")
   idleIds: string[];
+  // … und jene, die gerade mit dem Handy da sind
+  mobileIds: string[];
   ready: boolean;
   configured: boolean;
   // Auth / Login
@@ -235,11 +237,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Zusätzlich wird beim Zurückkehren in den Tab alles frisch geladen.
   const [onlineIds, setOnlineIds] = useState<string[]>([]);
   const [idleIds, setIdleIds] = useState<string[]>([]);
+  const [mobileIds, setMobileIds] = useState<string[]>([]);
   const approvedId = currentPlayer?.approved ? currentPlayer.id : null;
   useEffect(() => {
     if (!approvedId) {
       setOnlineIds([]);
       setIdleIds([]);
+      setMobileIds([]);
       return;
     }
     const world = supabase
@@ -266,19 +270,32 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
     // Aktiv = Tab sichtbar und Fenster im Vordergrund; sonst „anderswo". Bei
     // mehreren offenen Tabs zählt eine Person als aktiv, sobald einer aktiv ist.
+    // Handy = Mobil-Browser (Tablets zählen nicht). Bei mehreren Geräten gilt das
+    // gerade aktive; ist keines aktiv, müssen alle offenen Handys sein.
+    const mobile = /Android.*Mobile|iPhone|iPod|Windows Phone/i.test(navigator.userAgent);
     let subscribed = false;
     const trackNow = () => {
       if (!subscribed) return;
       void presence.track({
         active: document.visibilityState === "visible" && document.hasFocus(),
+        mobile,
       });
     };
     presence
       .on("presence", { event: "sync" }, () => {
-        const st = presence.presenceState() as Record<string, { active?: boolean }[]>;
+        const st = presence.presenceState() as Record<
+          string,
+          { active?: boolean; mobile?: boolean }[]
+        >;
         const ids = Object.keys(st);
         setOnlineIds(ids);
         setIdleIds(ids.filter((id) => !st[id].some((m) => m.active)));
+        setMobileIds(
+          ids.filter((id) => {
+            const act = st[id].filter((m) => m.active);
+            return (act.length ? act : st[id]).every((m) => m.mobile);
+          }),
+        );
       })
       .subscribe((status) => {
         if (status !== "SUBSCRIBED") return;
@@ -823,6 +840,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       clearSaveError,
       onlineIds,
       idleIds,
+      mobileIds,
       ready,
       configured: supabaseConfigured,
       currentPlayerId: currentPlayer?.id ?? null,
@@ -892,6 +910,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       clearSaveError,
       onlineIds,
       idleIds,
+      mobileIds,
       canEditLocation,
       canEditCharacter,
       addPost,
