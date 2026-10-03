@@ -230,23 +230,19 @@ function Heading({ children }: { children: React.ReactNode }) {
 }
 
 // Ein am Ort hinterlegter Charakter/NPC — Aufbau wie die Relations im Charakterprofil:
-// Bubble + Alter | Beruf in Caps, darunter der Bezug zum Ort.
+// Bubble + Alter · Beruf als Faktenzeile, darunter der Bezug zum Ort.
 function PersonCard({ person }: { person: LocationPerson }) {
   const { character } = useStore();
   const c = character(person.id);
   if (!c) return null;
 
-  const facts = [c.age ? `${c.age}` : null, c.role].filter(Boolean).join(" | ");
+  const facts = [c.age ? `${c.age}` : null, c.role].filter(Boolean).join(" · ");
 
   return (
     <div className="rounded-lg border border-border-subtle bg-bg-surface p-3">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <CharacterBubble character={c} />
-        {facts && (
-          <span className="text-[0.875rem] uppercase tracking-wider text-text-secondary">
-            {facts}
-          </span>
-        )}
+        {facts && <span className="text-[0.875rem] text-text-tertiary">{facts}</span>}
       </div>
       {person.note && (
         <p className="mt-2 text-[0.875rem] text-text-secondary leading-relaxed">

@@ -86,3 +86,12 @@ Seitenleiste ist unter `md` eine Schublade (Menü-Taste in der Kopfleiste).
   text-[0.8125rem]`; Primär-Aktion `bg-accent/90 text-black`.
 - Abschnitte mit `font-display lowercase text-[2rem] text-accent` überschreiben;
   leere Abschnitte ausblenden statt Platzhaltertext zu zeigen.
+- **Fakten** („facts.", „looks."): `<dl>` mit grauem Label samt Doppelpunkt und Wert
+  daneben (`grid-cols-[max-content_minmax(0,1fr)]`, `0.875rem`), lange Werte brechen
+  um. Keine eckigen Tags, keine Großbuchstaben-Zeilen.
+- **Tabs:** runde Pills wie in der Szenen-Übersicht (aktiv `bg-accent text-black`).
+- **Personen-Karten** (Relations im Charakterprofil, „characters & npcs." am Ort):
+  `CharacterBubble` + Faktenzeile als reiner Text mit Punkten (Alter · Beruf ·
+  Beziehung), Buttons rechts oben, Erläuterung darunter.
+- **Charakterprofil:** Der runde Avatar sitzt mittig auf der Unterkante des
+  Profil-Banners, darunter der Usertag als `Bubble`.
