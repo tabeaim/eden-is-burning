@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { use, useEffect, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
-import type { Chat, ChatMessage, ChatMessageKind } from "@/lib/types";
+import type { Chat, ChatMessageKind } from "@/lib/types";
 import { formatDateTime, formatInplayDate } from "@/lib/format";
 import { isEmojiOnly, QUICK_REACTIONS } from "@/lib/emoji";
 import { addMinutes, resolvePhone } from "@/lib/phone";
+import { chatTitle, isArchivedFor, messageSnippet } from "@/lib/chats";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DatePicker } from "@/components/DatePicker";
 import { Composer } from "@/components/phone/Composer";
@@ -15,7 +16,8 @@ import {
   PhoneAvatar,
   PhoneFrame,
   PhoneHeader,
-  usePhoneOwner,
+  phoneIconBtn,
+  useMyPhone,
 } from "@/components/phone/PhoneFrame";
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -37,12 +39,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   return <ChatView chat={chat} />;
 }
 
-// Kurzfassung einer Nachricht (Antwort-Zitat)
-function snippet(m: ChatMessage): string {
-  if (m.kind === "gif") return "GIF";
-  if (m.kind === "image") return "Foto";
-  return m.content;
-}
+const snippet = messageSnippet;
 
 // Tagestrenner: Inplay-Datum „2021-11-23"
 function dividerLabel(content: string): string {
@@ -59,20 +56,31 @@ function ChatView({ chat }: { chat: Chat }) {
     deleteMessage,
     toggleReaction,
     markChatSeen,
+    leaveOnRead,
+    archiveChat,
   } = useStore();
   const messages = messagesOf(chat.id);
   const parts = chat.participant_ids;
 
-  // Wessen Handy? Eigene Charaktere im Chat haben Vorrang (rechts = „ich"). Sind
-  // beide meine oder keiner, lässt sich die Seite über die Leiste oben tauschen.
-  const [owner, setOwner] = usePhoneOwner();
+  // Wessen Handy? Ist ein eigener Charakter im Chat, ist es seins (rechts = „ich";
+  // sind mehrere eigene dabei, tauscht die Leiste oben die Seite). Sonst liest man
+  // mit: Man bleibt auf dem eigenen Handy und sieht alle Blasen links mit Namen,
+  // wie in einem Gruppenchat.
+  const { myChars, me, stored, setOwner } = useMyPhone();
   const writable = parts.filter(canWriteAs);
-  const candidates = writable.length > 0 ? writable : parts;
-  const self = owner && candidates.includes(owner) ? owner : candidates[0];
-  const canWrite = canWriteAs(self);
-  const selfChar = character(self);
+  const reading = writable.length === 0;
+  const self = reading ? "" : stored && writable.includes(stored) ? stored : writable[0];
+  const canWrite = !reading;
+  const selfChar = reading ? undefined : character(self);
   const others = parts.filter((p) => p !== self).map((p) => character(p));
-  const other = others[0];
+  const other = others.length === 1 ? others[0] : undefined;
+
+  // „Left on read": wer hat die neueste Nachricht bewusst unbeantwortet gelassen?
+  const lastReal = [...messages].reverse().find((m) => m.kind !== "date");
+  const leftBy = lastReal ? parts.filter((p) => chat.left_on_read?.[p] === lastReal.id) : [];
+  const myTurn = canWrite && !!lastReal && lastReal.character_id !== self;
+  const archived = canWrite && isArchivedFor(chat, self);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Inplay-Uhrzeit der nächsten Nachricht: läuft von der letzten Nachricht aus
   // eine Minute weiter, lässt sich in der Eingabezeile überschreiben.
@@ -82,6 +90,9 @@ function ChatView({ chat }: { chat: Chat }) {
   // Ohne Tagestrenner kein Chat: zuerst das Inplay-Datum festlegen
   const hasDate = messages.some((m) => m.kind === "date");
   const burner = resolvePhone(selfChar).burner;
+  // Aus der Suche kommend: zur gefundenen Nachricht springen und sie kurz markieren
+  const jump = useRef(typeof window !== "undefined" ? window.location.hash.slice(1) : "");
+  const [highlight, setHighlight] = useState<string | null>(null);
 
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -98,6 +109,15 @@ function ChatView({ chat }: { chat: Chat }) {
     if (el) el.scrollTop = el.scrollHeight;
   };
   useEffect(() => {
+    const target = jump.current && document.getElementById(jump.current);
+    if (target) {
+      target.scrollIntoView({ block: "center" });
+      setHighlight(jump.current);
+      const t = setTimeout(() => setHighlight(null), 2500);
+      jump.current = "";
+      markChatSeen(chat.id);
+      return () => clearTimeout(t);
+    }
     toBottom();
     markChatSeen(chat.id);
   }, [chat.id, messages.length, markChatSeen]);
@@ -119,16 +139,46 @@ function ChatView({ chat }: { chat: Chat }) {
   }
 
   return (
-    <PhoneFrame owner={self} options={candidates} onOwner={setOwner}>
-      <PhoneHeader back="/handy/nachrichten">
-        <Link href={other ? `/charaktere/${other.id}` : "/handy"} className="flex items-center gap-2.5">
-          {other && <PhoneAvatar character={other} size={38} />}
+    <PhoneFrame
+      owner={reading ? (me?.id ?? null) : self}
+      options={reading ? myChars.map((c) => c.id) : writable}
+      onOwner={setOwner}
+    >
+      <PhoneHeader
+        back="/handy/nachrichten"
+        actions={
+          canWrite && (
+            <button
+              onClick={() => setMenuOpen(true)}
+              aria-label="Chat-Optionen"
+              title="Chat-Optionen"
+              className={`${phoneIconBtn} text-[1.25rem] font-bold leading-none`}
+            >
+              ⋯
+            </button>
+          )
+        }
+      >
+        <Link
+          href={other ? `/charaktere/${other.id}` : "/handy/nachrichten"}
+          className="flex items-center gap-2.5"
+        >
+          <span className="flex shrink-0 -space-x-4">
+            {others.slice(0, 2).map(
+              (o) =>
+                o && (
+                  <PhoneAvatar key={o.id} character={o} size={38} className="ring-2 ring-bg-surface" />
+                ),
+            )}
+          </span>
           <span className="min-w-0">
             <span className="block truncate text-[0.9375rem] font-semibold leading-tight text-text-primary">
-              {others.map((o) => o?.name ?? "Unbekannt").join(" & ") || "Unbekannt"}
+              {chatTitle(others)}
             </span>
-            {!canWrite && (
-              <span className="block truncate text-[0.75rem] text-text-tertiary">nur lesen</span>
+            {(reading || archived) && (
+              <span className="block truncate text-[0.75rem] text-text-tertiary">
+                {reading ? "du liest mit" : "archiviert"}
+              </span>
             )}
           </span>
         </Link>
@@ -153,7 +203,10 @@ function ChatView({ chat }: { chat: Chat }) {
               </div>
             );
           }
-          const mine = m.character_id === self;
+          const mine = !reading && m.character_id === self;
+          const sender = character(m.character_id);
+          // Beim Mitlesen bekommt die zweite Person eine eigene Blasenfarbe
+          const tint = reading && m.character_id === parts[1];
           const prev = messages[i - 1];
           const next = messages[i + 1];
           const first = !prev || prev.kind === "date" || prev.character_id !== m.character_id;
@@ -169,8 +222,21 @@ function ChatView({ chat }: { chat: Chat }) {
           return (
             <div
               key={m.id}
-              className={`flex flex-col ${mine ? "items-end" : "items-start"} ${first ? "mt-2.5" : "mt-0.5"}`}
+              id={m.id}
+              className={`relative flex flex-col rounded-xl transition-colors duration-700 ${
+                mine ? "items-end" : "items-start"
+              } ${first ? "mt-2.5" : "mt-0.5"} ${reading ? "pl-8" : ""} ${
+                highlight === m.id ? "bg-accent/20" : ""
+              }`}
             >
+              {reading && first && (
+                <span className="mb-0.5 ml-1 text-[0.6875rem] font-semibold text-text-tertiary">
+                  {sender?.name.split(" ")[0] ?? "?"}
+                </span>
+              )}
+              {reading && lastOfGroup && sender && (
+                <PhoneAvatar character={sender} size={24} className="absolute bottom-0 left-0" />
+              )}
               <button
                 onClick={() => setActiveId(m.id)}
                 className={`relative max-w-[78%] text-left ${
@@ -179,7 +245,11 @@ function ChatView({ chat }: { chat: Chat }) {
                     : media
                       ? `overflow-hidden ${shape} bg-bg-surface-2`
                       : `${shape} px-3.5 py-2 text-[0.9375rem] leading-snug ${
-                          mine ? "bg-accent text-black" : "bg-bg-surface-2 text-text-primary"
+                          mine
+                            ? "bg-accent text-black"
+                            : tint
+                              ? "bg-accent-soft text-text-primary"
+                              : "bg-bg-surface-2 text-text-primary"
                         }`
                 }`}
               >
@@ -230,7 +300,7 @@ function ChatView({ chat }: { chat: Chat }) {
                       disabled={!canWrite}
                       onClick={() => toggleReaction(m.id, emoji, self)}
                       title={ids.map((id) => character(id)?.name ?? "?").join(", ")}
-                      className={`flex items-center gap-0.5 rounded-full border-2 border-[#0c0c0e] px-1.5 py-px text-[0.8125rem] leading-snug ${
+                      className={`flex items-center gap-0.5 rounded-full border-2 border-[var(--phone-screen,#0c0c0e)] px-1.5 py-px text-[0.8125rem] leading-snug ${
                         ids.includes(self) ? "bg-accent/30" : "bg-bg-surface-2"
                       }`}
                     >
@@ -245,6 +315,19 @@ function ChatView({ chat }: { chat: Chat }) {
             </div>
           );
         })}
+        {lastReal && leftBy.length > 0 && (
+          <div
+            className={`mt-1 px-1 text-[0.6875rem] text-text-tertiary ${
+              !reading && lastReal.character_id === self ? "text-right" : reading ? "pl-9" : ""
+            }`}
+          >
+            {!reading && lastReal.character_id === self
+              ? "Gelesen"
+              : reading
+                ? `Gelesen · ${chatTitle(leftBy.map((p) => character(p)))} antwortet nicht`
+                : "Left on read · Chat pausiert"}
+          </div>
+        )}
       </div>
 
       {canWrite && !hasDate ? (
@@ -289,7 +372,7 @@ function ChatView({ chat }: { chat: Chat }) {
         />
       ) : (
         <div className="shrink-0 border-t border-border-subtle bg-bg-surface px-4 py-3 text-center text-[0.8125rem] text-text-tertiary">
-          Du liest mit — keiner dieser Charaktere gehört dir.
+          Du liest mit — in diesem Chat ist keiner deiner Charaktere.
         </div>
       )}
 
@@ -371,6 +454,43 @@ function ChatView({ chat }: { chat: Chat }) {
             </div>
             <div className="mt-2 text-center text-[0.6875rem] text-text-tertiary">
               Gepostet am {formatDateTime(active.created_at)} (echte Zeit)
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat-Optionen: pausieren („left on read") und archivieren */}
+      {menuOpen && (
+        <div
+          className="absolute inset-0 z-20 flex flex-col justify-end bg-black/55"
+          onClick={() => setMenuOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="rounded-t-2xl border-t border-border-subtle bg-bg-surface-2 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          >
+            <div className="flex flex-col divide-y divide-border-subtle overflow-hidden rounded-xl bg-white/[0.04] text-[0.9375rem]">
+              {myTurn && lastReal && (
+                <SheetButton
+                  onClick={() => {
+                    leaveOnRead(chat.id, self, leftBy.includes(self) ? null : lastReal.id);
+                    setMenuOpen(false);
+                  }}
+                >
+                  {leftBy.includes(self)
+                    ? "„Left on read“ zurücknehmen"
+                    : "Left on read — nicht antworten, Chat pausieren"}
+                </SheetButton>
+              )}
+              <SheetButton
+                onClick={() => {
+                  archiveChat(chat.id, self, !archived);
+                  setMenuOpen(false);
+                }}
+              >
+                {archived ? "Aus dem Archiv holen" : "Archivieren"}
+              </SheetButton>
+              <SheetButton onClick={() => setMenuOpen(false)}>Abbrechen</SheetButton>
             </div>
           </div>
         </div>

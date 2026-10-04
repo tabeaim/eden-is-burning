@@ -128,6 +128,29 @@ export function PhoneSettings({ character }: { character: Character }) {
       ) : (
         <>
           <div>
+            <div className={label}>
+              Captic{" "}
+              <span className="text-text-tertiary">
+                (Foto-Netzwerk — das Profil bearbeitest du danach direkt in der App auf dem Handy)
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => save({ captic: { ...raw.captic, enabled: true } })}
+                className={pill(phone.captic)}
+              >
+                Hat Captic
+              </button>
+              <button
+                onClick={() => save({ captic: { ...raw.captic, enabled: false } })}
+                className={pill(!phone.captic)}
+              >
+                Kein Captic
+              </button>
+            </div>
+          </div>
+
+          <div>
             <div className={label}>Hintergrundbild</div>
             <div className="flex flex-wrap items-center gap-2.5">
               {PHONE_WALLPAPERS.map((w) => (

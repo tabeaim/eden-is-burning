@@ -72,6 +72,9 @@ export interface PhoneSettings {
   wallpaper?: string | null; // "preset:<key>" oder Bild-Adresse
   apps?: string[]; // zusätzlich gewählte Apps (OPTIONAL_APPS); Standard-Apps sind immer da
   custom_apps?: CustomPhoneApp[]; // selbst erstellte Apps (Name + Icon)
+  // Captic ist optional: erst nach dem Aktivieren liegt die App auf dem Handy.
+  // Profilangaben werden in der App selbst bearbeitet.
+  captic?: { enabled?: boolean; handle?: string; bio?: string } | null;
 }
 
 export interface CustomPhoneApp {
@@ -177,6 +180,11 @@ export interface Chat {
   participant_ids: string[]; // Charakter-IDs (auch NPCs)
   created_by?: string | null; // Spieler-ID
   created_at: string;
+  // „Left on read": Charakter-ID -> ID der Nachricht, die unbeantwortet stehen
+  // bleibt. Gilt nur, solange das die neueste Nachricht ist (Chat pausiert).
+  left_on_read?: Record<string, string> | null;
+  // Charaktere, die den Chat auf ihrem Handy archiviert haben
+  archived_by?: string[] | null;
 }
 
 // text: `content` ist der Nachrichtentext · gif/image: Bild-Adresse ·

@@ -75,6 +75,7 @@ export interface ResolvedPhone {
   wear: number;
   wallpaper: string; // fertiger CSS-`background`-Wert
   apps: PhoneApp[]; // Standard + gewählte + eigene, in Anzeige-Reihenfolge
+  captic: boolean; // Captic aktiviert (nie auf dem Burner Phone)
 }
 
 export function wallpaperCss(value: string | null | undefined): string {
@@ -103,7 +104,19 @@ export function resolvePhone(c: Pick<Character, "phone"> | null | undefined): Re
     wear,
     wallpaper: wallpaperCss(p.wallpaper),
     apps: [...STANDARD_APPS, ...[...chosen, ...custom].slice(0, MAX_EXTRA_APPS)],
+    captic: model !== "burner" && !!p.captic?.enabled,
   };
+}
+
+// Merkt sich, mit welchem eigenen Charakter man zuletzt aktiv war (Post in einer
+// Szene, SMS) — dessen Handy zeigt „Handy" im Seitenmenü dann zuerst.
+export const PHONE_OWNER_KEY = "eden:phone";
+export function rememberPhone(characterId: string) {
+  try {
+    localStorage.setItem(PHONE_OWNER_KEY, characterId);
+  } catch {
+    /* ignore */
+  }
 }
 
 // --- Inplay-Uhrzeit ---------------------------------------------------------

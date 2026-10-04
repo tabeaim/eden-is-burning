@@ -22,6 +22,7 @@ import type {
   SceneQuote,
 } from "./types";
 import { supabase, supabaseConfigured } from "./supabase";
+import { rememberPhone } from "./phone";
 
 interface PersistedState {
   players: Player[];
@@ -113,6 +114,10 @@ interface StoreValue extends PersistedState {
     opts?: { replyTo?: string | null; time?: string | null },
   ) => void;
   deleteMessage: (messageId: string) => void;
+  // „Left on read": die neueste Nachricht bewusst unbeantwortet lassen (oder zurücknehmen)
+  leaveOnRead: (chatId: string, characterId: string, messageId: string | null) => void;
+  // Chat auf dem Handy dieses Charakters archivieren / wieder hervorholen
+  archiveChat: (chatId: string, characterId: string, archived: boolean) => void;
   toggleReaction: (messageId: string, emoji: string, characterId: string) => void;
   // Ungelesen: neueste Nachricht stammt von jemand anderem und ist neuer als der letzte Besuch
   isChatNew: (chatId: string) => boolean;
@@ -583,6 +588,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const scenePosts = s.posts.filter((p) => p.scene_id === sceneId);
         const nextNumber =
           scenePosts.reduce((m, p) => Math.max(m, p.post_number), 0) + 1;
+        rememberPhone(characterId);
         const post: Post = {
           id: uid("post"),
           scene_id: sceneId,
@@ -992,10 +998,55 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const send = () => supabase.from("chat_messages").insert(message);
       const pending = pendingChats.get(chatId);
       persist("addMessage", pending ? pending.then(send, send) : send());
-      setState((s) => ({ ...s, chatMessages: [...s.chatMessages, message] }));
+      if (kind !== "date") rememberPhone(characterId);
+      setState((s) => {
+        // Eine neue Nachricht holt den Chat bei allen aus dem Archiv
+        const chat = s.chats.find((c) => c.id === chatId);
+        let chats = s.chats;
+        if (kind !== "date" && chat?.archived_by?.length) {
+          persist(
+            "unarchiveChat",
+            supabase.from("chats").update({ archived_by: [] }).eq("id", chatId),
+          );
+          chats = s.chats.map((c) => (c.id === chatId ? { ...c, archived_by: [] } : c));
+        }
+        return { ...s, chats, chatMessages: [...s.chatMessages, message] };
+      });
     },
     [],
   );
+
+  const leaveOnRead = useCallback(
+    (chatId: string, characterId: string, messageId: string | null) => {
+      setState((s) => {
+        const chat = s.chats.find((c) => c.id === chatId);
+        if (!chat) return s;
+        const left_on_read = { ...(chat.left_on_read ?? {}) };
+        if (messageId) left_on_read[characterId] = messageId;
+        else delete left_on_read[characterId];
+        persist("leaveOnRead", supabase.from("chats").update({ left_on_read }).eq("id", chatId));
+        return {
+          ...s,
+          chats: s.chats.map((c) => (c.id === chatId ? { ...c, left_on_read } : c)),
+        };
+      });
+    },
+    [],
+  );
+
+  const archiveChat = useCallback((chatId: string, characterId: string, archived: boolean) => {
+    setState((s) => {
+      const chat = s.chats.find((c) => c.id === chatId);
+      if (!chat) return s;
+      const rest = (chat.archived_by ?? []).filter((id) => id !== characterId);
+      const archived_by = archived ? [...rest, characterId] : rest;
+      persist("archiveChat", supabase.from("chats").update({ archived_by }).eq("id", chatId));
+      return {
+        ...s,
+        chats: s.chats.map((c) => (c.id === chatId ? { ...c, archived_by } : c)),
+      };
+    });
+  }, []);
 
   const deleteMessage = useCallback((messageId: string) => {
     persist("deleteMessage", supabase.from("chat_messages").delete().eq("id", messageId));
@@ -1120,6 +1171,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       openChat,
       addMessage,
       deleteMessage,
+      leaveOnRead,
+      archiveChat,
       toggleReaction,
       isChatNew,
       markChatSeen,
@@ -1181,6 +1234,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       openChat,
       addMessage,
       deleteMessage,
+      leaveOnRead,
+      archiveChat,
       toggleReaction,
       isChatNew,
       markChatSeen,

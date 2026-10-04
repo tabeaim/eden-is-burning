@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
-import { resolvePhone, type PhoneModel } from "@/lib/phone";
+import { PHONE_OWNER_KEY, resolvePhone, type PhoneModel } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
 
 // Das „Handy" (siehe DESIGN.md). Über dem Gerät — nicht auf dem Display — sitzt
@@ -432,7 +432,7 @@ export const phoneIconBtn =
   "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-accent hover:bg-white/[0.06] disabled:opacity-40";
 
 // Wessen Handy zuletzt offen war (pro Gerät gemerkt).
-const KEY = "eden:phone";
+const KEY = PHONE_OWNER_KEY;
 export function usePhoneOwner(): [string | null, (id: string) => void] {
   const [owner, setOwner] = useState<string | null>(() => {
     try {

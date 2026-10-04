@@ -22,6 +22,10 @@ create table if not exists chat_messages (
 -- Inplay-Uhrzeit der Nachricht („23:41") — created_at bestimmt nur die Reihenfolge
 alter table chat_messages add column if not exists inplay_time text;
 
+-- „Left on read" ({ "<charakter-id>": "<nachricht-id>" }) und Archiv je Charakter
+alter table chats add column if not exists left_on_read jsonb not null default '{}'::jsonb;
+alter table chats add column if not exists archived_by  jsonb not null default '[]'::jsonb;
+
 create index if not exists idx_chat_messages_chat on chat_messages(chat_id, created_at);
 
 -- Wie bei Szenen/Posts: alle Freigeschalteten dürfen lesen und schreiben

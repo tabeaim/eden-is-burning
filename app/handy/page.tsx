@@ -16,7 +16,7 @@ const WEEKDAYS = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Fr
 const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
 // Startbildschirm des Handys: Hintergrundbild, angedeutete Apps und unten im
-// Dock die beiden echten — Nachrichten und Captic.
+// Dock die echten — Nachrichten und (wenn aktiviert) Captic.
 export default function PhoneHomePage() {
   const { chats, isChatNew } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
@@ -96,11 +96,13 @@ export default function PhoneHomePage() {
               <MessengerGlyph />
             </AppIcon>
           </Link>
-          <Link href="/handy/captic">
-            <AppIcon label="Captic" bg={CAPTIC_BG}>
-              <CapticGlyph />
-            </AppIcon>
-          </Link>
+          {phone.captic && (
+            <Link href="/handy/captic">
+              <AppIcon label="Captic" bg={CAPTIC_BG}>
+                <CapticGlyph />
+              </AppIcon>
+            </Link>
+          )}
         </div>
       </div>
     </PhoneFrame>

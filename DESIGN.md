@@ -97,6 +97,20 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Hintergrundbild (drei Vorlagen oder eigenes Bild), Apps. Standard-Apps sind
   immer da; wählbar sind nur optionale und selbst erstellte (Name + Icon),
   zusammen höchstens so viele, wie auf einen Startbildschirm passen.
+- **Mitlesen:** Ist kein eigener Charakter im Chat, bleibt man auf dem eigenen
+  Handy; alle Blasen stehen links mit Vorname und Avatar (wie ein Gruppenchat).
+  Chat-Namen: eine Person mit vollem Namen, mehrere nur mit Vornamen
+  (`chatTitle` in `lib/chats.ts`).
+- **Liste:** Reiter „Meine / Alle / Archiv" plus Suchfeld (Namen und
+  Nachrichtentext; ein Treffer springt zur Nachricht). Archivieren und „Left on
+  read" stecken im ⋯-Menü des Chats; eine neue Nachricht holt den Chat aus dem
+  Archiv.
+- **Dashboard:** Chats erscheinen als `ChatRow` (`components/phone/ChatRow.tsx`,
+  Aufbau wie `SceneRow`, Handy-Icon statt Streichholz) — in „letzte 24h" als
+  „Neue Nachrichten bei A & B", unter „Du bist dran" als „Chat mit …" samt Knopf
+  „Left on read" (pausiert den Chat, bis wieder jemand schreibt).
+- **Captic ist optional** (Schalter in `PhoneSettings`); das Profil wird in der
+  App auf dem Handy bearbeitet.
 - **Burner Phone:** altes Tastenhandy, nur SMS (kein Captic, keine Apps, keine
   GIFs/Fotos). Das Display stellt per `.phone-burner` (globals.css) die
   Farb-Tokens auf Graustufen um, darüber liegt ein grünes LCD-Overlay — im

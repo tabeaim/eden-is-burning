@@ -8,12 +8,24 @@ import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import { QuoteRotator } from "@/components/QuoteRotator";
 import { SceneCard, SceneRow } from "@/components/SceneCard";
-import type { Character, Player, Scene } from "@/lib/types";
+import { ChatRow } from "@/components/phone/ChatRow";
+import { isArchivedFor, isLeftOnRead, lastMessages } from "@/lib/chats";
+import type { Character, Chat, Player, Scene } from "@/lib/types";
 
 export default function DashboardPage() {
   const store = useStore();
-  const { currentPlayer, scenes, players, charactersOf, postsOf, onlineIds, idleIds, mobileIds } =
-    store;
+  const {
+    currentPlayer,
+    scenes,
+    players,
+    charactersOf,
+    postsOf,
+    onlineIds,
+    idleIds,
+    mobileIds,
+    chats,
+    chatMessages,
+  } = store;
   const [showWarten, setShowWarten] = useState(false);
   // "Du bist dran": null = noch nicht selbst umgeschaltet → Standard (s.u.)
   const [showDran, setShowDran] = useState<boolean | null>(null);
@@ -39,6 +51,22 @@ export default function DashboardPage() {
     new Date(lastPostAt(b.id) ?? b.created_at).getTime() -
     new Date(lastPostAt(a.id) ?? a.created_at).getTime();
 
+  // Chats (Handy): unbeantwortet = die neueste Nachricht kommt von jemand anderem.
+  // Archivierte und „left on read" markierte Chats sind pausiert.
+  const lastMsg = lastMessages(chatMessages);
+  const openChatsOf = (charId: string) =>
+    chats.filter((ch) => {
+      const last = lastMsg.get(ch.id);
+      return (
+        !!last &&
+        ch.participant_ids.includes(charId) &&
+        !isArchivedFor(ch, charId) &&
+        !isLeftOnRead(ch, charId, last)
+      );
+    });
+  const byLastMsgDesc = (a: Chat, b: Chat) =>
+    (lastMsg.get(b.id)?.created_at ?? "").localeCompare(lastMsg.get(a.id)?.created_at ?? "");
+
   // Pro Charakter: in welchen aktiven Szenen ist er dran / wartet er auf andere?
   const grouped = myChars
     .map((c) => {
@@ -57,12 +85,18 @@ export default function DashboardPage() {
       }
       dran.sort(byLastPostDesc);
       warten.sort(byLastPostDesc);
-      return { char: c, dran, warten };
+      const open = openChatsOf(c.id).sort(byLastMsgDesc);
+      const chatsDran = open.filter((ch) => lastMsg.get(ch.id)!.character_id !== c.id);
+      const chatsWarten = open.filter((ch) => lastMsg.get(ch.id)!.character_id === c.id);
+      return { char: c, dran, warten, chatsDran, chatsWarten };
     })
-    .filter((g) => g.dran.length > 0 || g.warten.length > 0);
+    .filter(
+      (g) =>
+        g.dran.length > 0 || g.warten.length > 0 || g.chatsDran.length > 0 || g.chatsWarten.length > 0,
+    );
 
-  const hasDran = grouped.some((g) => g.dran.length > 0);
-  const hasWarten = grouped.some((g) => g.warten.length > 0);
+  const hasDran = grouped.some((g) => g.dran.length > 0 || g.chatsDran.length > 0);
+  const hasWarten = grouped.some((g) => g.warten.length > 0 || g.chatsWarten.length > 0);
 
   // Numerische Übersicht über distinkte offene Szenen des Spielers
   const myCharIds = new Set(myChars.map((c) => c.id));
@@ -72,11 +106,15 @@ export default function DashboardPage() {
       !s.paused &&
       s.participant_ids.some((id) => myCharIds.has(id)),
   );
-  const totalOpen = myOpenScenes.length;
-  const dranCount = myOpenScenes.filter((s) => {
-    const t = whoseTurn(s, postsOf(s.id));
-    return t != null && myCharIds.has(t);
-  }).length;
+  // Chats zählen mit (jeder Chat einmal, auch wenn mehrere eigene Charaktere dabei sind)
+  const openChatIds = new Set(grouped.flatMap((g) => [...g.chatsDran, ...g.chatsWarten].map((c) => c.id)));
+  const dranChatIds = new Set(grouped.flatMap((g) => g.chatsDran.map((c) => c.id)));
+  const totalOpen = myOpenScenes.length + openChatIds.size;
+  const dranCount =
+    myOpenScenes.filter((s) => {
+      const t = whoseTurn(s, postsOf(s.id));
+      return t != null && myCharIds.has(t);
+    }).length + dranChatIds.size;
   const wartenCount = totalOpen - dranCount;
   // Standard: aufgeklappt, nur auf dem Handy eingeklappt
   const dranOpen = showDran ?? !isMobile;
@@ -93,6 +131,18 @@ export default function DashboardPage() {
         new Date(b.last!.created_at).getTime() -
         new Date(a.last!.created_at).getTime(),
     );
+
+  // Chats mit neuen Nachrichten in den letzten 24h (alle, auch fremde) — stehen
+  // zusammen mit den Szenen in einer nach Zeit sortierten Liste
+  const recentItems = [
+    ...recentScenes.map(({ scene, last }) => ({ key: scene.id, at: last!.created_at, scene, chat: null })),
+    ...chats
+      .filter((ch) => {
+        const last = lastMsg.get(ch.id);
+        return last && withinHours(last.created_at, 24);
+      })
+      .map((ch) => ({ key: ch.id, at: lastMsg.get(ch.id)!.created_at, scene: null, chat: ch })),
+  ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
   // Anwesenheit: "jetzt" (live) vs. "letzte 24h" (ohne die jetzt-Online)
   const byLastSeen = (a: (typeof players)[number], b: (typeof players)[number]) =>
@@ -148,16 +198,18 @@ export default function DashboardPage() {
               </span>
             </button>
             {!dranOpen ? null : !hasDran ? (
-              <Empty>Gerade bist du in keiner Szene am Zug.</Empty>
+              <Empty>Gerade bist du in keiner Szene und keinem Chat am Zug.</Empty>
             ) : (
               <div className="flex flex-col gap-6">
                 {grouped
-                  .filter((g) => g.dran.length > 0)
+                  .filter((g) => g.dran.length > 0 || g.chatsDran.length > 0)
                   .map((g) => (
                     <CharacterGroup
                       key={g.char.id}
                       char={g.char}
                       scenes={g.dran}
+                      chats={g.chatsDran}
+                      canLeaveOnRead
                     />
                   ))}
               </div>
@@ -189,12 +241,13 @@ export default function DashboardPage() {
               ) : (
                 <div className="flex flex-col gap-6">
                   {grouped
-                    .filter((g) => g.warten.length > 0)
+                    .filter((g) => g.warten.length > 0 || g.chatsWarten.length > 0)
                     .map((g) => (
                       <CharacterGroup
                         key={g.char.id}
                         char={g.char}
                         scenes={g.warten}
+                        chats={g.chatsWarten}
                         muted
                       />
                     ))}
@@ -210,13 +263,17 @@ export default function DashboardPage() {
             <h2 className="section-bar text-[0.875rem] text-text-secondary mb-3">
               Aktive Szenen · letzte 24h
             </h2>
-            {recentScenes.length === 0 ? (
+            {recentItems.length === 0 ? (
               <Empty>Keine.</Empty>
             ) : (
               <div className="flex flex-col gap-2">
-                {recentScenes.map(({ scene }) => (
-                  <SceneRow key={scene.id} scene={scene} />
-                ))}
+                {recentItems.map((item) =>
+                  item.scene ? (
+                    <SceneRow key={item.key} scene={item.scene} />
+                  ) : (
+                    <ChatRow key={item.key} chat={item.chat!} />
+                  ),
+                )}
               </div>
             )}
           </section>
@@ -314,12 +371,18 @@ function Empty({ children }: { children: React.ReactNode }) {
 function CharacterGroup({
   char,
   scenes,
+  chats = [],
   muted = false,
+  canLeaveOnRead = false,
 }: {
   char: Character;
   scenes: Scene[];
+  chats?: Chat[];
   muted?: boolean;
+  canLeaveOnRead?: boolean; // unbeantwortete Chats lassen sich pausieren
 }) {
+  const { chatMessages, leaveOnRead } = useStore();
+  const lastMsg = lastMessages(chatMessages);
   return (
     <div>
       <div className="flex items-center gap-2.5 mb-2.5">
@@ -336,12 +399,36 @@ function CharacterGroup({
           {char.name}
         </Link>
         <span className="text-[0.875rem] text-text-tertiary">
-          {scenes.length} {scenes.length === 1 ? "Szene" : "Szenen"}
+          {[
+            scenes.length > 0 && `${scenes.length} ${scenes.length === 1 ? "Szene" : "Szenen"}`,
+            chats.length > 0 && `${chats.length} ${chats.length === 1 ? "Chat" : "Chats"}`,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         </span>
       </div>
       <div className="flex flex-col gap-2 pl-1">
         {scenes.map((s) => (
           <SceneCard key={s.id} scene={s} muted={muted} />
+        ))}
+        {chats.map((ch) => (
+          <ChatRow
+            key={ch.id}
+            chat={ch}
+            forCharacter={char.id}
+            muted={muted}
+            action={
+              canLeaveOnRead ? (
+                <button
+                  onClick={() => leaveOnRead(ch.id, char.id, lastMsg.get(ch.id)?.id ?? null)}
+                  title="Nachricht unbeantwortet lassen — der Chat pausiert, bis jemand wieder schreibt"
+                  className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
+                >
+                  Left on read
+                </button>
+              ) : undefined
+            }
+          />
         ))}
       </div>
     </div>
