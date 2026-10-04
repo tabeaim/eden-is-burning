@@ -151,3 +151,27 @@ export interface SceneQuote {
   text: string;
   created_at: string;
 }
+
+// --- Messenger („Handy") -----------------------------------------------------
+// Ein Chat zwischen Charakteren (aktuell zwei; das Modell trägt auch Gruppen).
+export interface Chat {
+  id: string;
+  participant_ids: string[]; // Charakter-IDs (auch NPCs)
+  created_by?: string | null; // Spieler-ID
+  created_at: string;
+}
+
+// text: `content` ist der Nachrichtentext · gif/image: Bild-Adresse ·
+// date: Tagestrenner mit Inplay-Datum, „2021-11-23" oder „2021-11-23|spät nachts"
+export type ChatMessageKind = "text" | "gif" | "image" | "date";
+
+export interface ChatMessage {
+  id: string;
+  chat_id: string;
+  character_id: string; // Absender*in
+  kind: ChatMessageKind;
+  content: string;
+  reply_to?: string | null; // zitierte Nachricht
+  reactions?: Record<string, string[]> | null; // Emoji -> Charakter-IDs
+  created_at: string;
+}

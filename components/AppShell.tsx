@@ -14,6 +14,7 @@ import { pageHeader, sceneHeader } from "@/lib/headers";
 const NAV: { href: string; label: string; icon: IconName; title?: string }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/szenen", label: "Szenen", icon: "book" },
+  { href: "/handy", label: "Messenger", icon: "phone" },
   { href: "/orte", label: "Karte", icon: "map", title: "Eden, Virginia" },
   { href: "/kalender", label: "Timeline", icon: "calendar" },
   { href: "/charaktere", label: "Charaktere", icon: "users" },
@@ -54,6 +55,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (currentPlayer) touchPresence(currentPlayer.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, currentPlayer?.id]);
+
+  // Der Messenger füllt den Bildschirm wie ein Handy: kein Banner, keine Kopfleiste.
+  const bare = pathname === "/handy" || pathname.startsWith("/handy/");
 
   if (!ready) {
     return (
@@ -129,11 +133,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex-1 min-w-0 flex flex-col">
           {/* Schmale Bildschirme: Die Wortmarke steht oben und scrollt mit weg; nur
               die Menü-Taste bleibt beim Scrollen stehen. */}
-          <div className="md:hidden flex items-center border-b border-border-subtle bg-bg-sidebar px-4 py-3.5">
-            <Link href="/dashboard" className="font-display text-[1.25rem] leading-none text-text-primary">
-              eden is burning<span className="text-accent">.</span>
-            </Link>
-          </div>
+          {!bare && (
+            <div className="md:hidden flex items-center border-b border-border-subtle bg-bg-sidebar px-4 py-3.5">
+              <Link href="/dashboard" className="font-display text-[1.25rem] leading-none text-text-primary">
+                eden is burning<span className="text-accent">.</span>
+              </Link>
+            </div>
+          )}
           <button
             onClick={() => setNavOpen(true)}
             aria-label="Menü öffnen"
@@ -143,14 +149,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           {/* Die Karte bekommt ausnahmsweise kein Titelbild — nur den Seitentitel;
               der Platz gehört der Karte. */}
-          <BannerHeader
-            pathname={pathname}
-            noBanner={pathname === "/orte"}
-            navHidden={navHidden}
-          />
+          {!bare && (
+            <BannerHeader
+              pathname={pathname}
+              noBanner={pathname === "/orte"}
+              navHidden={navHidden}
+            />
+          )}
           {/* Der Kopfbereich ist deckend dunkel; ab der Trennlinie blendet das
               Hintergrundfoto weich ein (Verlauf liegt hinter dem Seiteninhalt). */}
-          <main className="flex-1 min-w-0 bg-[linear-gradient(to_bottom,var(--bg-primary),transparent_14rem)]">
+          <main
+            className={`flex-1 min-w-0 ${
+              bare ? "" : "bg-[linear-gradient(to_bottom,var(--bg-primary),transparent_14rem)]"
+            }`}
+          >
             {children}
           </main>
         </div>
@@ -295,7 +307,7 @@ function Sidebar({
   onPeek: (v: boolean) => void;
   onToggleHidden: () => void;
 }) {
-  const { currentPlayer, charactersOf, logout } = useStore();
+  const { currentPlayer, charactersOf, logout, unreadChatCount } = useStore();
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
   const [charsOpen, setCharsOpen] = useState(false);
 
@@ -357,12 +369,18 @@ function Sidebar({
                 <Icon name={item.icon} size={17} />
               </span>
               {item.label}
+              {item.href === "/handy" && unreadChatCount > 0 && (
+                <span className="ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[0.6875rem] font-semibold text-black">
+                  {unreadChatCount}
+                </span>
+              )}
             </Link>
           );
         })}
       </nav>
 
       <div className="px-2 pb-2 flex flex-col gap-0.5">
+        <SideLink href="/handy/neu" icon="phone" label="Neue SMS" pathname={pathname} />
         <SideLink href="/szenen/neu" icon="message" label="Neue Szene" pathname={pathname} />
         <SideLink href="/einstellungen" icon="settings" label="Einstellungen" pathname={pathname} />
         {currentPlayer && (

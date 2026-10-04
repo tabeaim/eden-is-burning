@@ -11,6 +11,9 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import type {
   Character,
+  Chat,
+  ChatMessage,
+  ChatMessageKind,
   Location,
   Player,
   Plot,
@@ -28,6 +31,8 @@ interface PersistedState {
   quotes: SceneQuote[];
   locations: Location[];
   plots: Plot[];
+  chats: Chat[];
+  chatMessages: ChatMessage[];
 }
 
 // `characters` enthält nach außen nur spielbare Charaktere; NPCs (Charaktere mit
@@ -94,6 +99,25 @@ interface StoreValue extends PersistedState {
   isSceneNew: (sceneId: string) => boolean;
   markSceneSeen: (sceneId: string) => void;
   markAllScenesSeen: () => void;
+  // --- Messenger ---
+  messagesOf: (chatId: string) => ChatMessage[];
+  // Darf ich als dieser Charakter schreiben? (eigene Charaktere und eigene NPCs)
+  canWriteAs: (characterId: string) => boolean;
+  // Findet den Chat dieser Charaktere oder legt ihn an; gibt die ID zurück.
+  openChat: (participantIds: string[]) => string;
+  addMessage: (
+    chatId: string,
+    characterId: string,
+    kind: ChatMessageKind,
+    content: string,
+    replyTo?: string | null,
+  ) => void;
+  deleteMessage: (messageId: string) => void;
+  toggleReaction: (messageId: string, emoji: string, characterId: string) => void;
+  // Ungelesen: neueste Nachricht stammt von jemand anderem und ist neuer als der letzte Besuch
+  isChatNew: (chatId: string) => boolean;
+  markChatSeen: (chatId: string) => void;
+  unreadChatCount: number;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -106,7 +130,32 @@ const EMPTY: PersistedState = {
   quotes: [],
   locations: [],
   plots: [],
+  chats: [],
+  chatMessages: [],
 };
+
+// Supabase liefert höchstens 1000 Zeilen pro Abfrage — Nachrichten werden schnell
+// mehr, daher seitenweise laden. Fehlt die Tabelle noch, bleibt die Liste leer.
+async function fetchAll<T>(table: string): Promise<T[]> {
+  const PAGE = 1000;
+  const rows: T[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error || !data) break;
+    rows.push(...(data as T[]));
+    if (data.length < PAGE) break;
+  }
+  return rows;
+}
+
+// Gerade angelegte Chats, deren Zeile noch unterwegs ist — die erste Nachricht
+// wartet darauf, sonst käme sie vor ihrem Chat an (Fremdschlüssel).
+const pendingChats = new Map<string, Promise<unknown>>();
 
 function uid(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
@@ -174,7 +223,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Lädt alle Welt-Daten (nur für freigeschaltete Nutzer*innen sichtbar; RLS).
   const loadWorld = useCallback(async () => {
-    const [pl, ch, sc, po, lo, qu, pt] = await Promise.all([
+    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages] = await Promise.all([
       supabase.from("players").select("*"),
       supabase.from("characters").select("*"),
       supabase.from("scenes").select("*"),
@@ -182,6 +231,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       supabase.from("locations").select("*"),
       supabase.from("quotes").select("*"),
       supabase.from("plots").select("*"),
+      fetchAll<Chat>("chats"),
+      fetchAll<ChatMessage>("chat_messages"),
     ]);
     setState({
       players: (pl.data as Player[]) ?? [],
@@ -191,6 +242,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       locations: (lo.data as Location[]) ?? [],
       quotes: (qu.data as SceneQuote[]) ?? [],
       plots: (pt.data as Plot[]) ?? [],
+      chats,
+      chatMessages,
     });
   }, []);
 
@@ -276,6 +329,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (row?.id === approvedId) setCurrentPlayer((cp) => (cp ? { ...cp, ...row } : cp));
       })
       .subscribe();
+    // Eigener Kanal: fehlen die Messenger-Tabellen (noch), bleibt der Rest live.
+    const phone = supabase
+      .channel("eden-phone")
+      .on("postgres_changes", { event: "*", schema: "public", table: "chats" }, (p) =>
+        setState((s) => ({ ...s, chats: applyChange(s.chats, p) })),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, (p) =>
+        setState((s) => ({ ...s, chatMessages: applyChange(s.chatMessages, p) })),
+      )
+      .subscribe();
 
     const presence = supabase.channel("eden-online", {
       config: { presence: { key: approvedId } },
@@ -332,6 +395,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("focus", trackNow);
       window.removeEventListener("blur", trackNow);
       void supabase.removeChannel(world);
+      void supabase.removeChannel(phone);
       void supabase.removeChannel(presence);
     };
   }, [approvedId, loadWorld]);
@@ -843,6 +907,153 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [state.posts, reads, currentPlayer?.id],
   );
 
+  // --- Messenger -------------------------------------------------------------
+  const messagesOf = useCallback(
+    (chatId: string) =>
+      state.chatMessages
+        .filter((m) => m.chat_id === chatId)
+        .sort((a, b) => a.created_at.localeCompare(b.created_at)),
+    [state.chatMessages],
+  );
+
+  const canWriteAs = useCallback(
+    (characterId: string) =>
+      !!currentPlayer &&
+      state.characters.some((c) => c.id === characterId && c.player_id === currentPlayer.id),
+    [state.characters, currentPlayer],
+  );
+
+  const openChat = useCallback(
+    (participantIds: string[]) => {
+      const key = [...participantIds].sort().join("|");
+      const existing = state.chats.find(
+        (c) => [...c.participant_ids].sort().join("|") === key,
+      );
+      if (existing) return existing.id;
+      const chat: Chat = {
+        id: uid("chat"),
+        participant_ids: participantIds,
+        created_by: currentPlayer?.id ?? null,
+        created_at: new Date().toISOString(),
+      };
+      const req = Promise.resolve(supabase.from("chats").insert(chat));
+      pendingChats.set(chat.id, req);
+      void req.finally(() => pendingChats.delete(chat.id));
+      persist("openChat", req);
+      setState((s) => ({ ...s, chats: [...s.chats, chat] }));
+      return chat.id;
+    },
+    [state.chats, currentPlayer?.id],
+  );
+
+  const markChatSeen = useCallback(
+    (chatId: string) => {
+      if (!currentPlayer) return;
+      const pid = currentPlayer.id;
+      setReads((r) => {
+        const next = { ...r, [chatId]: new Date().toISOString() };
+        try {
+          localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    },
+    [currentPlayer?.id],
+  );
+
+  const addMessage = useCallback(
+    (
+      chatId: string,
+      characterId: string,
+      kind: ChatMessageKind,
+      content: string,
+      replyTo: string | null = null,
+    ) => {
+      const text = content.trim();
+      if (!text) return;
+      const message: ChatMessage = {
+        id: uid("msg"),
+        chat_id: chatId,
+        character_id: characterId,
+        kind,
+        content: text,
+        reply_to: replyTo,
+        reactions: {},
+        created_at: new Date().toISOString(),
+      };
+      const send = () => supabase.from("chat_messages").insert(message);
+      const pending = pendingChats.get(chatId);
+      persist("addMessage", pending ? pending.then(send, send) : send());
+      setState((s) => ({ ...s, chatMessages: [...s.chatMessages, message] }));
+    },
+    [],
+  );
+
+  const deleteMessage = useCallback((messageId: string) => {
+    persist("deleteMessage", supabase.from("chat_messages").delete().eq("id", messageId));
+    setState((s) => ({
+      ...s,
+      chatMessages: s.chatMessages.filter((m) => m.id !== messageId),
+    }));
+  }, []);
+
+  // Pro Charakter eine Reaktion je Nachricht (wie in den bekannten Messengern):
+  // dasselbe Emoji nochmal nimmt sie zurück, ein anderes ersetzt sie.
+  const toggleReaction = useCallback(
+    (messageId: string, emoji: string, characterId: string) => {
+      setState((s) => {
+        const msg = s.chatMessages.find((m) => m.id === messageId);
+        if (!msg) return s;
+        const had = (msg.reactions?.[emoji] ?? []).includes(characterId);
+        const reactions: Record<string, string[]> = {};
+        for (const [e, ids] of Object.entries(msg.reactions ?? {})) {
+          const rest = ids.filter((id) => id !== characterId);
+          if (rest.length) reactions[e] = rest;
+        }
+        if (!had) reactions[emoji] = [...(reactions[emoji] ?? []), characterId];
+        persist(
+          "toggleReaction",
+          supabase.from("chat_messages").update({ reactions }).eq("id", messageId),
+        );
+        return {
+          ...s,
+          chatMessages: s.chatMessages.map((m) =>
+            m.id === messageId ? { ...m, reactions } : m,
+          ),
+        };
+      });
+    },
+    [],
+  );
+
+  // Chats mit ungelesener Nachricht: mindestens ein eigener Charakter ist dabei,
+  // die neueste Nachricht kommt von einem fremden und ist neuer als der letzte Besuch.
+  const unreadChatIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!currentPlayer) return ids;
+    const mine = new Set(
+      state.characters.filter((c) => c.player_id === currentPlayer.id).map((c) => c.id),
+    );
+    const last = new Map<string, ChatMessage>();
+    for (const m of state.chatMessages) {
+      if (m.kind === "date") continue;
+      const cur = last.get(m.chat_id);
+      if (!cur || m.created_at > cur.created_at) last.set(m.chat_id, m);
+    }
+    for (const chat of state.chats) {
+      const m = last.get(chat.id);
+      if (!m || mine.has(m.character_id)) continue;
+      if (!chat.participant_ids.some((id) => mine.has(id))) continue;
+      const seen = reads[chat.id] ? new Date(reads[chat.id]).getTime() : 0;
+      if (new Date(m.created_at).getTime() > seen) ids.add(chat.id);
+    }
+    return ids;
+  }, [state.chats, state.chatMessages, state.characters, reads, currentPlayer]);
+  const isChatNew = useCallback((chatId: string) => unreadChatIds.has(chatId), [unreadChatIds]);
+  const unreadChatCount = unreadChatIds.size;
+
   const value = useMemo<StoreValue>(
     () => ({
       ...state,
@@ -898,6 +1109,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       isSceneNew,
       markSceneSeen,
       markAllScenesSeen,
+      messagesOf,
+      canWriteAs,
+      openChat,
+      addMessage,
+      deleteMessage,
+      toggleReaction,
+      isChatNew,
+      markChatSeen,
+      unreadChatCount,
     }),
     [
       state,
@@ -950,6 +1170,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       isSceneNew,
       markSceneSeen,
       markAllScenesSeen,
+      messagesOf,
+      canWriteAs,
+      openChat,
+      addMessage,
+      deleteMessage,
+      toggleReaction,
+      isChatNew,
+      markChatSeen,
+      unreadChatCount,
     ],
   );
 

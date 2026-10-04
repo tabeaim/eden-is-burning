@@ -78,6 +78,26 @@ mehrspaltige Raster und Karte-neben-Text erst ab `sm`/`md`/`lg` nebeneinander,
 Button-Reihen mit `flex-wrap`, keine festen Breiten ohne `max-w-full`. Die
 Seitenleiste ist unter `md` eine Schublade (Menü-Taste in der Kopfleiste).
 
+## Messenger („Handy") — `components/phone/`
+
+Der Messenger sieht bewusst aus wie eine Messenger-App, nicht wie der Rest der
+Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
+
+- **`PhoneFrame`**: auf dem Handy vollflächig, ab `sm` ein Gerät mit Rahmen mittig
+  auf der Seite. Alle Seiten unter `/handy` stecken darin; Kopfzeile immer
+  `PhoneHeader`, Avatare `PhoneAvatar`.
+- **Sprechblasen:** eigene rechts in `bg-accent text-black`, fremde links in
+  `bg-bg-surface-2`; nur die letzte Blase einer Folge hat die spitze Ecke. Bis zu
+  drei Emojis ohne Text stehen groß ohne Blase. Reaktionen hängen als kleine Pills
+  unter der Blase.
+- **Antippen** einer Nachricht öffnet ein Blatt von unten (Reaktionen, Antworten,
+  Kopieren, Löschen) — keine Hover-Menüs, damit es mobil gleich funktioniert.
+- **Eingabe:** immer `Composer`; Emoji-, GIF- und Plus-Feld klappen darunter auf
+  wie eine Tastatur. Eingabefelder im Handy haben mobil `text-[16px]` (sonst zoomt
+  iOS hinein).
+- **Zeit:** Blasen tragen keine Uhrzeit (die echte wäre 2026). Das Inplay-Datum
+  steht als Tagestrenner im Chat (Plus → „Inplay-Datum").
+
 ## Detailseiten (Szene, Charakter, Ort)
 
 - Aktions-Buttons („Bearbeiten") rechts **über** der Trennlinie; die Seite zeichnet
