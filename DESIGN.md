@@ -111,7 +111,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Admins, immer mit `ConfirmDialog`.
 - **Dashboard:** Chats erscheinen als `ChatRow` (`components/phone/ChatRow.tsx`,
   Aufbau wie `SceneRow`, Handy-Icon statt Streichholz) — in „letzte 24h" als
-  „Neue Nachrichten bei A & B", unter „Du bist dran" als „Chat mit …" samt Knopf
+  „Neue Nachrichten bei A & B", unter „Du bist dran" als „Chat mit …" (nie mit
+  Vorschau des Nachrichtentexts — nichts spoilern) samt Knopf
   „Left on read" (pausiert den Chat, bis wieder jemand schreibt).
 - **Captic ist optional** (An/Aus-Schalter in `PhoneSettings`); das Profil wird
   in der App auf dem Handy bearbeitet.
@@ -124,8 +125,9 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Telefonszenen** sind normale Szenen (Zusammenfassung, Timeline, Plots):
   Häkchen „Telefonat" im Neue-Szene-Formular bzw. beim Bearbeiten — dann ohne
   Bezirk/Ort (`location_area: "phone"`, Ort „am Telefon" mit Handy-Icon in der
-  Orts-Bubble) und ohne eigenen Titel „A & B on the phone". Vom Handy aus öffnet
-  sich dasselbe Formular vorausgefüllt (`phoneSceneHref`).
+  Orts-Bubble) und ohne eigenen Titel „A & B on the phone". Vom Handy aus
+  (Anruf-Dialog, nach dem Annehmen) entsteht die Szene direkt, nur mit
+  optionalem Titel (`useCreatePhoneScene`).
 - **Buttons im Handy:** Dialoge und Formulare nutzen die normalen Buttons des
   Design-Systems (`rounded-md`, Primär-Aktion `bg-accent/90 text-black`). Runde,
   farbige Knöpfe nur dort, wo das Handy selbst simuliert wird (Annehmen/Ablehnen,

@@ -5,11 +5,12 @@ import type { Chat } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { formatDateTimeShort, formatInplayDateShort } from "@/lib/format";
 import { rememberPhone } from "@/lib/phone";
-import { chatTitle, messageSnippet } from "@/lib/chats";
+import { chatTitle } from "@/lib/chats";
 import { Icon } from "@/components/Icon";
 
 // Chat als kompakte Zeile fürs Dashboard — gleicher Aufbau wie `SceneRow`
-// (Symbol, Titel, Unterzeile; rechts wer zuletzt schrieb und wann). Führt direkt
+// (Symbol, Titel, Unterzeile; rechts wer zuletzt schrieb und wann). Zeigt nie
+// den Text der Nachricht. Führt direkt
 // in den Chat auf dem Handy; mit `forCharacter` auf dem Handy dieses Charakters.
 export function ChatRow({
   chat,
@@ -57,8 +58,8 @@ export function ChatRow({
           </Link>
         </div>
         <div className="truncate text-[0.875rem] text-text-tertiary">
-          {date && `${formatInplayDateShort(date.content.split("|")[0])} · `}
-          {last ? messageSnippet(last) : "Noch keine Nachricht"}
+          {/* bewusst ohne Vorschau der Nachricht — nichts spoilern */}
+          SMS{date && ` · ${formatInplayDateShort(date.content.split("|")[0])}`}
         </div>
       </div>
       {action ? (

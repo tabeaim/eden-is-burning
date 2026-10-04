@@ -16,20 +16,6 @@ import { AuNameField, auNames } from "@/components/AuNameField";
 import { DatePicker } from "@/components/DatePicker";
 import { PHONE_AREA, PHONE_LOCATION, phoneSceneTitle } from "@/lib/phone";
 
-// Vorbelegung aus der Adresse — z.B. vom Handy: /szenen/neu?telefon=1&von=…&mit=…
-// (`anruf`: dieser Anruf bekommt die Szene; `log`: Anruf in die Anrufliste eintragen)
-function prefill() {
-  const q = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
-  return {
-    phone: q.get("telefon") === "1",
-    from: q.get("von"),
-    to: q.get("mit"),
-    date: q.get("datum"),
-    time: q.get("zeit"),
-    callId: q.get("anruf"),
-    log: q.get("log") === "1",
-  };
-}
 
 // Pflichtfeld-Stern
 function Req() {
@@ -42,8 +28,6 @@ export default function NewScenePage() {
     addScene,
     addLocation,
     addPost,
-    addCall,
-    updateCall,
     character,
     characters,
     npcs,
@@ -51,22 +35,19 @@ export default function NewScenePage() {
     currentPlayer,
     charactersOf,
   } = useStore();
-  const [pre] = useState(prefill);
-  // Telefonat: kein Bezirk/Ort — die Szene spielt „am Telefon"
-  const [phone, setPhone] = useState(pre.phone);
+  // Telefonat statt Ort: kein Bezirk/Ort nötig — die Szene spielt „am Telefon"
+  const [phone, setPhone] = useState(false);
 
   const [title, setTitle] = useState("");
   const [area, setArea] = useState<AreaKey>("rivers_edge");
   const [locationName, setLocationName] = useState("");
-  const [date, setDate] = useState(pre.date ?? "2021-11-23");
-  const [time, setTime] = useState(pre.time ?? "Nachmittag");
+  const [date, setDate] = useState("2021-11-23");
+  const [time, setTime] = useState("Nachmittag");
   const [tw, setTw] = useState(false);
   const [au, setAu] = useState(false);
   const [auName, setAuName] = useState("");
   const [summary, setSummary] = useState("");
-  const [selected, setSelected] = useState<string[]>(
-    [pre.from, pre.to].filter((id): id is string => !!id),
-  );
+  const [selected, setSelected] = useState<string[]>([]);
   // Ohne eigenen Titel heißt ein Telefonat „A & B on the phone"
   const phoneTitle = phoneSceneTitle(
     selected.map((id) => character(id)).filter((c): c is NonNullable<typeof c> => !!c),
@@ -110,19 +91,6 @@ export default function NewScenePage() {
     // Optionaler erster Post (kann auch später von einer teilnehmenden Person kommen)
     if (firstPost.trim() && firstChar) {
       addPost(id, firstChar, firstPost.trim());
-    }
-    // Vom Handy aus: Szene an den Anruf hängen bzw. den Anruf in die Liste eintragen
-    if (phone && pre.callId) {
-      updateCall(pre.callId, { scene_id: id });
-    } else if (phone && pre.log && pre.from && pre.to) {
-      addCall({
-        caller_id: pre.from,
-        callee_id: pre.to,
-        inplay_date: date,
-        inplay_time: time,
-        status: "accepted",
-        scene_id: id,
-      });
     }
     router.push(`/szenen/${id}`);
   }

@@ -8,8 +8,11 @@ import type { Character, PhoneCall } from "@/lib/types";
 import { formatInplayDateShort } from "@/lib/format";
 import { DatePicker } from "@/components/DatePicker";
 import { Icon } from "@/components/Icon";
-import { phoneSceneHref } from "@/lib/phone";
-import { IncomingCall } from "@/components/phone/IncomingCall";
+import {
+  IncomingCall,
+  PhoneSceneDialog,
+  useCreatePhoneScene,
+} from "@/components/phone/IncomingCall";
 import { PhoneAvatar, PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
 
 const first = (c: Character | undefined) => c?.name.split(" ")[0] ?? "?";
@@ -27,6 +30,9 @@ export default function PhoneAppPage() {
   );
   const [q, setQ] = useState("");
   const [contact, setContact] = useState<Character | null>(null);
+  // Angenommener Anruf ohne Szene: lässt sich aus der Anrufliste nachholen
+  const [sceneFor, setSceneFor] = useState<PhoneCall | null>(null);
+  const createScene = useCreatePhoneScene();
   // „Neuer Anruf" im Seitenmenü führt per #kontakte direkt zu den Kontakten
   useEffect(() => {
     const onHash = () => window.location.hash === "#kontakte" && setView("contacts");
@@ -112,14 +118,14 @@ export default function PhoneAppPage() {
                 </Link>
               ) : c.status === "accepted" ? (
                 // angenommen, aber (noch) ohne Szene: lässt sich nachholen
-                <Link
+                <button
                   key={c.id}
-                  href={phoneSceneHref({ from: c.caller_id, to: c.callee_id, date: c.inplay_date, time: c.inplay_time, call: c.id })}
+                  onClick={() => setSceneFor(c)}
                   title="Szene zu diesem Anruf erstellen"
-                  className={`${cls} hover:bg-white/[0.03]`}
+                  className={`${cls} w-full text-left hover:bg-white/[0.03]`}
                 >
                   {body}
-                </Link>
+                </button>
               ) : (
                 <div key={c.id} className={cls}>
                   {body}
@@ -189,13 +195,20 @@ export default function PhoneAppPage() {
             setContact(null);
             setView("log");
           }}
-          onScene={(date, time) =>
-            router.push(phoneSceneHref({ from: me.id, to: contact.id, date, time, log: true }))
-          }
+          onScene={(date, time, title) => {
+            const call = { caller_id: me.id, callee_id: contact.id, inplay_date: date, inplay_time: time };
+            const sceneId = createScene(call, title);
+            addCall({ ...call, status: "accepted", scene_id: sceneId });
+            router.push(`/szenen/${sceneId}`);
+          }}
         />
       )}
 
-      <IncomingCall characterId={me.id} />
+      {sceneFor ? (
+        <PhoneSceneDialog call={sceneFor} onClose={() => setSceneFor(null)} />
+      ) : (
+        <IncomingCall characterId={me.id} />
+      )}
     </PhoneFrame>
   );
 }
@@ -203,8 +216,8 @@ export default function PhoneAppPage() {
 const dialogWrap = "absolute inset-0 z-20 overflow-y-auto bg-black/55 p-3 pt-12";
 const dialogBox = "rounded-2xl border border-border-subtle bg-bg-surface-2 p-4";
 
-// Anruf starten: Inplay-Datum und Uhrzeit sind Pflicht; dann anklingeln oder
-// direkt eine Telefonszene erstellen (Neue-Szene-Formular, vorausgefüllt).
+// Anruf starten: oben Inplay-Datum und Uhrzeit (Pflicht) und „anklingeln",
+// darunter optionaler Titel und „Telefonszene erstellen" (ohne anzuklingeln).
 // Buttons nach DESIGN.md: rounded-md, Primär-Aktion in Akzentfarbe.
 function CallDialog({
   me,
@@ -216,14 +229,16 @@ function CallDialog({
   me: Character;
   contact: Character;
   onRing: (date: string, time: string) => void;
-  onScene: (date: string, time: string) => void;
+  onScene: (date: string, time: string, title: string) => void;
   onCancel: () => void;
 }) {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("20:00");
+  const [title, setTitle] = useState("");
   const ok = !!date && !!time;
   const button =
-    "rounded-md border border-border-subtle px-3 py-1.5 text-[0.8125rem] disabled:opacity-40";
+    "w-full rounded-md border px-3 py-2 text-[0.8125rem] font-medium disabled:opacity-40";
+  const hint = "mt-1.5 text-center text-[0.75rem] text-text-tertiary";
   return (
     <div className={dialogWrap} onClick={onCancel}>
       <div onClick={(e) => e.stopPropagation()} className={dialogBox}>
@@ -248,31 +263,39 @@ function CallDialog({
           />
         </label>
 
-        <p className="mt-3 text-[0.75rem] leading-relaxed text-text-tertiary">
-          <span className="text-text-secondary">Anklingeln:</span> {first(contact)} bekommt den Anruf
-          aufs Handy und kann annehmen oder ablehnen.{" "}
-          <span className="text-text-secondary">Telefonszene erstellen:</span> direkt eine Szene
-          eröffnen, ohne vorher anzuklingeln.
+        <button
+          disabled={!ok}
+          onClick={() => onRing(date, time)}
+          className={`${button} mt-4 border-transparent bg-accent/90 text-black hover:bg-accent`}
+        >
+          {first(contact)} anklingeln
+        </button>
+        <p className={hint}>
+          {first(contact)} bekommt den Anruf aufs Handy und kann annehmen oder ablehnen.
         </p>
-        <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
-          <button onClick={onCancel} className="mr-auto px-1 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
-            Abbrechen
-          </button>
+
+        <div className="mt-4 border-t border-border-subtle pt-4">
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={`Titel (optional): ${first(me)} & ${first(contact)} on the phone`}
+            className="w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/20 sm:text-[0.875rem]"
+          />
           <button
             disabled={!ok}
-            onClick={() => onScene(date, time)}
-            className={`${button} bg-white/[0.04] text-text-primary hover:bg-white/[0.08]`}
+            onClick={() => onScene(date, time, title)}
+            className={`${button} mt-2 border-border-subtle bg-white/[0.04] text-text-primary hover:bg-white/[0.08]`}
           >
             Telefonszene erstellen
           </button>
-          <button
-            disabled={!ok}
-            onClick={() => onRing(date, time)}
-            className={`${button} border-transparent bg-accent/90 font-medium text-black hover:bg-accent`}
-          >
-            {first(contact)} anklingeln
-          </button>
+          <p className={hint}>Direkt eine Szene eröffnen, ohne vorher anzuklingeln.</p>
         </div>
+        <button
+          onClick={onCancel}
+          className="mt-3 w-full py-1 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+        >
+          Abbrechen
+        </button>
       </div>
     </div>
   );

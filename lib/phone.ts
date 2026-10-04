@@ -130,22 +130,6 @@ export function phoneSceneTitle(participants: { name: string }[]): string {
   const names = participants.map((p) => p.name.split(" ")[0]);
   return `${names.join(" & ") || "Jemand"} on the phone`;
 }
-// Neue-Szene-Formular, als Telefonat vorausgefüllt. `call`: bestehender Anruf,
-// der die Szene bekommt; `log`: stattdessen einen (angenommenen) Anruf eintragen.
-export function phoneSceneHref(p: {
-  from: string;
-  to: string;
-  date: string;
-  time?: string | null;
-  call?: string;
-  log?: boolean;
-}): string {
-  const q = new URLSearchParams({ telefon: "1", von: p.from, mit: p.to, datum: p.date });
-  if (p.time) q.set("zeit", p.time);
-  if (p.call) q.set("anruf", p.call);
-  if (p.log) q.set("log", "1");
-  return `/szenen/neu?${q}`;
-}
 
 // --- Inplay-Uhrzeit ---------------------------------------------------------
 // „23:58" + 5 → „00:03" (läuft über Mitternacht einfach weiter)
