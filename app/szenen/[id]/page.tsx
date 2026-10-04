@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
@@ -14,6 +14,7 @@ import { CharacterBubble, LocationBubble } from "@/components/Bubble";
 import { PHONE_AREA } from "@/lib/phone";
 import { AuTag } from "@/components/SceneCard";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { CharacterSelect } from "@/components/CharacterSelect";
 import type { Character, Post, Scene } from "@/lib/types";
 
 function focusReplyEditor() {
@@ -573,8 +574,10 @@ function PostRow({
   );
   const [editing, setEditing] = useState(false);
 
-  // Bei Textauswahl im Post: Buttons zum Zitieren oder Kopieren anbieten.
-  function onMouseUp() {
+  // Bei Textauswahl im Post „Zitat hinzufügen" anbieten. Die Auswahl selbst bleibt
+  // stehen und lässt sich ganz normal kopieren (Tastatur oder Rechtsklick).
+  function onMouseUp(e: React.MouseEvent) {
+    if (e.button !== 0) return; // Rechtsklick auf die Auswahl: Browser-Menü, nichts ändern
     const sel = window.getSelection();
     const text = sel?.toString().trim() ?? "";
     if (
@@ -602,12 +605,6 @@ function PostRow({
     setQuoteBtn(null);
   }
 
-  function copySelection() {
-    if (!quoteBtn) return;
-    navigator.clipboard?.writeText(quoteBtn.text).catch(() => {});
-    setQuoteBtn(null);
-  }
-
   function startEdit() {
     setQuoteBtn(null);
     setEditing(true);
@@ -629,6 +626,12 @@ function PostRow({
     setConfirmDelete(true);
   }
 
+  // Gleiches Objekt über Renderings hinweg: React fasst das HTML dann nicht an und
+  // die Textauswahl geht beim Einblenden des Zitat-Knopfs nicht verloren.
+  const html = useMemo(
+    () => ({ __html: highlightTerm(renderPost(post.content), term ?? "") }),
+    [post.content, term],
+  );
   const card = <SceneCharacterCard character={character} player={player} />;
   const prose = editing ? (
     <div className="flex-1 min-w-0">
@@ -662,9 +665,7 @@ function PostRow({
       <div
         ref={proseRef}
         className="prose-serif text-text-primary"
-        dangerouslySetInnerHTML={{
-          __html: highlightTerm(renderPost(post.content), term ?? ""),
-        }}
+        dangerouslySetInnerHTML={html}
       />
       {quoteBtn && (
         <div
@@ -676,14 +677,7 @@ function PostRow({
             onClick={saveQuote}
             className="flex items-center gap-1 px-1.5 hover:text-accent"
           >
-            <Icon name="quote" size={12} /> Zitat
-          </button>
-          <button
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={copySelection}
-            className="flex items-center gap-1 px-1.5 hover:text-accent"
-          >
-            <Icon name="copy" size={12} /> Kopieren
+            <Icon name="quote" size={12} /> Zitat hinzufügen
           </button>
         </div>
       )}
@@ -809,33 +803,22 @@ function ReplyBox({
 
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={activeChar?.faceclaim_image_url ?? ""}
-            alt={activeChar?.name}
-            className="w-8 h-8 rounded-full object-cover bg-bg-primary"
-          />
           <div>
             <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
               Antwort als
             </div>
-            {myChars.length > 1 ? (
-              <select
-                value={activeChar?.id ?? ""}
-                onChange={(e) => setActiveCharId(e.target.value)}
-                aria-label="Charakter wählen"
-                className="mt-0.5 max-w-full rounded-md border border-border-subtle bg-bg-primary px-2 py-1 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
-              >
-                {myChars.map((c) => (
-                  <option key={c.id} value={c.id} className="bg-bg-surface">
-                    {c.name}
-                    {scene.participant_ids.includes(c.id) ? "" : " (steigt neu ein)"}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className="text-[0.875rem] text-text-primary">{activeChar?.name}</div>
-            )}
+            <div className="mt-1">
+              {myChars.length > 1 ? (
+                <CharacterSelect
+                  characters={myChars}
+                  value={activeChar?.id ?? null}
+                  onChange={setActiveCharId}
+                  hint={(c) => (scene.participant_ids.includes(c.id) ? null : "steigt neu ein")}
+                />
+              ) : (
+                <div className="text-[0.875rem] text-text-primary">{activeChar?.name}</div>
+              )}
+            </div>
             {activeChar && !scene.participant_ids.includes(activeChar.id) && (
               <div className="mt-0.5 text-[0.8125rem] text-accent">steigt neu in die Szene ein</div>
             )}

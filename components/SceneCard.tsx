@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useContextMenu } from "./ContextMenu";
 import { useStore, whoseTurn } from "@/lib/store";
 import {
   formatDateTime,
@@ -50,6 +51,20 @@ export function AuTag({ scene }: { scene: Scene }) {
 
 // Die ganze Box führt zur Szene (Titel-Link, über die Box gestreckt); einzelne
 // Stellen darin können eigene Ziele haben (z.B. „Letzter Post" → neuester Post).
+// Rechtsklick auf eine Szenenbox: gelesen/ungelesen umschalten (nur wenn die
+// Szene Posts hat – sonst gibt es nichts zu lesen).
+function useSceneMenu(scene: Scene) {
+  const { isSceneNew, markSceneSeen, markSceneUnread, postsOf } = useStore();
+  const hasPosts = postsOf(scene.id).length > 0;
+  return useContextMenu(
+    !hasPosts
+      ? []
+      : isSceneNew(scene.id)
+        ? [{ label: "Als gelesen markieren", onClick: () => markSceneSeen(scene.id) }]
+        : [{ label: "Als ungelesen markieren", onClick: () => markSceneUnread(scene.id) }],
+  );
+}
+
 const STRETCHED = "after:absolute after:inset-0 after:content-['']";
 
 // Ort in der Faktenzeile: bleibt reiner Text, führt aber aufs Ortsprofil. Orte
@@ -87,13 +102,16 @@ export function SceneCard({
     .filter(Boolean) as Character[];
   const posts = postsOf(scene.id);
   const lastPost = posts.length ? posts[posts.length - 1] : null;
+  const { onContextMenu, menu } = useSceneMenu(scene);
 
   return (
     <div
+      onContextMenu={onContextMenu}
       className={`relative flex items-center gap-4 rounded-xl border border-border-subtle px-4 py-3.5 transition-colors hover:bg-white/[0.03] ${
         muted ? "bg-bg-surface/60" : "bg-bg-surface"
       }`}
     >
+      {menu}
       {/* Streichholz groß, vertikal mittig über die ganze Karte */}
       <SceneMatch scene={scene} size={38} />
       <div className="min-w-0 flex-1">
@@ -163,9 +181,14 @@ export function SceneRow({ scene }: { scene: Scene }) {
   const posts = postsOf(scene.id);
   const lastPost = posts.length ? posts[posts.length - 1] : null;
   const lastChar = lastPost ? character(lastPost.character_id) : undefined;
+  const { onContextMenu, menu } = useSceneMenu(scene);
 
   return (
-    <div className="relative flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-surface px-3.5 py-2.5 hover:bg-white/[0.03] transition-colors">
+    <div
+      onContextMenu={onContextMenu}
+      className="relative flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-surface px-3.5 py-2.5 hover:bg-white/[0.03] transition-colors"
+    >
+      {menu}
       <SceneMatch scene={scene} size={24} />
       <div className="min-w-0 flex-1">
         <div className="font-serif text-[0.875rem] text-text-primary truncate">

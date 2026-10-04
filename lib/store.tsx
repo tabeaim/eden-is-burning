@@ -106,6 +106,7 @@ interface StoreValue extends PersistedState {
   isSceneNew: (sceneId: string) => boolean;
   markSceneSeen: (sceneId: string) => void;
   markAllScenesSeen: () => void;
+  markSceneUnread: (sceneId: string) => void;
   // --- Messenger ---
   messagesOf: (chatId: string) => ChatMessage[];
   // Darf ich als dieser Charakter schreiben? (eigene Charaktere und eigene NPCs)
@@ -964,6 +965,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [currentPlayer?.id],
   );
 
+  const markSceneUnread = useCallback(
+    (sceneId: string) => {
+      if (!currentPlayer) return;
+      const pid = currentPlayer.id;
+      setReads((r) => {
+        const next = { ...r };
+        delete next[sceneId];
+        try {
+          localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentPlayer?.id],
+  );
+
   const markAllScenesSeen = useCallback(() => {
     if (!currentPlayer) return;
     const pid = currentPlayer.id;
@@ -1335,6 +1355,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       isSceneNew,
       markSceneSeen,
       markAllScenesSeen,
+      markSceneUnread,
       messagesOf,
       canWriteAs,
       openChat,
@@ -1407,6 +1428,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       isSceneNew,
       markSceneSeen,
       markAllScenesSeen,
+      markSceneUnread,
       messagesOf,
       canWriteAs,
       openChat,

@@ -68,6 +68,12 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   der Charakter lässt sich im Feld immer wechseln, und wer mit einem neuen
   Charakter schreibt, wird als Teilnehmer*in eingetragen. „Antworten",
   „Weitergeben" und „Beenden" stehen im Szenenkopf und noch einmal unter den Posts.
+- **Rechtsklick auf eine Szenenbox** (`SceneCard`, `SceneRow`): kleines Menü an
+  der Maus (`components/ContextMenu.tsx`) – „Als ungelesen/gelesen markieren".
+- **Charakter wählen:** `components/CharacterSelect.tsx` (Aufklappliste mit
+  Avatar), nie das Browser-eigene `<select>` – das lässt sich nicht stylen.
+- **Text im Post markieren:** Die Auswahl bleibt stehen (normal kopierbar),
+  darüber erscheint nur „Zitat hinzufügen".
 - **Hover in der Szene:** Die Bio erscheint nur über dem Avatar (benannte Gruppe
   `group/ava`), Bearbeiten/Löschen eines Posts beim Hovern über dem Post
   (`group/post`) – verschachtelte Hover immer als benannte Gruppen.
