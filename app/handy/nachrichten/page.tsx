@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { formatInplayDateShort } from "@/lib/format";
 import { useStore } from "@/lib/store";
-import type { ChatMessage } from "@/lib/types";
+import type { Chat, ChatMessage } from "@/lib/types";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
 import { chatTitle, isArchivedFor, isLeftOnRead, messageSnippet } from "@/lib/chats";
 import { Icon } from "@/components/Icon";
 import {
@@ -15,23 +17,36 @@ import {
   useMyPhone,
 } from "@/components/phone/PhoneFrame";
 
-type Tab = "mine" | "all" | "archive";
+type Tab = "mine" | "others";
 const TAB_KEY = "eden:sms-tab";
 
 export default function MessagesPage() {
-  const { chats, chatMessages, character, isChatNew } = useStore();
+  const { chats, chatMessages, character, isChatNew, canWriteAs, isAdmin, archiveChat, deleteChat } =
+    useStore();
   const { myChars, me, setOwner } = useMyPhone();
-  // „Meine": Chats des Handys, das man in der Hand hat · „Alle": jeder Chat im
-  // Spiel zum Mitlesen · „Archiv": auf diesem Handy weggelegte Chats.
+  // „Meine": Chats des Charakters, dessen Handy man in der Hand hat · „Andere":
+  // alle übrigen Chats zum Mitlesen. Beide haben ein eigenes Archiv (Taste rechts).
   const [tabState, setTabState] = useState<Tab>(() => {
     try {
       const t = typeof window !== "undefined" ? localStorage.getItem(TAB_KEY) : null;
-      return t === "all" || t === "archive" ? t : "mine";
+      return t === "others" ? t : "mine";
     } catch {
       return "mine";
     }
   });
-  const tab: Tab = me ? tabState : "all";
+  const tab: Tab = me ? tabState : "others";
+  const [showArchive, setShowArchive] = useState(false);
+  // Rechtsklick (am Handy: lange drücken) auf einen Chat öffnet seine Optionen
+  const [menuChat, setMenuChat] = useState<Chat | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Chat | null>(null);
+  const press = useRef<{ timer: ReturnType<typeof setTimeout> | null; fired: boolean }>({
+    timer: null,
+    fired: false,
+  });
+  const cancelPress = () => {
+    if (press.current.timer) clearTimeout(press.current.timer);
+    press.current.timer = null;
+  };
   const setTab = (t: Tab) => {
     setTabState(t);
     try {
@@ -61,20 +76,18 @@ export default function MessagesPage() {
   }, [chatMessages, query]);
 
   const myId = me?.id;
-  const inTab = chats.filter((c) => {
-    if (tab === "all" || !myId) return true;
-    if (!c.participant_ids.includes(myId)) return false;
-    return isArchivedFor(c, myId) === (tab === "archive");
-  });
-  const archivedCount = myId
-    ? chats.filter((c) => c.participant_ids.includes(myId) && isArchivedFor(c, myId)).length
-    : 0;
+  const ofTab = chats.filter(
+    (c) => !myId || c.participant_ids.includes(myId) === (tab === "mine"),
+  );
+  const archivedCount = myId ? ofTab.filter((c) => isArchivedFor(c, myId)).length : 0;
+  const inArchive = showArchive && !!myId;
+  const inTab = ofTab.filter((c) => !myId || isArchivedFor(c, myId) === inArchive);
 
   const rows = inTab
     .map((chat) => {
       // In „Alle" stehen beide Namen da, sonst nur das Gegenüber
       const people = chat.participant_ids
-        .filter((id) => tab === "all" || id !== myId)
+        .filter((id) => id !== myId)
         .map((id) => character(id));
       return { chat, people, title: chatTitle(people), last: last.get(chat.id), hit: hits.get(chat.id) };
     })
@@ -87,8 +100,7 @@ export default function MessagesPage() {
 
   const tabs: [Tab, string][] = [
     ["mine", "Meine"],
-    ["all", "Alle"],
-    ["archive", archivedCount > 0 ? `Archiv (${archivedCount})` : "Archiv"],
+    ["others", "Andere"],
   ];
 
   return (
@@ -120,6 +132,19 @@ export default function MessagesPage() {
                 {label}
               </button>
             ))}
+            {/* Archiv des gewählten Reiters ein-/ausblenden */}
+            <button
+              onClick={() => setShowArchive((v) => !v)}
+              aria-pressed={showArchive}
+              title={showArchive ? "Archiv schließen" : "Archiv zeigen"}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-[0.8125rem] font-medium transition-colors ${
+                showArchive
+                  ? "bg-text-primary text-bg-primary"
+                  : "bg-white/[0.06] text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              Archiv{archivedCount > 0 ? ` (${archivedCount})` : ""}
+            </button>
           </div>
         )}
         <label className="flex items-center gap-2 rounded-full bg-white/[0.06] px-3 py-1.5 text-text-tertiary">
@@ -141,17 +166,17 @@ export default function MessagesPage() {
       <div className="min-h-0 flex-1 overflow-y-auto">
         {rows.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
-            <div className="text-[2.5rem] leading-none">{query ? "🔍" : tab === "archive" ? "🗄️" : "💬"}</div>
+            <div className="text-[2.5rem] leading-none">{query ? "🔍" : inArchive ? "🗄️" : "💬"}</div>
             <p className="text-[0.875rem] text-text-secondary">
               {query
                 ? "Nichts gefunden."
-                : tab === "archive"
+                : inArchive
                   ? "Im Archiv liegt nichts."
                   : tab === "mine" && me
                     ? `${me.name.split(" ")[0]} hat noch keine Chats.`
                     : "Noch keine Chats."}
             </p>
-            {!query && tab === "mine" && (
+            {!query && tab === "mine" && !inArchive && (
               <Link
                 href="/handy/neu"
                 className="rounded-full bg-accent/90 px-4 py-2 text-[0.8125rem] font-medium text-black"
@@ -162,7 +187,7 @@ export default function MessagesPage() {
           </div>
         )}
         {rows.map(({ chat, people, title, last: m, hit }) => {
-          const unread = tab !== "all" && isChatNew(chat.id);
+          const unread = tab === "mine" && isChatNew(chat.id);
           const shown = hit ?? m;
           const date = dates.get(chat.id);
           const paused = tab === "mine" && !!myId && isLeftOnRead(chat, myId, m);
@@ -170,7 +195,27 @@ export default function MessagesPage() {
             <Link
               key={chat.id}
               href={`/handy/${chat.id}${hit ? `#${hit.id}` : ""}`}
-              className="flex items-center gap-3 px-3 py-2.5 hover:bg-white/[0.03] active:bg-white/[0.06]"
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setMenuChat(chat);
+              }}
+              onPointerDown={(e) => {
+                if (e.pointerType === "mouse") return;
+                press.current.fired = false;
+                press.current.timer = setTimeout(() => {
+                  press.current.fired = true;
+                  setMenuChat(chat);
+                }, 550);
+              }}
+              onPointerUp={cancelPress}
+              onPointerMove={cancelPress}
+              onPointerCancel={cancelPress}
+              onClick={(e) => {
+                // nach langem Drücken nicht auch noch den Chat öffnen
+                if (press.current.fired) e.preventDefault();
+                press.current.fired = false;
+              }}
+              className="select-none [-webkit-touch-callout:none] flex items-center gap-3 px-3 py-2.5 hover:bg-white/[0.03] active:bg-white/[0.06]"
             >
               <span className="flex shrink-0 -space-x-5">
                 {people.slice(0, 2).map(
@@ -193,7 +238,7 @@ export default function MessagesPage() {
                   <span className={`min-w-0 flex-1 truncate text-[0.8125rem] ${unread || hit ? "text-text-primary" : "text-text-tertiary"}`}>
                     {shown ? (
                       <>
-                        {shown.character_id === myId && tab !== "all"
+                        {shown.character_id === myId && tab === "mine"
                           ? "Du: "
                           : people.length > 1
                             ? `${character(shown.character_id)?.name.split(" ")[0] ?? "?"}: `
@@ -216,6 +261,51 @@ export default function MessagesPage() {
           );
         })}
       </div>
+
+      {menuChat && (
+        <Sheet onClose={() => setMenuChat(null)}>
+          <div className="mb-2 truncate px-1 text-[0.8125rem] text-text-tertiary">
+            {chatTitle(menuChat.participant_ids.filter((id) => id !== myId).map((id) => character(id)))}
+          </div>
+          <SheetList>
+            {myId && (
+              <SheetButton
+                onClick={() => {
+                  archiveChat(menuChat.id, myId, !isArchivedFor(menuChat, myId));
+                  setMenuChat(null);
+                }}
+              >
+                {isArchivedFor(menuChat, myId) ? "Aus dem Archiv holen" : "Archivieren"}
+              </SheetButton>
+            )}
+            {(isAdmin || menuChat.participant_ids.some(canWriteAs)) && (
+              <SheetButton
+                danger
+                onClick={() => {
+                  setConfirmDelete(menuChat);
+                  setMenuChat(null);
+                }}
+              >
+                Chat löschen
+              </SheetButton>
+            )}
+            <SheetButton onClick={() => setMenuChat(null)}>Abbrechen</SheetButton>
+          </SheetList>
+        </Sheet>
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Chat löschen?"
+          text="Der ganze Chat mit allen Nachrichten verschwindet für alle — auch für die andere Seite."
+          confirmLabel="Chat löschen"
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={() => {
+            deleteChat(confirmDelete.id);
+            setConfirmDelete(null);
+          }}
+        />
+      )}
     </PhoneFrame>
   );
 }

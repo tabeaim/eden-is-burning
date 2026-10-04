@@ -89,7 +89,7 @@ export function Composer({
               className="bg-transparent text-[16px] font-semibold text-text-primary outline-none [color-scheme:dark] sm:text-[0.8125rem]"
             />
           </label>
-          {[1, 5, 30].map((n) => (
+          {[1, 3, 9, 24].map((n) => (
             <button
               key={n}
               type="button"

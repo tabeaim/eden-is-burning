@@ -101,10 +101,14 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Handy; alle Blasen stehen links mit Vorname und Avatar (wie ein Gruppenchat).
   Chat-Namen: eine Person mit vollem Namen, mehrere nur mit Vornamen
   (`chatTitle` in `lib/chats.ts`).
-- **Liste:** Reiter „Meine / Alle / Archiv" plus Suchfeld (Namen und
-  Nachrichtentext; ein Treffer springt zur Nachricht). Archivieren und „Left on
-  read" stecken im ⋯-Menü des Chats; eine neue Nachricht holt den Chat aus dem
-  Archiv.
+- **Liste:** Reiter „Meine" (Chats dieses Charakters) und „Andere" (alle übrigen,
+  zum Mitlesen); die Taste „Archiv" daneben schaltet für den gewählten Reiter
+  aufs Archiv um. Dazu ein Suchfeld (Namen und Nachrichtentext; ein Treffer
+  springt zur Nachricht). Eine neue Nachricht holt den Chat aus dem Archiv.
+- **Chat-Optionen** (archivieren, löschen, „Left on read"): Rechtsklick bzw.
+  langes Drücken auf den Chat in der Liste oder ⋯ in der Chat-Ansicht — immer als
+  Blatt von unten (`components/phone/Sheet.tsx`). Löschen dürfen Beteiligte und
+  Admins, immer mit `ConfirmDialog`.
 - **Dashboard:** Chats erscheinen als `ChatRow` (`components/phone/ChatRow.tsx`,
   Aufbau wie `SceneRow`, Handy-Icon statt Streichholz) — in „letzte 24h" als
   „Neue Nachrichten bei A & B", unter „Du bist dran" als „Chat mit …" samt Knopf
@@ -123,15 +127,17 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   `bg-bg-surface-2`; nur die letzte Blase einer Folge hat die spitze Ecke. Bis zu
   drei Emojis ohne Text stehen groß ohne Blase. Reaktionen hängen als kleine Pills
   unter der Blase.
-- **Antippen** einer Nachricht öffnet ein Blatt von unten (Reaktionen, Antworten,
-  Kopieren, Löschen) — keine Hover-Menüs, damit es mobil gleich funktioniert.
+- **Antippen oder Rechtsklick** auf eine Nachricht öffnet ein Blatt von unten
+  (Reaktionen, Antworten, Kopieren, Bearbeiten, Löschen) — keine Hover-Menüs,
+  damit es mobil gleich funktioniert. Bearbeiten und Löschen nur bei eigenen
+  Nachrichten (Admins: alle).
 - **Eingabe:** immer `Composer`; Emoji-, GIF- und Plus-Feld klappen darunter auf
   wie eine Tastatur. Eingabefelder im Handy haben mobil `text-[16px]` (sonst zoomt
   iOS hinein).
 - **Zeit:** nie die echte. Jeder Chat beginnt mit einem Tagestrenner
   (Inplay-Datum, Pflicht bei „Neue SMS"; weitere über Plus → „Inplay-Datum").
   Jede Nachricht trägt eine Inplay-Uhrzeit: Die Eingabezeile schlägt die letzte
-  Uhrzeit + 1 Minute vor, änderbar per Zeitfeld oder +1/+5/+30.
+  Uhrzeit + 1 Minute vor, änderbar per Zeitfeld oder +1/+3/+9/+24.
 
 ## Detailseiten (Szene, Charakter, Ort)
 

@@ -114,6 +114,9 @@ interface StoreValue extends PersistedState {
     opts?: { replyTo?: string | null; time?: string | null },
   ) => void;
   deleteMessage: (messageId: string) => void;
+  updateMessage: (messageId: string, patch: Pick<ChatMessage, "content" | "inplay_time">) => void;
+  // Löscht den Chat samt aller Nachrichten — für alle
+  deleteChat: (chatId: string) => void;
   // „Left on read": die neueste Nachricht bewusst unbeantwortet lassen (oder zurücknehmen)
   leaveOnRead: (chatId: string, characterId: string, messageId: string | null) => void;
   // Chat auf dem Handy dieses Charakters archivieren / wieder hervorholen
@@ -1016,6 +1019,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const updateMessage = useCallback(
+    (messageId: string, patch: Pick<ChatMessage, "content" | "inplay_time">) => {
+      persist("updateMessage", supabase.from("chat_messages").update(patch).eq("id", messageId));
+      setState((s) => ({
+        ...s,
+        chatMessages: s.chatMessages.map((m) => (m.id === messageId ? { ...m, ...patch } : m)),
+      }));
+    },
+    [],
+  );
+
+  const deleteChat = useCallback((chatId: string) => {
+    // Nachrichten hängen per „on delete cascade" am Chat
+    persist("deleteChat", supabase.from("chats").delete().eq("id", chatId));
+    setState((s) => ({
+      ...s,
+      chats: s.chats.filter((c) => c.id !== chatId),
+      chatMessages: s.chatMessages.filter((m) => m.chat_id !== chatId),
+    }));
+  }, []);
+
   const leaveOnRead = useCallback(
     (chatId: string, characterId: string, messageId: string | null) => {
       setState((s) => {
@@ -1171,6 +1195,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       openChat,
       addMessage,
       deleteMessage,
+      updateMessage,
+      deleteChat,
       leaveOnRead,
       archiveChat,
       toggleReaction,
@@ -1234,6 +1260,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       openChat,
       addMessage,
       deleteMessage,
+      updateMessage,
+      deleteChat,
       leaveOnRead,
       archiveChat,
       toggleReaction,

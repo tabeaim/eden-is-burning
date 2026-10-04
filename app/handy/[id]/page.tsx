@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { use, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import type { Chat, ChatMessageKind } from "@/lib/types";
 import { formatDateTime, formatInplayDate } from "@/lib/format";
@@ -12,6 +13,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DatePicker } from "@/components/DatePicker";
 import { Composer } from "@/components/phone/Composer";
 import { EmojiPicker } from "@/components/phone/EmojiPicker";
+import { SheetButton } from "@/components/phone/Sheet";
 import {
   PhoneAvatar,
   PhoneFrame,
@@ -58,7 +60,10 @@ function ChatView({ chat }: { chat: Chat }) {
     markChatSeen,
     leaveOnRead,
     archiveChat,
+    updateMessage,
+    deleteChat,
   } = useStore();
+  const router = useRouter();
   const messages = messagesOf(chat.id);
   const parts = chat.participant_ids;
 
@@ -79,8 +84,15 @@ function ChatView({ chat }: { chat: Chat }) {
   const lastReal = [...messages].reverse().find((m) => m.kind !== "date");
   const leftBy = lastReal ? parts.filter((p) => chat.left_on_read?.[p] === lastReal.id) : [];
   const myTurn = canWrite && !!lastReal && lastReal.character_id !== self;
-  const archived = canWrite && isArchivedFor(chat, self);
+  // Archiviert wird auf dem Handy, das man in der Hand hat (auch beim Mitlesen)
+  const phoneId = reading ? (me?.id ?? "") : self;
+  const archived = !!phoneId && isArchivedFor(chat, phoneId);
+  // Löschen dürfen Beteiligte und Admins
+  const canDeleteChat = canWrite || isAdmin;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDeleteChat, setConfirmDeleteChat] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const editMsg = messages.find((m) => m.id === editId);
 
   // Inplay-Uhrzeit der nächsten Nachricht: läuft von der letzten Nachricht aus
   // eine Minute weiter, lässt sich in der Eingabezeile überschreiben.
@@ -147,7 +159,7 @@ function ChatView({ chat }: { chat: Chat }) {
       <PhoneHeader
         back="/handy/nachrichten"
         actions={
-          canWrite && (
+          (phoneId || canDeleteChat) && (
             <button
               onClick={() => setMenuOpen(true)}
               aria-label="Chat-Optionen"
@@ -177,7 +189,7 @@ function ChatView({ chat }: { chat: Chat }) {
             </span>
             {(reading || archived) && (
               <span className="block truncate text-[0.75rem] text-text-tertiary">
-                {reading ? "du liest mit" : "archiviert"}
+                {[reading && "du liest mit", archived && "archiviert"].filter(Boolean).join(" · ")}
               </span>
             )}
           </span>
@@ -239,6 +251,10 @@ function ChatView({ chat }: { chat: Chat }) {
               )}
               <button
                 onClick={() => setActiveId(m.id)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setActiveId(m.id);
+                }}
                 className={`relative max-w-[78%] text-left ${
                   big
                     ? "text-[2.75rem] leading-tight"
@@ -439,6 +455,16 @@ function ChatView({ chat }: { chat: Chat }) {
                   Kopieren
                 </SheetButton>
               )}
+              {active.kind === "text" && (isAdmin || canWriteAs(active.character_id)) && (
+                <SheetButton
+                  onClick={() => {
+                    setEditId(active.id);
+                    closeSheet();
+                  }}
+                >
+                  Bearbeiten
+                </SheetButton>
+              )}
               {(isAdmin || canWriteAs(active.character_id)) && (
                 <SheetButton
                   danger
@@ -482,14 +508,27 @@ function ChatView({ chat }: { chat: Chat }) {
                     : "Left on read — nicht antworten, Chat pausieren"}
                 </SheetButton>
               )}
-              <SheetButton
-                onClick={() => {
-                  archiveChat(chat.id, self, !archived);
-                  setMenuOpen(false);
-                }}
-              >
-                {archived ? "Aus dem Archiv holen" : "Archivieren"}
-              </SheetButton>
+              {phoneId && (
+                <SheetButton
+                  onClick={() => {
+                    archiveChat(chat.id, phoneId, !archived);
+                    setMenuOpen(false);
+                  }}
+                >
+                  {archived ? "Aus dem Archiv holen" : "Archivieren"}
+                </SheetButton>
+              )}
+              {canDeleteChat && (
+                <SheetButton
+                  danger
+                  onClick={() => {
+                    setConfirmDeleteChat(true);
+                    setMenuOpen(false);
+                  }}
+                >
+                  Chat löschen
+                </SheetButton>
+              )}
               <SheetButton onClick={() => setMenuOpen(false)}>Abbrechen</SheetButton>
             </div>
           </div>
@@ -509,6 +548,30 @@ function ChatView({ chat }: { chat: Chat }) {
         />
       )}
 
+      {editMsg && (
+        <EditSheet
+          message={editMsg}
+          onCancel={() => setEditId(null)}
+          onSave={(content, inplay_time) => {
+            updateMessage(editMsg.id, { content, inplay_time });
+            setEditId(null);
+          }}
+        />
+      )}
+
+      {confirmDeleteChat && (
+        <ConfirmDialog
+          title="Chat löschen?"
+          text="Der ganze Chat mit allen Nachrichten verschwindet für alle — auch für die andere Seite."
+          confirmLabel="Chat löschen"
+          onCancel={() => setConfirmDeleteChat(false)}
+          onConfirm={() => {
+            router.push("/handy/nachrichten");
+            deleteChat(chat.id);
+          }}
+        />
+      )}
+
       {confirmDelete && (
         <ConfirmDialog
           title="Nachricht löschen?"
@@ -522,25 +585,6 @@ function ChatView({ chat }: { chat: Chat }) {
         />
       )}
     </PhoneFrame>
-  );
-}
-
-function SheetButton({
-  onClick,
-  danger = false,
-  children,
-}: {
-  onClick: () => void;
-  danger?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-3 text-left hover:bg-white/[0.05] ${danger ? "text-red-300" : "text-text-primary"}`}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -589,6 +633,58 @@ function DateSheet({
             className="rounded-md bg-accent/90 px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
           >
             Einfügen
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Nachricht bearbeiten (eigene; Admins alle): Text und Inplay-Uhrzeit.
+function EditSheet({
+  message,
+  onSave,
+  onCancel,
+}: {
+  message: { content: string; inplay_time?: string | null };
+  onSave: (content: string, time: string | null) => void;
+  onCancel: () => void;
+}) {
+  const [text, setText] = useState(message.content);
+  const [time, setTime] = useState(message.inplay_time ?? "");
+  return (
+    <div className="absolute inset-0 z-20 bg-black/55 p-3 pt-16" onClick={onCancel}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="rounded-2xl border border-border-subtle bg-bg-surface-2 p-4"
+      >
+        <div className="text-[0.9375rem] font-semibold text-text-primary">Nachricht bearbeiten</div>
+        <textarea
+          value={text}
+          rows={4}
+          autoFocus
+          onChange={(e) => setText(e.target.value)}
+          className="mt-3 w-full resize-none rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/20 sm:text-[0.9375rem]"
+        />
+        <label className="mt-2 flex items-center justify-between gap-3 rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[0.875rem] text-text-secondary">
+          Uhrzeit
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className="bg-transparent text-[16px] font-semibold text-text-primary outline-none [color-scheme:dark] sm:text-[0.875rem]"
+          />
+        </label>
+        <div className="mt-4 flex items-center justify-end gap-3">
+          <button onClick={onCancel} className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+            Abbrechen
+          </button>
+          <button
+            disabled={!text.trim()}
+            onClick={() => onSave(text.trim(), time || null)}
+            className="rounded-md bg-accent/90 px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
+          >
+            Speichern
           </button>
         </div>
       </div>
