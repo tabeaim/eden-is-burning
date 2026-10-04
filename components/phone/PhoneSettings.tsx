@@ -18,7 +18,7 @@ import { Icon } from "@/components/Icon";
 import { Toggle } from "@/components/Toggle";
 
 // Handy-Einstellungen eines Charakters (Einstellungen → Meine Charaktere). Jede
-// Änderung wird sofort gespeichert - unabhängig vom „Speichern" des Profils.
+// Änderung wird sofort gespeichert – unabhängig vom „Speichern" des Profils.
 export function PhoneSettings({ character }: { character: Character }) {
   const { updateCharacter } = useStore();
   const [uploading, setUploading] = useState(false);
@@ -124,7 +124,7 @@ export function PhoneSettings({ character }: { character: Character }) {
       {phone.burner ? (
         <p className="text-[0.8125rem] text-text-tertiary">
           Das Burner Phone ist ein altes Tastenhandy: kein Hintergrundbild, keine Apps, kein
-          Captic - nur SMS.
+          Captic – nur SMS.
         </p>
       ) : (
         <>
@@ -134,7 +134,7 @@ export function PhoneSettings({ character }: { character: Character }) {
           >
             Captic{" "}
             <span className="text-text-tertiary">
-              (Foto-Netzwerk - das Profil bearbeitest du danach direkt in der App auf dem Handy)
+              (Foto-Netzwerk – das Profil bearbeitest du danach direkt in der App auf dem Handy)
             </span>
           </Toggle>
 

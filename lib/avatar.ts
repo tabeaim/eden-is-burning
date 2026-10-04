@@ -9,7 +9,7 @@ const SILHOUETTE_SVG =
 
 export const DEFAULT_AVATAR = `data:image/svg+xml;utf8,${encodeURIComponent(SILHOUETTE_SVG)}`;
 
-// Bild eines Charakters oder - ohne eigenes Bild - die Silhouette
+// Bild eines Charakters oder – ohne eigenes Bild – die Silhouette
 export function characterImage(c: { faceclaim_image_url: string | null }): string {
   return c.faceclaim_image_url || DEFAULT_AVATAR;
 }

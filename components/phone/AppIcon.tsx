@@ -43,7 +43,7 @@ export function MessengerGlyph() {
   return <Icon name="message" size={28} className="text-black" fill="currentColor" stroke="none" />;
 }
 
-// Captic - das fiktive Foto-Netzwerk von Eden
+// Captic – das fiktive Foto-Netzwerk von Eden
 export const CAPTIC_BG = "linear-gradient(135deg, #ff9d5c 0%, #e8457a 50%, #7b3fd6 100%)";
 export function CapticGlyph({ size = "1.875rem" }: { size?: string }) {
   return (

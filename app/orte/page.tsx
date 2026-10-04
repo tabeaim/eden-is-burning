@@ -61,7 +61,7 @@ export default function PlacesPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-6">
       <PageHeader
         title="Eden, Virginia"
-        subtitle="Eden, Virginia - fünf Bezirke, ein Fluss, und alles dahinter." width="max-w-6xl" />
+        subtitle="Eden, Virginia – fünf Bezirke, ein Fluss, und alles dahinter." width="max-w-6xl" />
 
       {/* Karte liegt frei (ohne Kasten, ohne Banner-Header) auf der Seite und füllt
           die Fensterhöhe; das schmale Detail-Panel sitzt rechtsbündig und darf bei
@@ -96,12 +96,12 @@ export default function PlacesPage() {
               </p>
 
               {/* Steckbrief */}
-              {info && (info.priceLevel !== "-" || info.residents !== "-") && (
+              {info && (info.priceLevel !== "–" || info.residents !== "–") && (
                 <Facts className="mt-4">
-                  {info.priceLevel !== "-" && (
+                  {info.priceLevel !== "–" && (
                     <FactRow label="Preislevel" value={info.priceLevel} />
                   )}
-                  {info.residents !== "-" && (
+                  {info.residents !== "–" && (
                     <FactRow label="Hier wohnen" value={info.residents} />
                   )}
                 </Facts>
@@ -184,7 +184,7 @@ export default function PlacesPage() {
   );
 }
 
-// Aufklappbarer Abschnitt im Bezirks-Panel - eingeklappt, außer mit `defaultOpen`
+// Aufklappbarer Abschnitt im Bezirks-Panel – eingeklappt, außer mit `defaultOpen`
 // (Bewohner*innen und bespielte Orte).
 function AccordionSection({
   title,
@@ -256,7 +256,7 @@ function LocationSection({
             Hier wurde noch nicht gespielt.
           </p>
         )}
-        {/* + neuen Ort erstellen - am Ende der Liste */}
+        {/* + neuen Ort erstellen – am Ende der Liste */}
         {onAdd && (
           <button
             onClick={onAdd}

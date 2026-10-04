@@ -22,7 +22,7 @@ const SORT_LABELS: Record<SortKey, string> = {
   active: "Zuletzt aktiv",
   inplay: "In-Game-Datum",
   created: "Erstellungsdatum",
-  title: "Titel A-Z",
+  title: "Titel A–Z",
 };
 
 const MONTHS_DE = [
@@ -53,7 +53,7 @@ export default function ScenesPage() {
   const [searchPost, setSearchPost] = useState("");
   const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED
   const [plotId, setPlotId] = useState<string | null>(null); // geöffneter Plot
-  // Filter vor dem Öffnen eines Plots - beim Schließen kommen sie zurück
+  // Filter vor dem Öffnen eines Plots – beim Schließen kommen sie zurück
   const [beforePlot, setBeforePlot] = useState<{
     tokens: string[];
     aus: string[];

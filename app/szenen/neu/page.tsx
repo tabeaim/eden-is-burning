@@ -31,13 +31,14 @@ export default function NewScenePage() {
     currentPlayer,
     charactersOf,
   } = useStore();
-  // Telefonat statt Ort: kein Bezirk/Ort nötig - die Szene spielt „am Telefon"
+  // Telefonat statt Ort: kein Bezirk/Ort nötig – die Szene spielt „am Telefon"
   const [phone, setPhone] = useState(false);
 
   const [title, setTitle] = useState("");
   // Bezirk kommt vom gewählten Ort; nur bei einem neuen Ort wird er abgefragt
   const [area, setArea] = useState("");
   const [locationName, setLocationName] = useState("");
+  const [locationDescription, setLocationDescription] = useState("");
   const [date, setDate] = useState("2021-11-23");
   const [time, setTime] = useState("Nachmittag");
   const [tw, setTw] = useState(false);
@@ -71,7 +72,7 @@ export default function NewScenePage() {
     if (!valid) return;
     const loc = phone ? PHONE_LOCATION : locationName.trim();
     // Neuer Ort wird angelegt und ist durch diese Szene direkt "bespielt".
-    if (!phone) addLocation(area, loc);
+    if (!phone) addLocation(area, loc, locationDescription.trim() || null);
     const id = addScene({
       title: title.trim() || phoneTitle,
       location_area: phone ? PHONE_AREA : area,
@@ -134,7 +135,7 @@ export default function NewScenePage() {
         </label>
 
         <Toggle checked={phone} onChange={setPhone}>
-          Telefonat - die Szene spielt am Telefon (kein Ort)
+          Telefonat – die Szene spielt am Telefon (kein Ort)
         </Toggle>
 
         {!phone && (
@@ -149,6 +150,8 @@ export default function NewScenePage() {
                 setArea(a);
                 setLocationName(n);
               }}
+              description={locationDescription}
+              onDescription={setLocationDescription}
             />
           </div>
         )}
@@ -174,7 +177,7 @@ export default function NewScenePage() {
         </Toggle>
 
         <Toggle checked={au} onChange={setAu}>
-          <span className="italic">AU</span> - spielt in einem Alternate Universe (Nicht-Canon)
+          <span className="italic">AU</span> – spielt in einem Alternate Universe (Nicht-Canon)
         </Toggle>
         {au && (
           <AuNameField value={auName} onChange={setAuName} names={auNames(scenes)} />
@@ -202,7 +205,7 @@ export default function NewScenePage() {
               <span>
                 Erster Post{" "}
                 <span className="text-text-tertiary">
-                  (optional - kann auch später von einer teilnehmenden Person kommen)
+                  (optional – kann auch später von einer teilnehmenden Person kommen)
                 </span>
               </span>
               {eligibleFirst.length > 1 && (

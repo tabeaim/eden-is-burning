@@ -64,7 +64,7 @@ export default function MessagesPage() {
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
 
-  // Je Chat: neueste Nachricht, neuester Tagestrenner und - bei einer Suche - die
+  // Je Chat: neueste Nachricht, neuester Tagestrenner und – bei einer Suche – die
   // neueste Nachricht, die den Suchbegriff enthält
   const { last, dates, hits } = useMemo(() => {
     const last = new Map<string, ChatMessage>();
@@ -229,7 +229,7 @@ export default function MessagesPage() {
               }}
               onPointerUp={cancelPress}
               onPointerMove={(e) => {
-                // ein Finger liegt nie ganz still - erst echtes Wischen bricht ab
+                // ein Finger liegt nie ganz still – erst echtes Wischen bricht ab
                 if (Math.hypot(e.clientX - press.current.x, e.clientY - press.current.y) > 10) cancelPress();
               }}
               onPointerCancel={cancelPress}
@@ -320,7 +320,7 @@ export default function MessagesPage() {
       {confirmDelete && (
         <ConfirmDialog
           title="Chat löschen?"
-          text="Der ganze Chat mit allen Nachrichten verschwindet für alle - auch für die andere Seite."
+          text="Der ganze Chat mit allen Nachrichten verschwindet für alle – auch für die andere Seite."
           confirmLabel="Chat löschen"
           onCancel={() => setConfirmDelete(null)}
           onConfirm={() => {

@@ -12,8 +12,8 @@ type GiphyItem = {
   images: Record<string, { url?: string; webp?: string } | undefined>;
 };
 
-// GIF-Auswahl: Suche über GIPHY (wenn ein Schlüssel hinterlegt ist), sonst - und
-// zusätzlich - ein Feld, um die Adresse eines GIFs einzufügen.
+// GIF-Auswahl: Suche über GIPHY (wenn ein Schlüssel hinterlegt ist), sonst – und
+// zusätzlich – ein Feld, um die Adresse eines GIFs einzufügen.
 export function GifPicker({ onPick }: { onPick: (url: string) => void }) {
   const [q, setQ] = useState("");
   const [gifs, setGifs] = useState<Gif[]>([]);

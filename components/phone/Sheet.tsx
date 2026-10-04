@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 // Blatt von unten im Handy-Display: Aktionen zu einer Nachricht oder einem Chat.
 export function Sheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
   // Das Loslassen der Maus nach Rechtsklick/Ctrl-Klick kann als Klick auf dem
-  // Hintergrund ankommen - direkt nach dem Öffnen deshalb nicht schließen.
+  // Hintergrund ankommen – direkt nach dem Öffnen deshalb nicht schließen.
   const armed = useRef(false);
   useEffect(() => {
     const t = setTimeout(() => (armed.current = true), 400);

@@ -16,7 +16,7 @@ export interface Player {
   avatar_url: string | null;
   bio: string | null;
   created_at: string;
-  last_seen: string; // ISO timestamp - "zuletzt online"
+  last_seen: string; // ISO timestamp – "zuletzt online"
   current_location?: PlayerLocation | null;
   dashboard_header_url?: string | null; // eigener Banner fürs Dashboard
   // --- Backend/Login (Supabase) ---
@@ -29,7 +29,7 @@ export interface Character {
   id: string;
   player_id: string;
   name: string;
-  faceclaim: string | null; // "FACE" - Schauspieler/Model
+  faceclaim: string | null; // "FACE" – Schauspieler/Model
   faceclaim_image_url: string | null;
   banner_url?: string | null; // eigens hochladbarer Profil-Banner (Seitenbild)
   tagline: string | null;
@@ -64,7 +64,7 @@ export interface Character {
   phone?: PhoneSettings | null;
 }
 
-// Alle Felder optional - Fehlendes füllt `resolvePhone` (lib/phone.ts) mit Standards.
+// Alle Felder optional – Fehlendes füllt `resolvePhone` (lib/phone.ts) mit Standards.
 export interface PhoneSettings {
   model?: string; // Schlüssel aus PHONE_MODELS
   color?: string; // Schlüssel aus PHONE_COLORS
@@ -92,13 +92,13 @@ export interface Scene {
   inplay_time: string;
   status: "active" | "closed";
   trigger_warning: boolean;
-  au?: boolean; // "Alternate Universe" - Szene in einem Nicht-Canon-Plot
+  au?: boolean; // "Alternate Universe" – Szene in einem Nicht-Canon-Plot
   au_name?: string | null; // Name des AUs (mehrere Szenen können dasselbe AU teilen)
   next_up?: string | null; // manuelle Zug-Übergabe (Charakter-ID); sonst Reihenfolge
   paused?: boolean; // pausiert -> nicht im Dashboard-Tracker
   created_at: string;
   participant_ids: string[]; // character ids, in turn order
-  // Ein-Satz-Zusammenfassung - bei Erstellung oder beim Schließen ergänzbar
+  // Ein-Satz-Zusammenfassung – bei Erstellung oder beim Schließen ergänzbar
   summary?: string | null;
   // Gewähltes Header-/Titelbild der Szene (sonst Seed-Platzhalter)
   header_url?: string | null;
@@ -136,7 +136,7 @@ export interface LocationPerson {
   note: string | null; // warum die Person für den Ort relevant ist
 }
 
-// Plot-Punkt, der nicht ausgespielt wurde („im Off") - erscheint nur in der
+// Plot-Punkt, der nicht ausgespielt wurde („im Off") – erscheint nur in der
 // Timeline des jeweiligen Plots.
 export interface OffScene {
   id: string;
@@ -163,7 +163,7 @@ export interface Plot {
   created_at: string;
 }
 
-// Ein aus einem Post markiertes Zitat - speist die rotierenden Dashboard-Zitate
+// Ein aus einem Post markiertes Zitat – speist die rotierenden Dashboard-Zitate
 export interface SceneQuote {
   id: string;
   scene_id: string;
@@ -212,5 +212,5 @@ export interface ChatMessage {
   reply_to?: string | null; // zitierte Nachricht
   reactions?: Record<string, string[]> | null; // Emoji -> Charakter-IDs
   inplay_time?: string | null; // Inplay-Uhrzeit „23:41" (nie die echte)
-  created_at: string; // echte Zeit - bestimmt nur die Reihenfolge
+  created_at: string; // echte Zeit – bestimmt nur die Reihenfolge
 }

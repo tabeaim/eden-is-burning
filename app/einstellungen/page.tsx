@@ -33,7 +33,7 @@ export default function SettingsPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader title="Einstellungen" width="max-w-6xl" />
 
-      {/* Inhalt linksbündig in Formularbreite - Container-Breite bleibt einheitlich */}
+      {/* Inhalt linksbündig in Formularbreite – Container-Breite bleibt einheitlich */}
       <div className="max-w-2xl">
       <div className="flex gap-1.5 mb-6 border-b border-border-subtle">
         {tabs.map(([key, label]) => (
@@ -291,7 +291,7 @@ function CharactersTab() {
     useStore();
   if (!currentPlayer) return null;
   const chars = charactersOf(currentPlayer.id);
-  // NPCs, die man selbst angelegt hat (Admins: alle) - Profil optional ausfüllbar
+  // NPCs, die man selbst angelegt hat (Admins: alle) – Profil optional ausfüllbar
   const myNpcs = npcs.filter(canEditCharacter);
 
   return (
@@ -347,7 +347,7 @@ function CharacterEditor({ character }: { character: Character }) {
   }
 
   function save() {
-    // Handy-Einstellungen speichern sich selbst (PhoneSettings) - nicht mit dem
+    // Handy-Einstellungen speichern sich selbst (PhoneSettings) – nicht mit dem
     // Stand vom Öffnen des Formulars überschreiben.
     const rest = { ...draft };
     delete rest.phone;
@@ -472,7 +472,7 @@ function CharacterEditor({ character }: { character: Character }) {
                 >
                   {character.is_npc && (
                     <option value="" className="bg-bg-surface">
-                      -
+                      –
                     </option>
                   )}
                   {AREA_ORDER.map((k) => (

@@ -138,7 +138,7 @@ function ChatView({ chat }: { chat: Chat }) {
     toBottom();
     markChatSeen(chat.id);
   }, [chat.id, messages.length, markChatSeen]);
-  // Bilder laden nach - unten bleiben, wenn man ohnehin am Ende war
+  // Bilder laden nach – unten bleiben, wenn man ohnehin am Ende war
   const onMedia = () => {
     const el = list.current;
     if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 500) toBottom();
@@ -399,7 +399,7 @@ function ChatView({ chat }: { chat: Chat }) {
         />
       ) : (
         <div className="shrink-0 border-t border-border-subtle bg-bg-surface px-4 py-3 text-center text-[0.8125rem] text-text-tertiary">
-          Du liest mit - in diesem Chat ist keiner deiner Charaktere.
+          Du liest mit – in diesem Chat ist keiner deiner Charaktere.
         </div>
       )}
 
@@ -506,7 +506,7 @@ function ChatView({ chat }: { chat: Chat }) {
                 >
                   {leftBy.includes(self)
                     ? "„Left on read“ zurücknehmen"
-                    : "Left on read - nicht antworten, Chat pausieren"}
+                    : "Left on read – nicht antworten, Chat pausieren"}
                 </SheetButton>
               )}
               {phoneId && (
@@ -563,7 +563,7 @@ function ChatView({ chat }: { chat: Chat }) {
       {confirmDeleteChat && (
         <ConfirmDialog
           title="Chat löschen?"
-          text="Der ganze Chat mit allen Nachrichten verschwindet für alle - auch für die andere Seite."
+          text="Der ganze Chat mit allen Nachrichten verschwindet für alle – auch für die andere Seite."
           confirmLabel="Chat löschen"
           onCancel={() => setConfirmDeleteChat(false)}
           onConfirm={() => {
@@ -612,7 +612,7 @@ function DateSheet({
       >
         <div className="text-[0.9375rem] font-semibold text-text-primary">Inplay-Datum</div>
         <p className="mt-0.5 text-[0.8125rem] text-text-tertiary">
-          Setzt einen Trenner in den Chat - alles danach spielt an diesem Tag.
+          Setzt einen Trenner in den Chat – alles danach spielt an diesem Tag.
         </p>
         <DatePicker value={date} onChange={setDate} className="mt-3" />
         <label className="mt-2 flex items-center justify-between gap-3 rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[0.875rem] text-text-secondary">

@@ -35,6 +35,7 @@ export function SceneEditPanel({
   const [summary, setSummary] = useState(scene.summary ?? "");
   const [area, setArea] = useState<string>(scene.location_area);
   const [locationName, setLocationName] = useState(scene.location_name);
+  const [locationDescription, setLocationDescription] = useState("");
   // Telefonat: kein Bezirk/Ort, die Szene spielt „am Telefon"
   const [phone, setPhone] = useState(scene.location_area === PHONE_AREA);
   const [date, setDate] = useState(scene.inplay_date);
@@ -60,7 +61,7 @@ export function SceneEditPanel({
   function save() {
     if (!valid) return;
     const loc = phone ? PHONE_LOCATION : locationName.trim();
-    if (!phone) addLocation(area, loc);
+    if (!phone) addLocation(area, loc, locationDescription.trim() || null);
     updateScene(scene.id, {
       title: title.trim(),
       location_area: phone ? PHONE_AREA : area,
@@ -156,7 +157,7 @@ export function SceneEditPanel({
           }
         }}
       >
-        Telefonat - die Szene spielt am Telefon (kein Ort)
+        Telefonat – die Szene spielt am Telefon (kein Ort)
       </Toggle>
 
       {!phone && (
@@ -171,6 +172,8 @@ export function SceneEditPanel({
               setArea(a);
               setLocationName(n);
             }}
+            description={locationDescription}
+            onDescription={setLocationDescription}
           />
         </div>
       )}
@@ -195,7 +198,7 @@ export function SceneEditPanel({
       </Toggle>
 
       <Toggle checked={au} onChange={setAu}>
-        <span className="italic">AU</span> - Alternate Universe
+        <span className="italic">AU</span> – Alternate Universe
       </Toggle>
       {au && <AuNameField value={auName} onChange={setAuName} names={auNames(scenes)} />}
 

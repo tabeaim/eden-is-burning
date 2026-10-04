@@ -136,7 +136,7 @@ export default function DashboardPage() {
         new Date(a.last!.created_at).getTime(),
     );
 
-  // Chats mit neuen Nachrichten in den letzten 24h (alle, auch fremde) - stehen
+  // Chats mit neuen Nachrichten in den letzten 24h (alle, auch fremde) – stehen
   // zusammen mit den Szenen in einer nach Zeit sortierten Liste
   const recentItems = [
     ...recentScenes.map(({ scene, last }) => ({ key: scene.id, at: last!.created_at, scene, chat: null })),
@@ -168,7 +168,7 @@ export default function DashboardPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader
         title={`Hallo, ${currentPlayer.username}`}
-        subtitle="Dein Inplaytracker - offene Szenen, in denen du mitspielst."
+        subtitle="Dein Inplaytracker – offene Szenen, in denen du mitspielst."
         width="max-w-6xl"
         bannerImage={currentPlayer.dashboard_header_url ?? undefined}
       />
@@ -181,7 +181,7 @@ export default function DashboardPage() {
       <div className="grid lg:grid-cols-[1.6fr_1fr] gap-8 lg:gap-16 items-start">
         {/* LINKS: Szenenübersicht, nach Charakteren gruppiert */}
         <div className="flex flex-col gap-6 lg:gap-10">
-          {/* Klingelnde Anrufe an eigene Charaktere - führen aufs Handy zum Abheben */}
+          {/* Klingelnde Anrufe an eigene Charaktere – führen aufs Handy zum Abheben */}
           {incomingCalls.length > 0 && (
             <section className="flex flex-col gap-2">
               {incomingCalls.map((call) => (
@@ -453,7 +453,7 @@ function CharacterGroup({
               canLeaveOnRead ? (
                 <button
                   onClick={() => leaveOnRead(ch.id, char.id, lastMsg.get(ch.id)?.id ?? null)}
-                  title="Nachricht unbeantwortet lassen - der Chat pausiert, bis jemand wieder schreibt"
+                  title="Nachricht unbeantwortet lassen – der Chat pausiert, bis jemand wieder schreibt"
                   className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
                 >
                   Left on read

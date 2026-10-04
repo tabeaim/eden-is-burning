@@ -3,7 +3,7 @@ import type { Character } from "@/lib/types";
 import { Icon, type IconName } from "./Icon";
 import { characterImage } from "@/lib/avatar";
 
-// Bubbles - die EINE runde Pill-Form der App (siehe DESIGN.md). Charaktere, NPCs
+// Bubbles – die EINE runde Pill-Form der App (siehe DESIGN.md). Charaktere, NPCs
 // und Orte sehen überall gleich aus; nur der Inhalt (Avatar bzw. Icon) wechselt.
 // Mit `href` wird die Bubble zum Link, sonst bleibt sie ein <span> (z.B. innerhalb
 // einer bereits verlinkten Karte).

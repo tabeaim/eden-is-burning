@@ -50,7 +50,7 @@ export function LoginScreen() {
           setError(uebersetze(error));
         } else {
           setNotice(
-            "Registrierung eingegangen. Ein Admin muss dich freischalten - danach kannst du dich anmelden.",
+            "Registrierung eingegangen. Ein Admin muss dich freischalten – danach kannst du dich anmelden.",
           );
           setMode("signin");
           setPassword("");
@@ -191,7 +191,7 @@ export function LoginScreen() {
 
         <p className="text-[0.75rem] text-text-tertiary text-center mt-4 leading-relaxed">
           {mode === "signin"
-            ? "Neu hier? Wechsle oben zu Registrieren - ein Admin schaltet dich frei."
+            ? "Neu hier? Wechsle oben zu Registrieren – ein Admin schaltet dich frei."
             : "Nach der Registrierung wirst du von einem Admin freigeschaltet."}
         </p>
       </div>

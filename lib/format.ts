@@ -93,7 +93,7 @@ export function placeholderImg(seed: string, w = 400, h = 600) {
   return `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
 }
 
-// "vor 2 Stunden" / "gerade eben" - relative Zeit auf Deutsch
+// "vor 2 Stunden" / "gerade eben" – relative Zeit auf Deutsch
 export function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const min = Math.floor(diff / 60000);

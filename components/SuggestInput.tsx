@@ -23,7 +23,7 @@ export function SuggestInput({
   onChange: (text: string) => void;
   suggestions: Suggestion[];
   onPick: (key: string) => void;
-  createLabel?: string | null; // z.B. „Neuen Ort „X" erstellen" - nur wenn neu
+  createLabel?: string | null; // z.B. „Neuen Ort „X" erstellen" – nur wenn neu
   placeholder?: string;
   className?: string;
 }) {

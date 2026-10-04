@@ -1,6 +1,6 @@
 "use client";
 
-// An/Aus-Schalter - ersetzt überall die Checkbox (siehe DESIGN.md): Schalter
+// An/Aus-Schalter – ersetzt überall die Checkbox (siehe DESIGN.md): Schalter
 // links, Beschriftung daneben.
 export function Toggle({
   checked,

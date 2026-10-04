@@ -1,4 +1,4 @@
-// Emoji-Auswahl des Messengers - bewusst eine handliche Auswahl statt des ganzen
+// Emoji-Auswahl des Messengers – bewusst eine handliche Auswahl statt des ganzen
 // Unicode-Katalogs (auf dem Handy bringt die Tastatur den Rest mit).
 export const QUICK_REACTIONS = ["❤️", "😂", "😮", "😢", "🔥", "👍"];
 
@@ -51,6 +51,6 @@ const PICTO = new RegExp("\\p{Extended_Pictographic}|[\\u{1F1E6}-\\u{1F1FF}]{2}"
 export function isEmojiOnly(text: string): boolean {
   const t = text.replace(/\s+/g, "");
   if (!t || t.length > 40 || !ONLY_EMOJI.test(t)) return false;
-  // ZWJ-Folgen (👨‍👩‍👧) zählen grob mehrfach - für „groß anzeigen" genügt das.
+  // ZWJ-Folgen (👨‍👩‍👧) zählen grob mehrfach – für „groß anzeigen" genügt das.
   return (t.match(PICTO) ?? []).length <= 3 || t.includes("‍");
 }

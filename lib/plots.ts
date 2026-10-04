@@ -37,7 +37,7 @@ export function tokenMatches(
   return participantIds.some((pid) => character(pid)?.player_id === id);
 }
 
-// Timeline-Regel: AUs sind eigene Zeitlinien - ohne AU-Auswahl nur Canon, mit
+// Timeline-Regel: AUs sind eigene Zeitlinien – ohne AU-Auswahl nur Canon, mit
 // Auswahl nur die Szenen der gewählten AUs. Alle Tokens müssen passen.
 export function matchesFilters(s: Scene, f: PlotFilters, character: CharacterLookup): boolean {
   if (f.aus.length === 0 ? s.au : !(s.au && f.aus.includes(s.au_name || AU_UNNAMED)))
@@ -67,7 +67,7 @@ export function plotScenes(
 }
 
 // Plots sieht nur, wessen Charaktere betroffen sind: als Filter gewählt, in einer
-// Szene oder Off-Szene des Plots beteiligt - außerdem wer den Plot angelegt hat,
+// Szene oder Off-Szene des Plots beteiligt – außerdem wer den Plot angelegt hat,
 // und Admins.
 export function visiblePlots(
   plots: Plot[],

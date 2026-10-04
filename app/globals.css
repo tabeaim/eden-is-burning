@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Dunkles, moody Theme - Schwarz/Grau mit Feuer-Orange + Olive */
+  /* Dunkles, moody Theme – Schwarz/Grau mit Feuer-Orange + Olive */
   --bg-primary: #0a0a0b;
   --bg-sidebar: #060607;
   --bg-surface: #141416;
@@ -51,7 +51,7 @@
   color: var(--text-primary);
 }
 
-/* Sichtbarer Tastatur-Fokus (WCAG 2.4.7) - nur bei Keyboard-Navigation */
+/* Sichtbarer Tastatur-Fokus (WCAG 2.4.7) – nur bei Keyboard-Navigation */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -93,7 +93,7 @@ body {
   background-attachment: fixed;
 }
 
-/* Display-Font (ZCOOL KuaiLe) - Bildmarke & Seiten-Überschriften */
+/* Display-Font (ZCOOL KuaiLe) – Bildmarke & Seiten-Überschriften */
 .font-display {
   font-family: var(--font-display), "ZCOOL KuaiLe", sans-serif;
   font-weight: 400; /* die Schrift hat nur einen Schnitt */
@@ -127,10 +127,10 @@ body {
   background: var(--accent-soft);
 }
 
-/* Szenen-Prosa - jetzt serifenlos, größer und linksbündig (bessere Lesbarkeit) */
+/* Szenen-Prosa – jetzt serifenlos, größer und linksbündig (bessere Lesbarkeit) */
 .prose-serif {
   font-family: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.875rem; /* 14px @ Basis 16px - skaliert mit Browser-Schriftgröße */
+  font-size: 0.875rem; /* 14px @ Basis 16px – skaliert mit Browser-Schriftgröße */
   line-height: 1.8;
   text-align: justify;
 }

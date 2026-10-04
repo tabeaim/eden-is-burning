@@ -10,7 +10,7 @@ const sans = Montserrat({
   subsets: ["latin"],
 });
 
-// Display-Schrift - Bildmarke (Logo) und Seiten-Überschriften
+// Display-Schrift – Bildmarke (Logo) und Seiten-Überschriften
 const display = ZCOOL_KuaiLe({
   variable: "--font-display",
   subsets: ["latin"],
@@ -19,7 +19,7 @@ const display = ZCOOL_KuaiLe({
 
 export const metadata: Metadata = {
   title: "Eden Is Burning",
-  description: "Kollaborative Prosa-RPG-Plattform - Eden, Virginia.",
+  description: "Kollaborative Prosa-RPG-Plattform – Eden, Virginia.",
 };
 
 export default function RootLayout({

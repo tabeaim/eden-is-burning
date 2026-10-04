@@ -18,7 +18,7 @@ function defaultHandle(name: string): string {
     .replace(/\s+/g, ".");
 }
 
-// Captic - das fiktive Foto-Netzwerk von Eden. Bisher nur angedeutet: das eigene
+// Captic – das fiktive Foto-Netzwerk von Eden. Bisher nur angedeutet: das eigene
 // Profil aus Sicht des Charakters, dessen Handy man in der Hand hat. Captic ist
 // optional (Einstellungen → Meine Charaktere → Handy); das Profil wird hier in
 // der App bearbeitet.
@@ -46,7 +46,7 @@ export default function CapticPage() {
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
           <p className="text-[0.875rem] text-text-secondary">
             {phone.burner
-              ? `Das Burner Phone von ${me.name.split(" ")[0]} kann nur SMS - kein Captic.`
+              ? `Das Burner Phone von ${me.name.split(" ")[0]} kann nur SMS – kein Captic.`
               : `${me.name.split(" ")[0]} hat kein Captic.`}
           </p>
           {!phone.burner && (
@@ -122,8 +122,8 @@ function CapticProfile({ me }: { me: Character }) {
           <div className="flex flex-1 justify-around text-center">
             {[
               ["0", "Beiträge"],
-              ["-", "Follower"],
-              ["-", "Gefolgt"],
+              ["–", "Follower"],
+              ["–", "Gefolgt"],
             ].map(([n, l]) => (
               <div key={l}>
                 <div className="text-[1.0625rem] font-bold text-text-primary">{n}</div>
@@ -193,7 +193,7 @@ function CapticProfile({ me }: { me: Character }) {
         <div className="px-8 py-6 text-center">
           <div className="text-[0.9375rem] font-semibold text-text-primary">Beiträge kommen bald</div>
           <p className="mt-1 text-[0.8125rem] text-text-tertiary">
-            Hier postet {me.name.split(" ")[0]} demnächst Fotos, Stories und Kommentare - immer aus
+            Hier postet {me.name.split(" ")[0]} demnächst Fotos, Stories und Kommentare – immer aus
             der eigenen Sicht.
           </p>
         </div>

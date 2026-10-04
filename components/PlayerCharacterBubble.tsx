@@ -6,7 +6,7 @@ import type { Character, Player } from "@/lib/types";
 
 // Spieler-Bubble, die zu einzelnen Charakteren ausfächert.
 // Tokens: "player:<id>" | "char:<id>". Geteilt von Szenen-Übersicht und Timeline.
-// Klick auf den Namen schaltet alle Charaktere der Person an - und, sobald
+// Klick auf den Namen schaltet alle Charaktere der Person an – und, sobald
 // irgendetwas von ihr gewählt ist, wieder komplett aus.
 export function PlayerCharacterBubble({
   player,
