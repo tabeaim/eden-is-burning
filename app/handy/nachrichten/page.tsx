@@ -39,10 +39,16 @@ export default function MessagesPage() {
   // Rechtsklick (am Handy: lange drücken) auf einen Chat öffnet seine Optionen
   const [menuChat, setMenuChat] = useState<Chat | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Chat | null>(null);
-  const press = useRef<{ timer: ReturnType<typeof setTimeout> | null; fired: boolean }>({
-    timer: null,
-    fired: false,
-  });
+  const press = useRef<{
+    timer: ReturnType<typeof setTimeout> | null;
+    fired: boolean;
+    x: number;
+    y: number;
+  }>({ timer: null, fired: false, x: 0, y: 0 });
+  const closeMenu = () => {
+    press.current.fired = false;
+    setMenuChat(null);
+  };
   const cancelPress = () => {
     if (press.current.timer) clearTimeout(press.current.timer);
     press.current.timer = null;
@@ -136,14 +142,23 @@ export default function MessagesPage() {
             <button
               onClick={() => setShowArchive((v) => !v)}
               aria-pressed={showArchive}
-              title={showArchive ? "Archiv schließen" : "Archiv zeigen"}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-[0.8125rem] font-medium transition-colors ${
+              aria-label={showArchive ? "Archiv schließen" : "Archiv zeigen"}
+              title={showArchive ? "Archiv schließen" : `Archiv zeigen${archivedCount > 0 ? ` (${archivedCount})` : ""}`}
+              className={`relative flex h-8 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
                 showArchive
-                  ? "bg-text-primary text-bg-primary"
+                  ? "bg-accent text-black"
                   : "bg-white/[0.06] text-text-secondary hover:text-text-primary"
               }`}
             >
-              Archiv{archivedCount > 0 ? ` (${archivedCount})` : ""}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="5" rx="1.2" />
+                <path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9M10 13h4" />
+              </svg>
+              {archivedCount > 0 && !showArchive && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-bg-surface-2 px-1 text-[0.625rem] font-semibold text-text-primary ring-1 ring-border-subtle">
+                  {archivedCount}
+                </span>
+              )}
             </button>
           </div>
         )}
@@ -197,22 +212,30 @@ export default function MessagesPage() {
               href={`/handy/${chat.id}${hit ? `#${hit.id}` : ""}`}
               onContextMenu={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
+                press.current.fired = true; // ein nachfolgender Klick öffnet den Chat nicht
                 setMenuChat(chat);
               }}
+              draggable={false}
               onPointerDown={(e) => {
                 if (e.pointerType === "mouse") return;
                 press.current.fired = false;
+                press.current.x = e.clientX;
+                press.current.y = e.clientY;
                 press.current.timer = setTimeout(() => {
                   press.current.fired = true;
                   setMenuChat(chat);
                 }, 550);
               }}
               onPointerUp={cancelPress}
-              onPointerMove={cancelPress}
+              onPointerMove={(e) => {
+                // ein Finger liegt nie ganz still — erst echtes Wischen bricht ab
+                if (Math.hypot(e.clientX - press.current.x, e.clientY - press.current.y) > 10) cancelPress();
+              }}
               onPointerCancel={cancelPress}
               onClick={(e) => {
                 // nach langem Drücken nicht auch noch den Chat öffnen
-                if (press.current.fired) e.preventDefault();
+                if (press.current.fired || e.ctrlKey) e.preventDefault();
                 press.current.fired = false;
               }}
               className="select-none [-webkit-touch-callout:none] flex items-center gap-3 px-3 py-2.5 hover:bg-white/[0.03] active:bg-white/[0.06]"
@@ -263,7 +286,7 @@ export default function MessagesPage() {
       </div>
 
       {menuChat && (
-        <Sheet onClose={() => setMenuChat(null)}>
+        <Sheet onClose={() => closeMenu()}>
           <div className="mb-2 truncate px-1 text-[0.8125rem] text-text-tertiary">
             {chatTitle(menuChat.participant_ids.filter((id) => id !== myId).map((id) => character(id)))}
           </div>
@@ -272,7 +295,7 @@ export default function MessagesPage() {
               <SheetButton
                 onClick={() => {
                   archiveChat(menuChat.id, myId, !isArchivedFor(menuChat, myId));
-                  setMenuChat(null);
+                  closeMenu();
                 }}
               >
                 {isArchivedFor(menuChat, myId) ? "Aus dem Archiv holen" : "Archivieren"}
@@ -283,13 +306,13 @@ export default function MessagesPage() {
                 danger
                 onClick={() => {
                   setConfirmDelete(menuChat);
-                  setMenuChat(null);
+                  closeMenu();
                 }}
               >
                 Chat löschen
               </SheetButton>
             )}
-            <SheetButton onClick={() => setMenuChat(null)}>Abbrechen</SheetButton>
+            <SheetButton onClick={() => closeMenu()}>Abbrechen</SheetButton>
           </SheetList>
         </Sheet>
       )}

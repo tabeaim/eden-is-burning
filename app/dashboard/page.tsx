@@ -9,6 +9,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { QuoteRotator } from "@/components/QuoteRotator";
 import { SceneCard, SceneRow } from "@/components/SceneCard";
 import { ChatRow } from "@/components/phone/ChatRow";
+import { rememberPhone } from "@/lib/phone";
+import { formatInplayDateShort } from "@/lib/format";
 import { isArchivedFor, isLeftOnRead, lastMessages } from "@/lib/chats";
 import type { Character, Chat, Player, Scene } from "@/lib/types";
 
@@ -25,6 +27,8 @@ export default function DashboardPage() {
     mobileIds,
     chats,
     chatMessages,
+    incomingCalls,
+    character,
   } = store;
   const [showWarten, setShowWarten] = useState(false);
   // "Du bist dran": null = noch nicht selbst umgeschaltet → Standard (s.u.)
@@ -177,6 +181,34 @@ export default function DashboardPage() {
       <div className="grid lg:grid-cols-[1.6fr_1fr] gap-8 lg:gap-16 items-start">
         {/* LINKS: Szenenübersicht, nach Charakteren gruppiert */}
         <div className="flex flex-col gap-6 lg:gap-10">
+          {/* Klingelnde Anrufe an eigene Charaktere — führen aufs Handy zum Abheben */}
+          {incomingCalls.length > 0 && (
+            <section className="flex flex-col gap-2">
+              {incomingCalls.map((call) => (
+                <Link
+                  key={call.id}
+                  href="/handy/telefon"
+                  onClick={() => rememberPhone(call.callee_id)}
+                  className="flex items-center gap-3 rounded-lg border border-accent/60 bg-accent-soft px-3.5 py-2.5 hover:bg-accent/20"
+                >
+                  <span className="phone-ring flex h-6 w-6 shrink-0 items-center justify-center text-accent">
+                    <Icon name="phone" size={20} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-serif text-[0.875rem] leading-snug text-text-primary">
+                      {character(call.caller_id)?.name ?? "Jemand"} ruft{" "}
+                      {character(call.callee_id)?.name.split(" ")[0] ?? "dich"} an
+                    </span>
+                    <span className="block text-[0.875rem] text-text-tertiary">
+                      {formatInplayDateShort(call.inplay_date)}
+                      {call.inplay_time ? `, ${call.inplay_time}` : ""}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-[0.8125rem] font-medium text-accent">Abheben ›</span>
+                </Link>
+              ))}
+            </section>
+          )}
           <section>
             <button
               onClick={() => setShowDran(!dranOpen)}

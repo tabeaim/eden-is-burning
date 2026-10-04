@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { AREA_ORDER, AREAS, type AreaKey } from "@/lib/world";
@@ -15,7 +15,11 @@ type SettingsTab = "profile" | "characters" | "appearance" | "admin";
 
 export default function SettingsPage() {
   const { currentPlayer, isAdmin } = useStore();
-  const [tab, setTab] = useState<SettingsTab>("profile");
+  // „#charakter-<id>" (z.B. aus der Einstellungen-App auf dem Handy) öffnet gleich
+  // den Reiter „Meine Charaktere" mit diesem Charakter
+  const [tab, setTab] = useState<SettingsTab>(() =>
+    typeof window !== "undefined" && window.location.hash.startsWith("#charakter") ? "characters" : "profile",
+  );
   if (!currentPlayer) return null;
 
   const tabs: [SettingsTab, string][] = [
@@ -318,7 +322,14 @@ function CharactersTab() {
 
 function CharacterEditor({ character }: { character: Character }) {
   const { updateCharacter } = useStore();
-  const [open, setOpen] = useState(false);
+  const anchor = `charakter-${character.id}`;
+  const [open, setOpen] = useState(
+    () => typeof window !== "undefined" && window.location.hash === `#${anchor}`,
+  );
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (window.location.hash === `#${anchor}`) box.current?.scrollIntoView({ block: "start" });
+  }, [anchor]);
   const [draft, setDraft] = useState(character);
   const [saved, setSaved] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -346,7 +357,11 @@ function CharacterEditor({ character }: { character: Character }) {
   }
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-bg-surface overflow-hidden">
+    <div
+      ref={box}
+      id={anchor}
+      className="scroll-mt-4 rounded-xl border border-border-subtle bg-bg-surface overflow-hidden"
+    >
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.02]"

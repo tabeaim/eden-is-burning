@@ -22,7 +22,7 @@ export function ChatRow({
   muted?: boolean;
   action?: React.ReactNode; // z.B. „Left on read"
 }) {
-  const { messagesOf, character } = useStore();
+  const { messagesOf, character, isChatFresh } = useStore();
   const messages = messagesOf(chat.id);
   const last = [...messages].reverse().find((m) => m.kind !== "date");
   const date = [...messages].reverse().find((m) => m.kind === "date");
@@ -38,7 +38,12 @@ export function ChatRow({
         muted ? "opacity-70" : ""
       }`}
     >
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center text-accent">
+      {/* wie das Streichholz der Szenen: orange bei Ungelesenem, sonst grau */}
+      <span
+        className={`flex h-6 w-6 shrink-0 items-center justify-center ${
+          isChatFresh(chat.id) ? "text-accent" : "text-text-tertiary opacity-60"
+        }`}
+      >
         <Icon name="phone" size={20} />
       </span>
       <div className="min-w-0 flex-1">

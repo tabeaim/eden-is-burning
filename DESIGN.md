@@ -103,7 +103,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   (`chatTitle` in `lib/chats.ts`).
 - **Liste:** Reiter „Meine" (Chats dieses Charakters) und „Andere" (alle übrigen,
   zum Mitlesen); die Taste „Archiv" daneben schaltet für den gewählten Reiter
-  aufs Archiv um. Dazu ein Suchfeld (Namen und Nachrichtentext; ein Treffer
+  aufs Archiv um (nur Icon, kein Text). Dazu ein Suchfeld (Namen und Nachrichtentext; ein Treffer
   springt zur Nachricht). Eine neue Nachricht holt den Chat aus dem Archiv.
 - **Chat-Optionen** (archivieren, löschen, „Left on read"): Rechtsklick bzw.
   langes Drücken auf den Chat in der Liste oder ⋯ in der Chat-Ansicht — immer als
@@ -113,14 +113,30 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Aufbau wie `SceneRow`, Handy-Icon statt Streichholz) — in „letzte 24h" als
   „Neue Nachrichten bei A & B", unter „Du bist dran" als „Chat mit …" samt Knopf
   „Left on read" (pausiert den Chat, bis wieder jemand schreibt).
-- **Captic ist optional** (Schalter in `PhoneSettings`); das Profil wird in der
-  App auf dem Handy bearbeitet.
+- **Captic ist optional** (An/Aus-Schalter in `PhoneSettings`); das Profil wird
+  in der App auf dem Handy bearbeitet.
+- **Telefon** (`/handy/telefon`, im Dock): Anrufliste und Kontakte als Reiter
+  unten. Aus den Kontakten: „anklingeln" (Inplay-Datum + Uhrzeit Pflicht; der
+  andere Charakter nimmt an oder lehnt ab, beim Annehmen wird nach einer Szene
+  gefragt) oder direkt „Telefonszene erstellen". Telefonszenen haben
+  `location_area: "phone"`, Ort „am Telefon" und ohne eigenen Titel den Namen
+  „A & B on the phone". Angenommene Anrufe mit Szene verlinken aus der Anrufliste
+  dorthin.
+- **Klingeln:** alles, was einen eingehenden Anruf meldet (Dashboard-Zeile,
+  Banner im Display, Zähler im Menü, Telefon-App), vibriert mit `.phone-ring`
+  (globals.css).
+- **Gelesen/ungelesen:** Das Handy-Icon der `ChatRow` ist orange bei neuen
+  Nachrichten und grau, sobald der Chat geöffnet wurde (wie das Streichholz).
+- **Nachrichtentext ist markier- und kopierbar** — die Blase ist deshalb kein
+  `<button>`; ist Text markiert, öffnen weder Klick noch Rechtsklick das Blatt.
 - **Burner Phone:** altes Tastenhandy, nur SMS (kein Captic, keine Apps, keine
   GIFs/Fotos). Das Display stellt per `.phone-burner` (globals.css) die
   Farb-Tokens auf Graustufen um, darüber liegt ein grünes LCD-Overlay — im
   Burner-Display deshalb keine festen Farben verwenden.
-- **Startbildschirm** (`/handy`): angedeutete Apps sind reine Deko (`AppIcon`
-  ohne Link); echte Apps stehen im Dock. Die Home-Leiste unten (bzw. der
+- **Startbildschirm** (`/handy`): kein Datum, nur Apps. Angedeutete Apps sind
+  reine Deko (`AppIcon` ohne Link) — Ausnahme „Einstellungen", die in die
+  Charakter-Einstellungen führt; echte Apps (Telefon, Nachrichten, Captic)
+  stehen im Dock. Die Home-Leiste unten (bzw. der
   Home-Button des alten Modells) führt immer dorthin zurück.
 - **Captic** (`/handy/captic`): fiktives Foto-Netzwerk, bisher nur angedeutet.
 - **Sprechblasen:** eigene rechts in `bg-accent text-black`, fremde links in

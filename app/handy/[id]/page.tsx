@@ -43,6 +43,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
 const snippet = messageSnippet;
 
+// Ist gerade Text markiert? (Dann will man kopieren, nicht das Blatt öffnen.)
+function hasSelection(): boolean {
+  return !!window.getSelection()?.toString();
+}
+
 // Tagestrenner: Inplay-Datum „2021-11-23"
 function dividerLabel(content: string): string {
   return formatInplayDate(content.split("|")[0]);
@@ -249,13 +254,19 @@ function ChatView({ chat }: { chat: Chat }) {
               {reading && lastOfGroup && sender && (
                 <PhoneAvatar character={sender} size={24} className="absolute bottom-0 left-0" />
               )}
-              <button
-                onClick={() => setActiveId(m.id)}
+              {/* Text bleibt markier- und kopierbar: Ist etwas markiert, öffnet weder
+                  Klick noch Rechtsklick das Blatt (dann greift das Browser-Menü). */}
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => !hasSelection() && setActiveId(m.id)}
+                onKeyDown={(e) => e.key === "Enter" && setActiveId(m.id)}
                 onContextMenu={(e) => {
+                  if (hasSelection()) return;
                   e.preventDefault();
                   setActiveId(m.id);
                 }}
-                className={`relative max-w-[78%] text-left ${
+                className={`relative max-w-[78%] cursor-pointer select-text text-left ${
                   big
                     ? "text-[2.75rem] leading-tight"
                     : media
@@ -302,12 +313,12 @@ function ChatView({ chat }: { chat: Chat }) {
                     <span
                       className={`float-right ml-2.5 mt-1.5 text-[0.6875rem] leading-none ${
                         big ? "text-text-tertiary" : mine ? "text-black/60" : "text-text-tertiary"
-                      }`}
+                      } select-none`}
                     >
                       {m.inplay_time}
                     </span>
                   ))}
-              </button>
+              </div>
               {reactions.length > 0 && (
                 <div className={`relative z-[1] -mt-1.5 flex gap-1 ${mine ? "mr-2" : "ml-2"}`}>
                   {reactions.map(([emoji, ids]) => (
@@ -443,16 +454,6 @@ function ChatView({ chat }: { chat: Chat }) {
                   }}
                 >
                   Antworten
-                </SheetButton>
-              )}
-              {active.kind === "text" && (
-                <SheetButton
-                  onClick={() => {
-                    void navigator.clipboard?.writeText(active.content);
-                    closeSheet();
-                  }}
-                >
-                  Kopieren
                 </SheetButton>
               )}
               {active.kind === "text" && (isAdmin || canWriteAs(active.character_id)) && (

@@ -307,7 +307,8 @@ function Sidebar({
   onPeek: (v: boolean) => void;
   onToggleHidden: () => void;
 }) {
-  const { currentPlayer, charactersOf, logout, unreadChatCount } = useStore();
+  const { currentPlayer, charactersOf, logout, unreadChatCount, incomingCalls } = useStore();
+  const phoneBadge = unreadChatCount + incomingCalls.length;
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
   const [charsOpen, setCharsOpen] = useState(false);
 
@@ -369,9 +370,13 @@ function Sidebar({
                 <Icon name={item.icon} size={17} />
               </span>
               {item.label}
-              {item.href === "/handy" && unreadChatCount > 0 && (
-                <span className="ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[0.6875rem] font-semibold text-black">
-                  {unreadChatCount}
+              {item.href === "/handy" && phoneBadge > 0 && (
+                <span
+                  className={`ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[0.6875rem] font-semibold text-black ${
+                    incomingCalls.length > 0 ? "phone-ring" : ""
+                  }`}
+                >
+                  {phoneBadge}
                 </span>
               )}
             </Link>

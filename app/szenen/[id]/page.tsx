@@ -95,7 +95,9 @@ export default function ScenePage({
   // (dort, wo auf anderen Seiten die Tagline/der Untertitel steht), plus das
   // gewählte Header-Bild der Szene.
   const factsLine = scene
-    ? `${scene.location_name} · ${areaName(scene.location_area)} · ${formatInplayDate(
+    ? `${scene.location_name}${
+        scene.location_area === "phone" ? "" : ` · ${areaName(scene.location_area)}`
+      } · ${formatInplayDate(
         scene.inplay_date,
       )}, ${scene.inplay_time}`
     : undefined;

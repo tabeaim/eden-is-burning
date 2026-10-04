@@ -17,17 +17,22 @@ export function PhoneFrame({
   options = [],
   onOwner,
   tone = "app",
+  callBanner = true,
   children,
 }: {
   owner: string | null; // Charakter-ID (null: neutrales Handy)
   options?: string[]; // wählbare Handys (Charakter-IDs)
   onOwner?: (id: string) => void;
   tone?: "app" | "home"; // "home": Hintergrundbild füllt das Display
+  callBanner?: boolean; // eingehenden Anruf oben im Display melden
   children: React.ReactNode;
 }) {
-  const { character } = useStore();
+  const { character, calls } = useStore();
   const ownerChar = owner ? character(owner) : undefined;
   const phone = resolvePhone(ownerChar);
+  const ringing = callBanner
+    ? calls.find((c) => c.status === "ringing" && c.callee_id === owner)
+    : undefined;
   const classic = phone.model === "classic";
   const burner = phone.burner;
 
@@ -94,6 +99,18 @@ export function PhoneFrame({
           }`}
         >
           <StatusBar model={phone.model} tone={tone} />
+          {ringing && (
+            <Link
+              href="/handy/telefon"
+              className="flex shrink-0 items-center gap-2 bg-green-500/90 px-3 py-2 text-[0.8125rem] font-semibold text-black"
+            >
+              <Icon name="phone" size={18} className="phone-ring shrink-0" />
+              <span className="min-w-0 flex-1 truncate">
+                {character(ringing.caller_id)?.name ?? "Jemand"} ruft an
+              </span>
+              <span className="shrink-0">Abheben ›</span>
+            </Link>
+          )}
           <div className="burner-content relative flex min-h-0 flex-1 flex-col">{children}</div>
           {/* Home-Leiste: zurück zum Startbildschirm (altes Modell ab sm: Home-Button) */}
           <Link

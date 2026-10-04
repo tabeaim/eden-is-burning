@@ -127,27 +127,28 @@ export function PhoneSettings({ character }: { character: Character }) {
         </p>
       ) : (
         <>
-          <div>
-            <div className={label}>
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-[0.875rem] text-text-secondary">
               Captic{" "}
               <span className="text-text-tertiary">
                 (Foto-Netzwerk — das Profil bearbeitest du danach direkt in der App auf dem Handy)
               </span>
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => save({ captic: { ...raw.captic, enabled: true } })}
-                className={pill(phone.captic)}
-              >
-                Hat Captic
-              </button>
-              <button
-                onClick={() => save({ captic: { ...raw.captic, enabled: false } })}
-                className={pill(!phone.captic)}
-              >
-                Kein Captic
-              </button>
-            </div>
+            <button
+              role="switch"
+              aria-checked={phone.captic}
+              aria-label="Captic"
+              onClick={() => save({ captic: { ...raw.captic, enabled: !phone.captic } })}
+              className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+                phone.captic ? "bg-accent" : "bg-white/[0.14]"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-[left] ${
+                  phone.captic ? "left-[1.375rem]" : "left-0.5"
+                }`}
+              />
+            </button>
           </div>
 
           <div>

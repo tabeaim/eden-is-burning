@@ -36,18 +36,20 @@ export interface PhoneApp {
   glyph?: string; // Symbol auf farbiger Kachel …
   bg?: string;
   icon?: string; // … oder (eigene Apps) ein hochgeladenes Icon
+  href?: string; // echte App: führt irgendwohin (sonst reine Deko)
 }
 
 // Standard-Apps: auf jedem Smartphone einfach da, nicht wählbar.
 export const STANDARD_APPS: PhoneApp[] = [
-  { key: "telefon", label: "Telefon", glyph: "📞", bg: "linear-gradient(#5fd66b, #2aa63a)" },
+  { key: "rechner", label: "Rechner", glyph: "🧮", bg: "linear-gradient(#48484c, #1c1c1e)" },
   { key: "kamera", label: "Kamera", glyph: "📷", bg: "linear-gradient(#8e8e93, #48484c)" },
   { key: "fotos", label: "Fotos", glyph: "🌸", bg: "linear-gradient(#ffffff, #dcdce0)" },
   { key: "uhr", label: "Uhr", glyph: "⏰", bg: "linear-gradient(#2c2c2e, #111113)" },
   { key: "wetter", label: "Wetter", glyph: "⛅", bg: "linear-gradient(#4aa3f0, #1d5fc2)" },
   { key: "karten", label: "Karten", glyph: "🗺️", bg: "linear-gradient(#7ed0a0, #3c8f6a)" },
   { key: "notizen", label: "Notizen", glyph: "📝", bg: "linear-gradient(#ffe27a, #f2b824)" },
-  { key: "einstellungen", label: "Einstellungen", glyph: "⚙️", bg: "linear-gradient(#a9a9af, #6b6b70)" },
+  // führt in die Charakter-Einstellungen (Handy-Look, Captic, Apps)
+  { key: "einstellungen", label: "Einstellungen", glyph: "⚙️", bg: "linear-gradient(#a9a9af, #6b6b70)", href: "/einstellungen" },
 ];
 
 // Optionale Apps — sagen etwas über den Charakter. Bewusst ohne echte Marken.

@@ -217,6 +217,19 @@ body {
   pointer-events: none;
 }
 
+/* Klingelndes Telefon: kurzes Vibrieren, dann Pause */
+@keyframes phone-ring {
+  0%, 60%, 100% { transform: translate(0, 0) rotate(0); }
+  5%, 15%, 25%, 35%, 45% { transform: translate(-1.5px, 0) rotate(-9deg); }
+  10%, 20%, 30%, 40%, 50% { transform: translate(1.5px, 0) rotate(9deg); }
+}
+.phone-ring {
+  animation: phone-ring 1.3s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .phone-ring { animation: none; }
+}
+
 /* Burner Phone (Messenger): altes Tastenhandy. Die Farb-Tokens werden im Display
    auf Graustufen umgestellt; das grünliche LCD legt PhoneFrame per Overlay darüber. */
 .phone-burner {

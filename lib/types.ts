@@ -187,6 +187,18 @@ export interface Chat {
   archived_by?: string[] | null;
 }
 
+// Anruf zwischen zwei Charakteren. „ringing": klingelt noch beim Angerufenen.
+export interface PhoneCall {
+  id: string;
+  caller_id: string;
+  callee_id: string;
+  inplay_date: string; // ISO-Datum
+  inplay_time: string | null; // „22:10"
+  status: "ringing" | "accepted" | "declined";
+  scene_id?: string | null; // Telefonszene, falls eine erstellt wurde
+  created_at: string;
+}
+
 // text: `content` ist der Nachrichtentext · gif/image: Bild-Adresse ·
 // date: Tagestrenner mit Inplay-Datum, „2021-11-23"
 export type ChatMessageKind = "text" | "gif" | "image" | "date";

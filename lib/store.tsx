@@ -15,6 +15,7 @@ import type {
   ChatMessage,
   ChatMessageKind,
   Location,
+  PhoneCall,
   Player,
   Plot,
   Post,
@@ -34,6 +35,7 @@ interface PersistedState {
   plots: Plot[];
   chats: Chat[];
   chatMessages: ChatMessage[];
+  calls: PhoneCall[];
 }
 
 // `characters` enthält nach außen nur spielbare Charaktere; NPCs (Charaktere mit
@@ -126,6 +128,13 @@ interface StoreValue extends PersistedState {
   isChatNew: (chatId: string) => boolean;
   markChatSeen: (chatId: string) => void;
   unreadChatCount: number;
+  // Gibt es in diesem Chat (auch einem fremden) Nachrichten seit dem letzten Besuch?
+  isChatFresh: (chatId: string) => boolean;
+  // --- Telefon ---
+  addCall: (call: Omit<PhoneCall, "id" | "created_at">) => string;
+  updateCall: (id: string, patch: Partial<PhoneCall>) => void;
+  // Klingelnde Anrufe an eigene Charaktere
+  incomingCalls: PhoneCall[];
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -140,6 +149,7 @@ const EMPTY: PersistedState = {
   plots: [],
   chats: [],
   chatMessages: [],
+  calls: [],
 };
 
 // Supabase liefert höchstens 1000 Zeilen pro Abfrage — Nachrichten werden schnell
@@ -164,6 +174,12 @@ async function fetchAll<T>(table: string): Promise<T[]> {
 // Gerade angelegte Chats, deren Zeile noch unterwegs ist — die erste Nachricht
 // wartet darauf, sonst käme sie vor ihrem Chat an (Fremdschlüssel).
 const pendingChats = new Map<string, Promise<unknown>>();
+// Dasselbe für gerade angelegte Szenen (erster Post, Anruf mit Telefonszene)
+const pendingScenes = new Map<string, Promise<unknown>>();
+function afterScene<T>(sceneId: string | null | undefined, run: () => PromiseLike<T>): PromiseLike<T> {
+  const pending = sceneId ? pendingScenes.get(sceneId) : undefined;
+  return pending ? pending.then(run, run) : run();
+}
 
 let lastMessageAt = 0;
 
@@ -233,7 +249,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Lädt alle Welt-Daten (nur für freigeschaltete Nutzer*innen sichtbar; RLS).
   const loadWorld = useCallback(async () => {
-    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages] = await Promise.all([
+    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, calls] = await Promise.all([
       supabase.from("players").select("*"),
       supabase.from("characters").select("*"),
       supabase.from("scenes").select("*"),
@@ -243,6 +259,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       supabase.from("plots").select("*"),
       fetchAll<Chat>("chats"),
       fetchAll<ChatMessage>("chat_messages"),
+      fetchAll<PhoneCall>("calls"),
     ]);
     setState({
       players: (pl.data as Player[]) ?? [],
@@ -254,6 +271,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       plots: (pt.data as Plot[]) ?? [],
       chats,
       chatMessages,
+      calls,
     });
   }, []);
 
@@ -349,6 +367,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setState((s) => ({ ...s, chatMessages: applyChange(s.chatMessages, p) })),
       )
       .subscribe();
+    const phoneCalls = supabase
+      .channel("eden-calls")
+      .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, (p) =>
+        setState((s) => ({ ...s, calls: applyChange(s.calls, p) })),
+      )
+      .subscribe();
 
     const presence = supabase.channel("eden-online", {
       config: { presence: { key: approvedId } },
@@ -406,6 +430,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("blur", trackNow);
       void supabase.removeChannel(world);
       void supabase.removeChannel(phone);
+      void supabase.removeChannel(phoneCalls);
       void supabase.removeChannel(presence);
     };
   }, [approvedId, loadWorld]);
@@ -600,7 +625,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           post_number: nextNumber,
           created_at: new Date().toISOString(),
         };
-        persist("addPost", supabase.from("posts").insert(post));
+        persist("addPost", afterScene(sceneId, () => supabase.from("posts").insert(post)));
         // Manuelle Zug-Übergabe nach einem Post wieder aufheben
         const sc = s.scenes.find((x) => x.id === sceneId);
         let scenes = s.scenes;
@@ -851,7 +876,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const addScene = useCallback((scene: Omit<Scene, "id" | "created_at">) => {
     const id = uid("s");
     const newScene: Scene = { ...scene, id, created_at: new Date().toISOString() };
-    persist("addScene", supabase.from("scenes").insert(newScene));
+    const req = Promise.resolve(supabase.from("scenes").insert(newScene));
+    pendingScenes.set(id, req);
+    void req.finally(() => pendingScenes.delete(id));
+    persist("addScene", req);
     setState((s) => ({ ...s, scenes: [...s.scenes, newScene] }));
     return id;
   }, []);
@@ -1133,6 +1161,47 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return ids;
   }, [state.chats, state.chatMessages, state.characters, reads, currentPlayer]);
   const isChatNew = useCallback((chatId: string) => unreadChatIds.has(chatId), [unreadChatIds]);
+
+  const isChatFresh = useCallback(
+    (chatId: string) => {
+      let newest = "";
+      for (const m of state.chatMessages) {
+        if (m.chat_id === chatId && m.kind !== "date" && m.created_at > newest) newest = m.created_at;
+      }
+      if (!newest) return false;
+      const seen = reads[chatId] ? new Date(reads[chatId]).getTime() : 0;
+      return new Date(newest).getTime() > seen;
+    },
+    [state.chatMessages, reads],
+  );
+
+  // --- Telefon ---------------------------------------------------------------
+  const addCall = useCallback((call: Omit<PhoneCall, "id" | "created_at">) => {
+    const row: PhoneCall = { ...call, id: uid("call"), created_at: new Date().toISOString() };
+    rememberPhone(call.caller_id);
+    persist("addCall", afterScene(row.scene_id, () => supabase.from("calls").insert(row)));
+    setState((s) => ({ ...s, calls: [...s.calls, row] }));
+    return row.id;
+  }, []);
+
+  const updateCall = useCallback((id: string, patch: Partial<PhoneCall>) => {
+    persist(
+      "updateCall",
+      afterScene(patch.scene_id, () => supabase.from("calls").update(patch).eq("id", id)),
+    );
+    setState((s) => ({
+      ...s,
+      calls: s.calls.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    }));
+  }, []);
+
+  const incomingCalls = useMemo(() => {
+    if (!currentPlayer) return [];
+    const mine = new Set(
+      state.characters.filter((c) => c.player_id === currentPlayer.id).map((c) => c.id),
+    );
+    return state.calls.filter((c) => c.status === "ringing" && mine.has(c.callee_id));
+  }, [state.calls, state.characters, currentPlayer]);
   const unreadChatCount = unreadChatIds.size;
 
   const value = useMemo<StoreValue>(
@@ -1203,6 +1272,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       isChatNew,
       markChatSeen,
       unreadChatCount,
+      isChatFresh,
+      addCall,
+      updateCall,
+      incomingCalls,
     }),
     [
       state,
@@ -1268,6 +1341,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       isChatNew,
       markChatSeen,
       unreadChatCount,
+      isChatFresh,
+      addCall,
+      updateCall,
+      incomingCalls,
     ],
   );
 

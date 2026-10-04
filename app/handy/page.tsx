@@ -12,13 +12,10 @@ import {
   MessengerGlyph,
 } from "@/components/phone/AppIcon";
 
-const WEEKDAYS = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
-const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
-
 // Startbildschirm des Handys: Hintergrundbild, angedeutete Apps und unten im
 // Dock die echten — Nachrichten und (wenn aktiviert) Captic.
 export default function PhoneHomePage() {
-  const { chats, isChatNew } = useStore();
+  const { chats, calls, isChatNew } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
 
   if (!me) {
@@ -41,7 +38,7 @@ export default function PhoneHomePage() {
 
   const phone = resolvePhone(me);
   const unread = chats.filter((c) => c.participant_ids.includes(me.id) && isChatNew(c.id)).length;
-  const now = new Date();
+  const ringingCount = calls.filter((c) => c.status === "ringing" && c.callee_id === me.id).length;
 
   // Burner Phone: kein Startbildschirm mit Apps, nur das Menü eines Tastenhandys
   if (phone.burner) {
@@ -58,11 +55,18 @@ export default function PhoneHomePage() {
             <span>✉ Nachrichten</span>
             <span>{unread > 0 ? `${unread} neu` : "›"}</span>
           </Link>
-          {["Kontakte", "Anruflisten", "Einstellungen"].map((item) => (
-            <div key={item} aria-hidden className="px-3 py-3 text-[1rem] text-text-tertiary">
-              {item}
-            </div>
-          ))}
+          <Link href="/handy/telefon" className="flex items-center justify-between px-3 py-3 text-[1rem] font-bold text-text-primary">
+            <span>☎ Anrufliste</span>
+            <span>{ringingCount > 0 ? `${ringingCount} klingelt` : "›"}</span>
+          </Link>
+          <Link href="/handy/telefon#kontakte" className="flex items-center justify-between px-3 py-3 text-[1rem] font-bold text-text-primary">
+            <span>☺ Kontakte</span>
+            <span>›</span>
+          </Link>
+          <Link href={`/einstellungen#charakter-${me.id}`} className="flex items-center justify-between px-3 py-3 text-[1rem] font-bold text-text-primary">
+            <span>⚙ Einstellungen</span>
+            <span>›</span>
+          </Link>
           <div className="flex-1" />
           <div className="text-center text-[0.75rem] text-text-tertiary">Prepaid · kein Internet</div>
         </div>
@@ -73,24 +77,34 @@ export default function PhoneHomePage() {
   return (
     <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner} tone="home">
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-black/15 px-4 pb-2 pt-5">
-        <div className="text-center text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
-          <div className="text-[0.9375rem] font-medium">
-            {WEEKDAYS[now.getDay()]}, {now.getDate()}. {MONTHS[now.getMonth()]}
-          </div>
-        </div>
-
-        {/* Angedeutete Apps — nicht anklickbar */}
-        <div aria-hidden className="mt-6 grid grid-cols-4 justify-items-center gap-y-5">
-          {phone.apps.map((a) => (
-            <AppIcon key={a.key} label={a.label} bg={a.bg} icon={a.icon}>
-              {a.glyph}
-            </AppIcon>
-          ))}
+        {/* Angedeutete Apps — nicht anklickbar (außer „Einstellungen") */}
+        <div className="grid grid-cols-4 justify-items-center gap-y-5">
+          {phone.apps.map((a) => {
+            const icon = (
+              <AppIcon label={a.label} bg={a.bg} icon={a.icon}>
+                {a.glyph}
+              </AppIcon>
+            );
+            return a.href ? (
+              <Link key={a.key} href={`${a.href}#charakter-${me.id}`}>
+                {icon}
+              </Link>
+            ) : (
+              <span key={a.key} aria-hidden>
+                {icon}
+              </span>
+            );
+          })}
         </div>
 
         <div className="min-h-6 flex-1" />
 
-        <div className="flex justify-center gap-6 rounded-[1.75rem] bg-white/15 px-4 pb-2 pt-3 backdrop-blur-md">
+        <div className="flex justify-center gap-3 rounded-[1.75rem] bg-white/15 px-3 pb-2 pt-3 backdrop-blur-md">
+          <Link href="/handy/telefon">
+            <AppIcon label="Telefon" bg="linear-gradient(#5fd66b, #2aa63a)" badge={ringingCount}>
+              <span className={ringingCount > 0 ? "phone-ring" : ""}>📞</span>
+            </AppIcon>
+          </Link>
           <Link href="/handy/nachrichten">
             <AppIcon label="Nachrichten" bg={MESSENGER_BG} badge={unread}>
               <MessengerGlyph />
