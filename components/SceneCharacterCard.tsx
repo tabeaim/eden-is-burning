@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import type { Character, Player } from "@/lib/types";
 import { Icon } from "./Icon";
 
 // Große Charakterkarte für die Szenenansicht. Bildformat 600×502; die
-// Beschreibung (Bio) erscheint als Overlay beim Hovern über das Bild.
+// Beschreibung (Bio) erscheint als Overlay, solange die Maus über dem Bild ist.
 export function SceneCharacterCard({
   character,
   player,
@@ -14,14 +13,10 @@ export function SceneCharacterCard({
   character: Character;
   player?: Player;
 }) {
-  const [showBio, setShowBio] = useState(false);
-
   return (
     <div className="w-[260px] max-w-full shrink-0">
       <div
         className="group relative aspect-[600/502] w-full overflow-hidden rounded-lg border border-border-subtle bg-bg-surface"
-        onMouseEnter={() => setShowBio(true)}
-        onMouseLeave={() => setShowBio(false)}
       >
         <Link href={`/charaktere/${character.id}`} className="block h-full w-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -35,9 +30,7 @@ export function SceneCharacterCard({
         {/* Bio-Overlay beim Hover */}
         {character.bio && (
           <div
-            className={`pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 text-center transition-opacity duration-200 ${
-              showBio ? "opacity-100" : "opacity-0"
-            }`}
+            className="pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 text-center opacity-0 transition-opacity duration-200 group-hover:opacity-100"
           >
             <div className="mb-2 text-[0.875rem] font-semibold uppercase tracking-wider text-text-primary">
               {[character.role, character.age ? `${character.age}` : null]
@@ -51,17 +44,13 @@ export function SceneCharacterCard({
         )}
       </div>
 
-      {/* Name (mit Aufklapp-Marker für die Bio) */}
-      <button
-        onClick={() => setShowBio((v) => !v)}
-        className="mt-3 flex w-full items-center justify-center gap-1.5 font-serif font-bold text-[1.125rem] uppercase tracking-wide text-text-primary hover:text-accent"
-        title="Beschreibung ein-/ausblenden"
+      {/* Name – führt wie das Bild aufs Profil */}
+      <Link
+        href={`/charaktere/${character.id}`}
+        className="mt-3 block text-center font-serif font-bold text-[1.125rem] uppercase tracking-wide text-text-primary hover:text-accent"
       >
         {character.name}
-        <span className={`text-[0.875rem] transition-transform ${showBio ? "rotate-180" : ""}`}>
-          ▾
-        </span>
-      </button>
+      </Link>
 
       {/* Tagline */}
       {character.tagline && (

@@ -36,7 +36,7 @@ export function SceneEditPanel({
   const [area, setArea] = useState<string>(scene.location_area);
   const [locationName, setLocationName] = useState(scene.location_name);
   const [locationDescription, setLocationDescription] = useState("");
-  // Telefonat: kein Bezirk/Ort, die Szene spielt „am Telefon"
+  // Telefonat: keine Gegend/kein Ort, die Szene spielt „am Telefon"
   const [phone, setPhone] = useState(scene.location_area === PHONE_AREA);
   const [date, setDate] = useState(scene.inplay_date);
   const [time, setTime] = useState(scene.inplay_time);

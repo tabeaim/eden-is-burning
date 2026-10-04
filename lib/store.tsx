@@ -127,6 +127,8 @@ interface StoreValue extends PersistedState {
   // Ungelesen: neueste Nachricht stammt von jemand anderem und ist neuer als der letzte Besuch
   isChatNew: (chatId: string) => boolean;
   markChatSeen: (chatId: string) => void;
+  // Chat wieder als ungelesen markieren (z.B. um „left on read" aufzuheben)
+  markChatUnread: (chatId: string) => void;
   unreadChatCount: number;
   // Gibt es in diesem Chat (auch einem fremden) Nachrichten seit dem letzten Besuch?
   isChatFresh: (chatId: string) => boolean;
@@ -1002,6 +1004,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [currentPlayer?.id],
   );
 
+  const markChatUnread = useCallback(
+    (chatId: string) => {
+      if (!currentPlayer) return;
+      const pid = currentPlayer.id;
+      setReads((r) => {
+        const next = { ...r };
+        delete next[chatId];
+        try {
+          localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentPlayer?.id],
+  );
+
   const addMessage = useCallback(
     (
       chatId: string,
@@ -1271,6 +1292,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       toggleReaction,
       isChatNew,
       markChatSeen,
+      markChatUnread,
       unreadChatCount,
       isChatFresh,
       addCall,
@@ -1340,6 +1362,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       toggleReaction,
       isChatNew,
       markChatSeen,
+      markChatUnread,
       unreadChatCount,
       isChatFresh,
       addCall,

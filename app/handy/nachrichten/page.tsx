@@ -21,8 +21,18 @@ type Tab = "mine" | "others";
 const TAB_KEY = "eden:sms-tab";
 
 export default function MessagesPage() {
-  const { chats, chatMessages, character, isChatNew, canWriteAs, isAdmin, archiveChat, deleteChat } =
-    useStore();
+  const {
+    chats,
+    chatMessages,
+    character,
+    isChatNew,
+    canWriteAs,
+    isAdmin,
+    archiveChat,
+    deleteChat,
+    leaveOnRead,
+    markChatUnread,
+  } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
   // „Meine": Chats des Charakters, dessen Handy man in der Hand hat · „Andere":
   // alle übrigen Chats zum Mitlesen. Beide haben ein eigenes Archiv (Taste rechts).
@@ -291,6 +301,25 @@ export default function MessagesPage() {
             {chatTitle(menuChat.participant_ids.filter((id) => id !== myId).map((id) => character(id)))}
           </div>
           <SheetList>
+            {/* eigener Chat, in dem man dran ist: pausieren bzw. wieder aktivieren */}
+            {(() => {
+              const m = last.get(menuChat.id);
+              if (!myId || !m || !menuChat.participant_ids.includes(myId) || m.character_id === myId) {
+                return null;
+              }
+              const left = isLeftOnRead(menuChat, myId, m);
+              return (
+                <SheetButton
+                  onClick={() => {
+                    leaveOnRead(menuChat.id, myId, left ? null : m.id);
+                    if (left) markChatUnread(menuChat.id);
+                    closeMenu();
+                  }}
+                >
+                  {left ? "Als ungelesen markieren – Chat wieder aktivieren" : "Left on read – Chat pausieren"}
+                </SheetButton>
+              );
+            })()}
             {myId && (
               <SheetButton
                 onClick={() => {

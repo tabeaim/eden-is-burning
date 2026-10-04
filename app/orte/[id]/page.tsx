@@ -158,7 +158,7 @@ export default function LocationPage({
           <section>
             <Heading>facts.</Heading>
             <Facts>
-              <FactRow label="Bezirk" value={areaName(loc.area)} />
+              <FactRow label="Gegend" value={areaName(loc.area)} />
               <FactRow
                 label="Status"
                 value={scenesHere.length > 0 ? "Bespielt" : "Noch unbespielt"}

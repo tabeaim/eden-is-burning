@@ -31,11 +31,11 @@ export default function NewScenePage() {
     currentPlayer,
     charactersOf,
   } = useStore();
-  // Telefonat statt Ort: kein Bezirk/Ort nötig – die Szene spielt „am Telefon"
+  // Telefonat statt Ort: keine Gegend/kein Ort nötig – die Szene spielt „am Telefon"
   const [phone, setPhone] = useState(false);
 
   const [title, setTitle] = useState("");
-  // Bezirk kommt vom gewählten Ort; nur bei einem neuen Ort wird er abgefragt
+  // Die Gegend kommt vom gewählten Ort; nur bei einem neuen Ort wird sie abgefragt
   const [area, setArea] = useState("");
   const [locationName, setLocationName] = useState("");
   const [locationDescription, setLocationDescription] = useState("");

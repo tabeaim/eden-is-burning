@@ -6,11 +6,11 @@ import { useEffect, useRef, useState } from "react";
 // "Stadtbezirks-Karte" (Frame 608×654) übernommen. Die exakten Vektorpfade sind aus
 // den Figma-Exporten transkribiert und per <g transform> an ihre Frame-Position
 // gesetzt; Orchid Valley ist rotiert wie im Original.
-// Neu ggü. der alten Karte: eigener Bezirk "Central" (Downtown-Fläche), abgesetzter
+// Neu ggü. der alten Karte: eigene Gegend "Central" (Downtown-Fläche), abgesetzter
 // "Industrial District & Eden Port", Byron University als Highlight in Rivers Edge.
 // Die Auswahl-, Bespielt- und Aktive-Szenen-Logik der App liegt darüber.
 // Pro Bereich zeigt ein oranger Ticker die Zahl der aktiven Szenen:
-// zentriert unter dem Bezirksnamen bzw. rechts neben dem Label in den Pills.
+// zentriert unter dem Namen der Gegend bzw. rechts neben dem Label in den Pills.
 
 interface District {
   key: string; // onSelect-Key (muss zu lib/world.ts bzw. EXTRA passen)
@@ -22,7 +22,7 @@ interface District {
   ly: number;
 }
 
-// Bezirke – Pfad-Koordinaten stammen aus dem jeweiligen Asset-viewBox (Ursprung
+// Gegenden – Pfad-Koordinaten stammen aus dem jeweiligen Asset-viewBox (Ursprung
 // nahe 0), transform verschiebt sie an die Frame-Position (left/top aus Figma).
 const DISTRICTS: District[] = [
   {
@@ -157,7 +157,7 @@ export function EdenMap({
   onSelect: (key: string) => void;
   areaStats: Record<string, { active: number; total: number }>;
 }) {
-  // Ausgewählten Bezirk zuletzt zeichnen (Akzentrand vollständig sichtbar)
+  // Ausgewählte Gegend zuletzt zeichnen (Akzentrand vollständig sichtbar)
   const ordered = [...DISTRICTS].sort((a, b) =>
     a.key === selected ? 1 : b.key === selected ? -1 : 0,
   );
@@ -232,7 +232,7 @@ export function EdenMap({
         Umland
       </text>
 
-      {/* Bezirke */}
+      {/* Gegenden */}
       {ordered.map((d) => {
         const isSel = selected === d.key;
         return (

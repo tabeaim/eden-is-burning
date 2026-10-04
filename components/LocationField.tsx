@@ -5,9 +5,9 @@ import { AREA_ORDER, AREAS, areaName } from "@/lib/world";
 import { PHONE_AREA } from "@/lib/phone";
 import { SuggestInput } from "./SuggestInput";
 
-// Ort einer Szene: beim Tippen werden vorhandene Orte vorgeschlagen (der Bezirk
+// Ort einer Szene: beim Tippen werden vorhandene Orte vorgeschlagen (die Gegend
 // kommt vom Ort). Gibt es den Namen noch nicht, wird ein neuer Ort angelegt – dann
-// fragt das Feld Bezirk und Beschreibung ab (der Name steht schon im Feld).
+// fragt das Feld Gegend und Beschreibung ab (der Name steht schon im Feld).
 export function LocationField({
   area,
   name,
@@ -38,7 +38,7 @@ export function LocationField({
         value={name}
         placeholder="Ort eintippen ..."
         onChange={(text) => {
-          // getippter Name passt genau auf einen vorhandenen Ort: dessen Bezirk übernehmen
+          // getippter Name passt genau auf einen vorhandenen Ort: dessen Gegend übernehmen
           const hit = places.filter((l) => l.name.toLowerCase() === text.trim().toLowerCase());
           onChange(hit.find((l) => l.area === area)?.area ?? hit[0]?.area ?? area, text);
         }}
@@ -61,14 +61,14 @@ export function LocationField({
             <span className="text-text-tertiary">– wird mit dieser Szene angelegt</span>
           </div>
           <label className="text-[0.8125rem] text-text-secondary">
-            Bezirk <span className="text-accent">*</span>
+            Gegend <span className="text-accent">*</span>
             <select
               value={AREA_ORDER.includes(area as (typeof AREA_ORDER)[number]) ? area : ""}
               onChange={(e) => onChange(e.target.value, name)}
               className={`mt-1 ${field}`}
             >
               <option value="" disabled className="bg-bg-surface">
-                Bezirk wählen
+                Gegend wählen
               </option>
               {AREA_ORDER.map((k) => (
                 <option key={k} value={k} className="bg-bg-surface">
@@ -96,7 +96,7 @@ export function LocationField({
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
-// Ist die Ortsangabe vollständig? (Name und – bei neuen Orten – ein Bezirk)
+// Ist die Ortsangabe vollständig? (Name und – bei neuen Orten – eine Gegend)
 export function locationComplete(area: string, name: string): boolean {
   return !!name.trim() && !!area && area !== PHONE_AREA;
 }

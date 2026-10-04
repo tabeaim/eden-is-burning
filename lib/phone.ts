@@ -123,7 +123,7 @@ export function rememberPhone(characterId: string) {
 
 // --- Telefonszenen ----------------------------------------------------------
 // Eine Telefonszene ist eine normale Szene (Zusammenfassung, Timeline, …) mit
-// festem „Ort": kein Bezirk, sondern das Telefon.
+// festem „Ort": keine Gegend, sondern das Telefon.
 export const PHONE_AREA = "phone";
 export const PHONE_LOCATION = "am Telefon";
 export function phoneSceneTitle(participants: { name: string }[]): string {

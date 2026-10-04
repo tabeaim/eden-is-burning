@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 export interface Suggestion {
   key: string;
   label: string;
-  hint?: string; // grau dahinter, z.B. der Bezirk
+  hint?: string; // grau dahinter, z.B. die Gegend
 }
 
 // Textfeld mit Vorschlägen beim Tippen (siehe DESIGN.md): Vorhandenes wählen oder,

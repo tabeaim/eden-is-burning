@@ -38,7 +38,7 @@ Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schre
 Status steht links als Streichholz (`SceneMatch`): brennend/orange bei ungelesenem
 neuestem Post, grau ohne Flamme wenn gelesen, abgebrannt mit Rauch bei geschlossener
 Szene. Die Tags „aktiv"/„geschlossen" (`StatusBadge`) gibt es nur in der Szene selbst.
-Szenen-Boxen nennen nur den Ort, nie den Bezirk. Genau zwei Varianten:
+Szenen-Boxen nennen nur den Ort, nie die Gegend. Genau zwei Varianten:
 
 Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden").
 
@@ -47,7 +47,7 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
    Ortsprofil, Charakterprofil.
    Die ganze Box führt zur Szene; „Letzter Post" springt zum neuesten Post.
 2. **`SceneRow`** – kompakte Zeile für schmale Spalten, überall identisch
-   (Dashboard „letzte 24h", Bezirks-Panel der Karte): Ort · Datum numerisch, rechts
+   (Dashboard „letzte 24h", Gegend-Panel der Karte): Ort · Datum numerisch, rechts
    letzter Poster + Zeitpunkt.
 
 ## Formulare & Nachfragen
@@ -56,8 +56,8 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   daneben), nie `<input type="checkbox">`.
 - **Vorhandenes wählen oder Neues anlegen** (Ort, AU): `components/SuggestInput.tsx`
   – Vorschläge beim Tippen; gibt es das Getippte noch nicht, bietet die Liste
-  „+ Neuen … erstellen" an. Orte: `LocationField` (kein Bezirks-Feld; der Bezirk
-  kommt vom Ort. Ein neuer Ort fragt Name, Bezirk und Beschreibung ab). AUs: `AuNameField`.
+  „+ Neuen … erstellen" an. Orte: `LocationField` (kein Gegend-Feld; die Gegend
+  kommt vom Ort. Ein neuer Ort fragt Name, Gegend und Beschreibung ab). AUs: `AuNameField`.
 - **Datum:** immer `components/DatePicker.tsx` (kleiner Kalender, öffnet ohne Wert
   im Jahr 2021), nie `<input type="date">`.
 - **Endgültige Aktionen** (löschen): `components/ConfirmDialog.tsx` mit klar
@@ -136,7 +136,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   gefragt. Angenommene Anrufe mit Szene verlinken aus der Anrufliste dorthin.
 - **Telefonszenen** sind normale Szenen (Zusammenfassung, Timeline, Plots):
   Häkchen „Telefonat" im Neue-Szene-Formular bzw. beim Bearbeiten – dann ohne
-  Bezirk/Ort (`location_area: "phone"`, Ort „am Telefon" mit Handy-Icon in der
+  Gegend/Ort (`location_area: "phone"`, Ort „am Telefon" mit Handy-Icon in der
   Orts-Bubble) und ohne eigenen Titel „A & B on the phone". Vom Handy aus
   (Anruf-Dialog, nach dem Annehmen) entsteht die Szene direkt, nur mit
   optionalem Titel (`useCreatePhoneScene`).

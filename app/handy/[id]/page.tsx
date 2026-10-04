@@ -64,6 +64,7 @@ function ChatView({ chat }: { chat: Chat }) {
     toggleReaction,
     markChatSeen,
     leaveOnRead,
+    markChatUnread,
     archiveChat,
     updateMessage,
     deleteChat,
@@ -500,12 +501,19 @@ function ChatView({ chat }: { chat: Chat }) {
               {myTurn && lastReal && (
                 <SheetButton
                   onClick={() => {
-                    leaveOnRead(chat.id, self, leftBy.includes(self) ? null : lastReal.id);
                     setMenuOpen(false);
+                    if (leftBy.includes(self)) {
+                      // wieder aktiv: zählt als ungelesen und steht im Dashboard
+                      leaveOnRead(chat.id, self, null);
+                      markChatUnread(chat.id);
+                      router.push("/handy/nachrichten");
+                    } else {
+                      leaveOnRead(chat.id, self, lastReal.id);
+                    }
                   }}
                 >
                   {leftBy.includes(self)
-                    ? "„Left on read“ zurücknehmen"
+                    ? "Als ungelesen markieren – Chat wieder aktivieren"
                     : "Left on read – nicht antworten, Chat pausieren"}
                 </SheetButton>
               )}

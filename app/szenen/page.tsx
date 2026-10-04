@@ -339,6 +339,7 @@ export default function ScenesPage() {
           activeId={plotId}
           onToggle={togglePlot}
           onSave={(name) => setPlotId(addPlot(name, [...tokens], [...aus], [...areas]))}
+          canSave={[...tokens, ...aus, ...areas].length > 0}
         />
       </div>
 

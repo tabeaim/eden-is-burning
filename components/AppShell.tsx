@@ -18,7 +18,7 @@ const NAV: { href: string; label: string; icon: IconName; title?: string }[] = [
   { href: "/orte", label: "Karte", icon: "map", title: "Eden, Virginia" },
   { href: "/kalender", label: "Timeline", icon: "calendar" },
   { href: "/charaktere", label: "Charaktere", icon: "users" },
-  { href: "/spieler", label: "Spieler", icon: "star" },
+  { href: "/spieler", label: "Spieler*innen", icon: "star" },
   { href: "/info", label: "Info", icon: "info" },
 ];
 
@@ -307,9 +307,20 @@ function Sidebar({
   onPeek: (v: boolean) => void;
   onToggleHidden: () => void;
 }) {
-  const { currentPlayer, charactersOf, logout, unreadChatCount, incomingCalls } = useStore();
-  const phoneBadge = unreadChatCount + incomingCalls.length;
+  const { currentPlayer, charactersOf, logout, unreadChatCount, incomingCalls, scenes, isSceneNew } =
+    useStore();
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
+  const phoneBadge = unreadChatCount + incomingCalls.length;
+  // Orange Zähler im Menü: Szenen = alle ungelesenen; Dashboard = Bewegung bei
+  // den eigenen Charakteren (eigene Szenen, Chats, Anrufe)
+  const myIds = new Set(myChars.map((c) => c.id));
+  const newScenes = scenes.filter((s) => isSceneNew(s.id));
+  const badges: Record<string, number> = {
+    "/szenen": newScenes.length,
+    "/dashboard":
+      newScenes.filter((s) => s.participant_ids.some((id) => myIds.has(id))).length + phoneBadge,
+    "/handy": phoneBadge,
+  };
   const [charsOpen, setCharsOpen] = useState(false);
 
   const isActive = (href: string) =>
@@ -370,13 +381,13 @@ function Sidebar({
                 <Icon name={item.icon} size={17} />
               </span>
               {item.label}
-              {item.href === "/handy" && phoneBadge > 0 && (
+              {(badges[item.href] ?? 0) > 0 && (
                 <span
                   className={`ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[0.6875rem] font-semibold text-black ${
-                    incomingCalls.length > 0 ? "phone-ring" : ""
+                    item.href === "/handy" && incomingCalls.length > 0 ? "phone-ring" : ""
                   }`}
                 >
-                  {phoneBadge}
+                  {badges[item.href]}
                 </span>
               )}
             </Link>
@@ -389,21 +400,6 @@ function Sidebar({
         <SideLink href="/handy/neu" icon="message" label="Neue SMS" pathname={pathname} />
         <SideLink href="/szenen/neu" icon="book" label="Neue Szene" pathname={pathname} />
         <SideLink href="/einstellungen" icon="settings" label="Einstellungen" pathname={pathname} />
-        {currentPlayer && (
-          <SideLink
-            href={`/spieler/${currentPlayer.username}`}
-            icon="users"
-            label="Profil"
-            pathname={pathname}
-          />
-        )}
-        <button
-          onClick={logout}
-          className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.8125rem] text-left text-text-secondary hover:text-text-primary hover:bg-white/[0.025] transition-colors"
-        >
-          <Icon name="logout" size={17} />
-          Abmelden
-        </button>
       </div>
 
       {/* Alter Egos (eigene Charaktere) – aufklappbares Dropdown */}

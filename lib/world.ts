@@ -160,7 +160,7 @@ export const AREA_ORDER: AreaKey[] = [
   "washington",
 ];
 
-// Karten-Bereiche ohne eigenen Bezirks-Steckbrief (nur Name + Kurzbeschreibung)
+// Karten-Bereiche ohne eigenen Gegend-Steckbrief (nur Name + Kurzbeschreibung)
 export const EXTRA_AREAS: Record<string, { name: string; character: string }> = {
   rest: {
     name: "Rest der Welt",

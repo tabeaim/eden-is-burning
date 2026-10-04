@@ -21,7 +21,7 @@ export function areaFilterOptions(): { value: string; label: string }[] {
   ].sort((a, b) => a.label.localeCompare(b.label, "de"));
 }
 
-// Gegend (Mehrfach): mind. eine muss passen; „rest" = alles außerhalb der Bezirke
+// Gegend (Mehrfach): mind. eine muss passen; „rest" = alles außerhalb der Gegenden
 export function areaMatches(areas: string[], area: string): boolean {
   if (areas.length === 0 || areas.includes(area)) return true;
   return areas.includes("rest") && !AREA_ORDER.includes(area as AreaKey);

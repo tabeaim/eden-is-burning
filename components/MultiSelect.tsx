@@ -20,6 +20,9 @@ export function MultiSelect({
   onClear: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  // Liegt die Taste weit rechts, klappt die Liste nach links auf (sonst würde der
+  // Bildschirmrand sie abschneiden)
+  const [alignRight, setAlignRight] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,7 +36,11 @@ export function MultiSelect({
   return (
     <div ref={ref} className="relative">
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          const left = ref.current?.getBoundingClientRect().left ?? 0;
+          setAlignRight(left + 224 > window.innerWidth - 8);
+          setOpen((o) => !o);
+        }}
         className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[0.8125rem] transition-colors ${
           selected.length > 0
             ? "border-accent/50 bg-accent-soft text-text-primary"
@@ -53,7 +60,11 @@ export function MultiSelect({
       </button>
 
       {open && (
-        <div className="absolute z-20 mt-1 w-56 max-h-72 overflow-auto rounded-lg border border-border-subtle bg-bg-surface-2 p-1.5 shadow-xl">
+        <div
+          className={`absolute z-20 mt-1 w-56 max-w-[calc(100vw-1rem)] max-h-72 overflow-auto ${
+            alignRight ? "right-0" : "left-0"
+          } rounded-lg border border-border-subtle bg-bg-surface-2 p-1.5 shadow-xl`}
+        >
           {options.map((o) => {
             const on = selected.includes(o.value);
             return (
