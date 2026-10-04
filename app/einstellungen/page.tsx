@@ -8,6 +8,8 @@ import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { pageHeader } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
 import { PhoneSettings } from "@/components/phone/PhoneSettings";
+import { NewNpcButton } from "@/components/NewNpcButton";
+import { MultiSelect } from "@/components/MultiSelect";
 import { Icon } from "@/components/Icon";
 import type { Character } from "@/lib/types";
 
@@ -306,16 +308,13 @@ function CharactersTab() {
         <Icon name="plus" size={16} /> Neuen Charakter anlegen
       </button>
 
-      {myNpcs.length > 0 && (
-        <>
-          <div className="mt-4 text-[0.875rem] uppercase tracking-wider font-semibold text-text-tertiary">
-            NPCs
-          </div>
-          {myNpcs.map((c) => (
-            <CharacterEditor key={c.id} character={c} />
-          ))}
-        </>
-      )}
+      <div className="mt-4 text-[0.875rem] uppercase tracking-wider font-semibold text-text-tertiary">
+        NPCs
+      </div>
+      {myNpcs.map((c) => (
+        <CharacterEditor key={c.id} character={c} />
+      ))}
+      <NewNpcButton />
     </div>
   );
 }
@@ -503,6 +502,7 @@ function CharacterEditor({ character }: { character: Character }) {
           </Labeled>
 
           {!character.is_npc && <PhoneSettings character={character} />}
+          {character.is_npc && <NpcOwners character={character} />}
 
           <div className="flex items-center gap-3">
             <button
@@ -525,6 +525,37 @@ function CharacterEditor({ character }: { character: Character }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Ein NPC kann mehreren Spieler*innen zugeordnet sein (speichert sofort).
+function NpcOwners({ character }: { character: Character }) {
+  const { players, player, updateCharacter } = useStore();
+  const owners = character.co_owner_ids ?? [];
+  const creator = player(character.player_id);
+  const others = players.filter((p) => p.id !== character.player_id);
+  const save = (ids: string[]) => updateCharacter(character.id, { co_owner_ids: ids });
+  return (
+    <div className="rounded-lg border border-border-subtle p-3 sm:p-4">
+      <div className="text-[0.875rem] font-semibold text-text-primary">Zugeordnet</div>
+      <p className="mt-0.5 text-[0.8125rem] text-text-tertiary">
+        Angelegt von {creator?.username ?? "?"}. Alle Zugeordneten dürfen den NPC bearbeiten und
+        für ihn schreiben.
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <MultiSelect
+          label="Weitere Spieler*innen"
+          icon="users"
+          options={others.map((p) => ({ value: p.id, label: p.username }))}
+          selected={owners}
+          onToggle={(id) => save(owners.includes(id) ? owners.filter((x) => x !== id) : [...owners, id])}
+          onClear={() => save([])}
+        />
+        <span className="text-[0.8125rem] text-text-secondary">
+          {[creator?.username, ...owners.map((id) => player(id)?.username)].filter(Boolean).join(", ")}
+        </span>
+      </div>
     </div>
   );
 }

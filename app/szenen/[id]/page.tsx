@@ -87,6 +87,9 @@ export default function ScenePage({
     store;
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
+  // Antwortfeld erscheint erst nach Klick auf „Antworten"
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
 
   const scene = scenes.find((s) => s.id === id);
   const posts = scene ? postsOf(scene.id) : [];
@@ -156,17 +159,37 @@ export default function ScenePage({
     );
   }
 
-  const myCharsInScene: Character[] = currentPlayer
-    ? charactersOf(currentPlayer.id).filter((c) =>
-        scene.participant_ids.includes(c.id),
-      )
-    : [];
+  const myChars: Character[] = currentPlayer ? charactersOf(currentPlayer.id) : [];
+  const myCharsInScene = myChars.filter((c) => scene.participant_ids.includes(c.id));
   const myTurn = !!turnId && myCharsInScene.some((c) => c.id === turnId);
   const isParticipant = myCharsInScene.length > 0;
+  // Antworten darf jede*r mit einem eigenen Charakter – auch in fremden Szenen;
+  // wer mit einem neuen Charakter schreibt, steigt damit in die Szene ein.
+  const canReply = scene.status === "active" && myChars.length > 0;
+  const sceneId = scene.id;
+  const participantIds = scene.participant_ids;
 
   const pages = paginate(posts);
   const safePage = Math.min(page, pages.length - 1);
   const pagePosts = pages[safePage] ?? [];
+
+  function openReply() {
+    setPage(Math.max(0, pages.length - 1));
+    setReplyOpen(true);
+    setTimeout(focusReplyEditor, 120);
+  }
+  // Zug an den nächsten Charakter in der Reihenfolge weitergeben
+  function passTurn() {
+    if (!turnId) return;
+    const next = participantIds[(participantIds.indexOf(turnId) + 1) % participantIds.length];
+    if (next && next !== turnId) store.updateScene(sceneId, { next_up: next });
+  }
+  function startClosing() {
+    setClosing(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  const actionBtn =
+    "flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-8">
@@ -176,6 +199,11 @@ export default function ScenePage({
         activeCharId={turnId}
         myTurn={myTurn}
         isParticipant={isParticipant}
+        canReply={canReply}
+        onReply={openReply}
+        onPassTurn={passTurn}
+        closing={closing}
+        setClosing={setClosing}
       />
 
       {/* Trennlinie zur Seite */}
@@ -239,17 +267,48 @@ export default function ScenePage({
         </div>
       )}
 
-      {/* Antwort-Editor – nur für Teilnehmende, auf der letzten Seite */}
-      {scene.status === "active" && isParticipant && safePage === pages.length - 1 && (
+      {/* Antwort-Editor – erst nach Klick auf „Antworten", auf der letzten Seite */}
+      {canReply && replyOpen && safePage === Math.max(0, pages.length - 1) && (
         <ReplyBox
-          sceneId={scene.id}
-          myChars={myCharsInScene}
+          scene={scene}
+          // Charaktere der Szene zuerst, dann die übrigen eigenen
+          myChars={[...myCharsInScene, ...myChars.filter((c) => !myCharsInScene.includes(c))]}
           suggestedCharId={
             turnId && myCharsInScene.some((c) => c.id === turnId)
               ? turnId
-              : myCharsInScene[0]?.id ?? null
+              : (myCharsInScene[0] ?? myChars[0])?.id ?? null
           }
+          onClose={() => setReplyOpen(false)}
         />
+      )}
+
+      {/* Aktionen unten wiederholt (wie im Szenenkopf) */}
+      {scene.status === "active" && (canReply || isParticipant) && (
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+          {canReply && !replyOpen && (
+            <button
+              onClick={openReply}
+              title={myTurn ? "Du bist am Zug" : undefined}
+              className={
+                myTurn
+                  ? "flex items-center gap-1.5 rounded-md border border-accent/70 bg-accent-soft px-3 py-1.5 text-[0.8125rem] text-text-primary"
+                  : actionBtn
+              }
+            >
+              <Icon name="message" size={14} /> Antworten
+            </button>
+          )}
+          {myTurn && (
+            <button onClick={passTurn} className={actionBtn} title="Zug weitergeben">
+              <Icon name="arrow-right" size={14} /> Weitergeben
+            </button>
+          )}
+          {isParticipant && (
+            <button onClick={startClosing} className={actionBtn}>
+              <Icon name="check" size={14} /> Beenden
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
@@ -263,18 +322,27 @@ function SceneHeader({
   activeCharId,
   myTurn,
   isParticipant,
+  canReply,
+  onReply,
+  onPassTurn,
+  closing,
+  setClosing,
 }: {
   scene: Scene;
   activeCharId: string | null;
   myTurn: boolean;
   isParticipant: boolean;
+  canReply: boolean; // auch ohne eigenen Charakter in der Szene
+  onReply: () => void;
+  onPassTurn: () => void;
+  closing: boolean;
+  setClosing: (v: boolean) => void;
 }) {
   const { character, updateScene, locationsOf } = useStore();
   // Ortsprofil zum Szenen-Ort (falls ein Eintrag existiert) → Ort anklickbar
   const loc = locationsOf(scene.location_area).find(
     (l) => l.name === scene.location_name,
   );
-  const [closing, setClosing] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -288,17 +356,6 @@ function SceneHeader({
       summary: draft.trim() || scene.summary || null,
     });
     setClosing(false);
-  }
-
-  // Zug an den nächsten Charakter in der Reihenfolge weitergeben
-  function passTurn() {
-    if (!activeCharId) return;
-    const ids = scene.participant_ids;
-    const idx = ids.indexOf(activeCharId);
-    const next = ids[(idx + 1) % ids.length];
-    if (next && next !== activeCharId) {
-      updateScene(scene.id, { next_up: next });
-    }
   }
 
   if (editing) {
@@ -370,11 +427,11 @@ function SceneHeader({
         })}
         </div>
 
-        {isParticipant && (
+        {(isParticipant || canReply) && (
           <div className="flex flex-wrap items-center gap-2">
-            {scene.status === "active" && (
+            {canReply && (
               <button
-                onClick={focusReplyEditor}
+                onClick={onReply}
                 title={myTurn ? "Du bist am Zug" : undefined}
                 className={
                   myTurn
@@ -386,16 +443,16 @@ function SceneHeader({
               </button>
             )}
             {scene.status === "active" && myTurn && (
-              <button onClick={passTurn} className={btn} title="Zug weitergeben">
+              <button onClick={onPassTurn} className={btn} title="Zug weitergeben">
                 <Icon name="arrow-right" size={14} /> Weitergeben
               </button>
             )}
-            {scene.status === "active" && (
+            {scene.status === "active" && isParticipant && (
               <button onClick={() => setClosing(true)} className={btn}>
                 <Icon name="check" size={14} /> Beenden
               </button>
             )}
-            {scene.status === "closed" && (
+            {scene.status === "closed" && isParticipant && (
               <button
                 onClick={() => updateScene(scene.id, { status: "active" })}
                 className={btn}
@@ -403,9 +460,11 @@ function SceneHeader({
                 <Icon name="flame" size={14} /> Wieder eröffnen
               </button>
             )}
-            <button onClick={() => setEditing(true)} className={btn}>
-              <Icon name="edit" size={14} /> Bearbeiten
-            </button>
+            {isParticipant && (
+              <button onClick={() => setEditing(true)} className={btn}>
+                <Icon name="edit" size={14} /> Bearbeiten
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -672,15 +731,17 @@ function PostRow({
 }
 
 function ReplyBox({
-  sceneId,
+  scene,
   myChars,
   suggestedCharId,
+  onClose,
 }: {
-  sceneId: string;
-  myChars: Character[];
+  scene: Scene;
+  myChars: Character[]; // alle eigenen Charaktere – auch die (noch) nicht in der Szene
   suggestedCharId: string | null;
+  onClose: () => void;
 }) {
-  const { addPost, character, player } = useStore();
+  const { addPost, updateScene, character, player } = useStore();
   const [activeCharId, setActiveCharId] = useState<string | null>(suggestedCharId);
   const [preview, setPreview] = useState<string | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -694,15 +755,6 @@ function ReplyBox({
     setPreview((p) => (p === null ? editorRef.current?.innerHTML ?? "" : null));
   }
 
-  if (myChars.length === 0) {
-    return (
-      <div className="mt-10 rounded-xl border border-border-subtle bg-bg-surface px-5 py-4 text-[0.875rem] text-text-tertiary">
-        Du spielst in dieser Szene keinen Charakter mit – daher kannst du hier
-        nicht antworten.
-      </div>
-    );
-  }
-
   const activeChar = activeCharId ? character(activeCharId) : myChars[0];
 
   function exec(cmd: string, value?: string) {
@@ -714,8 +766,13 @@ function ReplyBox({
     const html = editorRef.current?.innerHTML ?? "";
     const text = editorRef.current?.textContent?.trim() ?? "";
     if (!activeChar || !text) return;
-    addPost(sceneId, activeChar.id, html);
+    // Mit einem neuen Charakter antworten heißt: in die Szene einsteigen
+    if (!scene.participant_ids.includes(activeChar.id)) {
+      updateScene(scene.id, { participant_ids: [...scene.participant_ids, activeChar.id] });
+    }
+    addPost(scene.id, activeChar.id, html);
     if (editorRef.current) editorRef.current.innerHTML = "";
+    onClose();
     setTimeout(
       () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }),
       50,
@@ -750,7 +807,7 @@ function ReplyBox({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3 mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -762,12 +819,17 @@ function ReplyBox({
             <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
               Antwort als
             </div>
-            <div className="text-[0.875rem] text-text-primary">{activeChar?.name}</div>
+            <div className="text-[0.875rem] text-text-primary">
+              {activeChar?.name}
+              {activeChar && !scene.participant_ids.includes(activeChar.id) && (
+                <span className="ml-1.5 text-[0.8125rem] text-accent">steigt neu in die Szene ein</span>
+              )}
+            </div>
           </div>
         </div>
 
         {myChars.length > 1 && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
             <span className="text-[0.875rem] text-text-tertiary">Charakter wechseln:</span>
             {myChars.map((c) => (
               <button
@@ -819,6 +881,12 @@ function ReplyBox({
         <span className="mr-auto text-[0.875rem] text-text-tertiary">
           HTML wird übernommen
         </span>
+        <button
+          onClick={onClose}
+          className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+        >
+          Abbrechen
+        </button>
         <button
           onClick={togglePreview}
           className={`rounded-md border border-border-subtle px-4 py-2 text-[0.8125rem] transition-colors ${

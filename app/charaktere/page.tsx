@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { NewNpcButton } from "@/components/NewNpcButton";
 import { useStore } from "@/lib/store";
 import { formatInplayDateShort } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
@@ -26,7 +28,8 @@ const SORT_LABELS: Record<SortKey, string> = {
 };
 
 export default function CharaktereePage() {
-  const { characters, npcs, posts, player } = useStore();
+  const { characters, npcs, posts, player, currentPlayer, addCharacter } = useStore();
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<Tab>("played");
   const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -79,8 +82,8 @@ export default function CharaktereePage() {
         width="max-w-6xl"
       />
 
-      {/* Reiter wie in der Szenen-Übersicht */}
-      <div className="flex gap-1.5 mb-4">
+      {/* Reiter wie in der Szenen-Übersicht; rechts „Neu anlegen" passend zum Reiter */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-4">
         {TABS.map(([key, label]) => (
           <button
             key={key}
@@ -94,6 +97,17 @@ export default function CharaktereePage() {
             {label}
           </button>
         ))}
+        <div className="ml-auto flex flex-wrap items-center gap-1.5">
+          {tab !== "npcs" && currentPlayer && (
+            <button
+              onClick={() => router.push(`/einstellungen#charakter-${addCharacter(currentPlayer.id)}`)}
+              className="flex items-center gap-1 rounded-full border border-dashed border-border-strong px-3 py-1.5 text-[0.8125rem] text-text-tertiary hover:border-accent/50 hover:text-accent"
+            >
+              <Icon name="plus" size={12} /> Neuer Charakter
+            </button>
+          )}
+          {tab !== "played" && <NewNpcButton pill />}
+        </div>
       </div>
 
       {/* Textsuche links, Sortierung rechts */}
@@ -157,7 +171,7 @@ export default function CharaktereePage() {
           {q
             ? `Kein Charakter passt zu „${query.trim()}“.`
             : tab === "npcs"
-              ? "Noch keine NPCs – sie lassen sich im Ortsprofil anlegen."
+              ? "Noch keine NPCs – leg oben den ersten an."
               : "Noch keine Charaktere."}
         </p>
       )}

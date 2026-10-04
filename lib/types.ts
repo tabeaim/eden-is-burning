@@ -60,6 +60,9 @@ export interface Character {
   // NPC: Nebenfigur mit optional ausfüllbarem Profil; gehört (player_id) dem/der
   // Ersteller*in, zählt aber nicht zu deren spielbaren Charakteren.
   is_npc?: boolean;
+  // NPCs: weitere Spieler*innen (IDs), denen der NPC zugeordnet ist – sie dürfen
+  // ihn wie die Person, die ihn angelegt hat, bearbeiten und für ihn schreiben
+  co_owner_ids?: string[] | null;
   // Look des Handys im Messenger (Modell, Abnutzung, Hintergrund, Apps)
   phone?: PhoneSettings | null;
 }

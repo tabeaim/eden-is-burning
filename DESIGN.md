@@ -63,6 +63,14 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
 - **Endgültige Aktionen** (löschen): `components/ConfirmDialog.tsx` mit klar
   benanntem Knopf („Plot löschen"), nie `window.confirm`.
 - **Mehrfach-Filter:** `components/MultiSelect.tsx`.
+- **Szene beantworten:** Das Antwortfeld klappt erst nach Klick auf „Antworten"
+  auf. Antworten darf jede*r mit einem eigenen Charakter, auch in fremden Szenen;
+  der Charakter lässt sich im Feld immer wechseln, und wer mit einem neuen
+  Charakter schreibt, wird als Teilnehmer*in eingetragen. „Antworten",
+  „Weitergeben" und „Beenden" stehen im Szenenkopf und noch einmal unter den Posts.
+- **Zähler im Seitenmenü** (orange Pill): „Szenen" = alle ungelesenen Szenen,
+  „Dashboard" = Bewegung bei den eigenen Charakteren (Szenen, Chats, Anrufe),
+  „Handy" = ungelesene Chats und klingelnde Anrufe.
 - **„Neu anlegen" in einer Bubble-Reihe:** gestrichelte Pill mit Plus und Text
   („+ Neuer Ort", „+ Als Plot speichern").
 

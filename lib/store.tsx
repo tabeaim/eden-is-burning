@@ -535,7 +535,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const canEditCharacter = useCallback(
     (c: Character) =>
       !!currentPlayer &&
-      (Boolean(currentPlayer.is_admin) || c.player_id === currentPlayer.id),
+      (Boolean(currentPlayer.is_admin) ||
+        c.player_id === currentPlayer.id ||
+        (c.co_owner_ids ?? []).includes(currentPlayer.id)),
     [currentPlayer],
   );
   // Orte bearbeiten dürfen Admins und wer den Ort erstellt hat.
@@ -960,7 +962,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const canWriteAs = useCallback(
     (characterId: string) =>
       !!currentPlayer &&
-      state.characters.some((c) => c.id === characterId && c.player_id === currentPlayer.id),
+      state.characters.some(
+        (c) =>
+          c.id === characterId &&
+          (c.player_id === currentPlayer.id || (c.co_owner_ids ?? []).includes(currentPlayer.id)),
+      ),
     [state.characters, currentPlayer],
   );
 
