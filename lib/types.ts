@@ -60,6 +60,17 @@ export interface Character {
   // NPC: Nebenfigur mit optional ausfüllbarem Profil; gehört (player_id) dem/der
   // Ersteller*in, zählt aber nicht zu deren spielbaren Charakteren.
   is_npc?: boolean;
+  // Look des Handys im Messenger (Modell, Abnutzung, Hintergrund, Apps)
+  phone?: PhoneSettings | null;
+}
+
+// Alle Felder optional — Fehlendes füllt `resolvePhone` (lib/phone.ts) mit Standards.
+export interface PhoneSettings {
+  model?: string; // Schlüssel aus PHONE_MODELS
+  color?: string; // Schlüssel aus PHONE_COLORS
+  wear?: number; // 0 wie neu … 3 Display gesprungen
+  wallpaper?: string | null; // "preset:<key>" oder Bild-Adresse
+  apps?: string[]; // angedeutete Apps auf dem Startbildschirm (PHONE_APPS)
 }
 
 export interface Scene {

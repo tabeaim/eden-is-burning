@@ -7,6 +7,7 @@ import { AREA_ORDER, AREAS, type AreaKey } from "@/lib/world";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { pageHeader } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
+import { PhoneSettings } from "@/components/phone/PhoneSettings";
 import { Icon } from "@/components/Icon";
 import type { Character } from "@/lib/types";
 
@@ -335,7 +336,11 @@ function CharacterEditor({ character }: { character: Character }) {
   }
 
   function save() {
-    updateCharacter(character.id, draft);
+    // Handy-Einstellungen speichern sich selbst (PhoneSettings) — nicht mit dem
+    // Stand vom Öffnen des Formulars überschreiben.
+    const rest = { ...draft };
+    delete rest.phone;
+    updateCharacter(character.id, rest);
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
   }
@@ -481,6 +486,8 @@ function CharacterEditor({ character }: { character: Character }) {
               className={field}
             />
           </Labeled>
+
+          {!character.is_npc && <PhoneSettings character={character} />}
 
           <div className="flex items-center gap-3">
             <button

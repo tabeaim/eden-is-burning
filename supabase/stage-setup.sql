@@ -590,6 +590,16 @@ grant all on chats, chat_messages to service_role;
 
 
 -- ############################################################
+-- ## schema-phone.sql
+-- ############################################################
+
+-- Handy-Look pro Charakter (Modell, Gehäusefarbe, Abnutzung, Hintergrund, Apps).
+-- Im Supabase SQL-Editor ausführen (Run). Wiederholbar (idempotent).
+
+alter table characters add column if not exists phone jsonb;
+
+
+-- ############################################################
 -- ## Zugriffsrechte (Grants)
 -- ############################################################
 

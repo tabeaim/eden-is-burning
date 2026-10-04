@@ -5,17 +5,15 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import type { ChatMessageKind } from "@/lib/types";
 import { Composer } from "@/components/phone/Composer";
-import { PhoneAvatar, PhoneFrame, PhoneHeader, usePhoneOwner } from "@/components/phone/PhoneFrame";
+import { PhoneAvatar, PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
 
-// „Neue SMS": Von (eigener Charakter) → An (beliebiger Charakter oder NPC) →
-// erste Nachricht. Gibt es den Chat schon, landet die Nachricht dort.
+// „Neue SMS": vom Handy des gewählten eigenen Charakters (Leiste über dem Gerät)
+// an einen beliebigen Charakter oder NPC. Gibt es den Chat schon, landet die
+// Nachricht dort.
 export default function NewSmsPage() {
   const router = useRouter();
-  const { characters, npcs, chats, currentPlayer, charactersOf, openChat, addMessage } = useStore();
-  const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
-  const [stored, setOwner] = usePhoneOwner();
-  const [fromId, setFromId] = useState<string | null>(null);
-  const from = myChars.find((c) => c.id === (fromId ?? stored)) ?? myChars[0];
+  const { characters, npcs, chats, currentPlayer, openChat, addMessage } = useStore();
+  const { myChars, me: from, setOwner } = useMyPhone();
   const [toId, setToId] = useState<string | null>(null);
   const [q, setQ] = useState("");
 
@@ -46,8 +44,8 @@ export default function NewSmsPage() {
   const label = "w-9 shrink-0 text-[0.8125rem] text-text-tertiary";
 
   return (
-    <PhoneFrame>
-      <PhoneHeader back="/handy">
+    <PhoneFrame owner={from?.id ?? null} options={myChars.map((c) => c.id)} onOwner={setOwner}>
+      <PhoneHeader back="/handy/nachrichten">
         <div className="text-[1.0625rem] font-semibold text-text-primary">Neue SMS</div>
       </PhoneHeader>
 
@@ -57,26 +55,6 @@ export default function NewSmsPage() {
         </p>
       ) : (
         <>
-          <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle px-3 py-2">
-            <span className={label}>Von:</span>
-            <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto">
-              {myChars.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setFromId(c.id)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-[0.8125rem] ${
-                    c.id === from?.id
-                      ? "bg-accent text-black"
-                      : "bg-white/[0.06] text-text-secondary"
-                  }`}
-                >
-                  <PhoneAvatar character={c} size={24} />
-                  {c.name.split(" ")[0]}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle px-3 py-2">
             <span className={label}>An:</span>
             {to ? (

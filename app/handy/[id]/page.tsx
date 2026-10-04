@@ -14,7 +14,6 @@ import {
   PhoneAvatar,
   PhoneFrame,
   PhoneHeader,
-  phoneIconBtn,
   usePhoneOwner,
 } from "@/components/phone/PhoneFrame";
 
@@ -24,8 +23,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const chat = chats.find((c) => c.id === id);
   if (!chat) {
     return (
-      <PhoneFrame>
-        <PhoneHeader back="/handy">
+      <PhoneFrame owner={null}>
+        <PhoneHeader back="/handy/nachrichten">
           <div className="text-[1.0625rem] font-semibold text-text-primary">Chat</div>
         </PhoneHeader>
         <p className="p-6 text-center text-[0.875rem] text-text-secondary">
@@ -65,7 +64,7 @@ function ChatView({ chat }: { chat: Chat }) {
   const parts = chat.participant_ids;
 
   // Wessen Handy? Eigene Charaktere im Chat haben Vorrang (rechts = „ich"). Sind
-  // beide meine oder keiner, lässt sich die Seite über die Wechsel-Taste tauschen.
+  // beide meine oder keiner, lässt sich die Seite über die Leiste oben tauschen.
   const [owner, setOwner] = usePhoneOwner();
   const writable = parts.filter(canWriteAs);
   const candidates = writable.length > 0 ? writable : parts;
@@ -110,34 +109,17 @@ function ChatView({ chat }: { chat: Chat }) {
   }
 
   return (
-    <PhoneFrame>
-      <PhoneHeader
-        back="/handy"
-        actions={
-          candidates.length > 1 && (
-            <button
-              onClick={() => setOwner(candidates[(candidates.indexOf(self) + 1) % candidates.length])}
-              title="Handy wechseln (andere Seite des Chats)"
-              aria-label="Handy wechseln"
-              className={phoneIconBtn}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" />
-              </svg>
-            </button>
-          )
-        }
-      >
+    <PhoneFrame owner={self} options={candidates} onOwner={setOwner}>
+      <PhoneHeader back="/handy/nachrichten">
         <Link href={other ? `/charaktere/${other.id}` : "/handy"} className="flex items-center gap-2.5">
           {other && <PhoneAvatar character={other} size={38} />}
           <span className="min-w-0">
             <span className="block truncate text-[0.9375rem] font-semibold leading-tight text-text-primary">
               {others.map((o) => o?.name ?? "Unbekannt").join(" & ") || "Unbekannt"}
             </span>
-            <span className="block truncate text-[0.75rem] text-text-tertiary">
-              Handy von {selfChar?.name ?? "?"}
-              {!canWrite && " · nur lesen"}
-            </span>
+            {!canWrite && (
+              <span className="block truncate text-[0.75rem] text-text-tertiary">nur lesen</span>
+            )}
           </span>
         </Link>
       </PhoneHeader>

@@ -83,9 +83,20 @@ Seitenleiste ist unter `md` eine Schublade (Menü-Taste in der Kopfleiste).
 Der Messenger sieht bewusst aus wie eine Messenger-App, nicht wie der Rest der
 Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 
-- **`PhoneFrame`**: auf dem Handy vollflächig, ab `sm` ein Gerät mit Rahmen mittig
-  auf der Seite. Alle Seiten unter `/handy` stecken darin; Kopfzeile immer
-  `PhoneHeader`, Avatare `PhoneAvatar`.
+- **`PhoneFrame`**: auf dem Handy füllt das Display den Bildschirm, ab `sm` steht
+  ein Gerät mit Gehäuse mittig auf der Seite. Alle Seiten unter `/handy` stecken
+  darin; Kopfzeile einer App immer `PhoneHeader`, Avatare `PhoneAvatar`.
+- **Handy wechseln** passiert nie auf dem Display, sondern in der Leiste über dem
+  Gerät (Aufklappmenü „Handy von …"). „Alle Chats (mitlesen)" gibt es nur in der
+  Nachrichten-Liste; Startbildschirm, Captic und „Neue SMS" sind immer aus Sicht
+  eines eigenen Charakters (`useMyPhone`).
+- **Look pro Charakter** (`lib/phone.ts`, Einstellungen → Meine Charaktere →
+  `PhoneSettings`): Modell, Gehäusefarbe, Zustand (Kratzer/Sprünge liegen als
+  Overlay über dem Display — auch mobil), Hintergrundbild, angedeutete Apps.
+- **Startbildschirm** (`/handy`): angedeutete Apps sind reine Deko (`AppIcon`
+  ohne Link); echte Apps stehen im Dock. Die Home-Leiste unten (bzw. der
+  Home-Button des alten Modells) führt immer dorthin zurück.
+- **Captic** (`/handy/captic`): fiktives Foto-Netzwerk, bisher nur angedeutet.
 - **Sprechblasen:** eigene rechts in `bg-accent text-black`, fremde links in
   `bg-bg-surface-2`; nur die letzte Blase einer Folge hat die spitze Ecke. Bis zu
   drei Emojis ohne Text stehen groß ohne Blase. Reaktionen hängen als kleine Pills
