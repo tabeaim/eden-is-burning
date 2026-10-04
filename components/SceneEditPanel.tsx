@@ -8,6 +8,7 @@ import {
   LOCATION_SUGGESTIONS,
   type AreaKey,
 } from "@/lib/world";
+import { PHONE_AREA, PHONE_LOCATION } from "@/lib/phone";
 import { sceneHeader } from "@/lib/headers";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { Icon } from "@/components/Icon";
@@ -38,6 +39,8 @@ export function SceneEditPanel({
   const [summary, setSummary] = useState(scene.summary ?? "");
   const [area, setArea] = useState<string>(scene.location_area);
   const [locationName, setLocationName] = useState(scene.location_name);
+  // Telefonat: kein Bezirk/Ort, die Szene spielt „am Telefon"
+  const [phone, setPhone] = useState(scene.location_area === PHONE_AREA);
   const [date, setDate] = useState(scene.inplay_date);
   const [time, setTime] = useState(scene.inplay_time);
   const [tw, setTw] = useState(scene.trigger_warning);
@@ -51,7 +54,7 @@ export function SceneEditPanel({
   const myCharIds = new Set(myChars.map((c) => c.id));
   const suggestions = LOCATION_SUGGESTIONS[area as AreaKey] ?? [];
   const valid =
-    title.trim() && locationName.trim() && date && selected.length > 0;
+    title.trim() && (phone || locationName.trim()) && date && selected.length > 0;
 
   async function onHeaderFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -61,11 +64,11 @@ export function SceneEditPanel({
 
   function save() {
     if (!valid) return;
-    const loc = locationName.trim();
-    addLocation(area, loc);
+    const loc = phone ? PHONE_LOCATION : locationName.trim();
+    if (!phone) addLocation(area, loc);
     updateScene(scene.id, {
       title: title.trim(),
-      location_area: area,
+      location_area: phone ? PHONE_AREA : area,
       location_name: loc,
       inplay_date: date,
       inplay_time: time,
@@ -147,6 +150,23 @@ export function SceneEditPanel({
         />
       </label>
 
+      <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
+        <input
+          type="checkbox"
+          checked={phone}
+          onChange={(e) => {
+            setPhone(e.target.checked);
+            // zurück zu einem echten Ort: Bezirk/Ort neu wählen
+            if (!e.target.checked && area === PHONE_AREA) {
+              setArea(AREA_ORDER[0]);
+              setLocationName("");
+            }
+          }}
+        />
+        Telefonat — die Szene spielt am Telefon (kein Ort)
+      </label>
+
+      {!phone && (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label className="text-[0.875rem] text-text-secondary">
           Bezirk <Req />
@@ -176,8 +196,9 @@ export function SceneEditPanel({
           />
         </label>
       </div>
+      )}
 
-      {suggestions.length > 0 && (
+      {!phone && suggestions.length > 0 && (
         <div className="flex flex-wrap gap-1.5 -mt-2">
           {suggestions.map((loc) => (
             <button

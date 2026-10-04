@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import type { Character, PhoneCall } from "@/lib/types";
 import { formatInplayDateShort } from "@/lib/format";
 import { DatePicker } from "@/components/DatePicker";
 import { Icon } from "@/components/Icon";
+import { phoneSceneHref } from "@/lib/phone";
+import { IncomingCall } from "@/components/phone/IncomingCall";
 import { PhoneAvatar, PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
 
 const first = (c: Character | undefined) => c?.name.split(" ")[0] ?? "?";
@@ -18,16 +20,19 @@ const when = (c: Pick<PhoneCall, "inplay_date" | "inplay_time">) =>
 // Charakter an (der nimmt an oder lehnt ab) oder erstellt direkt eine Telefonszene.
 export default function PhoneAppPage() {
   const router = useRouter();
-  const { calls, scenes, character, characters, npcs, addCall, updateCall, addScene, currentPlayer } =
-    useStore();
+  const { calls, scenes, character, characters, npcs, addCall, currentPlayer } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
   const [view, setView] = useState<"log" | "contacts">(() =>
     typeof window !== "undefined" && window.location.hash === "#kontakte" ? "contacts" : "log",
   );
   const [q, setQ] = useState("");
   const [contact, setContact] = useState<Character | null>(null);
-  // Angenommener Anruf, zu dem gerade gefragt wird, ob eine Szene entstehen soll
-  const [sceneFor, setSceneFor] = useState<PhoneCall | null>(null);
+  // „Neuer Anruf" im Seitenmenü führt per #kontakte direkt zu den Kontakten
+  useEffect(() => {
+    const onHash = () => window.location.hash === "#kontakte" && setView("contacts");
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   if (!me) {
     return (
@@ -37,23 +42,6 @@ export default function PhoneAppPage() {
         </p>
       </PhoneFrame>
     );
-  }
-
-  // Telefonszene: beide am Apparat, Ort „am Telefon", Datum/Uhrzeit des Anrufs
-  function createScene(call: Pick<PhoneCall, "caller_id" | "callee_id" | "inplay_date" | "inplay_time">, title: string) {
-    return addScene({
-      title:
-        title.trim() ||
-        `${first(character(call.caller_id))} & ${first(character(call.callee_id))} on the phone`,
-      location_area: "phone",
-      location_name: "am Telefon",
-      inplay_date: call.inplay_date,
-      inplay_time: call.inplay_time ?? "",
-      status: "active",
-      trigger_warning: false,
-      participant_ids: [call.caller_id, call.callee_id],
-      summary: null,
-    });
   }
 
   const myCalls = calls
@@ -83,37 +71,6 @@ export default function PhoneAppPage() {
       <div className="min-h-0 flex-1 overflow-y-auto">
         {view === "log" ? (
           <>
-            {ringing.map((c) => {
-              const caller = character(c.caller_id);
-              return (
-                <div key={c.id} className="m-3 rounded-2xl border border-accent/60 bg-accent-soft p-4 text-center">
-                  <div className="flex justify-center">
-                    {caller && <PhoneAvatar character={caller} size={64} className="phone-ring" />}
-                  </div>
-                  <div className="mt-2 text-[1rem] font-semibold text-text-primary">
-                    {caller?.name ?? "Unbekannt"} ruft an
-                  </div>
-                  <div className="text-[0.8125rem] text-text-tertiary">{when(c)}</div>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      onClick={() => updateCall(c.id, { status: "declined" })}
-                      className="flex-1 rounded-full bg-red-500/85 py-2 text-[0.875rem] font-semibold text-white"
-                    >
-                      Ablehnen
-                    </button>
-                    <button
-                      onClick={() => {
-                        updateCall(c.id, { status: "accepted" });
-                        setSceneFor({ ...c, status: "accepted" });
-                      }}
-                      className="flex-1 rounded-full bg-green-500/85 py-2 text-[0.875rem] font-semibold text-black"
-                    >
-                      Annehmen
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
             {log.length === 0 && ringing.length === 0 && (
               <p className="px-8 pt-16 text-center text-[0.875rem] text-text-tertiary">
                 Noch keine Anrufe. Unter „Kontakte“ kannst du jemanden anrufen.
@@ -155,14 +112,14 @@ export default function PhoneAppPage() {
                 </Link>
               ) : c.status === "accepted" ? (
                 // angenommen, aber (noch) ohne Szene: lässt sich nachholen
-                <button
+                <Link
                   key={c.id}
-                  onClick={() => setSceneFor(c)}
+                  href={phoneSceneHref({ from: c.caller_id, to: c.callee_id, date: c.inplay_date, time: c.inplay_time, call: c.id })}
                   title="Szene zu diesem Anruf erstellen"
-                  className={`${cls} w-full text-left hover:bg-white/[0.03]`}
+                  className={`${cls} hover:bg-white/[0.03]`}
                 >
                   {body}
-                </button>
+                </Link>
               ) : (
                 <div key={c.id} className={cls}>
                   {body}
@@ -232,37 +189,23 @@ export default function PhoneAppPage() {
             setContact(null);
             setView("log");
           }}
-          onScene={(date, time, title) => {
-            const call = { caller_id: me.id, callee_id: contact.id, inplay_date: date, inplay_time: time };
-            const sceneId = createScene(call, title);
-            addCall({ ...call, status: "accepted", scene_id: sceneId });
-            router.push(`/szenen/${sceneId}`);
-          }}
+          onScene={(date, time) =>
+            router.push(phoneSceneHref({ from: me.id, to: contact.id, date, time, log: true }))
+          }
         />
       )}
 
-      {sceneFor && (
-        <SceneDialog
-          placeholder={`${first(character(sceneFor.caller_id))} & ${first(character(sceneFor.callee_id))} on the phone`}
-          onSkip={() => setSceneFor(null)}
-          onCreate={(title) => {
-            const sceneId = createScene(sceneFor, title);
-            updateCall(sceneFor.id, { scene_id: sceneId });
-            router.push(`/szenen/${sceneId}`);
-          }}
-        />
-      )}
+      <IncomingCall characterId={me.id} />
     </PhoneFrame>
   );
 }
 
 const dialogWrap = "absolute inset-0 z-20 overflow-y-auto bg-black/55 p-3 pt-12";
 const dialogBox = "rounded-2xl border border-border-subtle bg-bg-surface-2 p-4";
-const field =
-  "w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/20 sm:text-[0.875rem]";
 
 // Anruf starten: Inplay-Datum und Uhrzeit sind Pflicht; dann anklingeln oder
-// direkt eine Telefonszene erstellen (optional mit Titel).
+// direkt eine Telefonszene erstellen (Neue-Szene-Formular, vorausgefüllt).
+// Buttons nach DESIGN.md: rounded-md, Primär-Aktion in Akzentfarbe.
 function CallDialog({
   me,
   contact,
@@ -273,13 +216,14 @@ function CallDialog({
   me: Character;
   contact: Character;
   onRing: (date: string, time: string) => void;
-  onScene: (date: string, time: string, title: string) => void;
+  onScene: (date: string, time: string) => void;
   onCancel: () => void;
 }) {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("20:00");
-  const [title, setTitle] = useState("");
   const ok = !!date && !!time;
+  const button =
+    "rounded-md border border-border-subtle px-3 py-1.5 text-[0.8125rem] disabled:opacity-40";
   return (
     <div className={dialogWrap} onClick={onCancel}>
       <div onClick={(e) => e.stopPropagation()} className={dialogBox}>
@@ -304,76 +248,29 @@ function CallDialog({
           />
         </label>
 
-        <button
-          disabled={!ok}
-          onClick={() => onRing(date, time)}
-          className="mt-4 w-full rounded-full bg-green-500/85 py-2.5 text-[0.875rem] font-semibold text-black disabled:opacity-40"
-        >
-          {first(contact)} anklingeln
-        </button>
-        <p className="mt-1 text-center text-[0.75rem] text-text-tertiary">
-          {first(contact)} bekommt den Anruf aufs Handy und kann annehmen oder ablehnen.
+        <p className="mt-3 text-[0.75rem] leading-relaxed text-text-tertiary">
+          <span className="text-text-secondary">Anklingeln:</span> {first(contact)} bekommt den Anruf
+          aufs Handy und kann annehmen oder ablehnen.{" "}
+          <span className="text-text-secondary">Telefonszene erstellen:</span> direkt eine Szene
+          eröffnen, ohne vorher anzuklingeln.
         </p>
-
-        <div className="mt-4 border-t border-border-subtle pt-3">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder={`Titel (optional): ${first(me)} & ${first(contact)} on the phone`}
-            className={field}
-          />
+        <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+          <button onClick={onCancel} className="mr-auto px-1 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+            Abbrechen
+          </button>
           <button
             disabled={!ok}
-            onClick={() => onScene(date, time, title)}
-            className="mt-2 w-full rounded-full border border-border-subtle bg-white/[0.06] py-2.5 text-[0.875rem] font-semibold text-text-primary disabled:opacity-40"
+            onClick={() => onScene(date, time)}
+            className={`${button} bg-white/[0.04] text-text-primary hover:bg-white/[0.08]`}
           >
             Telefonszene erstellen
           </button>
-          <p className="mt-1 text-center text-[0.75rem] text-text-tertiary">
-            Direkt eine Szene eröffnen, ohne vorher anzuklingeln.
-          </p>
-        </div>
-        <button onClick={onCancel} className="mt-3 w-full py-1 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
-          Abbrechen
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Nach dem Annehmen: Soll aus dem Anruf eine Szene werden?
-function SceneDialog({
-  placeholder,
-  onCreate,
-  onSkip,
-}: {
-  placeholder: string;
-  onCreate: (title: string) => void;
-  onSkip: () => void;
-}) {
-  const [title, setTitle] = useState("");
-  return (
-    <div className={dialogWrap}>
-      <div className={dialogBox}>
-        <div className="text-[0.9375rem] font-semibold text-text-primary">Neue Szene erstellen?</div>
-        <p className="mt-0.5 text-[0.8125rem] text-text-tertiary">
-          Die Telefonszene ist mit beiden Charakteren, Datum und Uhrzeit des Anrufs vorausgefüllt.
-        </p>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={`Titel (optional): ${placeholder}`}
-          className={`mt-3 ${field}`}
-        />
-        <div className="mt-4 flex items-center justify-end gap-3">
-          <button onClick={onSkip} className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
-            Nein, ohne Szene
-          </button>
           <button
-            onClick={() => onCreate(title)}
-            className="rounded-md bg-accent/90 px-3 py-1.5 text-[0.8125rem] font-medium text-black"
+            disabled={!ok}
+            onClick={() => onRing(date, time)}
+            className={`${button} border-transparent bg-accent/90 font-medium text-black hover:bg-accent`}
           >
-            Szene erstellen
+            {first(contact)} anklingeln
           </button>
         </div>
       </div>

@@ -187,7 +187,7 @@ export default function DashboardPage() {
               {incomingCalls.map((call) => (
                 <Link
                   key={call.id}
-                  href="/handy/telefon"
+                  href="/handy"
                   onClick={() => rememberPhone(call.callee_id)}
                   className="flex items-center gap-3 rounded-lg border border-accent/60 bg-accent-soft px-3.5 py-2.5 hover:bg-accent/20"
                 >
@@ -204,7 +204,7 @@ export default function DashboardPage() {
                       {call.inplay_time ? `, ${call.inplay_time}` : ""}
                     </span>
                   </span>
-                  <span className="shrink-0 text-[0.8125rem] font-medium text-accent">Abheben ›</span>
+                  <span className="shrink-0 text-[0.8125rem] font-medium text-accent">Reagieren ›</span>
                 </Link>
               ))}
             </section>

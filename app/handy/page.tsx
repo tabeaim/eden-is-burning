@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { resolvePhone } from "@/lib/phone";
+import { IncomingCall } from "@/components/phone/IncomingCall";
 import { PhoneFrame, useMyPhone } from "@/components/phone/PhoneFrame";
 import {
   AppIcon,
@@ -43,7 +44,7 @@ export default function PhoneHomePage() {
   // Burner Phone: kein Startbildschirm mit Apps, nur das Menü eines Tastenhandys
   if (phone.burner) {
     return (
-      <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner}>
+      <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner} callBanner={false}>
         <div className="flex flex-1 flex-col px-3 py-3">
           <div className="border-b-2 border-border-strong pb-1 text-center text-[0.875rem] font-bold uppercase tracking-widest text-text-primary">
             Menü
@@ -70,12 +71,13 @@ export default function PhoneHomePage() {
           <div className="flex-1" />
           <div className="text-center text-[0.75rem] text-text-tertiary">Prepaid · kein Internet</div>
         </div>
+        <IncomingCall characterId={me.id} />
       </PhoneFrame>
     );
   }
 
   return (
-    <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner} tone="home">
+    <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner} tone="home" callBanner={false}>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-black/15 px-4 pb-2 pt-5">
         {/* Angedeutete Apps — nicht anklickbar (außer „Einstellungen") */}
         <div className="grid grid-cols-4 justify-items-center gap-y-5">
@@ -119,6 +121,7 @@ export default function PhoneHomePage() {
           )}
         </div>
       </div>
+      <IncomingCall characterId={me.id} />
     </PhoneFrame>
   );
 }

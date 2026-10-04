@@ -115,13 +115,21 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   „Left on read" (pausiert den Chat, bis wieder jemand schreibt).
 - **Captic ist optional** (An/Aus-Schalter in `PhoneSettings`); das Profil wird
   in der App auf dem Handy bearbeitet.
-- **Telefon** (`/handy/telefon`, im Dock): Anrufliste und Kontakte als Reiter
-  unten. Aus den Kontakten: „anklingeln" (Inplay-Datum + Uhrzeit Pflicht; der
-  andere Charakter nimmt an oder lehnt ab, beim Annehmen wird nach einer Szene
-  gefragt) oder direkt „Telefonszene erstellen". Telefonszenen haben
-  `location_area: "phone"`, Ort „am Telefon" und ohne eigenen Titel den Namen
-  „A & B on the phone". Angenommene Anrufe mit Szene verlinken aus der Anrufliste
-  dorthin.
+- **Telefon** (`/handy/telefon`, im Dock; „Neuer Anruf" im Seitenmenü führt zu
+  den Kontakten): Anrufliste und Kontakte als Reiter unten. Aus den Kontakten:
+  „anklingeln" (Inplay-Datum + Uhrzeit Pflicht) oder „Telefonszene erstellen".
+  Ein eingehender Anruf liegt als Karte über dem Startbildschirm
+  (`IncomingCall`, Annehmen/Ablehnen); nach dem Annehmen wird nach einer Szene
+  gefragt. Angenommene Anrufe mit Szene verlinken aus der Anrufliste dorthin.
+- **Telefonszenen** sind normale Szenen (Zusammenfassung, Timeline, Plots):
+  Häkchen „Telefonat" im Neue-Szene-Formular bzw. beim Bearbeiten — dann ohne
+  Bezirk/Ort (`location_area: "phone"`, Ort „am Telefon" mit Handy-Icon in der
+  Orts-Bubble) und ohne eigenen Titel „A & B on the phone". Vom Handy aus öffnet
+  sich dasselbe Formular vorausgefüllt (`phoneSceneHref`).
+- **Buttons im Handy:** Dialoge und Formulare nutzen die normalen Buttons des
+  Design-Systems (`rounded-md`, Primär-Aktion `bg-accent/90 text-black`). Runde,
+  farbige Knöpfe nur dort, wo das Handy selbst simuliert wird (Annehmen/Ablehnen,
+  Senden, Dock).
 - **Klingeln:** alles, was einen eingehenden Anruf meldet (Dashboard-Zeile,
   Banner im Display, Zähler im Menü, Telefon-App), vibriert mit `.phone-ring`
   (globals.css).

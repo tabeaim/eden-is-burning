@@ -11,6 +11,7 @@ import { SceneEditPanel } from "@/components/SceneEditPanel";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Icon } from "@/components/Icon";
 import { CharacterBubble, LocationBubble } from "@/components/Bubble";
+import { PHONE_AREA } from "@/lib/phone";
 import { AuTag } from "@/components/SceneCard";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import type { Character, Post, Scene } from "@/lib/types";
@@ -96,7 +97,7 @@ export default function ScenePage({
   // gewählte Header-Bild der Szene.
   const factsLine = scene
     ? `${scene.location_name}${
-        scene.location_area === "phone" ? "" : ` · ${areaName(scene.location_area)}`
+        scene.location_area === PHONE_AREA ? "" : ` · ${areaName(scene.location_area)}`
       } · ${formatInplayDate(
         scene.inplay_date,
       )}, ${scene.inplay_time}`
@@ -411,7 +412,11 @@ function SceneHeader({
 
       {/* Ort als Bubble · Datum, Tageszeit (+ AU) */}
       <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.875rem] text-text-tertiary">
-        <LocationBubble id={loc?.id} name={scene.location_name} />
+        <LocationBubble
+          id={loc?.id}
+          name={scene.location_name}
+          icon={scene.location_area === PHONE_AREA ? "phone" : "map"}
+        />
         <span>
           · {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
         </span>

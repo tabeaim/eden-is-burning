@@ -385,8 +385,9 @@ function Sidebar({
       </nav>
 
       <div className="px-2 pb-2 flex flex-col gap-0.5">
-        <SideLink href="/handy/neu" icon="phone" label="Neue SMS" pathname={pathname} />
-        <SideLink href="/szenen/neu" icon="message" label="Neue Szene" pathname={pathname} />
+        <SideLink href="/handy/telefon#kontakte" icon="phone" label="Neuer Anruf" pathname={pathname} />
+        <SideLink href="/handy/neu" icon="message" label="Neue SMS" pathname={pathname} />
+        <SideLink href="/szenen/neu" icon="book" label="Neue Szene" pathname={pathname} />
         <SideLink href="/einstellungen" icon="settings" label="Einstellungen" pathname={pathname} />
         {currentPlayer && (
           <SideLink
