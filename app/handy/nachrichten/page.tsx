@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { formatInplayDateShort } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { Character, ChatMessage } from "@/lib/types";
 import { Icon } from "@/components/Icon";
@@ -20,31 +21,43 @@ function preview(m: ChatMessage): string {
   return m.content;
 }
 
-// Heute: Uhrzeit, sonst das Datum
-function listTime(iso: string): string {
-  const d = new Date(iso);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return d.toDateString() === new Date().toDateString()
-    ? `${p(d.getHours())}:${p(d.getMinutes())}`
-    : `${p(d.getDate())}.${p(d.getMonth() + 1)}.${String(d.getFullYear()).slice(2)}`;
-}
+type Tab = "mine" | "all";
+const TAB_KEY = "eden:sms-tab";
 
 export default function MessagesPage() {
   const { chats, chatMessages, character, isChatNew } = useStore();
-  const { myChars, me, stored, setOwner } = useMyPhone();
-  // Wessen Handy? Eigene Charaktere oder „Alle" (jeder Chat im Spiel, nur lesen) —
-  // „Alle" gibt es nur hier im Messenger.
-  const owner = stored === "all" || !me ? "all" : me.id;
-  const ownerChar = owner === "all" ? undefined : character(owner);
+  const { myChars, me, setOwner } = useMyPhone();
+  // „Meine": Chats des Handys, das man in der Hand hat. „Alle": jeder Chat im
+  // Spiel zum Mitlesen (gibt es nur hier im Messenger).
+  const [tabState, setTabState] = useState<Tab>(() => {
+    try {
+      return typeof window !== "undefined" && localStorage.getItem(TAB_KEY) === "all" ? "all" : "mine";
+    } catch {
+      return "mine";
+    }
+  });
+  const tab: Tab = me ? tabState : "all";
+  const setTab = (t: Tab) => {
+    setTabState(t);
+    try {
+      localStorage.setItem(TAB_KEY, t);
+    } catch {
+      /* ignore */
+    }
+  };
+  const owner = tab === "mine" && me ? me.id : "all";
+  const ownerChar = tab === "mine" ? me : undefined;
 
-  const last = useMemo(() => {
-    const map = new Map<string, ChatMessage>();
+  // Je Chat: neueste Nachricht und neuester Tagestrenner (Inplay-Datum)
+  const { last, dates } = useMemo(() => {
+    const last = new Map<string, ChatMessage>();
+    const dates = new Map<string, ChatMessage>();
     for (const m of chatMessages) {
-      if (m.kind === "date") continue;
+      const map = m.kind === "date" ? dates : last;
       const cur = map.get(m.chat_id);
       if (!cur || m.created_at > cur.created_at) map.set(m.chat_id, m);
     }
-    return map;
+    return { last, dates };
   }, [chatMessages]);
 
   const rows = chats
@@ -57,7 +70,7 @@ export default function MessagesPage() {
     );
 
   return (
-    <PhoneFrame owner={owner} options={[...myChars.map((c) => c.id), "all"]} onOwner={setOwner}>
+    <PhoneFrame owner={me?.id ?? null} options={myChars.map((c) => c.id)} onOwner={setOwner}>
       <PhoneHeader
         back="/handy"
         actions={
@@ -68,6 +81,29 @@ export default function MessagesPage() {
       >
         <div className="text-[1.1875rem] font-bold leading-tight text-text-primary">Nachrichten</div>
       </PhoneHeader>
+
+      {me && (
+        <div className="flex shrink-0 gap-1.5 border-b border-border-subtle px-3 py-2">
+          {(
+            [
+              ["mine", "Meine"],
+              ["all", "Alle"],
+            ] as [Tab, string][]
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex-1 rounded-full px-3 py-1.5 text-[0.8125rem] font-medium transition-colors ${
+                tab === key
+                  ? "bg-accent text-black"
+                  : "bg-white/[0.06] text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {rows.length === 0 && (
@@ -107,7 +143,9 @@ export default function MessagesPage() {
                     {people.map((p) => p.name).join(" & ") || "Unbekannt"}
                   </span>
                   <span className={`shrink-0 text-[0.75rem] ${unread ? "text-accent" : "text-text-tertiary"}`}>
-                    {listTime(m?.created_at ?? chat.created_at)}
+                    {dates.has(chat.id)
+                      ? formatInplayDateShort(dates.get(chat.id)!.content.split("|")[0])
+                      : ""}
                   </span>
                 </span>
                 <span className="mt-0.5 flex items-center gap-2">

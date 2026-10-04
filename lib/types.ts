@@ -70,7 +70,14 @@ export interface PhoneSettings {
   color?: string; // Schlüssel aus PHONE_COLORS
   wear?: number; // 0 wie neu … 3 Display gesprungen
   wallpaper?: string | null; // "preset:<key>" oder Bild-Adresse
-  apps?: string[]; // angedeutete Apps auf dem Startbildschirm (PHONE_APPS)
+  apps?: string[]; // zusätzlich gewählte Apps (OPTIONAL_APPS); Standard-Apps sind immer da
+  custom_apps?: CustomPhoneApp[]; // selbst erstellte Apps (Name + Icon)
+}
+
+export interface CustomPhoneApp {
+  id: string;
+  name: string;
+  icon: string; // Bild-Adresse
 }
 
 export interface Scene {
@@ -173,7 +180,7 @@ export interface Chat {
 }
 
 // text: `content` ist der Nachrichtentext · gif/image: Bild-Adresse ·
-// date: Tagestrenner mit Inplay-Datum, „2021-11-23" oder „2021-11-23|spät nachts"
+// date: Tagestrenner mit Inplay-Datum, „2021-11-23"
 export type ChatMessageKind = "text" | "gif" | "image" | "date";
 
 export interface ChatMessage {
@@ -184,5 +191,6 @@ export interface ChatMessage {
   content: string;
   reply_to?: string | null; // zitierte Nachricht
   reactions?: Record<string, string[]> | null; // Emoji -> Charakter-IDs
-  created_at: string;
+  inplay_time?: string | null; // Inplay-Uhrzeit „23:41" (nie die echte)
+  created_at: string; // echte Zeit — bestimmt nur die Reihenfolge
 }

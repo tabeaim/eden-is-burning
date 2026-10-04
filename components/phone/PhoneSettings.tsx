@@ -6,8 +6,8 @@ import type { Character, PhoneSettings as Settings } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import {
-  MAX_PHONE_APPS,
-  PHONE_APPS,
+  MAX_EXTRA_APPS,
+  OPTIONAL_APPS,
   PHONE_COLORS,
   PHONE_MODELS,
   PHONE_WALLPAPERS,
@@ -24,7 +24,14 @@ export function PhoneSettings({ character }: { character: Character }) {
   const file = useRef<HTMLInputElement>(null);
   const phone = resolvePhone(character);
   const raw: Settings = character.phone ?? {};
-  const apps = phone.apps.map((a) => a.key as string);
+  // Gewählte optionale Apps und eigene Apps teilen sich die freien Plätze
+  const chosen = (raw.apps ?? []).filter((k) => OPTIONAL_APPS.some((a) => a.key === k));
+  const custom = raw.custom_apps ?? [];
+  const extraCount = chosen.length + custom.length;
+  const full = extraCount >= MAX_EXTRA_APPS;
+  const [appName, setAppName] = useState("");
+  const [uploadingIcon, setUploadingIcon] = useState(false);
+  const iconFile = useRef<HTMLInputElement>(null);
   const customWallpaper = raw.wallpaper && !raw.wallpaper.startsWith("preset:") ? raw.wallpaper : null;
   const presetKey = customWallpaper ? null : raw.wallpaper?.slice(7) ?? PHONE_WALLPAPERS[0].key;
 
@@ -40,6 +47,22 @@ export function PhoneSettings({ character }: { character: Character }) {
     }
   }
 
+  async function onAppIcon(f: File | undefined) {
+    const name = appName.trim();
+    if (!f || !name || full) return;
+    setUploadingIcon(true);
+    try {
+      const icon = await uploadImage(f, "phones", IMAGE_SIZES.avatar);
+      const id = `app_${Math.random().toString(36).slice(2, 9)}`;
+      save({ custom_apps: [...custom, { id, name, icon }] });
+      setAppName("");
+    } finally {
+      setUploadingIcon(false);
+    }
+  }
+
+  const uploadBtn =
+    "inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08] disabled:opacity-50";
   const pill = (active: boolean) =>
     `rounded-full px-3 py-1.5 text-[0.8125rem] transition-colors ${
       active ? "bg-accent text-black" : "bg-white/[0.06] text-text-secondary hover:text-text-primary"
@@ -63,7 +86,7 @@ export function PhoneSettings({ character }: { character: Character }) {
         <div className={label}>Modell</div>
         <div className="flex flex-wrap gap-1.5">
           {PHONE_MODELS.map((m) => (
-            <button key={m.key} title={m.hint} onClick={() => save({ model: m.key })} className={pill(phone.model === m.key)}>
+            <button key={m.key} onClick={() => save({ model: m.key })} className={pill(phone.model === m.key)}>
               {m.label}
             </button>
           ))}
@@ -97,73 +120,122 @@ export function PhoneSettings({ character }: { character: Character }) {
         </div>
       </div>
 
-      <div>
-        <div className={label}>Hintergrundbild</div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          {PHONE_WALLPAPERS.map((w) => (
-            <button
-              key={w.key}
-              title={w.label}
-              aria-label={w.label}
-              onClick={() => save({ wallpaper: `preset:${w.key}` })}
-              style={{ background: w.css }}
-              className={`h-14 w-9 rounded-md border border-border-subtle ${
-                presetKey === w.key ? "ring-2 ring-accent ring-offset-2 ring-offset-bg-surface" : ""
-              }`}
-            />
-          ))}
-          {customWallpaper && (
-            <span
-              title="Eigenes Bild"
-              style={{ backgroundImage: `url("${customWallpaper}")` }}
-              className="h-14 w-9 rounded-md border border-border-subtle bg-cover bg-center ring-2 ring-accent ring-offset-2 ring-offset-bg-surface"
-            />
-          )}
-          <button
-            disabled={uploading}
-            onClick={() => file.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08] disabled:opacity-50"
-          >
-            <Icon name="upload" size={13} /> {uploading ? "Lädt…" : "Eigenes Bild"}
-          </button>
-          <input
-            ref={file}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => {
-              void onWallpaper(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
-        </div>
-      </div>
-
-      <div>
-        <div className={label}>
-          Apps auf dem Startbildschirm{" "}
-          <span className="text-text-tertiary">
-            ({apps.length}/{MAX_PHONE_APPS} · nur angedeutet; Nachrichten und Captic sind immer da)
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {PHONE_APPS.map((a) => {
-            const on = apps.includes(a.key);
-            return (
-              <button
-                key={a.key}
-                disabled={!on && apps.length >= MAX_PHONE_APPS}
-                onClick={() =>
-                  save({ apps: on ? apps.filter((k) => k !== a.key) : [...apps, a.key] })
-                }
-                className={`${pill(on)} disabled:opacity-40`}
-              >
-                {a.glyph} {a.label}
+      {phone.burner ? (
+        <p className="text-[0.8125rem] text-text-tertiary">
+          Das Burner Phone ist ein altes Tastenhandy: kein Hintergrundbild, keine Apps, kein
+          Captic — nur SMS.
+        </p>
+      ) : (
+        <>
+          <div>
+            <div className={label}>Hintergrundbild</div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {PHONE_WALLPAPERS.map((w) => (
+                <button
+                  key={w.key}
+                  title={w.label}
+                  aria-label={w.label}
+                  onClick={() => save({ wallpaper: `preset:${w.key}` })}
+                  style={{ background: w.css }}
+                  className={`h-14 w-9 rounded-md border border-border-subtle ${
+                    presetKey === w.key ? "ring-2 ring-accent ring-offset-2 ring-offset-bg-surface" : ""
+                  }`}
+                />
+              ))}
+              {customWallpaper && (
+                <span
+                  title="Eigenes Bild"
+                  style={{ backgroundImage: `url("${customWallpaper}")` }}
+                  className="h-14 w-9 rounded-md border border-border-subtle bg-cover bg-center ring-2 ring-accent ring-offset-2 ring-offset-bg-surface"
+                />
+              )}
+              <button disabled={uploading} onClick={() => file.current?.click()} className={uploadBtn}>
+                <Icon name="upload" size={13} /> {uploading ? "Lädt…" : "Eigenes Bild"}
               </button>
-            );
-          })}
-        </div>
-      </div>
+              <input
+                ref={file}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  void onWallpaper(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className={label}>
+              Weitere Apps{" "}
+              <span className="text-text-tertiary">
+                ({extraCount}/{MAX_EXTRA_APPS} · nur angedeutet; Telefon, Kamera & Co. sind immer da)
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {OPTIONAL_APPS.map((a) => {
+                const on = chosen.includes(a.key);
+                return (
+                  <button
+                    key={a.key}
+                    disabled={!on && full}
+                    onClick={() =>
+                      save({ apps: on ? chosen.filter((k) => k !== a.key) : [...chosen, a.key] })
+                    }
+                    className={`${pill(on)} disabled:opacity-40`}
+                  >
+                    {a.glyph} {a.label}
+                  </button>
+                );
+              })}
+              {custom.map((a) => (
+                <span key={a.id} className={`${pill(true)} inline-flex items-center gap-1.5 !py-1 !pl-1`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={a.icon} alt="" className="h-6 w-6 rounded-md object-cover" />
+                  {a.name}
+                  <button
+                    onClick={() => save({ custom_apps: custom.filter((x) => x.id !== a.id) })}
+                    aria-label={`${a.name} entfernen`}
+                    title="Entfernen"
+                    className="px-0.5 text-black/60 hover:text-black"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
+
+            {/* Eigene App: Name vergeben, dann Icon hochladen */}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <input
+                value={appName}
+                maxLength={14}
+                onChange={(e) => setAppName(e.target.value)}
+                placeholder="Eigene App: Name"
+                disabled={full}
+                className="w-44 max-w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20 disabled:opacity-40"
+              />
+              <button
+                disabled={full || !appName.trim() || uploadingIcon}
+                onClick={() => iconFile.current?.click()}
+                className={uploadBtn}
+              >
+                <Icon name="upload" size={13} /> {uploadingIcon ? "Lädt…" : "Icon hochladen & hinzufügen"}
+              </button>
+              <input
+                ref={iconFile}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  void onAppIcon(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

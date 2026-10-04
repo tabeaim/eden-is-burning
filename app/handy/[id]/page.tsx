@@ -6,6 +6,7 @@ import { useStore } from "@/lib/store";
 import type { Chat, ChatMessage, ChatMessageKind } from "@/lib/types";
 import { formatDateTime, formatInplayDate } from "@/lib/format";
 import { isEmojiOnly, QUICK_REACTIONS } from "@/lib/emoji";
+import { addMinutes, resolvePhone } from "@/lib/phone";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DatePicker } from "@/components/DatePicker";
 import { Composer } from "@/components/phone/Composer";
@@ -43,10 +44,9 @@ function snippet(m: ChatMessage): string {
   return m.content;
 }
 
-// Tagestrenner: „2021-11-23" oder „2021-11-23|spät nachts"
+// Tagestrenner: Inplay-Datum „2021-11-23"
 function dividerLabel(content: string): string {
-  const [date, time] = content.split("|");
-  return [formatInplayDate(date), time?.trim()].filter(Boolean).join(" · ");
+  return formatInplayDate(content.split("|")[0]);
 }
 
 function ChatView({ chat }: { chat: Chat }) {
@@ -74,6 +74,15 @@ function ChatView({ chat }: { chat: Chat }) {
   const others = parts.filter((p) => p !== self).map((p) => character(p));
   const other = others[0];
 
+  // Inplay-Uhrzeit der nächsten Nachricht: läuft von der letzten Nachricht aus
+  // eine Minute weiter, lässt sich in der Eingabezeile überschreiben.
+  const lastTime = [...messages].reverse().find((m) => m.inplay_time)?.inplay_time;
+  const [timeOverride, setTimeOverride] = useState<string | null>(null);
+  const time = timeOverride ?? (lastTime ? addMinutes(lastTime, 1) : "12:00");
+  // Ohne Tagestrenner kein Chat: zuerst das Inplay-Datum festlegen
+  const hasDate = messages.some((m) => m.kind === "date");
+  const burner = resolvePhone(selfChar).burner;
+
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [moreEmoji, setMoreEmoji] = useState(false);
@@ -99,8 +108,9 @@ function ChatView({ chat }: { chat: Chat }) {
   };
 
   function send(kind: ChatMessageKind, content: string) {
-    addMessage(chat.id, self, kind, content, replyTo);
+    addMessage(chat.id, self, kind, content, { replyTo, time });
     setReplyTo(null);
+    setTimeOverride(null);
   }
 
   function closeSheet() {
@@ -163,8 +173,7 @@ function ChatView({ chat }: { chat: Chat }) {
             >
               <button
                 onClick={() => setActiveId(m.id)}
-                title={formatDateTime(m.created_at)}
-                className={`max-w-[78%] text-left ${
+                className={`relative max-w-[78%] text-left ${
                   big
                     ? "text-[2.75rem] leading-tight"
                     : media
@@ -198,6 +207,20 @@ function ChatView({ chat }: { chat: Chat }) {
                 ) : (
                   <span className="whitespace-pre-wrap break-words">{m.content}</span>
                 )}
+                {m.inplay_time &&
+                  (media ? (
+                    <span className="absolute bottom-1.5 right-2 rounded-full bg-black/55 px-1.5 text-[0.6875rem] text-white">
+                      {m.inplay_time}
+                    </span>
+                  ) : (
+                    <span
+                      className={`float-right ml-2.5 mt-1.5 text-[0.6875rem] leading-none ${
+                        big ? "text-text-tertiary" : mine ? "text-black/60" : "text-text-tertiary"
+                      }`}
+                    >
+                      {m.inplay_time}
+                    </span>
+                  ))}
               </button>
               {reactions.length > 0 && (
                 <div className={`relative z-[1] -mt-1.5 flex gap-1 ${mine ? "mr-2" : "ml-2"}`}>
@@ -224,10 +247,25 @@ function ChatView({ chat }: { chat: Chat }) {
         })}
       </div>
 
-      {canWrite ? (
+      {canWrite && !hasDate ? (
+        <div className="shrink-0 border-t border-border-subtle bg-bg-surface px-4 py-3 text-center">
+          <p className="text-[0.8125rem] text-text-tertiary">
+            Wann spielt dieser Chat? Lege zuerst das Inplay-Datum fest.
+          </p>
+          <button
+            onClick={() => setDateOpen(true)}
+            className="mt-2 rounded-full bg-accent/90 px-4 py-2 text-[0.8125rem] font-medium text-black"
+          >
+            Inplay-Datum festlegen
+          </button>
+        </div>
+      ) : canWrite ? (
         <Composer
           onSend={send}
           onDate={() => setDateOpen(true)}
+          media={!burner}
+          time={time}
+          onTime={setTimeOverride}
           placeholder={`Nachricht als ${selfChar?.name.split(" ")[0] ?? "…"}`}
           above={
             replyMsg && (
@@ -332,7 +370,7 @@ function ChatView({ chat }: { chat: Chat }) {
               <SheetButton onClick={closeSheet}>Abbrechen</SheetButton>
             </div>
             <div className="mt-2 text-center text-[0.6875rem] text-text-tertiary">
-              Geschrieben am {formatDateTime(active.created_at)}
+              Gepostet am {formatDateTime(active.created_at)} (echte Zeit)
             </div>
           </div>
         </div>
@@ -341,9 +379,11 @@ function ChatView({ chat }: { chat: Chat }) {
       {dateOpen && (
         <DateSheet
           initial={[...messages].reverse().find((m) => m.kind === "date")?.content.split("|")[0] ?? ""}
+          initialTime={time}
           onCancel={() => setDateOpen(false)}
-          onSave={(content) => {
-            addMessage(chat.id, self, "date", content);
+          onSave={(date, t) => {
+            addMessage(chat.id, self, "date", date);
+            setTimeOverride(t);
             setDateOpen(false);
           }}
         />
@@ -384,19 +424,21 @@ function SheetButton({
   );
 }
 
-// Tagestrenner einfügen: Inplay-Datum und (optional) Uhrzeit/Tageszeit. Sitzt oben
-// im Handy, damit der aufklappende Kalender darunter Platz hat.
+// Tagestrenner einfügen: Inplay-Datum und die Uhrzeit, ab der es weitergeht. Sitzt
+// oben im Handy, damit der aufklappende Kalender darunter Platz hat.
 function DateSheet({
   initial,
+  initialTime,
   onSave,
   onCancel,
 }: {
   initial: string;
-  onSave: (content: string) => void;
+  initialTime: string;
+  onSave: (date: string, time: string) => void;
   onCancel: () => void;
 }) {
   const [date, setDate] = useState(initial);
-  const [time, setTime] = useState("");
+  const [time, setTime] = useState(initialTime);
   return (
     <div className="absolute inset-0 z-20 bg-black/55 p-3 pt-16" onClick={onCancel}>
       <div
@@ -408,19 +450,22 @@ function DateSheet({
           Setzt einen Trenner in den Chat — alles danach spielt an diesem Tag.
         </p>
         <DatePicker value={date} onChange={setDate} className="mt-3" />
-        <input
-          value={time}
-          onChange={(e) => setTime(e.target.value.replace("|", ""))}
-          placeholder="Uhrzeit oder Tageszeit (optional), z.B. 23:40"
-          className="mt-2 w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/20 sm:text-[0.875rem]"
-        />
+        <label className="mt-2 flex items-center justify-between gap-3 rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[0.875rem] text-text-secondary">
+          Uhrzeit der nächsten Nachricht
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => e.target.value && setTime(e.target.value)}
+            className="bg-transparent text-[16px] font-semibold text-text-primary outline-none [color-scheme:dark] sm:text-[0.875rem]"
+          />
+        </label>
         <div className="mt-4 flex items-center justify-end gap-3">
           <button onClick={onCancel} className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
             Abbrechen
           </button>
           <button
             disabled={!date}
-            onClick={() => onSave(time.trim() ? `${date}|${time.trim()}` : date)}
+            onClick={() => onSave(date, time)}
             className="rounded-md bg-accent/90 px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
           >
             Einfügen

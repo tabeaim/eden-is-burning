@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
-import { PhoneAvatar, PhoneFrame, useMyPhone } from "@/components/phone/PhoneFrame";
+import { resolvePhone } from "@/lib/phone";
+import { PhoneAvatar, PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
 
 // Captic — das fiktive Foto-Netzwerk von Eden. Bisher nur angedeutet: das eigene
 // Profil aus Sicht des Charakters, dessen Handy man in der Hand hat (nie „Alle").
@@ -20,6 +21,20 @@ export default function CapticPage() {
   }
 
   const first = me.name.split(" ")[0];
+
+  if (resolvePhone(me).burner) {
+    return (
+      <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner}>
+        <PhoneHeader back="/handy">
+          <div className="text-[1.0625rem] font-semibold text-text-primary">Captic</div>
+        </PhoneHeader>
+        <p className="p-8 text-center text-[0.875rem] text-text-secondary">
+          Das Burner Phone von {first} kann nur SMS — kein Captic.
+        </p>
+      </PhoneFrame>
+    );
+  }
+
   const handle = me.name
     .toLowerCase()
     .normalize("NFD")

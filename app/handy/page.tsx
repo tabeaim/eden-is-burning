@@ -43,6 +43,33 @@ export default function PhoneHomePage() {
   const unread = chats.filter((c) => c.participant_ids.includes(me.id) && isChatNew(c.id)).length;
   const now = new Date();
 
+  // Burner Phone: kein Startbildschirm mit Apps, nur das Menü eines Tastenhandys
+  if (phone.burner) {
+    return (
+      <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner}>
+        <div className="flex flex-1 flex-col px-3 py-3">
+          <div className="border-b-2 border-border-strong pb-1 text-center text-[0.875rem] font-bold uppercase tracking-widest text-text-primary">
+            Menü
+          </div>
+          <Link
+            href="/handy/nachrichten"
+            className="mt-3 flex items-center justify-between bg-accent px-3 py-3 text-[1rem] font-bold text-black"
+          >
+            <span>✉ Nachrichten</span>
+            <span>{unread > 0 ? `${unread} neu` : "›"}</span>
+          </Link>
+          {["Kontakte", "Anruflisten", "Einstellungen"].map((item) => (
+            <div key={item} aria-hidden className="px-3 py-3 text-[1rem] text-text-tertiary">
+              {item}
+            </div>
+          ))}
+          <div className="flex-1" />
+          <div className="text-center text-[0.75rem] text-text-tertiary">Prepaid · kein Internet</div>
+        </div>
+      </PhoneFrame>
+    );
+  }
+
   return (
     <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner} tone="home">
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-black/15 px-4 pb-2 pt-5">
@@ -55,7 +82,7 @@ export default function PhoneHomePage() {
         {/* Angedeutete Apps — nicht anklickbar */}
         <div aria-hidden className="mt-6 grid grid-cols-4 justify-items-center gap-y-5">
           {phone.apps.map((a) => (
-            <AppIcon key={a.key} label={a.label} bg={a.bg}>
+            <AppIcon key={a.key} label={a.label} bg={a.bg} icon={a.icon}>
               {a.glyph}
             </AppIcon>
           ))}

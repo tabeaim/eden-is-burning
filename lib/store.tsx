@@ -110,7 +110,7 @@ interface StoreValue extends PersistedState {
     characterId: string,
     kind: ChatMessageKind,
     content: string,
-    replyTo?: string | null,
+    opts?: { replyTo?: string | null; time?: string | null },
   ) => void;
   deleteMessage: (messageId: string) => void;
   toggleReaction: (messageId: string, emoji: string, characterId: string) => void;
@@ -156,6 +156,8 @@ async function fetchAll<T>(table: string): Promise<T[]> {
 // Gerade angelegte Chats, deren Zeile noch unterwegs ist — die erste Nachricht
 // wartet darauf, sonst käme sie vor ihrem Chat an (Fremdschlüssel).
 const pendingChats = new Map<string, Promise<unknown>>();
+
+let lastMessageAt = 0;
 
 function uid(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
@@ -969,7 +971,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       characterId: string,
       kind: ChatMessageKind,
       content: string,
-      replyTo: string | null = null,
+      opts: { replyTo?: string | null; time?: string | null } = {},
     ) => {
       const text = content.trim();
       if (!text) return;
@@ -979,10 +981,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         character_id: characterId,
         kind,
         content: text,
-        reply_to: replyTo,
+        reply_to: opts.replyTo ?? null,
         reactions: {},
-        created_at: new Date().toISOString(),
+        inplay_time: opts.time ?? null,
+        // Mehrere Nachrichten im selben Augenblick (Tagestrenner + erste SMS)
+        // behalten ihre Reihenfolge
+        created_at: new Date(Math.max(Date.now(), lastMessageAt + 1)).toISOString(),
       };
+      lastMessageAt = new Date(message.created_at).getTime();
       const send = () => supabase.from("chat_messages").insert(message);
       const pending = pendingChats.get(chatId);
       persist("addMessage", pending ? pending.then(send, send) : send());

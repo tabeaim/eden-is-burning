@@ -4,18 +4,22 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import type { ChatMessageKind } from "@/lib/types";
+import { addMinutes, resolvePhone } from "@/lib/phone";
+import { DatePicker } from "@/components/DatePicker";
 import { Composer } from "@/components/phone/Composer";
 import { PhoneAvatar, PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
 
 // „Neue SMS": vom Handy des gewählten eigenen Charakters (Leiste über dem Gerät)
-// an einen beliebigen Charakter oder NPC. Gibt es den Chat schon, landet die
-// Nachricht dort.
+// an einen beliebigen Charakter oder NPC. Ein neuer Chat beginnt immer mit dem
+// Inplay-Datum (Tagestrenner); gibt es den Chat schon, landet die Nachricht dort.
 export default function NewSmsPage() {
   const router = useRouter();
-  const { characters, npcs, chats, currentPlayer, openChat, addMessage } = useStore();
+  const { characters, npcs, chats, currentPlayer, openChat, addMessage, messagesOf } = useStore();
   const { myChars, me: from, setOwner } = useMyPhone();
   const [toId, setToId] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [date, setDate] = useState("");
+  const [timeOverride, setTimeOverride] = useState<string | null>(null);
 
   const everyone = [...characters, ...npcs];
   const to = everyone.find((c) => c.id === toId && c.id !== from?.id);
@@ -32,16 +36,20 @@ export default function NewSmsPage() {
             c.participant_ids.includes(to.id),
         )
       : undefined;
+  const existingMessages = existing ? messagesOf(existing.id) : [];
+  // Ein bestehender Chat hat sein Datum schon; sonst muss es hier gesetzt werden
+  const needsDate = !existingMessages.some((m) => m.kind === "date");
+  const lastTime = [...existingMessages].reverse().find((m) => m.inplay_time)?.inplay_time;
+  const time = timeOverride ?? (lastTime ? addMinutes(lastTime, 1) : "12:00");
 
   function send(kind: ChatMessageKind, content: string) {
-    if (!from || !to) return;
+    if (!from || !to || (needsDate && !date)) return;
     const id = openChat([from.id, to.id]);
-    addMessage(id, from.id, kind, content);
+    if (needsDate) addMessage(id, from.id, "date", date);
+    addMessage(id, from.id, kind, content, { time });
     setOwner(from.id);
     router.push(`/handy/${id}`);
   }
-
-  const label = "w-9 shrink-0 text-[0.8125rem] text-text-tertiary";
 
   return (
     <PhoneFrame owner={from?.id ?? null} options={myChars.map((c) => c.id)} onOwner={setOwner}>
@@ -49,14 +57,14 @@ export default function NewSmsPage() {
         <div className="text-[1.0625rem] font-semibold text-text-primary">Neue SMS</div>
       </PhoneHeader>
 
-      {myChars.length === 0 ? (
+      {!from ? (
         <p className="p-6 text-center text-[0.875rem] text-text-secondary">
           Du brauchst einen eigenen Charakter, um Nachrichten zu schreiben.
         </p>
       ) : (
         <>
           <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle px-3 py-2">
-            <span className={label}>An:</span>
+            <span className="w-9 shrink-0 text-[0.8125rem] text-text-tertiary">An:</span>
             {to ? (
               <button
                 onClick={() => setToId(null)}
@@ -86,6 +94,7 @@ export default function NewSmsPage() {
                   onClick={() => {
                     setToId(c.id);
                     setQ("");
+                    setTimeOverride(null);
                   }}
                   className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-white/[0.03] active:bg-white/[0.06]"
                 >
@@ -110,20 +119,40 @@ export default function NewSmsPage() {
             {!to && suggestions.length === 0 && (
               <p className="p-6 text-center text-[0.875rem] text-text-tertiary">Niemand gefunden.</p>
             )}
-            {to && from && (
-              <div className="flex h-full flex-col items-center justify-center gap-2 px-8 text-center">
-                <PhoneAvatar character={to} size={72} />
+            {to && (
+              <div className="flex flex-col items-center gap-2 px-5 pt-6 text-center">
+                <PhoneAvatar character={to} size={64} />
                 <div className="text-[1rem] font-semibold text-text-primary">{to.name}</div>
-                <p className="text-[0.8125rem] text-text-tertiary">
-                  {existing
-                    ? `${from.name.split(" ")[0]} hat schon einen Chat mit ${to.name.split(" ")[0]} — deine Nachricht landet dort.`
-                    : `Neuer Chat auf dem Handy von ${from.name.split(" ")[0]}.`}
-                </p>
+                {needsDate ? (
+                  <div className="mt-2 w-full max-w-[17rem] text-left">
+                    <div className="mb-1 text-[0.8125rem] text-text-secondary">
+                      Wann spielt der Chat? <span className="text-accent">*</span>
+                    </div>
+                    <DatePicker value={date} onChange={setDate} />
+                    <p className="mt-2 text-[0.75rem] text-text-tertiary">
+                      Das Inplay-Datum steht als Trenner über der ersten Nachricht. Die Uhrzeit
+                      stellst du unten in der Eingabezeile ein.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-[0.8125rem] text-text-tertiary">
+                    {from.name.split(" ")[0]} hat schon einen Chat mit {to.name.split(" ")[0]} —
+                    deine Nachricht landet dort.
+                  </p>
+                )}
               </div>
             )}
           </div>
 
-          {to && from && <Composer onSend={send} placeholder={`SMS als ${from.name.split(" ")[0]}`} />}
+          {to && (!needsDate || date) && (
+            <Composer
+              onSend={send}
+              media={!resolvePhone(from).burner}
+              time={time}
+              onTime={setTimeOverride}
+              placeholder={`SMS als ${from.name.split(" ")[0]}`}
+            />
+          )}
         </>
       )}
     </PhoneFrame>

@@ -7,19 +7,25 @@ import { Icon } from "@/components/Icon";
 import { EmojiPicker } from "./EmojiPicker";
 import { GifPicker } from "./GifPicker";
 import { phoneIconBtn } from "./PhoneFrame";
+import { addMinutes } from "@/lib/phone";
 
-// Eingabezeile des Messengers: Text, Emoji-Tastatur und — mit `extras` — GIF,
-// Foto und Tagestrenner. Die Auswahlfelder klappen wie eine Tastatur darunter auf.
+// Eingabezeile des Messengers: Inplay-Uhrzeit, Text, Emoji-Tastatur und im
+// Plus-Menü GIF/Foto (`media`) und Tagestrenner (`onDate`). Die Auswahlfelder
+// klappen wie eine Tastatur darunter auf.
 export function Composer({
   onSend,
   onDate,
-  extras = true,
+  media = true,
+  time,
+  onTime,
   placeholder = "Nachricht",
   above,
 }: {
   onSend: (kind: ChatMessageKind, content: string) => void;
   onDate?: () => void; // „Inplay-Datum" im Plus-Menü
-  extras?: boolean;
+  media?: boolean; // GIFs und Fotos (das Burner Phone kann nur Text)
+  time?: string; // Inplay-Uhrzeit der nächsten Nachricht („23:41")
+  onTime?: (time: string) => void;
   placeholder?: string;
   above?: React.ReactNode; // z.B. die Vorschau der Nachricht, auf die geantwortet wird
 }) {
@@ -72,8 +78,32 @@ export function Composer({
   return (
     <div className="shrink-0 border-t border-border-subtle bg-bg-surface px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
       {above}
+      {time !== undefined && onTime && (
+        <div className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] text-text-tertiary">
+          <label className="flex items-center gap-1.5 rounded-full bg-white/[0.06] py-0.5 pl-2.5 pr-1.5">
+            Uhrzeit
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => e.target.value && onTime(e.target.value)}
+              className="bg-transparent text-[16px] font-semibold text-text-primary outline-none [color-scheme:dark] sm:text-[0.8125rem]"
+            />
+          </label>
+          {[1, 5, 30].map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => onTime(addMinutes(time, n))}
+              className="rounded-full bg-white/[0.06] px-2.5 py-1.5 font-semibold text-text-secondary hover:bg-white/[0.12]"
+            >
+              +{n}
+            </button>
+          ))}
+          <span>Min</span>
+        </div>
+      )}
       <div className="flex items-end gap-1">
-        {extras && (
+        {(media || onDate) && (
           <button
             type="button"
             onClick={() => toggle("plus")}
@@ -132,21 +162,25 @@ export function Composer({
 
       {panel === "plus" && (
         <div className="mt-2 flex gap-1.5">
-          <button type="button" onClick={() => setPanel("gif")} className={menuBtn}>
-            <span className="rounded-md border border-current px-1 text-[0.6875rem] font-bold leading-[1.1rem]">
-              GIF
-            </span>
-            GIF
-          </button>
-          <button
-            type="button"
-            disabled={uploading}
-            onClick={() => file.current?.click()}
-            className={menuBtn}
-          >
-            <Icon name="photo" size={20} />
-            {uploading ? "Lädt…" : "Foto"}
-          </button>
+          {media && (
+            <>
+              <button type="button" onClick={() => setPanel("gif")} className={menuBtn}>
+                <span className="rounded-md border border-current px-1 text-[0.6875rem] font-bold leading-[1.1rem]">
+                  GIF
+                </span>
+                GIF
+              </button>
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => file.current?.click()}
+                className={menuBtn}
+              >
+                <Icon name="photo" size={20} />
+                {uploading ? "Lädt…" : "Foto"}
+              </button>
+            </>
+          )}
           {onDate && (
             <button
               type="button"

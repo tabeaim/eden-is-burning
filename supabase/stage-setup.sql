@@ -559,6 +559,9 @@ create table if not exists chat_messages (
   created_at   timestamptz not null default now()
 );
 
+-- Inplay-Uhrzeit der Nachricht („23:41") — created_at bestimmt nur die Reihenfolge
+alter table chat_messages add column if not exists inplay_time text;
+
 create index if not exists idx_chat_messages_chat on chat_messages(chat_id, created_at);
 
 -- Wie bei Szenen/Posts: alle Freigeschalteten dürfen lesen und schreiben

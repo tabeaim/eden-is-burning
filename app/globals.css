@@ -216,3 +216,37 @@ body {
   color: var(--text-tertiary);
   pointer-events: none;
 }
+
+/* Burner Phone (Messenger): altes Tastenhandy. Die Farb-Tokens werden im Display
+   auf Graustufen umgestellt; das grünliche LCD legt PhoneFrame per Overlay darüber. */
+.phone-burner {
+  --bg-primary: #dedede;
+  --bg-surface: #d0d0d0;
+  --bg-surface-2: #c2c2c2;
+  --text-primary: #141414;
+  --text-secondary: #202020;
+  --text-tertiary: #3a3a3a;
+  --accent: #1c1c1c;
+  --accent-soft: rgba(0, 0, 0, 0.15);
+  --border: rgba(0, 0, 0, 0.5);
+  --border-strong: rgba(0, 0, 0, 0.7);
+  --phone-screen: #dedede;
+  color: var(--text-primary);
+  font-family: ui-monospace, "SF Mono", Menlo, "Courier New", monospace;
+}
+.phone-burner * {
+  border-radius: 0 !important;
+  font-family: inherit;
+}
+.phone-burner .burner-content {
+  filter: grayscale(1) contrast(1.15);
+}
+.phone-burner .text-black {
+  color: #e6e6e6;
+}
+.phone-burner .text-black\/60 {
+  color: #b8b8b8;
+}
+.phone-burner .text-red-300 {
+  color: var(--text-primary);
+}

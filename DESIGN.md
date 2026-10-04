@@ -87,12 +87,20 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   ein Gerät mit Gehäuse mittig auf der Seite. Alle Seiten unter `/handy` stecken
   darin; Kopfzeile einer App immer `PhoneHeader`, Avatare `PhoneAvatar`.
 - **Handy wechseln** passiert nie auf dem Display, sondern in der Leiste über dem
-  Gerät (Aufklappmenü „Handy von …"). „Alle Chats (mitlesen)" gibt es nur in der
-  Nachrichten-Liste; Startbildschirm, Captic und „Neue SMS" sind immer aus Sicht
-  eines eigenen Charakters (`useMyPhone`).
+  Gerät (Aufklappmenü „Handy von …"). Die Nachrichten-Liste hat zwei Reiter
+  (runde Pills): „Meine" (Chats dieses Handys) und „Alle" (mitlesen).
+  Startbildschirm, Captic und „Neue SMS" sind immer aus Sicht eines eigenen
+  Charakters (`useMyPhone`).
 - **Look pro Charakter** (`lib/phone.ts`, Einstellungen → Meine Charaktere →
-  `PhoneSettings`): Modell, Gehäusefarbe, Zustand (Kratzer/Sprünge liegen als
-  Overlay über dem Display — auch mobil), Hintergrundbild, angedeutete Apps.
+  `PhoneSettings`): Modell (iPhone neu/alt, Android, Burner Phone), Gehäusefarbe,
+  Zustand (Kratzer/Sprünge liegen als Overlay über dem Display — auch mobil),
+  Hintergrundbild (drei Vorlagen oder eigenes Bild), Apps. Standard-Apps sind
+  immer da; wählbar sind nur optionale und selbst erstellte (Name + Icon),
+  zusammen höchstens so viele, wie auf einen Startbildschirm passen.
+- **Burner Phone:** altes Tastenhandy, nur SMS (kein Captic, keine Apps, keine
+  GIFs/Fotos). Das Display stellt per `.phone-burner` (globals.css) die
+  Farb-Tokens auf Graustufen um, darüber liegt ein grünes LCD-Overlay — im
+  Burner-Display deshalb keine festen Farben verwenden.
 - **Startbildschirm** (`/handy`): angedeutete Apps sind reine Deko (`AppIcon`
   ohne Link); echte Apps stehen im Dock. Die Home-Leiste unten (bzw. der
   Home-Button des alten Modells) führt immer dorthin zurück.
@@ -106,8 +114,10 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Eingabe:** immer `Composer`; Emoji-, GIF- und Plus-Feld klappen darunter auf
   wie eine Tastatur. Eingabefelder im Handy haben mobil `text-[16px]` (sonst zoomt
   iOS hinein).
-- **Zeit:** Blasen tragen keine Uhrzeit (die echte wäre 2026). Das Inplay-Datum
-  steht als Tagestrenner im Chat (Plus → „Inplay-Datum").
+- **Zeit:** nie die echte. Jeder Chat beginnt mit einem Tagestrenner
+  (Inplay-Datum, Pflicht bei „Neue SMS"; weitere über Plus → „Inplay-Datum").
+  Jede Nachricht trägt eine Inplay-Uhrzeit: Die Eingabezeile schlägt die letzte
+  Uhrzeit + 1 Minute vor, änderbar per Zeitfeld oder +1/+5/+30.
 
 ## Detailseiten (Szene, Charakter, Ort)
 

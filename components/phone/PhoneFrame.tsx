@@ -19,16 +19,17 @@ export function PhoneFrame({
   tone = "app",
   children,
 }: {
-  owner: string | null; // Charakter-ID oder "all" (alle Chats mitlesen)
-  options?: string[]; // wählbare Handys (IDs bzw. "all")
+  owner: string | null; // Charakter-ID (null: neutrales Handy)
+  options?: string[]; // wählbare Handys (Charakter-IDs)
   onOwner?: (id: string) => void;
   tone?: "app" | "home"; // "home": Hintergrundbild füllt das Display
   children: React.ReactNode;
 }) {
   const { character } = useStore();
-  const ownerChar = owner && owner !== "all" ? character(owner) : undefined;
+  const ownerChar = owner ? character(owner) : undefined;
   const phone = resolvePhone(ownerChar);
   const classic = phone.model === "classic";
+  const burner = phone.burner;
 
   const ref = useRef<HTMLDivElement>(null);
   // Höhe an den sichtbaren Bereich koppeln, damit die Eingabezeile über der
@@ -45,12 +46,16 @@ export function PhoneFrame({
     return () => vv.removeEventListener("resize", fit);
   }, []);
 
-  const radius = classic
+  const radius = burner
+    ? "sm:rounded-[2.75rem_2.75rem_4rem_4rem]"
+    : classic
     ? "sm:rounded-[2.25rem]"
     : phone.model === "punch"
       ? "sm:rounded-[1.75rem]"
       : "sm:rounded-[2.75rem]";
-  const screenRadius = classic
+  const screenRadius = burner
+    ? "sm:rounded-[8px] sm:border-[5px] sm:border-black/70"
+    : classic
     ? "sm:rounded-[3px]"
     : phone.model === "punch"
       ? "sm:rounded-[1.4rem]"
@@ -65,8 +70,8 @@ export function PhoneFrame({
       {/* Gehäuse (nur ab sm sichtbar) */}
       <div
         style={{ ["--frame" as string]: phone.frame }}
-        className={`relative z-10 flex min-h-0 flex-1 flex-col sm:h-[min(800px,calc(100dvh-6.5rem))] sm:w-[390px] sm:flex-none sm:bg-[var(--frame)] sm:shadow-2xl sm:shadow-black/70 sm:ring-1 sm:ring-white/10 ${radius} ${
-          classic ? "sm:px-[9px]" : phone.model === "punch" ? "sm:p-[5px]" : "sm:p-[8px]"
+        className={`relative z-10 flex min-h-0 flex-1 flex-col sm:h-[min(800px,calc(100dvh-6.5rem))] sm:flex-none ${burner ? "sm:w-[330px]" : "sm:w-[390px]"} sm:bg-[var(--frame)] sm:shadow-2xl sm:shadow-black/70 sm:ring-1 sm:ring-white/10 ${radius} ${
+          burner ? "sm:px-[20px]" : classic ? "sm:px-[9px]" : phone.model === "punch" ? "sm:p-[5px]" : "sm:p-[8px]"
         }`}
       >
         {classic && (
@@ -75,13 +80,21 @@ export function PhoneFrame({
             <span className="h-1.5 w-12 rounded-full bg-black/45" />
           </div>
         )}
+        {burner && (
+          <div className="hidden h-14 shrink-0 flex-col items-center justify-center gap-1.5 sm:flex">
+            <span className="h-1.5 w-14 rounded-full bg-black/45" />
+            <span className="text-[0.625rem] font-bold tracking-[0.3em] text-black/45">EDEN</span>
+          </div>
+        )}
         {/* Display */}
         <div
           style={tone === "home" ? { background: phone.wallpaper } : undefined}
-          className={`relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#0c0c0e] ${screenRadius}`}
+          className={`relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--phone-screen,#0c0c0e)] ${screenRadius} ${
+            burner ? "phone-burner" : ""
+          }`}
         >
           <StatusBar model={phone.model} tone={tone} />
-          <div className="relative flex min-h-0 flex-1 flex-col">{children}</div>
+          <div className="burner-content relative flex min-h-0 flex-1 flex-col">{children}</div>
           {/* Home-Leiste: zurück zum Startbildschirm (altes Modell ab sm: Home-Button) */}
           <Link
             href="/handy"
@@ -89,11 +102,15 @@ export function PhoneFrame({
             title="Startbildschirm"
             className={`flex h-5 shrink-0 items-center justify-center ${
               tone === "home" ? "" : "bg-bg-surface"
-            } ${classic ? "sm:hidden" : ""}`}
+            } ${classic || burner ? "sm:hidden" : ""}`}
           >
-            <span className="h-1 w-28 rounded-full bg-white/45" />
+            <span className="h-1 w-28 rounded-full bg-text-primary/45" />
           </Link>
-          <WearOverlay level={phone.wear} seed={owner ?? "phone"} />
+          {/* Burner: grünliches LCD über dem (entsättigten) Inhalt */}
+          {burner && (
+            <div className="pointer-events-none absolute inset-0 z-40 bg-[#a9c48f] mix-blend-multiply" />
+          )}
+          <WearOverlay level={phone.wear} seed={owner ?? "phone"} dark={burner} />
         </div>
         {classic && (
           <div className="hidden h-[3.75rem] shrink-0 items-center justify-center sm:flex">
@@ -105,6 +122,36 @@ export function PhoneFrame({
             />
           </div>
         )}
+        {burner && <BurnerKeypad />}
+      </div>
+    </div>
+  );
+}
+
+// Tastenfeld des Burner Phones (nur ab sm; reine Deko bis auf die Menü-Taste).
+function BurnerKeypad() {
+  const key =
+    "flex h-8 items-center justify-center rounded-[0.6rem] bg-black/25 text-[0.8125rem] font-semibold text-white/75 shadow-inner shadow-black/30";
+  return (
+    <div className="hidden shrink-0 flex-col gap-2 px-3 pb-7 pt-3 sm:flex">
+      <div className="flex items-center justify-between gap-3">
+        <span className="h-6 flex-1 rounded-full bg-black/25" />
+        <Link
+          href="/handy"
+          aria-label="Menü"
+          title="Menü"
+          className="flex h-11 w-20 items-center justify-center rounded-full border-2 border-black/40 bg-black/15 text-[0.625rem] font-bold tracking-widest text-white/75 hover:bg-black/30"
+        >
+          MENÜ
+        </Link>
+        <span className="h-6 flex-1 rounded-full bg-black/25" />
+      </div>
+      <div aria-hidden className="grid grid-cols-3 gap-x-3 gap-y-1.5">
+        {["1", "2 abc", "3 def", "4 ghi", "5 jkl", "6 mno", "7 pqrs", "8 tuv", "9 wxyz", "*", "0", "#"].map((k) => (
+          <span key={k} className={key}>
+            {k}
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -134,18 +181,18 @@ function OwnerBar({
   }, [open]);
 
   const entry = (id: string | null) => {
-    const c = id && id !== "all" ? character(id) : undefined;
+    const c = id ? character(id) : undefined;
     return (
       <>
         {c ? (
           <PhoneAvatar character={c} size={26} />
         ) : (
           <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-bg-surface-2 text-text-secondary">
-            <Icon name={id === "all" ? "users" : "phone"} size={14} />
+            <Icon name="phone" size={14} />
           </span>
         )}
         <span className="min-w-0 truncate">
-          {id === "all" ? "Alle Chats (mitlesen)" : c ? `Handy von ${c.name}` : "Handy"}
+          {c ? `Handy von ${c.name}` : "Handy"}
         </span>
       </>
     );
@@ -253,7 +300,7 @@ function seeded(seed: string) {
 }
 
 // Kratzer und Sprünge über dem Display (nimmt keine Klicks an).
-function WearOverlay({ level, seed }: { level: number; seed: string }) {
+function WearOverlay({ level, seed, dark = false }: { level: number; seed: string; dark?: boolean }) {
   const { scratches, cracks } = useMemo(() => {
     const rnd = seeded(seed);
     const scratches: { d: string; o: number }[] = [];
@@ -321,7 +368,7 @@ function WearOverlay({ level, seed }: { level: number; seed: string }) {
       strokeLinejoin="round"
     >
       {scratches.map((s, i) => (
-        <path key={i} d={s.d} stroke="#fff" strokeOpacity={s.o} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        <path key={i} d={s.d} stroke={dark ? "#000" : "#fff"} strokeOpacity={dark ? s.o * 2 : s.o} strokeWidth={1} vectorEffect="non-scaling-stroke" />
       ))}
       {cracks.map((d, i) => (
         <g key={i}>
@@ -384,7 +431,7 @@ export function PhoneAvatar({
 export const phoneIconBtn =
   "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-accent hover:bg-white/[0.06] disabled:opacity-40";
 
-// Wessen Handy zuletzt offen war (pro Gerät gemerkt). "all" = alle Chats.
+// Wessen Handy zuletzt offen war (pro Gerät gemerkt).
 const KEY = "eden:phone";
 export function usePhoneOwner(): [string | null, (id: string) => void] {
   const [owner, setOwner] = useState<string | null>(() => {
