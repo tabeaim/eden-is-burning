@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
@@ -11,8 +11,10 @@ import { SceneEditPanel } from "@/components/SceneEditPanel";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Icon } from "@/components/Icon";
 import { CharacterBubble, LocationBubble } from "@/components/Bubble";
+import { PHONE_AREA } from "@/lib/phone";
 import { AuTag } from "@/components/SceneCard";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { CharacterSelect } from "@/components/CharacterSelect";
 import type { Character, Post, Scene } from "@/lib/types";
 
 function focusReplyEditor() {
@@ -86,6 +88,9 @@ export default function ScenePage({
     store;
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
+  // Antwortfeld erscheint erst nach Klick auf „Antworten"
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
 
   const scene = scenes.find((s) => s.id === id);
   const posts = scene ? postsOf(scene.id) : [];
@@ -95,7 +100,9 @@ export default function ScenePage({
   // (dort, wo auf anderen Seiten die Tagline/der Untertitel steht), plus das
   // gewählte Header-Bild der Szene.
   const factsLine = scene
-    ? `${scene.location_name} · ${areaName(scene.location_area)} · ${formatInplayDate(
+    ? `${scene.location_name}${
+        scene.location_area === PHONE_AREA ? "" : ` · ${areaName(scene.location_area)}`
+      } · ${formatInplayDate(
         scene.inplay_date,
       )}, ${scene.inplay_time}`
     : undefined;
@@ -153,17 +160,37 @@ export default function ScenePage({
     );
   }
 
-  const myCharsInScene: Character[] = currentPlayer
-    ? charactersOf(currentPlayer.id).filter((c) =>
-        scene.participant_ids.includes(c.id),
-      )
-    : [];
+  const myChars: Character[] = currentPlayer ? charactersOf(currentPlayer.id) : [];
+  const myCharsInScene = myChars.filter((c) => scene.participant_ids.includes(c.id));
   const myTurn = !!turnId && myCharsInScene.some((c) => c.id === turnId);
   const isParticipant = myCharsInScene.length > 0;
+  // Antworten darf jede*r mit einem eigenen Charakter – auch in fremden Szenen;
+  // wer mit einem neuen Charakter schreibt, steigt damit in die Szene ein.
+  const canReply = scene.status === "active" && myChars.length > 0;
+  const sceneId = scene.id;
+  const participantIds = scene.participant_ids;
 
   const pages = paginate(posts);
   const safePage = Math.min(page, pages.length - 1);
   const pagePosts = pages[safePage] ?? [];
+
+  function openReply() {
+    setPage(Math.max(0, pages.length - 1));
+    setReplyOpen(true);
+    setTimeout(focusReplyEditor, 120);
+  }
+  // Zug an den nächsten Charakter in der Reihenfolge weitergeben
+  function passTurn() {
+    if (!turnId) return;
+    const next = participantIds[(participantIds.indexOf(turnId) + 1) % participantIds.length];
+    if (next && next !== turnId) store.updateScene(sceneId, { next_up: next });
+  }
+  function startClosing() {
+    setClosing(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  const actionBtn =
+    "flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-8">
@@ -173,6 +200,11 @@ export default function ScenePage({
         activeCharId={turnId}
         myTurn={myTurn}
         isParticipant={isParticipant}
+        canReply={canReply}
+        onReply={openReply}
+        onPassTurn={passTurn}
+        closing={closing}
+        setClosing={setClosing}
       />
 
       {/* Trennlinie zur Seite */}
@@ -236,17 +268,48 @@ export default function ScenePage({
         </div>
       )}
 
-      {/* Antwort-Editor — nur für Teilnehmende, auf der letzten Seite */}
-      {scene.status === "active" && isParticipant && safePage === pages.length - 1 && (
+      {/* Antwort-Editor – erst nach Klick auf „Antworten", auf der letzten Seite */}
+      {canReply && replyOpen && safePage === Math.max(0, pages.length - 1) && (
         <ReplyBox
-          sceneId={scene.id}
-          myChars={myCharsInScene}
+          scene={scene}
+          // Charaktere der Szene zuerst, dann die übrigen eigenen
+          myChars={[...myCharsInScene, ...myChars.filter((c) => !myCharsInScene.includes(c))]}
           suggestedCharId={
             turnId && myCharsInScene.some((c) => c.id === turnId)
               ? turnId
-              : myCharsInScene[0]?.id ?? null
+              : (myCharsInScene[0] ?? myChars[0])?.id ?? null
           }
+          onClose={() => setReplyOpen(false)}
         />
+      )}
+
+      {/* Aktionen unten wiederholt (wie im Szenenkopf) */}
+      {scene.status === "active" && (canReply || isParticipant) && (
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+          {canReply && !replyOpen && (
+            <button
+              onClick={openReply}
+              title={myTurn ? "Du bist am Zug" : undefined}
+              className={
+                myTurn
+                  ? "flex items-center gap-1.5 rounded-md border border-accent/70 bg-accent-soft px-3 py-1.5 text-[0.8125rem] text-text-primary"
+                  : actionBtn
+              }
+            >
+              <Icon name="message" size={14} /> Antworten
+            </button>
+          )}
+          {myTurn && (
+            <button onClick={passTurn} className={actionBtn} title="Zug weitergeben">
+              <Icon name="arrow-right" size={14} /> Weitergeben
+            </button>
+          )}
+          {isParticipant && (
+            <button onClick={startClosing} className={actionBtn}>
+              <Icon name="check" size={14} /> Beenden
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
@@ -260,18 +323,27 @@ function SceneHeader({
   activeCharId,
   myTurn,
   isParticipant,
+  canReply,
+  onReply,
+  onPassTurn,
+  closing,
+  setClosing,
 }: {
   scene: Scene;
   activeCharId: string | null;
   myTurn: boolean;
   isParticipant: boolean;
+  canReply: boolean; // auch ohne eigenen Charakter in der Szene
+  onReply: () => void;
+  onPassTurn: () => void;
+  closing: boolean;
+  setClosing: (v: boolean) => void;
 }) {
   const { character, updateScene, locationsOf } = useStore();
   // Ortsprofil zum Szenen-Ort (falls ein Eintrag existiert) → Ort anklickbar
   const loc = locationsOf(scene.location_area).find(
     (l) => l.name === scene.location_name,
   );
-  const [closing, setClosing] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -287,17 +359,6 @@ function SceneHeader({
     setClosing(false);
   }
 
-  // Zug an den nächsten Charakter in der Reihenfolge weitergeben
-  function passTurn() {
-    if (!activeCharId) return;
-    const ids = scene.participant_ids;
-    const idx = ids.indexOf(activeCharId);
-    const next = ids[(idx + 1) % ids.length];
-    if (next && next !== activeCharId) {
-      updateScene(scene.id, { next_up: next });
-    }
-  }
-
   if (editing) {
     return <SceneEditPanel scene={scene} onClose={() => setEditing(false)} />;
   }
@@ -306,7 +367,7 @@ function SceneHeader({
     return (
       <div className="mb-6 rounded-xl border border-border-subtle bg-bg-surface p-4">
         <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary mb-2">
-          Szene beenden — Zusammenfassung (ein Satz, optional)
+          Szene beenden – Zusammenfassung (ein Satz, optional)
         </div>
         <input
           value={draft}
@@ -367,11 +428,11 @@ function SceneHeader({
         })}
         </div>
 
-        {isParticipant && (
+        {(isParticipant || canReply) && (
           <div className="flex flex-wrap items-center gap-2">
-            {scene.status === "active" && (
+            {canReply && (
               <button
-                onClick={focusReplyEditor}
+                onClick={onReply}
                 title={myTurn ? "Du bist am Zug" : undefined}
                 className={
                   myTurn
@@ -383,16 +444,16 @@ function SceneHeader({
               </button>
             )}
             {scene.status === "active" && myTurn && (
-              <button onClick={passTurn} className={btn} title="Zug weitergeben">
+              <button onClick={onPassTurn} className={btn} title="Zug weitergeben">
                 <Icon name="arrow-right" size={14} /> Weitergeben
               </button>
             )}
-            {scene.status === "active" && (
+            {scene.status === "active" && isParticipant && (
               <button onClick={() => setClosing(true)} className={btn}>
                 <Icon name="check" size={14} /> Beenden
               </button>
             )}
-            {scene.status === "closed" && (
+            {scene.status === "closed" && isParticipant && (
               <button
                 onClick={() => updateScene(scene.id, { status: "active" })}
                 className={btn}
@@ -400,16 +461,22 @@ function SceneHeader({
                 <Icon name="flame" size={14} /> Wieder eröffnen
               </button>
             )}
-            <button onClick={() => setEditing(true)} className={btn}>
-              <Icon name="edit" size={14} /> Bearbeiten
-            </button>
+            {isParticipant && (
+              <button onClick={() => setEditing(true)} className={btn}>
+                <Icon name="edit" size={14} /> Bearbeiten
+              </button>
+            )}
           </div>
         )}
       </div>
 
       {/* Ort als Bubble · Datum, Tageszeit (+ AU) */}
       <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.875rem] text-text-tertiary">
-        <LocationBubble id={loc?.id} name={scene.location_name} />
+        <LocationBubble
+          id={loc?.id}
+          name={scene.location_name}
+          icon={scene.location_area === PHONE_AREA ? "phone" : "map"}
+        />
         <span>
           · {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
         </span>
@@ -427,7 +494,7 @@ function SceneHeader({
         </p>
       ) : (
         <p className="mt-3 text-[0.875rem] text-text-tertiary">
-          Noch keine Zusammenfassung hinterlegt — beim Beenden der Szene ergänzbar.
+          Noch keine Zusammenfassung hinterlegt – beim Beenden der Szene ergänzbar.
         </p>
       )}
     </div>
@@ -507,8 +574,10 @@ function PostRow({
   );
   const [editing, setEditing] = useState(false);
 
-  // Bei Textauswahl im Post: Buttons zum Zitieren oder Kopieren anbieten.
-  function onMouseUp() {
+  // Bei Textauswahl im Post „Zitat hinzufügen" anbieten. Die Auswahl selbst bleibt
+  // stehen und lässt sich ganz normal kopieren (Tastatur oder Rechtsklick).
+  function onMouseUp(e: React.MouseEvent) {
+    if (e.button !== 0) return; // Rechtsklick auf die Auswahl: Browser-Menü, nichts ändern
     const sel = window.getSelection();
     const text = sel?.toString().trim() ?? "";
     if (
@@ -536,12 +605,6 @@ function PostRow({
     setQuoteBtn(null);
   }
 
-  function copySelection() {
-    if (!quoteBtn) return;
-    navigator.clipboard?.writeText(quoteBtn.text).catch(() => {});
-    setQuoteBtn(null);
-  }
-
   function startEdit() {
     setQuoteBtn(null);
     setEditing(true);
@@ -563,6 +626,12 @@ function PostRow({
     setConfirmDelete(true);
   }
 
+  // Gleiches Objekt über Renderings hinweg: React fasst das HTML dann nicht an und
+  // die Textauswahl geht beim Einblenden des Zitat-Knopfs nicht verloren.
+  const html = useMemo(
+    () => ({ __html: highlightTerm(renderPost(post.content), term ?? "") }),
+    [post.content, term],
+  );
   const card = <SceneCharacterCard character={character} player={player} />;
   const prose = editing ? (
     <div className="flex-1 min-w-0">
@@ -596,9 +665,7 @@ function PostRow({
       <div
         ref={proseRef}
         className="prose-serif text-text-primary"
-        dangerouslySetInnerHTML={{
-          __html: highlightTerm(renderPost(post.content), term ?? ""),
-        }}
+        dangerouslySetInnerHTML={html}
       />
       {quoteBtn && (
         <div
@@ -610,14 +677,7 @@ function PostRow({
             onClick={saveQuote}
             className="flex items-center gap-1 px-1.5 hover:text-accent"
           >
-            <Icon name="quote" size={12} /> Zitat
-          </button>
-          <button
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={copySelection}
-            className="flex items-center gap-1 px-1.5 hover:text-accent"
-          >
-            <Icon name="copy" size={12} /> Kopieren
+            <Icon name="quote" size={12} /> Zitat hinzufügen
           </button>
         </div>
       )}
@@ -625,7 +685,7 @@ function PostRow({
   );
 
   return (
-    <div className="group">
+    <div className="group/post">
       {confirmDelete && (
         <ConfirmDialog
           title="Post löschen?"
@@ -639,7 +699,7 @@ function PostRow({
         />
       )}
       {canModify && !editing && (
-        <div className="mb-1 flex justify-end gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+        <div className="mb-1 flex justify-end gap-0.5 opacity-0 transition-opacity group-hover/post:opacity-100 focus-within:opacity-100">
           <button
             onClick={startEdit}
             title="Post bearbeiten"
@@ -665,15 +725,17 @@ function PostRow({
 }
 
 function ReplyBox({
-  sceneId,
+  scene,
   myChars,
   suggestedCharId,
+  onClose,
 }: {
-  sceneId: string;
-  myChars: Character[];
+  scene: Scene;
+  myChars: Character[]; // alle eigenen Charaktere – auch die (noch) nicht in der Szene
   suggestedCharId: string | null;
+  onClose: () => void;
 }) {
-  const { addPost, character, player } = useStore();
+  const { addPost, updateScene, character, player } = useStore();
   const [activeCharId, setActiveCharId] = useState<string | null>(suggestedCharId);
   const [preview, setPreview] = useState<string | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -687,15 +749,6 @@ function ReplyBox({
     setPreview((p) => (p === null ? editorRef.current?.innerHTML ?? "" : null));
   }
 
-  if (myChars.length === 0) {
-    return (
-      <div className="mt-10 rounded-xl border border-border-subtle bg-bg-surface px-5 py-4 text-[0.875rem] text-text-tertiary">
-        Du spielst in dieser Szene keinen Charakter mit — daher kannst du hier
-        nicht antworten.
-      </div>
-    );
-  }
-
   const activeChar = activeCharId ? character(activeCharId) : myChars[0];
 
   function exec(cmd: string, value?: string) {
@@ -707,8 +760,13 @@ function ReplyBox({
     const html = editorRef.current?.innerHTML ?? "";
     const text = editorRef.current?.textContent?.trim() ?? "";
     if (!activeChar || !text) return;
-    addPost(sceneId, activeChar.id, html);
+    // Mit einem neuen Charakter antworten heißt: in die Szene einsteigen
+    if (!scene.participant_ids.includes(activeChar.id)) {
+      updateScene(scene.id, { participant_ids: [...scene.participant_ids, activeChar.id] });
+    }
+    addPost(scene.id, activeChar.id, html);
     if (editorRef.current) editorRef.current.innerHTML = "";
+    onClose();
     setTimeout(
       () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }),
       50,
@@ -743,40 +801,29 @@ function ReplyBox({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3 mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={activeChar?.faceclaim_image_url ?? ""}
-            alt={activeChar?.name}
-            className="w-8 h-8 rounded-full object-cover bg-bg-primary"
-          />
           <div>
             <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
               Antwort als
             </div>
-            <div className="text-[0.875rem] text-text-primary">{activeChar?.name}</div>
+            <div className="mt-1">
+              {myChars.length > 1 ? (
+                <CharacterSelect
+                  characters={myChars}
+                  value={activeChar?.id ?? null}
+                  onChange={setActiveCharId}
+                  hint={(c) => (scene.participant_ids.includes(c.id) ? null : "steigt neu ein")}
+                />
+              ) : (
+                <div className="text-[0.875rem] text-text-primary">{activeChar?.name}</div>
+              )}
+            </div>
+            {activeChar && !scene.participant_ids.includes(activeChar.id) && (
+              <div className="mt-0.5 text-[0.8125rem] text-accent">steigt neu in die Szene ein</div>
+            )}
           </div>
         </div>
-
-        {myChars.length > 1 && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-[0.875rem] text-text-tertiary">Charakter wechseln:</span>
-            {myChars.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setActiveCharId(c.id)}
-                className={`rounded-full px-2.5 py-1 text-[0.8125rem] transition-colors ${
-                  c.id === activeChar?.id
-                    ? "bg-white/[0.1] text-text-primary"
-                    : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
-                }`}
-              >
-                {c.name.split(" ")[0]}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Formatierungs-Toolbar */}
@@ -812,6 +859,12 @@ function ReplyBox({
         <span className="mr-auto text-[0.875rem] text-text-tertiary">
           HTML wird übernommen
         </span>
+        <button
+          onClick={onClose}
+          className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+        >
+          Abbrechen
+        </button>
         <button
           onClick={togglePreview}
           className={`rounded-md border border-border-subtle px-4 py-2 text-[0.8125rem] transition-colors ${

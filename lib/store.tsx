@@ -11,7 +11,11 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import type {
   Character,
+  Chat,
+  ChatMessage,
+  ChatMessageKind,
   Location,
+  PhoneCall,
   Player,
   Plot,
   Post,
@@ -19,6 +23,7 @@ import type {
   SceneQuote,
 } from "./types";
 import { supabase, supabaseConfigured } from "./supabase";
+import { rememberPhone } from "./phone";
 
 interface PersistedState {
   players: Player[];
@@ -28,6 +33,9 @@ interface PersistedState {
   quotes: SceneQuote[];
   locations: Location[];
   plots: Plot[];
+  chats: Chat[];
+  chatMessages: ChatMessage[];
+  calls: PhoneCall[];
 }
 
 // `characters` enthält nach außen nur spielbare Charaktere; NPCs (Charaktere mit
@@ -45,7 +53,7 @@ interface StoreValue extends PersistedState {
   mobileIds: string[];
   ready: boolean;
   configured: boolean;
-  // Angemeldet, aber ohne (ladbaren) Spieler-Eintrag — Hinweis für den Login-Bildschirm
+  // Angemeldet, aber ohne (ladbaren) Spieler-Eintrag – Hinweis für den Login-Bildschirm
   loginProblem: string | null;
   // Auth / Login
   currentPlayerId: string | null;
@@ -85,15 +93,55 @@ interface StoreValue extends PersistedState {
   deletePlot: (id: string) => void;
   canEditPlot: (plot: Plot) => boolean;
   updateCharacter: (id: string, patch: Partial<Character>) => void;
-  addCharacter: (playerId: string) => string;
+  addCharacter: (playerId: string, name: string) => string;
+  // Löscht den Charakter samt seiner Posts, Zitate und Chats
+  deleteCharacter: (id: string) => void;
+  // Löscht die Szene samt aller Posts und Zitate
+  deleteScene: (id: string) => void;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
   addScene: (scene: Omit<Scene, "id" | "created_at">) => string;
   updateScene: (id: string, patch: Partial<Scene>) => void;
   resetData: () => void;
-  // Ungelesene Posts ("neu"-Tag) — pro Gerät/Nutzer in localStorage
+  // Ungelesene Posts ("neu"-Tag) – pro Gerät/Nutzer in localStorage
   isSceneNew: (sceneId: string) => boolean;
   markSceneSeen: (sceneId: string) => void;
   markAllScenesSeen: () => void;
+  markSceneUnread: (sceneId: string) => void;
+  // --- Messenger ---
+  messagesOf: (chatId: string) => ChatMessage[];
+  // Darf ich als dieser Charakter schreiben? (eigene Charaktere und eigene NPCs)
+  canWriteAs: (characterId: string) => boolean;
+  // Findet den Chat dieser Charaktere oder legt ihn an; gibt die ID zurück.
+  openChat: (participantIds: string[]) => string;
+  addMessage: (
+    chatId: string,
+    characterId: string,
+    kind: ChatMessageKind,
+    content: string,
+    opts?: { replyTo?: string | null; time?: string | null },
+  ) => void;
+  deleteMessage: (messageId: string) => void;
+  updateMessage: (messageId: string, patch: Pick<ChatMessage, "content" | "inplay_time">) => void;
+  // Löscht den Chat samt aller Nachrichten – für alle
+  deleteChat: (chatId: string) => void;
+  // „Left on read": die neueste Nachricht bewusst unbeantwortet lassen (oder zurücknehmen)
+  leaveOnRead: (chatId: string, characterId: string, messageId: string | null) => void;
+  // Chat auf dem Handy dieses Charakters archivieren / wieder hervorholen
+  archiveChat: (chatId: string, characterId: string, archived: boolean) => void;
+  toggleReaction: (messageId: string, emoji: string, characterId: string) => void;
+  // Ungelesen: neueste Nachricht stammt von jemand anderem und ist neuer als der letzte Besuch
+  isChatNew: (chatId: string) => boolean;
+  markChatSeen: (chatId: string) => void;
+  // Chat wieder als ungelesen markieren (z.B. um „left on read" aufzuheben)
+  markChatUnread: (chatId: string) => void;
+  unreadChatCount: number;
+  // Gibt es in diesem Chat (auch einem fremden) Nachrichten seit dem letzten Besuch?
+  isChatFresh: (chatId: string) => boolean;
+  // --- Telefon ---
+  addCall: (call: Omit<PhoneCall, "id" | "created_at">) => string;
+  updateCall: (id: string, patch: Partial<PhoneCall>) => void;
+  // Klingelnde Anrufe an eigene Charaktere
+  incomingCalls: PhoneCall[];
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -106,13 +154,47 @@ const EMPTY: PersistedState = {
   quotes: [],
   locations: [],
   plots: [],
+  chats: [],
+  chatMessages: [],
+  calls: [],
 };
+
+// Supabase liefert höchstens 1000 Zeilen pro Abfrage – Nachrichten werden schnell
+// mehr, daher seitenweise laden. Fehlt die Tabelle noch, bleibt die Liste leer.
+async function fetchAll<T>(table: string): Promise<T[]> {
+  const PAGE = 1000;
+  const rows: T[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error || !data) break;
+    rows.push(...(data as T[]));
+    if (data.length < PAGE) break;
+  }
+  return rows;
+}
+
+// Gerade angelegte Chats, deren Zeile noch unterwegs ist – die erste Nachricht
+// wartet darauf, sonst käme sie vor ihrem Chat an (Fremdschlüssel).
+const pendingChats = new Map<string, Promise<unknown>>();
+// Dasselbe für gerade angelegte Szenen (erster Post, Anruf mit Telefonszene)
+const pendingScenes = new Map<string, Promise<unknown>>();
+function afterScene<T>(sceneId: string | null | undefined, run: () => PromiseLike<T>): PromiseLike<T> {
+  const pending = sceneId ? pendingScenes.get(sceneId) : undefined;
+  return pending ? pending.then(run, run) : run();
+}
+
+let lastMessageAt = 0;
 
 function uid(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-// Schreibt asynchron in Supabase (die Änderung ist lokal bereits sichtbar —
+// Schreibt asynchron in Supabase (die Änderung ist lokal bereits sichtbar –
 // "optimistic update"). Schlägt das Speichern fehl, wird das sichtbar gemeldet:
 // sonst sähe die Änderung gespeichert aus und wäre nach dem Neuladen weg.
 // Übernimmt eine Live-Änderung (Supabase Realtime) in eine Liste. Felder, die in
@@ -135,7 +217,7 @@ function applyChange<T extends { id: string }>(
 }
 
 let reportSaveError: ((message: string) => void) | null = null;
-// Reine Anwesenheits-Updates melden wir nicht — da geht kein Inhalt verloren.
+// Reine Anwesenheits-Updates melden wir nicht – da geht kein Inhalt verloren.
 const SILENT = new Set(["touchPresence", "setLocation"]);
 function persist(label: string, p: unknown) {
   Promise.resolve(p as PromiseLike<{ error: unknown }>).then(
@@ -174,7 +256,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Lädt alle Welt-Daten (nur für freigeschaltete Nutzer*innen sichtbar; RLS).
   const loadWorld = useCallback(async () => {
-    const [pl, ch, sc, po, lo, qu, pt] = await Promise.all([
+    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, calls] = await Promise.all([
       supabase.from("players").select("*"),
       supabase.from("characters").select("*"),
       supabase.from("scenes").select("*"),
@@ -182,6 +264,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       supabase.from("locations").select("*"),
       supabase.from("quotes").select("*"),
       supabase.from("plots").select("*"),
+      fetchAll<Chat>("chats"),
+      fetchAll<ChatMessage>("chat_messages"),
+      fetchAll<PhoneCall>("calls"),
     ]);
     setState({
       players: (pl.data as Player[]) ?? [],
@@ -191,6 +276,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       locations: (lo.data as Location[]) ?? [],
       quotes: (qu.data as SceneQuote[]) ?? [],
       plots: (pt.data as Plot[]) ?? [],
+      chats,
+      chatMessages,
+      calls,
     });
   }, []);
 
@@ -276,6 +364,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (row?.id === approvedId) setCurrentPlayer((cp) => (cp ? { ...cp, ...row } : cp));
       })
       .subscribe();
+    // Eigener Kanal: fehlen die Messenger-Tabellen (noch), bleibt der Rest live.
+    const phone = supabase
+      .channel("eden-phone")
+      .on("postgres_changes", { event: "*", schema: "public", table: "chats" }, (p) =>
+        setState((s) => ({ ...s, chats: applyChange(s.chats, p) })),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, (p) =>
+        setState((s) => ({ ...s, chatMessages: applyChange(s.chatMessages, p) })),
+      )
+      .subscribe();
+    const phoneCalls = supabase
+      .channel("eden-calls")
+      .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, (p) =>
+        setState((s) => ({ ...s, calls: applyChange(s.calls, p) })),
+      )
+      .subscribe();
 
     const presence = supabase.channel("eden-online", {
       config: { presence: { key: approvedId } },
@@ -332,6 +436,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("focus", trackNow);
       window.removeEventListener("blur", trackNow);
       void supabase.removeChannel(world);
+      void supabase.removeChannel(phone);
+      void supabase.removeChannel(phoneCalls);
       void supabase.removeChannel(presence);
     };
   }, [approvedId, loadWorld]);
@@ -434,7 +540,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const canEditCharacter = useCallback(
     (c: Character) =>
       !!currentPlayer &&
-      (Boolean(currentPlayer.is_admin) || c.player_id === currentPlayer.id),
+      (Boolean(currentPlayer.is_admin) ||
+        c.player_id === currentPlayer.id ||
+        (c.co_owner_ids ?? []).includes(currentPlayer.id)),
     [currentPlayer],
   );
   // Orte bearbeiten dürfen Admins und wer den Ort erstellt hat.
@@ -517,6 +625,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const scenePosts = s.posts.filter((p) => p.scene_id === sceneId);
         const nextNumber =
           scenePosts.reduce((m, p) => Math.max(m, p.post_number), 0) + 1;
+        rememberPhone(characterId);
         const post: Post = {
           id: uid("post"),
           scene_id: sceneId,
@@ -525,7 +634,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           post_number: nextNumber,
           created_at: new Date().toISOString(),
         };
-        persist("addPost", supabase.from("posts").insert(post));
+        persist("addPost", afterScene(sceneId, () => supabase.from("posts").insert(post)));
         // Manuelle Zug-Übergabe nach einem Post wieder aufheben
         const sc = s.scenes.find((x) => x.id === sceneId);
         let scenes = s.scenes;
@@ -595,7 +704,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       };
       const loc: Location = { ...base, created_by: currentPlayer?.id ?? null };
       // Fallback ohne created_by, falls schema-locations-profile.sql noch nicht
-      // eingespielt ist — sonst ließen sich keine Orte/Szenen mehr anlegen.
+      // eingespielt ist – sonst ließen sich keine Orte/Szenen mehr anlegen.
       persist(
         "addLocation",
         supabase
@@ -615,7 +724,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const old = s.locations.find((l) => l.id === id);
       if (!old) return s;
       let scenes = s.scenes;
-      // Szenen hängen per Name am Ort — beim Umbenennen mitziehen.
+      // Szenen hängen per Name am Ort – beim Umbenennen mitziehen.
       if (patch.name && patch.name !== old.name) {
         persist(
           "updateLocation/scenes",
@@ -650,12 +759,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  const addCharacter = useCallback((playerId: string) => {
+  const addCharacter = useCallback((playerId: string, name: string) => {
     const id = uid("c");
     const newChar: Character = {
       id,
       player_id: playerId,
-      name: "Neuer Charakter",
+      name: name.trim(),
       faceclaim: null,
       faceclaim_image_url: null,
       tagline: null,
@@ -682,6 +791,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     persist("addCharacter", supabase.from("characters").insert(newChar));
     setState((s) => ({ ...s, characters: [...s.characters, newChar] }));
     return id;
+  }, []);
+
+  const deleteCharacter = useCallback((id: string) => {
+    setState((s) => {
+      // Posts, Zitate und Nachrichten hängen per „on delete cascade" am Charakter;
+      // aus Szenen und Chats muss er von Hand heraus.
+      const scenes = s.scenes.map((sc) => {
+        if (!sc.participant_ids.includes(id)) return sc;
+        const participant_ids = sc.participant_ids.filter((x) => x !== id);
+        const patch = { participant_ids, ...(sc.next_up === id ? { next_up: null } : {}) };
+        persist("deleteCharacter/scene", supabase.from("scenes").update(patch).eq("id", sc.id));
+        return { ...sc, ...patch };
+      });
+      const gone = s.chats.filter((c) => c.participant_ids.includes(id)).map((c) => c.id);
+      if (gone.length) {
+        persist("deleteCharacter/chats", supabase.from("chats").delete().in("id", gone));
+      }
+      persist("deleteCharacter", supabase.from("characters").delete().eq("id", id));
+      return {
+        ...s,
+        scenes,
+        characters: s.characters.filter((c) => c.id !== id),
+        posts: s.posts.filter((p) => p.character_id !== id),
+        quotes: s.quotes.filter((q) => q.character_id !== id),
+        chats: s.chats.filter((c) => !gone.includes(c.id)),
+        chatMessages: s.chatMessages.filter(
+          (m) => m.character_id !== id && !gone.includes(m.chat_id),
+        ),
+        calls: s.calls.filter((c) => c.caller_id !== id && c.callee_id !== id),
+      };
+    });
   }, []);
 
   // NPC = Charakter mit is_npc; Profil ist optional ausfüllbar.
@@ -776,9 +916,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const addScene = useCallback((scene: Omit<Scene, "id" | "created_at">) => {
     const id = uid("s");
     const newScene: Scene = { ...scene, id, created_at: new Date().toISOString() };
-    persist("addScene", supabase.from("scenes").insert(newScene));
+    const req = Promise.resolve(supabase.from("scenes").insert(newScene));
+    pendingScenes.set(id, req);
+    void req.finally(() => pendingScenes.delete(id));
+    persist("addScene", req);
     setState((s) => ({ ...s, scenes: [...s.scenes, newScene] }));
     return id;
+  }, []);
+
+  const deleteScene = useCallback((id: string) => {
+    // Posts und Zitate hängen per „on delete cascade" an der Szene
+    persist("deleteScene", supabase.from("scenes").delete().eq("id", id));
+    setState((s) => ({
+      ...s,
+      scenes: s.scenes.filter((sc) => sc.id !== id),
+      posts: s.posts.filter((p) => p.scene_id !== id),
+      quotes: s.quotes.filter((q) => q.scene_id !== id),
+      calls: s.calls.map((c) => (c.scene_id === id ? { ...c, scene_id: null } : c)),
+    }));
   }, []);
 
   const updateScene = useCallback((id: string, patch: Partial<Scene>) => {
@@ -807,6 +962,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return next;
       });
     },
+    [currentPlayer?.id],
+  );
+
+  const markSceneUnread = useCallback(
+    (sceneId: string) => {
+      if (!currentPlayer) return;
+      const pid = currentPlayer.id;
+      setReads((r) => {
+        const next = { ...r };
+        delete next[sceneId];
+        try {
+          localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [currentPlayer?.id],
   );
 
@@ -842,6 +1016,287 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     [state.posts, reads, currentPlayer?.id],
   );
+
+  // --- Messenger -------------------------------------------------------------
+  const messagesOf = useCallback(
+    (chatId: string) =>
+      state.chatMessages
+        .filter((m) => m.chat_id === chatId)
+        .sort((a, b) => a.created_at.localeCompare(b.created_at)),
+    [state.chatMessages],
+  );
+
+  const canWriteAs = useCallback(
+    (characterId: string) =>
+      !!currentPlayer &&
+      state.characters.some(
+        (c) =>
+          c.id === characterId &&
+          (c.player_id === currentPlayer.id || (c.co_owner_ids ?? []).includes(currentPlayer.id)),
+      ),
+    [state.characters, currentPlayer],
+  );
+
+  const openChat = useCallback(
+    (participantIds: string[]) => {
+      const key = [...participantIds].sort().join("|");
+      const existing = state.chats.find(
+        (c) => [...c.participant_ids].sort().join("|") === key,
+      );
+      if (existing) return existing.id;
+      const chat: Chat = {
+        id: uid("chat"),
+        participant_ids: participantIds,
+        created_by: currentPlayer?.id ?? null,
+        created_at: new Date().toISOString(),
+      };
+      const req = Promise.resolve(supabase.from("chats").insert(chat));
+      pendingChats.set(chat.id, req);
+      void req.finally(() => pendingChats.delete(chat.id));
+      persist("openChat", req);
+      setState((s) => ({ ...s, chats: [...s.chats, chat] }));
+      return chat.id;
+    },
+    [state.chats, currentPlayer?.id],
+  );
+
+  const markChatSeen = useCallback(
+    (chatId: string) => {
+      if (!currentPlayer) return;
+      const pid = currentPlayer.id;
+      setReads((r) => {
+        const next = { ...r, [chatId]: new Date().toISOString() };
+        try {
+          localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    },
+    [currentPlayer?.id],
+  );
+
+  const markChatUnread = useCallback(
+    (chatId: string) => {
+      if (!currentPlayer) return;
+      const pid = currentPlayer.id;
+      setReads((r) => {
+        const next = { ...r };
+        delete next[chatId];
+        try {
+          localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentPlayer?.id],
+  );
+
+  const addMessage = useCallback(
+    (
+      chatId: string,
+      characterId: string,
+      kind: ChatMessageKind,
+      content: string,
+      opts: { replyTo?: string | null; time?: string | null } = {},
+    ) => {
+      const text = content.trim();
+      if (!text) return;
+      const message: ChatMessage = {
+        id: uid("msg"),
+        chat_id: chatId,
+        character_id: characterId,
+        kind,
+        content: text,
+        reply_to: opts.replyTo ?? null,
+        reactions: {},
+        inplay_time: opts.time ?? null,
+        // Mehrere Nachrichten im selben Augenblick (Tagestrenner + erste SMS)
+        // behalten ihre Reihenfolge
+        created_at: new Date(Math.max(Date.now(), lastMessageAt + 1)).toISOString(),
+      };
+      lastMessageAt = new Date(message.created_at).getTime();
+      const send = () => supabase.from("chat_messages").insert(message);
+      const pending = pendingChats.get(chatId);
+      persist("addMessage", pending ? pending.then(send, send) : send());
+      if (kind !== "date") rememberPhone(characterId);
+      setState((s) => {
+        // Eine neue Nachricht holt den Chat bei allen aus dem Archiv
+        const chat = s.chats.find((c) => c.id === chatId);
+        let chats = s.chats;
+        if (kind !== "date" && chat?.archived_by?.length) {
+          persist(
+            "unarchiveChat",
+            supabase.from("chats").update({ archived_by: [] }).eq("id", chatId),
+          );
+          chats = s.chats.map((c) => (c.id === chatId ? { ...c, archived_by: [] } : c));
+        }
+        return { ...s, chats, chatMessages: [...s.chatMessages, message] };
+      });
+    },
+    [],
+  );
+
+  const updateMessage = useCallback(
+    (messageId: string, patch: Pick<ChatMessage, "content" | "inplay_time">) => {
+      persist("updateMessage", supabase.from("chat_messages").update(patch).eq("id", messageId));
+      setState((s) => ({
+        ...s,
+        chatMessages: s.chatMessages.map((m) => (m.id === messageId ? { ...m, ...patch } : m)),
+      }));
+    },
+    [],
+  );
+
+  const deleteChat = useCallback((chatId: string) => {
+    // Nachrichten hängen per „on delete cascade" am Chat
+    persist("deleteChat", supabase.from("chats").delete().eq("id", chatId));
+    setState((s) => ({
+      ...s,
+      chats: s.chats.filter((c) => c.id !== chatId),
+      chatMessages: s.chatMessages.filter((m) => m.chat_id !== chatId),
+    }));
+  }, []);
+
+  const leaveOnRead = useCallback(
+    (chatId: string, characterId: string, messageId: string | null) => {
+      setState((s) => {
+        const chat = s.chats.find((c) => c.id === chatId);
+        if (!chat) return s;
+        const left_on_read = { ...(chat.left_on_read ?? {}) };
+        if (messageId) left_on_read[characterId] = messageId;
+        else delete left_on_read[characterId];
+        persist("leaveOnRead", supabase.from("chats").update({ left_on_read }).eq("id", chatId));
+        return {
+          ...s,
+          chats: s.chats.map((c) => (c.id === chatId ? { ...c, left_on_read } : c)),
+        };
+      });
+    },
+    [],
+  );
+
+  const archiveChat = useCallback((chatId: string, characterId: string, archived: boolean) => {
+    setState((s) => {
+      const chat = s.chats.find((c) => c.id === chatId);
+      if (!chat) return s;
+      const rest = (chat.archived_by ?? []).filter((id) => id !== characterId);
+      const archived_by = archived ? [...rest, characterId] : rest;
+      persist("archiveChat", supabase.from("chats").update({ archived_by }).eq("id", chatId));
+      return {
+        ...s,
+        chats: s.chats.map((c) => (c.id === chatId ? { ...c, archived_by } : c)),
+      };
+    });
+  }, []);
+
+  const deleteMessage = useCallback((messageId: string) => {
+    persist("deleteMessage", supabase.from("chat_messages").delete().eq("id", messageId));
+    setState((s) => ({
+      ...s,
+      chatMessages: s.chatMessages.filter((m) => m.id !== messageId),
+    }));
+  }, []);
+
+  // Pro Charakter eine Reaktion je Nachricht (wie in den bekannten Messengern):
+  // dasselbe Emoji nochmal nimmt sie zurück, ein anderes ersetzt sie.
+  const toggleReaction = useCallback(
+    (messageId: string, emoji: string, characterId: string) => {
+      setState((s) => {
+        const msg = s.chatMessages.find((m) => m.id === messageId);
+        if (!msg) return s;
+        const had = (msg.reactions?.[emoji] ?? []).includes(characterId);
+        const reactions: Record<string, string[]> = {};
+        for (const [e, ids] of Object.entries(msg.reactions ?? {})) {
+          const rest = ids.filter((id) => id !== characterId);
+          if (rest.length) reactions[e] = rest;
+        }
+        if (!had) reactions[emoji] = [...(reactions[emoji] ?? []), characterId];
+        persist(
+          "toggleReaction",
+          supabase.from("chat_messages").update({ reactions }).eq("id", messageId),
+        );
+        return {
+          ...s,
+          chatMessages: s.chatMessages.map((m) =>
+            m.id === messageId ? { ...m, reactions } : m,
+          ),
+        };
+      });
+    },
+    [],
+  );
+
+  // Chats mit ungelesener Nachricht: mindestens ein eigener Charakter ist dabei,
+  // die neueste Nachricht kommt von einem fremden und ist neuer als der letzte Besuch.
+  const unreadChatIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!currentPlayer) return ids;
+    const mine = new Set(
+      state.characters.filter((c) => c.player_id === currentPlayer.id).map((c) => c.id),
+    );
+    const last = new Map<string, ChatMessage>();
+    for (const m of state.chatMessages) {
+      if (m.kind === "date") continue;
+      const cur = last.get(m.chat_id);
+      if (!cur || m.created_at > cur.created_at) last.set(m.chat_id, m);
+    }
+    for (const chat of state.chats) {
+      const m = last.get(chat.id);
+      if (!m || mine.has(m.character_id)) continue;
+      if (!chat.participant_ids.some((id) => mine.has(id))) continue;
+      const seen = reads[chat.id] ? new Date(reads[chat.id]).getTime() : 0;
+      if (new Date(m.created_at).getTime() > seen) ids.add(chat.id);
+    }
+    return ids;
+  }, [state.chats, state.chatMessages, state.characters, reads, currentPlayer]);
+  const isChatNew = useCallback((chatId: string) => unreadChatIds.has(chatId), [unreadChatIds]);
+
+  const isChatFresh = useCallback(
+    (chatId: string) => {
+      let newest = "";
+      for (const m of state.chatMessages) {
+        if (m.chat_id === chatId && m.kind !== "date" && m.created_at > newest) newest = m.created_at;
+      }
+      if (!newest) return false;
+      const seen = reads[chatId] ? new Date(reads[chatId]).getTime() : 0;
+      return new Date(newest).getTime() > seen;
+    },
+    [state.chatMessages, reads],
+  );
+
+  // --- Telefon ---------------------------------------------------------------
+  const addCall = useCallback((call: Omit<PhoneCall, "id" | "created_at">) => {
+    const row: PhoneCall = { ...call, id: uid("call"), created_at: new Date().toISOString() };
+    rememberPhone(call.caller_id);
+    persist("addCall", afterScene(row.scene_id, () => supabase.from("calls").insert(row)));
+    setState((s) => ({ ...s, calls: [...s.calls, row] }));
+    return row.id;
+  }, []);
+
+  const updateCall = useCallback((id: string, patch: Partial<PhoneCall>) => {
+    persist(
+      "updateCall",
+      afterScene(patch.scene_id, () => supabase.from("calls").update(patch).eq("id", id)),
+    );
+    setState((s) => ({
+      ...s,
+      calls: s.calls.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    }));
+  }, []);
+
+  const incomingCalls = useMemo(() => {
+    if (!currentPlayer) return [];
+    const mine = new Set(
+      state.characters.filter((c) => c.player_id === currentPlayer.id).map((c) => c.id),
+    );
+    return state.calls.filter((c) => c.status === "ringing" && mine.has(c.callee_id));
+  }, [state.calls, state.characters, currentPlayer]);
+  const unreadChatCount = unreadChatIds.size;
 
   const value = useMemo<StoreValue>(
     () => ({
@@ -891,6 +1346,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       canEditPlot,
       updateCharacter,
       addCharacter,
+      deleteCharacter,
+      deleteScene,
       updatePlayer,
       addScene,
       updateScene,
@@ -898,6 +1355,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       isSceneNew,
       markSceneSeen,
       markAllScenesSeen,
+      markSceneUnread,
+      messagesOf,
+      canWriteAs,
+      openChat,
+      addMessage,
+      deleteMessage,
+      updateMessage,
+      deleteChat,
+      leaveOnRead,
+      archiveChat,
+      toggleReaction,
+      isChatNew,
+      markChatSeen,
+      markChatUnread,
+      unreadChatCount,
+      isChatFresh,
+      addCall,
+      updateCall,
+      incomingCalls,
     }),
     [
       state,
@@ -943,6 +1419,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       canEditPlot,
       updateCharacter,
       addCharacter,
+      deleteCharacter,
+      deleteScene,
       updatePlayer,
       addScene,
       updateScene,
@@ -950,6 +1428,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       isSceneNew,
       markSceneSeen,
       markAllScenesSeen,
+      markSceneUnread,
+      messagesOf,
+      canWriteAs,
+      openChat,
+      addMessage,
+      deleteMessage,
+      updateMessage,
+      deleteChat,
+      leaveOnRead,
+      archiveChat,
+      toggleReaction,
+      isChatNew,
+      markChatSeen,
+      markChatUnread,
+      unreadChatCount,
+      isChatFresh,
+      addCall,
+      updateCall,
+      incomingCalls,
     ],
   );
 

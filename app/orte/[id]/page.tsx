@@ -106,7 +106,7 @@ export default function LocationPage({
             )}
           </section>
 
-          {/* Vibes — nur wenn Fotos hinterlegt sind */}
+          {/* Vibes – nur wenn Fotos hinterlegt sind */}
           {images.length > 0 && (
             <section>
               <Heading>vibes.</Heading>
@@ -125,7 +125,7 @@ export default function LocationPage({
             </section>
           )}
 
-          {/* Characters & NPCs — nur wenn welche hinterlegt sind */}
+          {/* Characters & NPCs – nur wenn welche hinterlegt sind */}
           {people.length > 0 && (
             <section>
               <Heading>characters &amp; npcs.</Heading>
@@ -158,7 +158,7 @@ export default function LocationPage({
           <section>
             <Heading>facts.</Heading>
             <Facts>
-              <FactRow label="Bezirk" value={areaName(loc.area)} />
+              <FactRow label="Gegend" value={areaName(loc.area)} />
               <FactRow
                 label="Status"
                 value={scenesHere.length > 0 ? "Bespielt" : "Noch unbespielt"}
@@ -224,7 +224,7 @@ function Heading({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Ein am Ort hinterlegter Charakter/NPC — Aufbau wie die Relations im Charakterprofil:
+// Ein am Ort hinterlegter Charakter/NPC – Aufbau wie die Relations im Charakterprofil:
 // Bubble + Alter · Beruf als Faktenzeile, darunter der Bezug zum Ort.
 function PersonCard({ person }: { person: LocationPerson }) {
   const { character } = useStore();
@@ -390,7 +390,7 @@ function PeopleEditor({
           <div className="text-[0.875rem] text-text-secondary">
             Neuer NPC{" "}
             <span className="text-text-tertiary">
-              — Basis-Infos; das Profil kannst du später in den Einstellungen ausfüllen
+              – Basis-Infos; das Profil kannst du später in den Einstellungen ausfüllen
             </span>
           </div>
           <div className="grid sm:grid-cols-[1fr_1fr_90px] gap-2">
@@ -500,7 +500,7 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
         Ort bearbeiten
       </div>
 
-      {/* Banner — ohne eigenes Bild gilt der Banner der Karte */}
+      {/* Banner – ohne eigenes Bild gilt der Banner der Karte */}
       <div>
         <div className="flex items-center justify-between text-[0.875rem] text-text-secondary mb-1">
           <span>

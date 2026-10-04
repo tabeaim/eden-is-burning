@@ -13,7 +13,7 @@ export type PageMeta = {
   statusBadge?: "active" | "closed"; // optionaler Status-Badge hinter dem Untertitel
   path?: string;
   bannerImage?: string; // überschreibt den Seed-Banner (z.B. Szenen-Header)
-  width?: string; // Tailwind max-w-Klasse der Seite — Banner-Titel nutzt dieselbe
+  width?: string; // Tailwind max-w-Klasse der Seite – Banner-Titel nutzt dieselbe
 };
 
 type Ctx = { meta: PageMeta; setMeta: (m: PageMeta) => void };

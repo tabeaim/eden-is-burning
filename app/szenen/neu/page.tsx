@@ -3,17 +3,15 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
-import {
-  AREA_ORDER,
-  AREAS,
-  LOCATION_SUGGESTIONS,
-  type AreaKey,
-} from "@/lib/world";
+import { Toggle } from "@/components/Toggle";
+import { LocationField, locationComplete } from "@/components/LocationField";
 import { PageHeader } from "@/components/PageHeader";
 import { CharacterPicker } from "@/components/CharacterPicker";
 import { sceneHeader } from "@/lib/headers";
 import { AuNameField, auNames } from "@/components/AuNameField";
 import { DatePicker } from "@/components/DatePicker";
+import { PHONE_AREA, PHONE_LOCATION, phoneSceneTitle } from "@/lib/phone";
+
 
 // Pflichtfeld-Stern
 function Req() {
@@ -22,12 +20,25 @@ function Req() {
 
 export default function NewScenePage() {
   const router = useRouter();
-  const { addScene, addLocation, addPost, characters, scenes, currentPlayer, charactersOf } =
-    useStore();
+  const {
+    addScene,
+    addLocation,
+    addPost,
+    character,
+    characters,
+    npcs,
+    scenes,
+    currentPlayer,
+    charactersOf,
+  } = useStore();
+  // Telefonat statt Ort: keine Gegend/kein Ort nötig – die Szene spielt „am Telefon"
+  const [phone, setPhone] = useState(false);
 
   const [title, setTitle] = useState("");
-  const [area, setArea] = useState<AreaKey>("rivers_edge");
+  // Die Gegend kommt vom gewählten Ort; nur bei einem neuen Ort wird sie abgefragt
+  const [area, setArea] = useState("");
   const [locationName, setLocationName] = useState("");
+  const [locationDescription, setLocationDescription] = useState("");
   const [date, setDate] = useState("2021-11-23");
   const [time, setTime] = useState("Nachmittag");
   const [tw, setTw] = useState(false);
@@ -35,6 +46,10 @@ export default function NewScenePage() {
   const [auName, setAuName] = useState("");
   const [summary, setSummary] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  // Ohne eigenen Titel heißt ein Telefonat „A & B on the phone"
+  const phoneTitle = phoneSceneTitle(
+    selected.map((id) => character(id)).filter((c): c is NonNullable<typeof c> => !!c),
+  );
   const [firstPost, setFirstPost] = useState("");
   const [firstCharId, setFirstCharId] = useState<string | null>(null);
 
@@ -42,23 +57,25 @@ export default function NewScenePage() {
   const myCharIds = new Set(myChars.map((c) => c.id));
   // Eigene Charaktere, die an dieser Szene teilnehmen (für den ersten Post)
   const eligibleFirst = myChars.filter((c) => selected.includes(c.id));
+  const subtitle = phone ? "Eröffne ein Telefonat." : "Eröffne einen neuen Thread.";
   const firstChar =
     firstCharId && eligibleFirst.some((c) => c.id === firstCharId)
       ? firstCharId
       : eligibleFirst[0]?.id ?? null;
 
-  const valid =
-    title.trim() && locationName.trim() && date && selected.length > 0;
+  const valid = phone
+    ? date && selected.length > 0
+    : title.trim() && locationComplete(area, locationName) && date && selected.length > 0;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid) return;
-    const loc = locationName.trim();
+    const loc = phone ? PHONE_LOCATION : locationName.trim();
     // Neuer Ort wird angelegt und ist durch diese Szene direkt "bespielt".
-    addLocation(area, loc);
+    if (!phone) addLocation(area, loc, locationDescription.trim() || null);
     const id = addScene({
-      title: title.trim(),
-      location_area: area,
+      title: title.trim() || phoneTitle,
+      location_area: phone ? PHONE_AREA : area,
       location_name: loc,
       inplay_date: date,
       inplay_time: time,
@@ -81,7 +98,7 @@ export default function NewScenePage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
-      <PageHeader title="Neue Szene" subtitle="Eröffne einen neuen Thread." width="max-w-6xl" />
+      <PageHeader title="Neue Szene"  subtitle={subtitle} width="max-w-6xl" />
 
       <form onSubmit={submit} className="flex flex-col gap-5 max-w-2xl">
         <div>
@@ -98,11 +115,11 @@ export default function NewScenePage() {
         </div>
 
         <label className="text-[0.875rem] text-text-secondary">
-          Titel <Req />
+          Titel {phone ? <span className="text-text-tertiary">(optional)</span> : <Req />}
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="z.B. Das Café und die Stille dazwischen"
+            placeholder={phone ? phoneTitle : "z.B. Das Café und die Stille dazwischen"}
             className={`mt-1 ${field}`}
           />
         </label>
@@ -117,48 +134,27 @@ export default function NewScenePage() {
           />
         </label>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label className="text-[0.875rem] text-text-secondary">
-            Bezirk <Req />
-            <select
-              value={area}
-              onChange={(e) => {
-                setArea(e.target.value as AreaKey);
-                setLocationName("");
+        <Toggle checked={phone} onChange={setPhone}>
+          Telefonat – die Szene spielt am Telefon (kein Ort)
+        </Toggle>
+
+        {!phone && (
+          <div className="text-[0.875rem] text-text-secondary">
+            <div className="mb-1">
+              Ort <Req />
+            </div>
+            <LocationField
+              area={area}
+              name={locationName}
+              onChange={(a, n) => {
+                setArea(a);
+                setLocationName(n);
               }}
-              className={`mt-1 ${field}`}
-            >
-              {AREA_ORDER.map((k) => (
-                <option key={k} value={k} className="bg-bg-surface">
-                  {AREAS[k].name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="text-[0.875rem] text-text-secondary">
-            Ort <Req />
-            <input
-              value={locationName}
-              onChange={(e) => setLocationName(e.target.value)}
-              placeholder={LOCATION_SUGGESTIONS[area][0]}
-              className={`mt-1 ${field}`}
+              description={locationDescription}
+              onDescription={setLocationDescription}
             />
-          </label>
-        </div>
-
-        <div className="flex flex-wrap gap-1.5 -mt-2">
-          {LOCATION_SUGGESTIONS[area].map((loc) => (
-            <button
-              type="button"
-              key={loc}
-              onClick={() => setLocationName(loc)}
-              className="rounded-full bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[0.8125rem] text-text-secondary"
-            >
-              {loc}
-            </button>
-          ))}
-        </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="text-[0.875rem] text-text-secondary">
@@ -166,7 +162,7 @@ export default function NewScenePage() {
             <DatePicker value={date} onChange={setDate} className="mt-1" />
           </div>
           <label className="text-[0.875rem] text-text-secondary">
-            Tageszeit
+            {phone ? "Uhrzeit" : "Tageszeit"}
             <input
               value={time}
               onChange={(e) => setTime(e.target.value)}
@@ -176,16 +172,13 @@ export default function NewScenePage() {
           </label>
         </div>
 
-        <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
-          <input type="checkbox" checked={tw} onChange={(e) => setTw(e.target.checked)} />
+        <Toggle checked={tw} onChange={setTw}>
           Triggerwarnung anzeigen
-        </label>
+        </Toggle>
 
-        <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
-          <input type="checkbox" checked={au} onChange={(e) => setAu(e.target.checked)} />
-          <span className="italic">AU</span> — spielt in einem Alternate
-          Universe (Nicht-Canon)
-        </label>
+        <Toggle checked={au} onChange={setAu}>
+          <span className="italic">AU</span> – spielt in einem Alternate Universe (Nicht-Canon)
+        </Toggle>
         {au && (
           <AuNameField value={auName} onChange={setAuName} names={auNames(scenes)} />
         )}
@@ -198,7 +191,7 @@ export default function NewScenePage() {
             </span>
           </div>
           <CharacterPicker
-            characters={characters}
+            characters={phone ? [...characters, ...npcs] : characters}
             selected={selected}
             onChange={setSelected}
             myCharIds={myCharIds}
@@ -212,7 +205,7 @@ export default function NewScenePage() {
               <span>
                 Erster Post{" "}
                 <span className="text-text-tertiary">
-                  (optional — kann auch später von einer teilnehmenden Person kommen)
+                  (optional – kann auch später von einer teilnehmenden Person kommen)
                 </span>
               </span>
               {eligibleFirst.length > 1 && (

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { NewCharacterButton } from "@/components/NewCharacterButton";
 import { useStore } from "@/lib/store";
 import { formatInplayDateShort } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
@@ -79,8 +80,8 @@ export default function CharaktereePage() {
         width="max-w-6xl"
       />
 
-      {/* Reiter wie in der Szenen-Übersicht */}
-      <div className="flex gap-1.5 mb-4">
+      {/* Reiter wie in der Szenen-Übersicht; rechts „Neu anlegen" passend zum Reiter */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-4">
         {TABS.map(([key, label]) => (
           <button
             key={key}
@@ -94,6 +95,10 @@ export default function CharaktereePage() {
             {label}
           </button>
         ))}
+        <div className="ml-auto flex flex-wrap items-center gap-1.5">
+          {tab !== "npcs" && <NewCharacterButton kind="character" />}
+          {tab !== "played" && <NewCharacterButton kind="npc" />}
+        </div>
       </div>
 
       {/* Textsuche links, Sortierung rechts */}
@@ -157,7 +162,7 @@ export default function CharaktereePage() {
           {q
             ? `Kein Charakter passt zu „${query.trim()}“.`
             : tab === "npcs"
-              ? "Noch keine NPCs — sie lassen sich im Ortsprofil anlegen."
+              ? "Noch keine NPCs – leg oben den ersten an."
               : "Noch keine Charaktere."}
         </p>
       )}

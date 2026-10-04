@@ -13,11 +13,13 @@ export function PlotBar({
   activeId,
   onToggle,
   onSave,
+  canSave,
 }: {
   plots: Plot[]; // nur die für mich sichtbaren
   activeId: string | null;
   onToggle: (plot: Plot) => void;
   onSave: (name: string) => void;
+  canSave: boolean; // ein Plot speichert Filter – ohne Filter gibt es nichts zu speichern
 }) {
   const [naming, setNaming] = useState(false);
   const [name, setName] = useState("");
@@ -33,7 +35,7 @@ export function PlotBar({
     <div className="flex flex-wrap items-center gap-2 border-t border-border-subtle pt-3">
       <span className="text-[0.8125rem] uppercase tracking-wider text-text-tertiary">Plots</span>
       {plots.length === 0 && !naming && (
-        <span className="text-[0.875rem] text-text-tertiary">— noch keine</span>
+        <span className="text-[0.875rem] text-text-tertiary">– noch keine</span>
       )}
       {plots.map((p) => (
         <button
@@ -79,8 +81,13 @@ export function PlotBar({
       ) : (
         <button
           onClick={() => setNaming(true)}
-          title="Aktuelle Filter (Charaktere, AU, Gegend) als neuen Plot speichern"
-          className="flex items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-0.5 text-[0.8125rem] text-text-tertiary hover:text-accent hover:border-accent/50"
+          disabled={!canSave}
+          title={
+            canSave
+              ? "Aktuelle Filter (Charaktere, AU, Gegend) als neuen Plot speichern"
+              : "Wähle zuerst Filter (Charaktere, AU oder Gegend) – ein Plot speichert die aktuellen Filter"
+          }
+          className="flex items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-0.5 text-[0.8125rem] text-text-tertiary enabled:hover:text-accent enabled:hover:border-accent/50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Icon name="plus" size={11} /> Als Plot speichern
         </button>

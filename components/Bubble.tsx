@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { Character } from "@/lib/types";
-import { Icon } from "./Icon";
+import { Icon, type IconName } from "./Icon";
 import { characterImage } from "@/lib/avatar";
 
-// Bubbles — die EINE runde Pill-Form der App (siehe DESIGN.md). Charaktere, NPCs
+// Bubbles – die EINE runde Pill-Form der App (siehe DESIGN.md). Charaktere, NPCs
 // und Orte sehen überall gleich aus; nur der Inhalt (Avatar bzw. Icon) wechselt.
 // Mit `href` wird die Bubble zum Link, sonst bleibt sie ein <span> (z.B. innerhalb
 // einer bereits verlinkten Karte).
@@ -107,12 +107,14 @@ export function LocationBubble({
   id,
   title,
   played = true,
+  icon = "map",
   className,
 }: {
   name: string;
   id?: string;
   title?: string;
   played?: boolean;
+  icon?: IconName; // Telefonszenen: "phone"
   className?: string;
 }) {
   return (
@@ -126,7 +128,7 @@ export function LocationBubble({
             played ? "text-accent" : "text-text-tertiary"
           }`}
         >
-          <Icon name="map" size={13} />
+          <Icon name={icon} size={13} />
         </span>
       }
     >

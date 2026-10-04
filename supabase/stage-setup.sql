@@ -535,6 +535,128 @@ end $$;
 
 
 -- ############################################################
+-- ## schema-messenger.sql
+-- ############################################################
+
+-- Messenger („Handy"): Chats zwischen Charakteren und ihre Nachrichten.
+-- Im Supabase SQL-Editor ausführen (Run). Wiederholbar (idempotent).
+
+create table if not exists chats (
+  id              text primary key,
+  participant_ids jsonb not null default '[]'::jsonb,   -- Charakter-IDs
+  created_by      text references players(id) on delete set null,
+  created_at      timestamptz not null default now()
+);
+
+create table if not exists chat_messages (
+  id           text primary key,
+  chat_id      text not null references chats(id) on delete cascade,
+  character_id text not null references characters(id) on delete cascade,
+  kind         text not null default 'text',            -- text | gif | image | date
+  content      text not null,
+  reply_to     text references chat_messages(id) on delete set null,
+  reactions    jsonb not null default '{}'::jsonb,      -- { "❤️": ["<charakter-id>"] }
+  created_at   timestamptz not null default now()
+);
+
+-- Inplay-Uhrzeit der Nachricht („23:41") — created_at bestimmt nur die Reihenfolge
+alter table chat_messages add column if not exists inplay_time text;
+
+-- „Left on read" ({ "<charakter-id>": "<nachricht-id>" }) und Archiv je Charakter
+alter table chats add column if not exists left_on_read jsonb not null default '{}'::jsonb;
+alter table chats add column if not exists archived_by  jsonb not null default '[]'::jsonb;
+
+create index if not exists idx_chat_messages_chat on chat_messages(chat_id, created_at);
+
+-- Wie bei Szenen/Posts: alle Freigeschalteten dürfen lesen und schreiben
+-- (Reaktionen ändern fremde Nachrichten-Zeilen).
+alter table chats         enable row level security;
+alter table chat_messages enable row level security;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['chats', 'chat_messages']
+  loop
+    execute format('drop policy if exists "%s approved all" on %I', t, t);
+    execute format(
+      'create policy "%s approved all" on %I for all to authenticated
+         using (public.is_approved()) with check (public.is_approved())', t, t);
+
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $$;
+
+grant select, insert, update, delete on chats, chat_messages to authenticated;
+grant all on chats, chat_messages to service_role;
+
+
+-- ############################################################
+-- ## schema-phone.sql
+-- ############################################################
+
+-- Handy-Look pro Charakter (Modell, Gehäusefarbe, Abnutzung, Hintergrund, Apps).
+-- Im Supabase SQL-Editor ausführen (Run). Wiederholbar (idempotent).
+
+alter table characters add column if not exists phone jsonb;
+
+
+-- ############################################################
+-- ## schema-calls.sql
+-- ############################################################
+
+-- Telefon („Handy"): Anrufe zwischen Charakteren — Anklingeln, Annehmen/Ablehnen
+-- und die Anrufliste. Im Supabase SQL-Editor ausführen (Run). Wiederholbar.
+
+create table if not exists calls (
+  id          text primary key,
+  caller_id   text not null references characters(id) on delete cascade,
+  callee_id   text not null references characters(id) on delete cascade,
+  inplay_date text not null,                      -- ISO-Datum als Text
+  inplay_time text,                               -- „22:10"
+  status      text not null default 'ringing',    -- ringing | accepted | declined
+  scene_id    text references scenes(id) on delete set null,  -- Telefonszene, falls erstellt
+  created_at  timestamptz not null default now()
+);
+
+alter table calls enable row level security;
+
+drop policy if exists "calls approved all" on calls;
+create policy "calls approved all" on calls for all to authenticated
+  using (public.is_approved()) with check (public.is_approved());
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'calls'
+  ) then
+    alter publication supabase_realtime add table public.calls;
+  end if;
+end $$;
+
+grant select, insert, update, delete on calls to authenticated;
+grant all on calls to service_role;
+
+
+-- ############################################################
+-- ## schema-npc-owners.sql
+-- ############################################################
+
+-- NPCs können mehreren Spieler*innen zugeordnet sein: zusätzlich zu player_id
+-- (wer den NPC angelegt hat) eine Liste weiterer Spieler-IDs, die ihn bearbeiten
+-- und für ihn schreiben dürfen.
+-- Im Supabase SQL-Editor ausführen (Run). Wiederholbar (idempotent).
+
+alter table characters add column if not exists co_owner_ids jsonb not null default '[]'::jsonb;
+
+
+-- ############################################################
 -- ## Zugriffsrechte (Grants)
 -- ############################################################
 

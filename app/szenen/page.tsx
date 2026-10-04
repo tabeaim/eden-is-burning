@@ -53,7 +53,7 @@ export default function ScenesPage() {
   const [searchPost, setSearchPost] = useState("");
   const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED
   const [plotId, setPlotId] = useState<string | null>(null); // geöffneter Plot
-  // Filter vor dem Öffnen eines Plots — beim Schließen kommen sie zurück
+  // Filter vor dem Öffnen eines Plots – beim Schließen kommen sie zurück
   const [beforePlot, setBeforePlot] = useState<{
     tokens: string[];
     aus: string[];
@@ -339,6 +339,7 @@ export default function ScenesPage() {
           activeId={plotId}
           onToggle={togglePlot}
           onSave={(name) => setPlotId(addPlot(name, [...tokens], [...aus], [...areas]))}
+          canSave={[...tokens, ...aus, ...areas].length > 0}
         />
       </div>
 

@@ -1,4 +1,7 @@
+"use client";
+
 import type { Scene } from "@/lib/types";
+import { SuggestInput } from "./SuggestInput";
 
 export { AU_UNNAMED } from "@/lib/plots";
 
@@ -9,7 +12,8 @@ export function auNames(scenes: Scene[]): string[] {
   return Array.from(set).sort((a, b) => a.localeCompare(b, "de"));
 }
 
-// Name des Alternate Universe — bestehendes AU auswählen oder ein neues benennen.
+// Name des Alternate Universe: beim Tippen werden vorhandene AUs vorgeschlagen;
+// gibt es den Namen noch nicht, entsteht ein neues.
 export function AuNameField({
   value,
   onChange,
@@ -19,21 +23,26 @@ export function AuNameField({
   onChange: (v: string) => void;
   names: string[];
 }) {
+  const query = value.trim().toLowerCase();
+  const exact = names.find((n) => n.toLowerCase() === query);
+  const matches = names.filter((n) => !query || n.toLowerCase().includes(query)).slice(0, 8);
   return (
-    <label className="text-[0.875rem] text-text-secondary">
+    <div className="text-[0.875rem] text-text-secondary">
       Name des AUs
-      <input
+      <SuggestInput
+        className="mt-1"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        list="au-names"
-        placeholder="z. B. Noir 1947 — bestehendes wählen oder neu benennen"
-        className="mt-1 w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+        onChange={onChange}
+        placeholder="AU eintippen, z. B. Noir 1947"
+        suggestions={matches.map((n) => ({ key: n, label: n }))}
+        onPick={onChange}
+        createLabel={query && !exact ? `Neues AU „${value.trim()}“ erstellen` : null}
       />
-      <datalist id="au-names">
-        {names.map((n) => (
-          <option key={n} value={n} />
-        ))}
-      </datalist>
-    </label>
+      {query && (
+        <div className="mt-1 text-[0.8125rem] text-text-tertiary">
+          {exact ? "Bestehendes AU" : <span className="text-accent">Neues AU</span>}
+        </div>
+      )}
+    </div>
   );
 }

@@ -9,7 +9,7 @@ const SECTIONS: { href: string; title: string; text: string; icon: IconName }[] 
   {
     href: "/info/eden",
     title: "Alles über Eden & D.C", // der Punkt kommt aus der Überschrift
-    text: "Die Stadt, ihre Gegenden und Washington D.C. — alles, was man zum Spielen wissen muss.",
+    text: "Die Stadt, ihre Gegenden und Washington D.C. – alles, was man zum Spielen wissen muss.",
     icon: "map",
   },
   {

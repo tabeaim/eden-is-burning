@@ -26,7 +26,7 @@ export default function PlayerPage({
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
-      {/* Inhalt linksbündig in Lesebreite — Container-Breite bleibt einheitlich */}
+      {/* Inhalt linksbündig in Lesebreite – Container-Breite bleibt einheitlich */}
       <div className="max-w-3xl">
       <div className="flex items-center gap-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}

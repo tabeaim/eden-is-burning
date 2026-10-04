@@ -2,12 +2,11 @@
 
 import { useRef, useState } from "react";
 import { useStore } from "@/lib/store";
-import {
-  AREA_ORDER,
-  AREAS,
-  LOCATION_SUGGESTIONS,
-  type AreaKey,
-} from "@/lib/world";
+import { PHONE_AREA, PHONE_LOCATION } from "@/lib/phone";
+import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Toggle } from "@/components/Toggle";
+import { LocationField, locationComplete } from "@/components/LocationField";
 import { sceneHeader } from "@/lib/headers";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { Icon } from "@/components/Icon";
@@ -31,13 +30,27 @@ export function SceneEditPanel({
   scene: Scene;
   onClose: () => void;
 }) {
-  const { updateScene, addLocation, characters, scenes, currentPlayer, charactersOf } =
-    useStore();
+  const {
+    updateScene,
+    deleteScene,
+    addLocation,
+    characters,
+    scenes,
+    posts,
+    currentPlayer,
+    charactersOf,
+  } = useStore();
+  const router = useRouter();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const postCount = posts.filter((p) => p.scene_id === scene.id).length;
 
   const [title, setTitle] = useState(scene.title);
   const [summary, setSummary] = useState(scene.summary ?? "");
   const [area, setArea] = useState<string>(scene.location_area);
   const [locationName, setLocationName] = useState(scene.location_name);
+  const [locationDescription, setLocationDescription] = useState("");
+  // Telefonat: keine Gegend/kein Ort, die Szene spielt „am Telefon"
+  const [phone, setPhone] = useState(scene.location_area === PHONE_AREA);
   const [date, setDate] = useState(scene.inplay_date);
   const [time, setTime] = useState(scene.inplay_time);
   const [tw, setTw] = useState(scene.trigger_warning);
@@ -49,9 +62,8 @@ export function SceneEditPanel({
 
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
   const myCharIds = new Set(myChars.map((c) => c.id));
-  const suggestions = LOCATION_SUGGESTIONS[area as AreaKey] ?? [];
   const valid =
-    title.trim() && locationName.trim() && date && selected.length > 0;
+    title.trim() && (phone || locationComplete(area, locationName)) && date && selected.length > 0;
 
   async function onHeaderFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -61,11 +73,11 @@ export function SceneEditPanel({
 
   function save() {
     if (!valid) return;
-    const loc = locationName.trim();
-    addLocation(area, loc);
+    const loc = phone ? PHONE_LOCATION : locationName.trim();
+    if (!phone) addLocation(area, loc, locationDescription.trim() || null);
     updateScene(scene.id, {
       title: title.trim(),
-      location_area: area,
+      location_area: phone ? PHONE_AREA : area,
       location_name: loc,
       inplay_date: date,
       inplay_time: time,
@@ -147,48 +159,35 @@ export function SceneEditPanel({
         />
       </label>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <label className="text-[0.875rem] text-text-secondary">
-          Bezirk <Req />
-          <select
-            value={area}
-            onChange={(e) => {
-              setArea(e.target.value);
-              setLocationName("");
+      <Toggle
+        checked={phone}
+        onChange={(on) => {
+          setPhone(on);
+          // zurück zu einem echten Ort: Ort neu wählen
+          if (!on && area === PHONE_AREA) {
+            setArea("");
+            setLocationName("");
+          }
+        }}
+      >
+        Telefonat – die Szene spielt am Telefon (kein Ort)
+      </Toggle>
+
+      {!phone && (
+        <div className="text-[0.875rem] text-text-secondary">
+          <div className="mb-1">
+            Ort <Req />
+          </div>
+          <LocationField
+            area={area}
+            name={locationName}
+            onChange={(a, n) => {
+              setArea(a);
+              setLocationName(n);
             }}
-            className={`mt-1 ${field}`}
-          >
-            {AREA_ORDER.map((k) => (
-              <option key={k} value={k} className="bg-bg-surface">
-                {AREAS[k].name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="text-[0.875rem] text-text-secondary">
-          Ort <Req />
-          <input
-            value={locationName}
-            onChange={(e) => setLocationName(e.target.value)}
-            placeholder={suggestions[0]}
-            className={`mt-1 ${field}`}
+            description={locationDescription}
+            onDescription={setLocationDescription}
           />
-        </label>
-      </div>
-
-      {suggestions.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 -mt-2">
-          {suggestions.map((loc) => (
-            <button
-              type="button"
-              key={loc}
-              onClick={() => setLocationName(loc)}
-              className="rounded-full bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[0.8125rem] text-text-secondary"
-            >
-              {loc}
-            </button>
-          ))}
         </div>
       )}
 
@@ -207,23 +206,13 @@ export function SceneEditPanel({
         </label>
       </div>
 
-      <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
-        <input
-          type="checkbox"
-          checked={tw}
-          onChange={(e) => setTw(e.target.checked)}
-        />
+      <Toggle checked={tw} onChange={setTw}>
         Triggerwarnung anzeigen
-      </label>
+      </Toggle>
 
-      <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
-        <input
-          type="checkbox"
-          checked={au}
-          onChange={(e) => setAu(e.target.checked)}
-        />
-        <span className="italic">AU</span> — Alternate Universe
-      </label>
+      <Toggle checked={au} onChange={setAu}>
+        <span className="italic">AU</span> – Alternate Universe
+      </Toggle>
       {au && <AuNameField value={auName} onChange={setAuName} names={auNames(scenes)} />}
 
       <div>
@@ -241,7 +230,13 @@ export function SceneEditPanel({
         />
       </div>
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <button
+          onClick={() => setConfirmDelete(true)}
+          className="mr-auto flex items-center gap-1.5 rounded-md border border-red-400/40 px-3 py-1.5 text-[0.8125rem] text-red-300 hover:bg-red-500/10"
+        >
+          <Icon name="trash" size={14} /> Szene löschen
+        </button>
         <button
           onClick={onClose}
           className="text-[0.8125rem] text-text-tertiary hover:text-text-primary px-2"
@@ -256,6 +251,19 @@ export function SceneEditPanel({
           Speichern
         </button>
       </div>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Szene löschen?"
+          text={`„${scene.title}“ wird mit allen ${postCount} Posts und ihren Zitaten endgültig gelöscht. Das lässt sich nicht rückgängig machen.`}
+          confirmLabel="Szene löschen"
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            router.push("/szenen");
+            deleteScene(scene.id);
+          }}
+        />
+      )}
     </div>
   );
 }

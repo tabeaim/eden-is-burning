@@ -10,7 +10,7 @@ import { characterImage } from "@/lib/avatar";
 
 // Spieler-Übersicht: zwei Spielerkarten nebeneinander. Oben die Person (führt zum
 // Spielerprofil), darunter ihre Charaktere als kompakte Liste mit kleinem Avatar
-// (führen zu den Charakterprofilen) — auch zehn Charaktere bleiben übersichtlich.
+// (führen zu den Charakterprofilen) – auch zehn Charaktere bleiben übersichtlich.
 // Meistbespielter Charakter zuerst.
 export default function SpielerOverviewPage() {
   const { players, posts, charactersOf, currentPlayer, onlineIds, idleIds } = useStore();
@@ -144,7 +144,7 @@ function CharacterRow({ c }: { c: Character }) {
   return (
     <Link
       href={`/charaktere/${c.id}`}
-      title={facts ? `${c.name} — ${facts}` : c.name}
+      title={facts ? `${c.name} – ${facts}` : c.name}
       className="group flex items-center gap-2.5 rounded-md px-1.5 py-1.5 transition-colors hover:bg-white/[0.04]"
     >
       {c.faceclaim_image_url || c.is_npc ? (

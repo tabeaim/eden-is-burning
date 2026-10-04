@@ -82,9 +82,9 @@ export default function CharacterPage({
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-1 pb-8">
-      {/* Inhalt linksbündig in gewohnter Breite — Container-Breite bleibt einheitlich */}
+      {/* Inhalt linksbündig in gewohnter Breite – Container-Breite bleibt einheitlich */}
       <div className="max-w-4xl">
-      {/* Zitat — direkt unter dem Seitentitel, über der Trennlinie */}
+      {/* Zitat – direkt unter dem Seitentitel, über der Trennlinie */}
       <QuoteBlock c={c} canEdit={canEditCharacter(c)} />
 
       {/* Trennlinie zur Seite */}
@@ -161,7 +161,7 @@ export default function CharacterPage({
                   {p.username}
                 </Link>
               ) : (
-                "—"
+                "–"
               )}
               .
             </div>
@@ -180,7 +180,7 @@ export default function CharacterPage({
 
 // Kompaktansicht für NPCs ohne ausgefülltes Profil: Facts + Orte, an denen der
 // NPC hinterlegt ist. Wer ihn angelegt hat (oder Admin ist), kann das Profil in
-// den Einstellungen ausfüllen — dann erscheint die volle Profilansicht.
+// den Einstellungen ausfüllen – dann erscheint die volle Profilansicht.
 function NpcFacts({ c }: { c: Character }) {
   const { locations, scenes, player, canEditCharacter } = useStore();
   const p = player(c.player_id);
@@ -242,7 +242,7 @@ function NpcFacts({ c }: { c: Character }) {
 }
 
 // Profil-Banner (Seitenbild, NICHT der Avatar; Upload folgt in den Einstellungen).
-// Looks erscheinen beim Hover — Hintergrund dunkelt leicht ab, Schrift tritt hervor.
+// Looks erscheinen beim Hover – Hintergrund dunkelt leicht ab, Schrift tritt hervor.
 function ProfileBanner({ c }: { c: Character }) {
   return (
     <div
@@ -282,7 +282,7 @@ function ProfileBanner({ c }: { c: Character }) {
   );
 }
 
-// Zitat anzeigen/hinzufügen — volle Breite über "facts".
+// Zitat anzeigen/hinzufügen – volle Breite über "facts".
 function QuoteBlock({ c, canEdit }: { c: Character; canEdit: boolean }) {
   const { updateCharacter } = useStore();
   const [editing, setEditing] = useState(false);
@@ -364,7 +364,7 @@ function Heading({ children }: { children: React.ReactNode }) {
 function GeneralTab({ c }: { c: Character }) {
   return (
     <div className="grid sm:grid-cols-2 gap-x-8 gap-y-6 items-start">
-      {/* Charaktertext — links neben den Facts */}
+      {/* Charaktertext – links neben den Facts */}
       <div>
         {c.bio ? (
           <p className="text-left text-[0.875rem] leading-relaxed text-text-secondary">
@@ -377,7 +377,7 @@ function GeneralTab({ c }: { c: Character }) {
         )}
       </div>
 
-      {/* Facts + occupation — rechts */}
+      {/* Facts + occupation – rechts */}
       <div className="flex flex-col gap-7">
         <section>
           <Heading>facts.</Heading>
@@ -463,7 +463,7 @@ function RelationsTab({
       <Heading>relations.</Heading>
       {coChars.length === 0 ? (
         <p className="text-[0.875rem] text-text-tertiary">
-          Noch keine Verbindungen — sobald zwei Charaktere eine gemeinsame Szene
+          Noch keine Verbindungen – sobald zwei Charaktere eine gemeinsame Szene
           hatten, erscheint die Verbindung hier automatisch.
         </p>
       ) : (

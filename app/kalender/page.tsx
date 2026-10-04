@@ -58,7 +58,7 @@ export default function TimelinePage() {
   const [yearSel, setYearSel] = useState<string[]>([]); // leer = alle Jahre
   const [plotId, setPlotId] = useState<string | null>(null);
   const [addingOff, setAddingOff] = useState(false);
-  // Filter, die vor dem Öffnen eines Plots aktiv waren — beim Schließen kommen
+  // Filter, die vor dem Öffnen eines Plots aktiv waren – beim Schließen kommen
   // sie zurück (waren keine aktiv, ist danach auch keiner aktiv).
   const [beforePlot, setBeforePlot] = useState<PlotFilters | null>(null);
 
@@ -172,7 +172,7 @@ export default function TimelinePage() {
         width="max-w-6xl"
       />
 
-      {/* Filterleiste — aufgebaut wie in der Szenen-Übersicht */}
+      {/* Filterleiste – aufgebaut wie in der Szenen-Übersicht */}
       <div className="rounded-xl border border-border-subtle bg-bg-surface p-4 flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           {charsByPlayer.map(({ player, chars }) => (
@@ -214,6 +214,7 @@ export default function TimelinePage() {
           activeId={plotId}
           onToggle={togglePlot}
           onSave={(name) => setPlotId(addPlot(name, [...tokens], [...aus], [...areas]))}
+          canSave={[...tokens, ...aus, ...areas].length > 0}
         />
       </div>
 
@@ -400,7 +401,7 @@ function RemoveButton({ onRemove, title }: { onRemove: () => void; title: string
 }
 
 // Faktenzeile eines Eintrags: Profilbilder zusammengerückt + Vornamen · Ort (· AU)
-// — reiner Text mit Punkten dazwischen, nichts davon anklickbar.
+// – reiner Text mit Punkten dazwischen, nichts davon anklickbar.
 function FactsLine({
   participants,
   location,
@@ -443,7 +444,7 @@ function FactsLine({
   );
 }
 
-// Gespielte Szene im Zeitstrahl: Datum, Titel, Beteiligte · Ort, Beschreibungssatz —
+// Gespielte Szene im Zeitstrahl: Datum, Titel, Beteiligte · Ort, Beschreibungssatz –
 // im Stil der Szenenboxen, mit dem Streichholz als Knoten auf der Linie.
 function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }) {
   const { character } = useStore();
@@ -491,7 +492,7 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
   );
 }
 
-// Off-Szene: Plot-Punkt, der nicht ausgespielt wurde — gestrichelt, ohne Link.
+// Off-Szene: Plot-Punkt, der nicht ausgespielt wurde – gestrichelt, ohne Link.
 function OffEntry({ off, onRemove }: { off: OffScene; onRemove?: () => void }) {
   const { character } = useStore();
   const participants = off.participant_ids
@@ -562,7 +563,7 @@ function OffSceneForm({
   return (
     <div className="mb-6 max-w-3xl rounded-xl border border-border-subtle bg-bg-surface p-4 flex flex-col gap-3">
       <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
-        Off-Szene — ein Plot-Punkt, der nicht ausgespielt wurde
+        Off-Szene – ein Plot-Punkt, der nicht ausgespielt wurde
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="text-[0.875rem] text-text-secondary">

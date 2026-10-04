@@ -14,10 +14,11 @@ import { pageHeader, sceneHeader } from "@/lib/headers";
 const NAV: { href: string; label: string; icon: IconName; title?: string }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/szenen", label: "Szenen", icon: "book" },
+  { href: "/handy", label: "Handy", icon: "phone" },
   { href: "/orte", label: "Karte", icon: "map", title: "Eden, Virginia" },
   { href: "/kalender", label: "Timeline", icon: "calendar" },
   { href: "/charaktere", label: "Charaktere", icon: "users" },
-  { href: "/spieler", label: "Spieler", icon: "star" },
+  { href: "/spieler", label: "Spieler*innen", icon: "star" },
   { href: "/info", label: "Info", icon: "info" },
 ];
 
@@ -55,6 +56,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, currentPlayer?.id]);
 
+  // Der Messenger füllt den Bildschirm wie ein Handy: kein Banner, keine Kopfleiste.
+  const bare = pathname === "/handy" || pathname.startsWith("/handy/");
+
   if (!ready) {
     return (
       <div className="flex min-h-screen items-center justify-center text-text-tertiary">
@@ -73,7 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <PageMetaProvider>
-      {/* Speichern fehlgeschlagen — die Änderung ist nur lokal sichtbar */}
+      {/* Speichern fehlgeschlagen – die Änderung ist nur lokal sichtbar */}
       {saveError && (
         <div
           role="alert"
@@ -129,11 +133,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex-1 min-w-0 flex flex-col">
           {/* Schmale Bildschirme: Die Wortmarke steht oben und scrollt mit weg; nur
               die Menü-Taste bleibt beim Scrollen stehen. */}
-          <div className="md:hidden flex items-center border-b border-border-subtle bg-bg-sidebar px-4 py-3.5">
-            <Link href="/dashboard" className="font-display text-[1.25rem] leading-none text-text-primary">
-              eden is burning<span className="text-accent">.</span>
-            </Link>
-          </div>
+          {!bare && (
+            <div className="md:hidden flex items-center border-b border-border-subtle bg-bg-sidebar px-4 py-3.5">
+              <Link href="/dashboard" className="font-display text-[1.25rem] leading-none text-text-primary">
+                eden is burning<span className="text-accent">.</span>
+              </Link>
+            </div>
+          )}
           <button
             onClick={() => setNavOpen(true)}
             aria-label="Menü öffnen"
@@ -141,16 +147,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <MenuIcon />
           </button>
-          {/* Die Karte bekommt ausnahmsweise kein Titelbild — nur den Seitentitel;
+          {/* Die Karte bekommt ausnahmsweise kein Titelbild – nur den Seitentitel;
               der Platz gehört der Karte. */}
-          <BannerHeader
-            pathname={pathname}
-            noBanner={pathname === "/orte"}
-            navHidden={navHidden}
-          />
+          {!bare && (
+            <BannerHeader
+              pathname={pathname}
+              noBanner={pathname === "/orte"}
+              navHidden={navHidden}
+            />
+          )}
           {/* Der Kopfbereich ist deckend dunkel; ab der Trennlinie blendet das
               Hintergrundfoto weich ein (Verlauf liegt hinter dem Seiteninhalt). */}
-          <main className="flex-1 min-w-0 bg-[linear-gradient(to_bottom,var(--bg-primary),transparent_14rem)]">
+          <main
+            className={`flex-1 min-w-0 ${
+              bare ? "" : "bg-[linear-gradient(to_bottom,var(--bg-primary),transparent_14rem)]"
+            }`}
+          >
             {children}
           </main>
         </div>
@@ -216,7 +228,7 @@ function BannerHeader({
 
   return (
     <header className="relative bg-bg-primary">
-      {/* Titelbild — Foto über Glut-Verlauf. background-image statt <img>, damit ein
+      {/* Titelbild – Foto über Glut-Verlauf. background-image statt <img>, damit ein
           fehlgeschlagener Ladevorgang kein kaputtes Icon zeigt, sondern den Verlauf. */}
       {!noBanner && (
       <div className="relative h-40 w-full overflow-hidden" style={{ backgroundImage: EMBER_BG }}>
@@ -228,7 +240,7 @@ function BannerHeader({
       </div>
       )}
 
-      {/* Titel — ragt halb über die Banner-Unterkante in die Seite (nicht beschnitten).
+      {/* Titel – ragt halb über die Banner-Unterkante in die Seite (nicht beschnitten).
           Container in der Seitenbreite zentriert → Titel startet bündig mit dem Inhalt. */}
       <div className={`relative ${width} mx-auto px-4 sm:px-8`}>
         <h1 className={`page-title inline-block ${
@@ -295,8 +307,20 @@ function Sidebar({
   onPeek: (v: boolean) => void;
   onToggleHidden: () => void;
 }) {
-  const { currentPlayer, charactersOf, logout } = useStore();
+  const { currentPlayer, charactersOf, logout, unreadChatCount, incomingCalls, scenes, isSceneNew } =
+    useStore();
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
+  const phoneBadge = unreadChatCount + incomingCalls.length;
+  // Orange Zähler im Menü: Szenen = alle ungelesenen; Dashboard = Bewegung bei
+  // den eigenen Charakteren (eigene Szenen, Chats, Anrufe)
+  const myIds = new Set(myChars.map((c) => c.id));
+  const newScenes = scenes.filter((s) => isSceneNew(s.id));
+  const badges: Record<string, number> = {
+    "/szenen": newScenes.length,
+    "/dashboard":
+      newScenes.filter((s) => s.participant_ids.some((id) => myIds.has(id))).length + phoneBadge,
+    "/handy": phoneBadge,
+  };
   const [charsOpen, setCharsOpen] = useState(false);
 
   const isActive = (href: string) =>
@@ -357,60 +381,64 @@ function Sidebar({
                 <Icon name={item.icon} size={17} />
               </span>
               {item.label}
+              {(badges[item.href] ?? 0) > 0 && (
+                <span
+                  className={`ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[0.6875rem] font-semibold text-black ${
+                    item.href === "/handy" && incomingCalls.length > 0 ? "phone-ring" : ""
+                  }`}
+                >
+                  {badges[item.href]}
+                </span>
+              )}
             </Link>
           );
         })}
       </nav>
 
       <div className="px-2 pb-2 flex flex-col gap-0.5">
-        <SideLink href="/szenen/neu" icon="message" label="Neue Szene" pathname={pathname} />
+        <SideLink href="/handy/kontakte" icon="phone" label="Neuer Anruf" pathname={pathname} />
+        <SideLink href="/handy/neu" icon="message" label="Neue SMS" pathname={pathname} />
+        <SideLink href="/szenen/neu" icon="book" label="Neue Szene" pathname={pathname} />
         <SideLink href="/einstellungen" icon="settings" label="Einstellungen" pathname={pathname} />
-        {currentPlayer && (
-          <SideLink
-            href={`/spieler/${currentPlayer.username}`}
-            icon="users"
-            label="Profil"
-            pathname={pathname}
-          />
-        )}
-        <button
-          onClick={logout}
-          className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.8125rem] text-left text-text-secondary hover:text-text-primary hover:bg-white/[0.025] transition-colors"
-        >
-          <Icon name="logout" size={17} />
-          Abmelden
-        </button>
       </div>
 
-      {/* Alter Egos (eigene Charaktere) — aufklappbares Dropdown */}
-      <div className="px-2 py-3 border-t border-border-subtle">
+      {/* Alter Egos (eigene Charaktere) – klappt als Overlay über dem Menü auf,
+          damit viele Charaktere das Menü nicht zusammenschieben; die Liste scrollt. */}
+      <div className="relative px-2 py-3 border-t border-border-subtle">
         <button
           onClick={() => setCharsOpen((o) => !o)}
+          aria-expanded={charsOpen}
           className="flex w-full items-center justify-between px-2.5 text-[0.75rem] uppercase tracking-[0.2em] text-text-tertiary hover:text-text-secondary"
         >
           <span>Alter Egos ({myChars.length})</span>
-          <span className={`transition-transform ${charsOpen ? "rotate-180" : ""}`}>
-            ▾
-          </span>
+          <span className={`transition-transform ${charsOpen ? "" : "rotate-180"}`}>▾</span>
         </button>
-        {/* Gleiche Zeilenhöhe und Abstände wie die Menüpunkte oben */}
-        <div className={`flex flex-col gap-0.5 ${charsOpen ? "mt-2" : "hidden"}`}>
-          {myChars.map((c) => (
-            <Link
-              key={c.id}
-              href={`/charaktere/${c.id}`}
-              className="group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.875rem] text-text-secondary transition-colors hover:bg-white/[0.025] hover:text-text-primary"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={c.faceclaim_image_url ?? placeholder(c.name)}
-                alt={c.name}
-                className="h-[17px] w-[17px] shrink-0 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
-              />
-              <span className="truncate">{c.name}</span>
-            </Link>
-          ))}
-        </div>
+        {charsOpen && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setCharsOpen(false)} />
+            <div className="absolute bottom-full left-2 right-2 z-20 mb-1 flex max-h-[min(60vh,22rem)] flex-col gap-0.5 overflow-y-auto rounded-lg border border-border-subtle bg-bg-surface-2 p-1 shadow-2xl shadow-black/70">
+              {myChars.length === 0 && (
+                <div className="px-2.5 py-2 text-[0.8125rem] text-text-tertiary">Noch keine Charaktere.</div>
+              )}
+              {myChars.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/charaktere/${c.id}`}
+                  onClick={() => setCharsOpen(false)}
+                  className="group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.875rem] text-text-secondary transition-colors hover:bg-white/[0.05] hover:text-text-primary"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={c.faceclaim_image_url ?? placeholder(c.name)}
+                    alt={c.name}
+                    className="h-[17px] w-[17px] shrink-0 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
+                  />
+                  <span className="truncate">{c.name}</span>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Spieler-Avatar */}
