@@ -68,6 +68,18 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   der Charakter lässt sich im Feld immer wechseln, und wer mit einem neuen
   Charakter schreibt, wird als Teilnehmer*in eingetragen. „Antworten",
   „Weitergeben" und „Beenden" stehen im Szenenkopf und noch einmal unter den Posts.
+- **Hover in der Szene:** Die Bio erscheint nur über dem Avatar (benannte Gruppe
+  `group/ava`), Bearbeiten/Löschen eines Posts beim Hovern über dem Post
+  (`group/post`) – verschachtelte Hover immer als benannte Gruppen.
+- **Löschen** (Szene, Charakter, NPC, Chat): roter Rand-Button
+  (`border-red-400/40 text-red-300`) im Bearbeiten-Bereich, immer mit
+  `ConfirmDialog`, der nennt, was mit verschwindet.
+- **Einstellungen:** Reiter als runde Pills, Abschnitte mit Display-Überschrift
+  („charaktere.", „npcs."), Buttons wie auf den Detailseiten. Ein Charakter oder
+  NPC braucht immer einen Namen – „Neuer Charakter"/„Neuer NPC"
+  (`NewCharacterButton`) fragt ihn vor dem Anlegen ab, Speichern ohne Namen geht nicht.
+- **Alter Egos** im Seitenmenü klappen als Overlay über dem Menü auf (scrollbar),
+  statt das Menü zu verschieben.
 - **Zähler im Seitenmenü** (orange Pill): „Szenen" = alle ungelesenen Szenen,
   „Dashboard" = Bewegung bei den eigenen Charakteren (Szenen, Chats, Anrufe),
   „Handy" = ungelesene Chats und klingelnde Anrufe.

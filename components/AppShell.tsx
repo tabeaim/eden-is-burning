@@ -402,35 +402,43 @@ function Sidebar({
         <SideLink href="/einstellungen" icon="settings" label="Einstellungen" pathname={pathname} />
       </div>
 
-      {/* Alter Egos (eigene Charaktere) – aufklappbares Dropdown */}
-      <div className="px-2 py-3 border-t border-border-subtle">
+      {/* Alter Egos (eigene Charaktere) – klappt als Overlay über dem Menü auf,
+          damit viele Charaktere das Menü nicht zusammenschieben; die Liste scrollt. */}
+      <div className="relative px-2 py-3 border-t border-border-subtle">
         <button
           onClick={() => setCharsOpen((o) => !o)}
+          aria-expanded={charsOpen}
           className="flex w-full items-center justify-between px-2.5 text-[0.75rem] uppercase tracking-[0.2em] text-text-tertiary hover:text-text-secondary"
         >
           <span>Alter Egos ({myChars.length})</span>
-          <span className={`transition-transform ${charsOpen ? "rotate-180" : ""}`}>
-            ▾
-          </span>
+          <span className={`transition-transform ${charsOpen ? "" : "rotate-180"}`}>▾</span>
         </button>
-        {/* Gleiche Zeilenhöhe und Abstände wie die Menüpunkte oben */}
-        <div className={`flex flex-col gap-0.5 ${charsOpen ? "mt-2" : "hidden"}`}>
-          {myChars.map((c) => (
-            <Link
-              key={c.id}
-              href={`/charaktere/${c.id}`}
-              className="group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.875rem] text-text-secondary transition-colors hover:bg-white/[0.025] hover:text-text-primary"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={c.faceclaim_image_url ?? placeholder(c.name)}
-                alt={c.name}
-                className="h-[17px] w-[17px] shrink-0 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
-              />
-              <span className="truncate">{c.name}</span>
-            </Link>
-          ))}
-        </div>
+        {charsOpen && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setCharsOpen(false)} />
+            <div className="absolute bottom-full left-2 right-2 z-20 mb-1 flex max-h-[min(60vh,22rem)] flex-col gap-0.5 overflow-y-auto rounded-lg border border-border-subtle bg-bg-surface-2 p-1 shadow-2xl shadow-black/70">
+              {myChars.length === 0 && (
+                <div className="px-2.5 py-2 text-[0.8125rem] text-text-tertiary">Noch keine Charaktere.</div>
+              )}
+              {myChars.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/charaktere/${c.id}`}
+                  onClick={() => setCharsOpen(false)}
+                  className="group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[0.875rem] text-text-secondary transition-colors hover:bg-white/[0.05] hover:text-text-primary"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={c.faceclaim_image_url ?? placeholder(c.name)}
+                    alt={c.name}
+                    className="h-[17px] w-[17px] shrink-0 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
+                  />
+                  <span className="truncate">{c.name}</span>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Spieler-Avatar */}

@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { PHONE_AREA, PHONE_LOCATION } from "@/lib/phone";
+import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Toggle } from "@/components/Toggle";
 import { LocationField, locationComplete } from "@/components/LocationField";
 import { sceneHeader } from "@/lib/headers";
@@ -28,8 +30,19 @@ export function SceneEditPanel({
   scene: Scene;
   onClose: () => void;
 }) {
-  const { updateScene, addLocation, characters, scenes, currentPlayer, charactersOf } =
-    useStore();
+  const {
+    updateScene,
+    deleteScene,
+    addLocation,
+    characters,
+    scenes,
+    posts,
+    currentPlayer,
+    charactersOf,
+  } = useStore();
+  const router = useRouter();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const postCount = posts.filter((p) => p.scene_id === scene.id).length;
 
   const [title, setTitle] = useState(scene.title);
   const [summary, setSummary] = useState(scene.summary ?? "");
@@ -217,7 +230,13 @@ export function SceneEditPanel({
         />
       </div>
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <button
+          onClick={() => setConfirmDelete(true)}
+          className="mr-auto flex items-center gap-1.5 rounded-md border border-red-400/40 px-3 py-1.5 text-[0.8125rem] text-red-300 hover:bg-red-500/10"
+        >
+          <Icon name="trash" size={14} /> Szene löschen
+        </button>
         <button
           onClick={onClose}
           className="text-[0.8125rem] text-text-tertiary hover:text-text-primary px-2"
@@ -232,6 +251,19 @@ export function SceneEditPanel({
           Speichern
         </button>
       </div>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Szene löschen?"
+          text={`„${scene.title}“ wird mit allen ${postCount} Posts und ihren Zitaten endgültig gelöscht. Das lässt sich nicht rückgängig machen.`}
+          confirmLabel="Szene löschen"
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            router.push("/szenen");
+            deleteScene(scene.id);
+          }}
+        />
+      )}
     </div>
   );
 }

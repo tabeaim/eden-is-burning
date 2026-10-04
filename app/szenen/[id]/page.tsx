@@ -691,7 +691,7 @@ function PostRow({
   );
 
   return (
-    <div className="group">
+    <div className="group/post">
       {confirmDelete && (
         <ConfirmDialog
           title="Post löschen?"
@@ -705,7 +705,7 @@ function PostRow({
         />
       )}
       {canModify && !editing && (
-        <div className="mb-1 flex justify-end gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+        <div className="mb-1 flex justify-end gap-0.5 opacity-0 transition-opacity group-hover/post:opacity-100 focus-within:opacity-100">
           <button
             onClick={startEdit}
             title="Post bearbeiten"
@@ -819,33 +819,28 @@ function ReplyBox({
             <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
               Antwort als
             </div>
-            <div className="text-[0.875rem] text-text-primary">
-              {activeChar?.name}
-              {activeChar && !scene.participant_ids.includes(activeChar.id) && (
-                <span className="ml-1.5 text-[0.8125rem] text-accent">steigt neu in die Szene ein</span>
-              )}
-            </div>
+            {myChars.length > 1 ? (
+              <select
+                value={activeChar?.id ?? ""}
+                onChange={(e) => setActiveCharId(e.target.value)}
+                aria-label="Charakter wählen"
+                className="mt-0.5 max-w-full rounded-md border border-border-subtle bg-bg-primary px-2 py-1 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+              >
+                {myChars.map((c) => (
+                  <option key={c.id} value={c.id} className="bg-bg-surface">
+                    {c.name}
+                    {scene.participant_ids.includes(c.id) ? "" : " (steigt neu ein)"}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="text-[0.875rem] text-text-primary">{activeChar?.name}</div>
+            )}
+            {activeChar && !scene.participant_ids.includes(activeChar.id) && (
+              <div className="mt-0.5 text-[0.8125rem] text-accent">steigt neu in die Szene ein</div>
+            )}
           </div>
         </div>
-
-        {myChars.length > 1 && (
-          <div className="flex flex-wrap items-center justify-end gap-1.5">
-            <span className="text-[0.875rem] text-text-tertiary">Charakter wechseln:</span>
-            {myChars.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setActiveCharId(c.id)}
-                className={`rounded-full px-2.5 py-1 text-[0.8125rem] transition-colors ${
-                  c.id === activeChar?.id
-                    ? "bg-white/[0.1] text-text-primary"
-                    : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
-                }`}
-              >
-                {c.name.split(" ")[0]}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Formatierungs-Toolbar */}

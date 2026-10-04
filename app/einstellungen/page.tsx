@@ -8,7 +8,8 @@ import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { pageHeader } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
 import { PhoneSettings } from "@/components/phone/PhoneSettings";
-import { NewNpcButton } from "@/components/NewNpcButton";
+import { NewCharacterButton } from "@/components/NewCharacterButton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MultiSelect } from "@/components/MultiSelect";
 import { Icon } from "@/components/Icon";
 import type { Character } from "@/lib/types";
@@ -37,15 +38,16 @@ export default function SettingsPage() {
 
       {/* Inhalt linksbündig in Formularbreite – Container-Breite bleibt einheitlich */}
       <div className="max-w-2xl">
-      <div className="flex gap-1.5 mb-6 border-b border-border-subtle">
+      {/* Reiter wie in der Szenen-Übersicht (runde Pills) */}
+      <div className="flex flex-wrap gap-1.5 mb-6">
         {tabs.map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`px-3 py-2 text-[0.8125rem] -mb-px border-b-2 transition-colors ${
+            className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
               tab === key
-                ? "border-white/40 text-text-primary"
-                : "border-transparent text-text-secondary hover:text-text-primary"
+                ? "bg-accent text-black font-medium"
+                : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
             }`}
           >
             {label}
@@ -166,7 +168,7 @@ function ProfileTab() {
         <div>
           <button
             onClick={() => fileRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-3 py-2 text-[0.8125rem] text-text-primary"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-primary"
           >
             <Icon name="upload" size={15} /> Avatar hochladen
           </button>
@@ -199,7 +201,7 @@ function ProfileTab() {
       <div className="flex items-center gap-3">
         <button
           onClick={save}
-          className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[0.8125rem] text-text-primary"
+          className="rounded-md bg-accent/90 hover:bg-accent px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
         >
           Speichern
         </button>
@@ -289,38 +291,34 @@ function AppearanceTab() {
 }
 
 function CharactersTab() {
-  const { currentPlayer, charactersOf, addCharacter, npcs, canEditCharacter } =
-    useStore();
+  const { currentPlayer, charactersOf, npcs, canEditCharacter } = useStore();
   if (!currentPlayer) return null;
   const chars = charactersOf(currentPlayer.id);
   // NPCs, die man selbst angelegt hat (Admins: alle) – Profil optional ausfüllbar
   const myNpcs = npcs.filter(canEditCharacter);
 
+  const heading = "font-display lowercase text-[2rem] leading-none text-accent";
   return (
     <div className="flex flex-col gap-3">
+      <h2 className={heading}>charaktere.</h2>
       {chars.map((c) => (
         <CharacterEditor key={c.id} character={c} />
       ))}
-      <button
-        onClick={() => addCharacter(currentPlayer.id)}
-        className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/15 px-4 py-4 text-[0.8125rem] text-text-secondary hover:text-text-primary hover:border-white/30 transition-colors"
-      >
-        <Icon name="plus" size={16} /> Neuen Charakter anlegen
-      </button>
+      <NewCharacterButton kind="character" />
 
-      <div className="mt-4 text-[0.875rem] uppercase tracking-wider font-semibold text-text-tertiary">
-        NPCs
-      </div>
+      <h2 className={`${heading} mt-6`}>npcs.</h2>
       {myNpcs.map((c) => (
         <CharacterEditor key={c.id} character={c} />
       ))}
-      <NewNpcButton />
+      <NewCharacterButton kind="npc" />
     </div>
   );
 }
 
 function CharacterEditor({ character }: { character: Character }) {
-  const { updateCharacter } = useStore();
+  const { updateCharacter, deleteCharacter, posts } = useStore();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const postCount = posts.filter((p) => p.character_id === character.id).length;
   const anchor = `charakter-${character.id}`;
   const [open, setOpen] = useState(
     () => typeof window !== "undefined" && window.location.hash === `#${anchor}`,
@@ -345,7 +343,10 @@ function CharacterEditor({ character }: { character: Character }) {
     updateCharacter(character.id, { faceclaim_image_url: url });
   }
 
+  // Ohne Namen wird nicht gespeichert
+  const nameMissing = !draft.name.trim();
   function save() {
+    if (nameMissing) return;
     // Handy-Einstellungen speichern sich selbst (PhoneSettings) – nicht mit dem
     // Stand vom Öffnen des Formulars überschreiben.
     const rest = { ...draft };
@@ -407,7 +408,7 @@ function CharacterEditor({ character }: { character: Character }) {
               </div>
               <button
                 onClick={() => fileRef.current?.click()}
-                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.14] border border-border-subtle px-2 py-1.5 text-[0.8125rem] text-text-primary"
+                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-primary"
               >
                 <Icon name="upload" size={13} /> Foto
               </button>
@@ -424,12 +425,18 @@ function CharacterEditor({ character }: { character: Character }) {
             </div>
 
             <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Labeled label="Name">
+              <Labeled label="Name *">
                 <input
                   value={draft.name}
                   onChange={(e) => set("name", e.target.value)}
-                  className={field}
+                  aria-invalid={nameMissing}
+                  className={`${field} ${nameMissing ? "!border-red-400/70" : ""}`}
                 />
+                {nameMissing && (
+                  <span className="mt-1 block text-[0.8125rem] text-red-300">
+                    Ohne Namen lässt sich der {character.is_npc ? "NPC" : "Charakter"} nicht speichern.
+                  </span>
+                )}
               </Labeled>
               <Labeled label="Faceclaim (Schauspieler)">
                 <input
@@ -507,7 +514,8 @@ function CharacterEditor({ character }: { character: Character }) {
           <div className="flex items-center gap-3">
             <button
               onClick={save}
-              className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[0.8125rem] text-text-primary"
+              disabled={nameMissing}
+              className="rounded-md bg-accent/90 hover:bg-accent px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
             >
               Speichern
             </button>
@@ -523,6 +531,29 @@ function CharacterEditor({ character }: { character: Character }) {
               Profil ansehen →
             </Link>
           </div>
+
+          <div className="flex justify-end border-t border-border-subtle pt-3">
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-1.5 rounded-md border border-red-400/40 px-3 py-1.5 text-[0.8125rem] text-red-300 hover:bg-red-500/10"
+            >
+              <Icon name="trash" size={14} /> {character.is_npc ? "NPC" : "Charakter"} löschen
+            </button>
+          </div>
+          {confirmDelete && (
+            <ConfirmDialog
+              title={`${character.name} löschen?`}
+              text={`${character.is_npc ? "Der NPC" : "Der Charakter"} wird endgültig gelöscht – samt ${postCount} ${
+                postCount === 1 ? "Post" : "Posts"
+              }, Zitaten, Chats und Anrufen. Aus allen Szenen wird er ausgetragen. Das lässt sich nicht rückgängig machen.`}
+              confirmLabel={`${character.is_npc ? "NPC" : "Charakter"} löschen`}
+              onCancel={() => setConfirmDelete(false)}
+              onConfirm={() => {
+                setConfirmDelete(false);
+                deleteCharacter(character.id);
+              }}
+            />
+          )}
         </div>
       )}
     </div>

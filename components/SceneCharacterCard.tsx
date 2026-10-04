@@ -5,7 +5,8 @@ import type { Character, Player } from "@/lib/types";
 import { Icon } from "./Icon";
 
 // Große Charakterkarte für die Szenenansicht. Bildformat 600×502; die
-// Beschreibung (Bio) erscheint als Overlay, solange die Maus über dem Bild ist.
+// Beschreibung (Bio) erscheint als Overlay, solange die Maus über dem Bild ist
+// (benannte Gruppe `ava` – nicht schon beim Hovern über dem ganzen Post).
 export function SceneCharacterCard({
   character,
   player,
@@ -16,7 +17,7 @@ export function SceneCharacterCard({
   return (
     <div className="w-[260px] max-w-full shrink-0">
       <div
-        className="group relative aspect-[600/502] w-full overflow-hidden rounded-lg border border-border-subtle bg-bg-surface"
+        className="group/ava relative aspect-[600/502] w-full overflow-hidden rounded-lg border border-border-subtle bg-bg-surface"
       >
         <Link href={`/charaktere/${character.id}`} className="block h-full w-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -30,7 +31,7 @@ export function SceneCharacterCard({
         {/* Bio-Overlay beim Hover */}
         {character.bio && (
           <div
-            className="pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 text-center opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+            className="pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 text-center opacity-0 transition-opacity duration-200 group-hover/ava:opacity-100"
           >
             <div className="mb-2 text-[0.875rem] font-semibold uppercase tracking-wider text-text-primary">
               {[character.role, character.age ? `${character.age}` : null]

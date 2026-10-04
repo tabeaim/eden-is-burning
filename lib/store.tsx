@@ -93,7 +93,11 @@ interface StoreValue extends PersistedState {
   deletePlot: (id: string) => void;
   canEditPlot: (plot: Plot) => boolean;
   updateCharacter: (id: string, patch: Partial<Character>) => void;
-  addCharacter: (playerId: string) => string;
+  addCharacter: (playerId: string, name: string) => string;
+  // Löscht den Charakter samt seiner Posts, Zitate und Chats
+  deleteCharacter: (id: string) => void;
+  // Löscht die Szene samt aller Posts und Zitate
+  deleteScene: (id: string) => void;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
   addScene: (scene: Omit<Scene, "id" | "created_at">) => string;
   updateScene: (id: string, patch: Partial<Scene>) => void;
@@ -754,12 +758,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  const addCharacter = useCallback((playerId: string) => {
+  const addCharacter = useCallback((playerId: string, name: string) => {
     const id = uid("c");
     const newChar: Character = {
       id,
       player_id: playerId,
-      name: "Neuer Charakter",
+      name: name.trim(),
       faceclaim: null,
       faceclaim_image_url: null,
       tagline: null,
@@ -786,6 +790,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     persist("addCharacter", supabase.from("characters").insert(newChar));
     setState((s) => ({ ...s, characters: [...s.characters, newChar] }));
     return id;
+  }, []);
+
+  const deleteCharacter = useCallback((id: string) => {
+    setState((s) => {
+      // Posts, Zitate und Nachrichten hängen per „on delete cascade" am Charakter;
+      // aus Szenen und Chats muss er von Hand heraus.
+      const scenes = s.scenes.map((sc) => {
+        if (!sc.participant_ids.includes(id)) return sc;
+        const participant_ids = sc.participant_ids.filter((x) => x !== id);
+        const patch = { participant_ids, ...(sc.next_up === id ? { next_up: null } : {}) };
+        persist("deleteCharacter/scene", supabase.from("scenes").update(patch).eq("id", sc.id));
+        return { ...sc, ...patch };
+      });
+      const gone = s.chats.filter((c) => c.participant_ids.includes(id)).map((c) => c.id);
+      if (gone.length) {
+        persist("deleteCharacter/chats", supabase.from("chats").delete().in("id", gone));
+      }
+      persist("deleteCharacter", supabase.from("characters").delete().eq("id", id));
+      return {
+        ...s,
+        scenes,
+        characters: s.characters.filter((c) => c.id !== id),
+        posts: s.posts.filter((p) => p.character_id !== id),
+        quotes: s.quotes.filter((q) => q.character_id !== id),
+        chats: s.chats.filter((c) => !gone.includes(c.id)),
+        chatMessages: s.chatMessages.filter(
+          (m) => m.character_id !== id && !gone.includes(m.chat_id),
+        ),
+        calls: s.calls.filter((c) => c.caller_id !== id && c.callee_id !== id),
+      };
+    });
   }, []);
 
   // NPC = Charakter mit is_npc; Profil ist optional ausfüllbar.
@@ -886,6 +921,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     persist("addScene", req);
     setState((s) => ({ ...s, scenes: [...s.scenes, newScene] }));
     return id;
+  }, []);
+
+  const deleteScene = useCallback((id: string) => {
+    // Posts und Zitate hängen per „on delete cascade" an der Szene
+    persist("deleteScene", supabase.from("scenes").delete().eq("id", id));
+    setState((s) => ({
+      ...s,
+      scenes: s.scenes.filter((sc) => sc.id !== id),
+      posts: s.posts.filter((p) => p.scene_id !== id),
+      quotes: s.quotes.filter((q) => q.scene_id !== id),
+      calls: s.calls.map((c) => (c.scene_id === id ? { ...c, scene_id: null } : c)),
+    }));
   }, []);
 
   const updateScene = useCallback((id: string, patch: Partial<Scene>) => {
@@ -1279,6 +1326,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       canEditPlot,
       updateCharacter,
       addCharacter,
+      deleteCharacter,
+      deleteScene,
       updatePlayer,
       addScene,
       updateScene,
@@ -1349,6 +1398,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       canEditPlot,
       updateCharacter,
       addCharacter,
+      deleteCharacter,
+      deleteScene,
       updatePlayer,
       addScene,
       updateScene,
