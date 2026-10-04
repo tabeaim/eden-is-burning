@@ -197,7 +197,7 @@ export interface PhoneCall {
   callee_id: string;
   inplay_date: string; // ISO-Datum
   inplay_time: string | null; // „22:10"
-  status: "ringing" | "accepted" | "declined";
+  status: "ringing" | "accepted" | "declined" | "cancelled"; // cancelled: vom Anrufenden abgebrochen
   scene_id?: string | null; // Telefonszene, falls eine erstellt wurde
   created_at: string;
 }

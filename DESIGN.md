@@ -171,6 +171,14 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Design-Systems (`rounded-md`, Primär-Aktion `bg-accent/90 text-black`). Runde,
   farbige Knöpfe nur dort, wo das Handy selbst simuliert wird (Annehmen/Ablehnen,
   Senden, Dock).
+- **Eingehender Anruf zuerst:** „Handy" im Seitenmenü öffnet das Handy des
+  gerade angerufenen Charakters, die Anruf-Karte liegt über dem Startbildschirm.
+  „Später reagieren" (nur Text) stellt sie zurück – der Anruf klingelt weiter und
+  bleibt in der Telefon-App erreichbar. Einen eigenen klingelnden Anruf bricht
+  man per Rechtsklick in der Anrufliste ab („abgebrochen").
+- **Handy folgt dem Chat:** Öffnet man den Chat eines anderen eigenen Charakters,
+  wechselt das Handy dauerhaft zu ihm (Archiv & Co. gelten immer fürs Handy in
+  der Hand).
 - **Klingeln:** alles, was einen eingehenden Anruf meldet (Dashboard-Zeile,
   Banner im Display, Zähler im Menü, Telefon-App), vibriert mit `.phone-ring`
   (globals.css).

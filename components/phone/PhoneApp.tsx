@@ -14,6 +14,7 @@ import {
   useCreatePhoneScene,
 } from "@/components/phone/IncomingCall";
 import { PhoneAvatar, PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
+import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
 
 const first = (c: Character | undefined) => c?.name.split(" ")[0] ?? "?";
 const when = (c: Pick<PhoneCall, "inplay_date" | "inplay_time">) =>
@@ -23,7 +24,8 @@ const when = (c: Pick<PhoneCall, "inplay_date" | "inplay_time">) =>
 // Charakter an (der nimmt an oder lehnt ab) oder erstellt direkt eine Telefonszene.
 export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
   const router = useRouter();
-  const { calls, scenes, character, characters, npcs, addCall, currentPlayer } = useStore();
+  const { calls, scenes, character, characters, npcs, addCall, updateCall, currentPlayer } =
+    useStore();
   const { myChars, me, setOwner } = useMyPhone();
   const [view, setView] = useState(initialView);
   const [q, setQ] = useState("");
@@ -31,6 +33,8 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
   // Angenommener Anruf ohne Szene: lässt sich aus der Anrufliste nachholen
   const [sceneFor, setSceneFor] = useState<PhoneCall | null>(null);
   const createScene = useCreatePhoneScene();
+  // Eigener klingelnder Anruf, der gerade abgebrochen werden soll
+  const [cancelFor, setCancelFor] = useState<PhoneCall | null>(null);
 
   if (!me) {
     return (
@@ -79,7 +83,13 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
               const other = character(outgoing ? c.callee_id : c.caller_id);
               const scene = c.scene_id ? scenes.find((s) => s.id === c.scene_id) : undefined;
               const status =
-                c.status === "accepted" ? "angenommen" : c.status === "declined" ? "abgelehnt" : "klingelt …";
+                c.status === "accepted"
+                  ? "angenommen"
+                  : c.status === "declined"
+                    ? "abgelehnt"
+                    : c.status === "cancelled"
+                      ? "abgebrochen"
+                      : "klingelt …";
               const body = (
                 <>
                   {other && <PhoneAvatar character={other} size={44} />}
@@ -119,7 +129,17 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
                   {body}
                 </button>
               ) : (
-                <div key={c.id} className={cls}>
+                // eigener, noch klingelnder Anruf: Rechtsklick (lange drücken) bricht ab
+                <div
+                  key={c.id}
+                  className={cls}
+                  title={outgoing && c.status === "ringing" ? "Rechtsklick: Anruf abbrechen" : undefined}
+                  onContextMenu={(e) => {
+                    if (!outgoing || c.status !== "ringing") return;
+                    e.preventDefault();
+                    setCancelFor(c);
+                  }}
+                >
                   {body}
                 </div>
               );
@@ -196,10 +216,27 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
         />
       )}
 
+      {cancelFor && (
+        <Sheet onClose={() => setCancelFor(null)}>
+          <SheetList>
+            <SheetButton
+              danger
+              onClick={() => {
+                updateCall(cancelFor.id, { status: "cancelled" });
+                setCancelFor(null);
+              }}
+            >
+              Anruf abbrechen
+            </SheetButton>
+            <SheetButton onClick={() => setCancelFor(null)}>Weiter klingeln lassen</SheetButton>
+          </SheetList>
+        </Sheet>
+      )}
+
       {sceneFor ? (
         <PhoneSceneDialog call={sceneFor} onClose={() => setSceneFor(null)} />
       ) : (
-        <IncomingCall characterId={me.id} />
+        <IncomingCall characterId={me.id} always />
       )}
     </PhoneFrame>
   );

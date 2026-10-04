@@ -77,12 +77,24 @@ export function PhoneSceneDialog({ call, onClose }: { call: PhoneCall; onClose: 
   );
 }
 
+// Anrufe, bei denen man „Später reagieren" gewählt hat – gilt, bis die Seite neu
+// geladen wird. Sie klingeln weiter (Dashboard, Balken im Display, Telefon-App),
+// drängen sich aber nicht mehr über den Startbildschirm.
+const postponed = new Set<string>();
+export function isPostponed(callId: string): boolean {
+  return postponed.has(callId);
+}
+
 // Eingehender Anruf als Karte über dem Display (Startbildschirm, Telefon-App):
-// annehmen oder ablehnen; nach dem Annehmen folgt die Frage nach einer Szene.
-export function IncomingCall({ characterId }: { characterId: string }) {
+// annehmen, ablehnen oder später reagieren; nach dem Annehmen folgt die Frage
+// nach einer Szene. `always`: auch zurückgestellte Anrufe zeigen (Telefon-App).
+export function IncomingCall({ characterId, always = false }: { characterId: string; always?: boolean }) {
   const { calls, character, updateCall } = useStore();
   const [accepted, setAccepted] = useState<PhoneCall | null>(null);
-  const call = calls.find((c) => c.status === "ringing" && c.callee_id === characterId);
+  const [, rerender] = useState(0);
+  const call = calls.find(
+    (c) => c.status === "ringing" && c.callee_id === characterId && (always || !postponed.has(c.id)),
+  );
 
   if (accepted) return <PhoneSceneDialog call={accepted} onClose={() => setAccepted(null)} />;
   if (!call) return null;
@@ -116,6 +128,17 @@ export function IncomingCall({ characterId }: { characterId: string }) {
             Annehmen
           </button>
         </div>
+        {!always && (
+          <button
+            onClick={() => {
+              postponed.add(call.id);
+              rerender((n) => n + 1);
+            }}
+            className="mt-3 text-[0.8125rem] text-text-tertiary underline-offset-2 hover:text-text-primary hover:underline"
+          >
+            Später reagieren
+          </button>
+        )}
       </div>
     </div>
   );

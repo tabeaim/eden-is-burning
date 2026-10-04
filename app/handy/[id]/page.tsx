@@ -83,6 +83,13 @@ function ChatView({ chat }: { chat: Chat }) {
   const self = reading ? "" : stored && writable.includes(stored) ? stored : writable[0];
   const canWrite = !reading;
   const selfChar = reading ? undefined : character(self);
+  // Öffnet man den Chat eines anderen eigenen Charakters, hält man ab jetzt dessen
+  // Handy in der Hand – sonst landete z.B. „Archivieren" im Archiv dieses
+  // Charakters, während die Übersicht noch das vorige Handy zeigte.
+  useEffect(() => {
+    if (self && stored !== self) setOwner(self);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [self, stored]);
   const others = parts.filter((p) => p !== self).map((p) => character(p));
   const other = others.length === 1 ? others[0] : undefined;
 

@@ -101,7 +101,7 @@ export function PhoneFrame({
           <StatusBar model={phone.model} tone={tone} />
           {ringing && (
             <Link
-              href="/handy"
+              href="/handy/telefon"
               className="flex shrink-0 items-center gap-2 bg-green-500/90 px-3 py-2 text-[0.8125rem] font-semibold text-black"
             >
               <Icon name="phone" size={18} className="phone-ring shrink-0" />

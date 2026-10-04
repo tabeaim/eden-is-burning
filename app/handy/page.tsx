@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { resolvePhone } from "@/lib/phone";
-import { IncomingCall } from "@/components/phone/IncomingCall";
+import { IncomingCall, isPostponed } from "@/components/phone/IncomingCall";
 import { PhoneFrame, useMyPhone } from "@/components/phone/PhoneFrame";
 import {
   AppIcon,
@@ -13,11 +14,24 @@ import {
   MessengerGlyph,
 } from "@/components/phone/AppIcon";
 
+// Anrufe, für die schon einmal aufs Handy des Angerufenen gewechselt wurde
+const switched = new Set<string>();
+
 // Startbildschirm des Handys: Hintergrundbild, angedeutete Apps und unten im
 // Dock die echten – Nachrichten und (wenn aktiviert) Captic.
 export default function PhoneHomePage() {
-  const { chats, calls, isChatNew } = useStore();
+  const { chats, calls, isChatNew, incomingCalls } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
+
+  // Wird gerade ein eigener Charakter angerufen, zeigt „Handy" zuerst dessen Handy
+  // (einmal je Anruf – danach lässt sich normal wechseln).
+  const ringingFor = incomingCalls.find((c) => !isPostponed(c.id) && !switched.has(c.id));
+  useEffect(() => {
+    if (!ringingFor) return;
+    switched.add(ringingFor.id);
+    if (ringingFor.callee_id !== me?.id) setOwner(ringingFor.callee_id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ringingFor?.id]);
 
   if (!me) {
     return (
@@ -44,7 +58,7 @@ export default function PhoneHomePage() {
   // Burner Phone: kein Startbildschirm mit Apps, nur das Menü eines Tastenhandys
   if (phone.burner) {
     return (
-      <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner} callBanner={false}>
+      <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner}>
         <div className="flex flex-1 flex-col px-3 py-3">
           <div className="border-b-2 border-border-strong pb-1 text-center text-[0.875rem] font-bold uppercase tracking-widest text-text-primary">
             Menü
@@ -77,7 +91,7 @@ export default function PhoneHomePage() {
   }
 
   return (
-    <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner} tone="home" callBanner={false}>
+    <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner} tone="home">
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-black/15 px-4 pb-2 pt-5">
         {/* Angedeutete Apps – nicht anklickbar (außer „Einstellungen") */}
         <div className="grid grid-cols-4 justify-items-center gap-y-5">
