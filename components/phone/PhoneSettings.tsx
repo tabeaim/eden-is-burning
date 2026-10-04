@@ -16,6 +16,7 @@ import {
 } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
 import { Toggle } from "@/components/Toggle";
+import { PhoneAvatar } from "./PhoneFrame";
 
 // Handy-Einstellungen eines Charakters (Einstellungen → Meine Charaktere). Jede
 // Änderung wird sofort gespeichert – unabhängig vom „Speichern" des Profils.
@@ -45,6 +46,18 @@ export function PhoneSettings({ character }: { character: Character }) {
       save({ wallpaper: await uploadImage(f, "phones", IMAGE_SIZES.gallery) });
     } finally {
       setUploading(false);
+    }
+  }
+
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarFile = useRef<HTMLInputElement>(null);
+  async function onAvatar(f: File | undefined) {
+    if (!f) return;
+    setUploadingAvatar(true);
+    try {
+      save({ avatar: await uploadImage(f, "phones", IMAGE_SIZES.avatar) });
+    } finally {
+      setUploadingAvatar(false);
     }
   }
 
@@ -81,6 +94,37 @@ export function PhoneSettings({ character }: { character: Character }) {
         <Link href="/handy" className="text-[0.875rem] text-text-tertiary hover:text-text-secondary">
           Handy ansehen →
         </Link>
+      </div>
+
+      <div>
+        <div className={label}>
+          Profilbild im Messenger{" "}
+          <span className="text-text-tertiary">(so sehen andere den Charakter auf dem Handy)</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <PhoneAvatar character={character} size={56} className="ring-1 ring-border-subtle" />
+          <button disabled={uploadingAvatar} onClick={() => avatarFile.current?.click()} className={uploadBtn}>
+            <Icon name="upload" size={13} /> {uploadingAvatar ? "Lädt…" : "Bild hochladen"}
+          </button>
+          {raw.avatar && (
+            <button
+              onClick={() => save({ avatar: null })}
+              className="text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+            >
+              Charakterbild verwenden
+            </button>
+          )}
+          <input
+            ref={avatarFile}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              void onAvatar(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+        </div>
       </div>
 
       <div>

@@ -429,14 +429,16 @@ export function PhoneAvatar({
   size = 40,
   className = "",
 }: {
-  character: Pick<Character, "faceclaim_image_url">;
+  character: Pick<Character, "faceclaim_image_url" | "phone">;
   size?: number;
   className?: string;
 }) {
   return (
+    // Im Handy zeigt sich ein Charakter mit seinem Messenger-Profilbild, falls er
+    // eines festgelegt hat – sonst mit dem normalen Charakterbild.
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={characterImage(character)}
+      src={character.phone?.avatar || characterImage(character)}
       alt=""
       style={{ width: size, height: size }}
       className={`shrink-0 rounded-full bg-bg-surface-2 object-cover ${className}`}

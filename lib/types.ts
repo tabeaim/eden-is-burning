@@ -69,6 +69,7 @@ export interface Character {
 
 // Alle Felder optional – Fehlendes füllt `resolvePhone` (lib/phone.ts) mit Standards.
 export interface PhoneSettings {
+  avatar?: string | null; // eigenes Profilbild im Messenger (sonst das Charakterbild)
   model?: string; // Schlüssel aus PHONE_MODELS
   color?: string; // Schlüssel aus PHONE_COLORS
   wear?: number; // 0 wie neu … 3 Display gesprungen
