@@ -498,23 +498,39 @@ function ChatView({ chat }: { chat: Chat }) {
             className="rounded-t-2xl border-t border-border-subtle bg-bg-surface-2 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
           >
             <div className="flex flex-col divide-y divide-border-subtle overflow-hidden rounded-xl bg-white/[0.04] text-[0.9375rem]">
-              {myTurn && lastReal && (
+              {/* dran und nicht pausiert: pausieren oder (wieder) als ungelesen markieren */}
+              {myTurn && lastReal && !leftBy.includes(self) && (
+                <>
+                  <SheetButton
+                    onClick={() => {
+                      setMenuOpen(false);
+                      leaveOnRead(chat.id, self, lastReal.id);
+                    }}
+                  >
+                    Left on read – nicht antworten, Chat pausieren
+                  </SheetButton>
+                  <SheetButton
+                    onClick={() => {
+                      setMenuOpen(false);
+                      markChatUnread(chat.id);
+                      router.push("/handy/nachrichten");
+                    }}
+                  >
+                    Als ungelesen markieren
+                  </SheetButton>
+                </>
+              )}
+              {/* pausiert: wieder aktivieren – zählt dann auch wieder als ungelesen */}
+              {myTurn && lastReal && leftBy.includes(self) && (
                 <SheetButton
                   onClick={() => {
                     setMenuOpen(false);
-                    if (leftBy.includes(self)) {
-                      // wieder aktiv: zählt als ungelesen und steht im Dashboard
-                      leaveOnRead(chat.id, self, null);
-                      markChatUnread(chat.id);
-                      router.push("/handy/nachrichten");
-                    } else {
-                      leaveOnRead(chat.id, self, lastReal.id);
-                    }
+                    leaveOnRead(chat.id, self, null);
+                    markChatUnread(chat.id);
+                    router.push("/handy/nachrichten");
                   }}
                 >
-                  {leftBy.includes(self)
-                    ? "Als ungelesen markieren – Chat wieder aktivieren"
-                    : "Left on read – nicht antworten, Chat pausieren"}
+                  Chat wieder aktivieren
                 </SheetButton>
               )}
               {phoneId && (

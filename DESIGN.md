@@ -137,7 +137,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   zum Mitlesen); die Taste „Archiv" daneben schaltet für den gewählten Reiter
   aufs Archiv um (nur Icon, kein Text). Dazu ein Suchfeld (Namen und Nachrichtentext; ein Treffer
   springt zur Nachricht). Eine neue Nachricht holt den Chat aus dem Archiv.
-- **Chat-Optionen** (archivieren, löschen, „Left on read"): Rechtsklick bzw.
+- **Chat-Optionen** (archivieren, löschen, „Left on read", „Als ungelesen
+  markieren", bei pausierten Chats „Chat wieder aktivieren"): Rechtsklick bzw.
   langes Drücken auf den Chat in der Liste oder ⋯ in der Chat-Ansicht – immer als
   Blatt von unten (`components/phone/Sheet.tsx`). Löschen dürfen Beteiligte und
   Admins, immer mit `ConfirmDialog`.

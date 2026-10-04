@@ -301,23 +301,47 @@ export default function MessagesPage() {
             {chatTitle(menuChat.participant_ids.filter((id) => id !== myId).map((id) => character(id)))}
           </div>
           <SheetList>
-            {/* eigener Chat, in dem man dran ist: pausieren bzw. wieder aktivieren */}
+            {/* eigener Chat, in dem man dran ist: pausieren, als ungelesen markieren
+                oder – wenn pausiert – wieder aktivieren (zählt dann als ungelesen) */}
             {(() => {
               const m = last.get(menuChat.id);
               if (!myId || !m || !menuChat.participant_ids.includes(myId) || m.character_id === myId) {
                 return null;
               }
-              const left = isLeftOnRead(menuChat, myId, m);
+              if (isLeftOnRead(menuChat, myId, m)) {
+                return (
+                  <SheetButton
+                    onClick={() => {
+                      leaveOnRead(menuChat.id, myId, null);
+                      markChatUnread(menuChat.id);
+                      closeMenu();
+                    }}
+                  >
+                    Chat wieder aktivieren
+                  </SheetButton>
+                );
+              }
               return (
-                <SheetButton
-                  onClick={() => {
-                    leaveOnRead(menuChat.id, myId, left ? null : m.id);
-                    if (left) markChatUnread(menuChat.id);
-                    closeMenu();
-                  }}
-                >
-                  {left ? "Als ungelesen markieren – Chat wieder aktivieren" : "Left on read – Chat pausieren"}
-                </SheetButton>
+                <>
+                  <SheetButton
+                    onClick={() => {
+                      leaveOnRead(menuChat.id, myId, m.id);
+                      closeMenu();
+                    }}
+                  >
+                    Left on read – Chat pausieren
+                  </SheetButton>
+                  {!isChatNew(menuChat.id) && (
+                    <SheetButton
+                      onClick={() => {
+                        markChatUnread(menuChat.id);
+                        closeMenu();
+                      }}
+                    >
+                      Als ungelesen markieren
+                    </SheetButton>
+                  )}
+                </>
               );
             })()}
             {myId && (
