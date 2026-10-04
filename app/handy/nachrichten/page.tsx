@@ -7,7 +7,7 @@ import { useStore } from "@/lib/store";
 import type { Chat, ChatMessage } from "@/lib/types";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
-import { chatTitle, isArchivedFor, isLeftOnRead, messageSnippet } from "@/lib/chats";
+import { chatTitle, isArchived, isLeftOnRead, messageSnippet } from "@/lib/chats";
 import { Icon } from "@/components/Icon";
 import {
   PhoneAvatar,
@@ -95,9 +95,10 @@ export default function MessagesPage() {
   const ofTab = chats.filter(
     (c) => !myId || c.participant_ids.includes(myId) === (tab === "mine"),
   );
-  const archivedCount = myId ? ofTab.filter((c) => isArchivedFor(c, myId)).length : 0;
-  const inArchive = showArchive && !!myId;
-  const inTab = ofTab.filter((c) => !myId || isArchivedFor(c, myId) === inArchive);
+  // Das Archiv gilt für alle: ein archivierter Chat liegt bei jeder*m im Archiv
+  const archivedCount = ofTab.filter(isArchived).length;
+  const inArchive = showArchive;
+  const inTab = ofTab.filter((c) => isArchived(c) === inArchive);
 
   const rows = inTab
     .map((chat) => {
@@ -344,14 +345,16 @@ export default function MessagesPage() {
                 </>
               );
             })()}
-            {myId && (
+            {/* archivieren (für alle) dürfen nur Beteiligte und Admins */}
+            {(isAdmin || menuChat.participant_ids.some(canWriteAs)) && (
               <SheetButton
                 onClick={() => {
-                  archiveChat(menuChat.id, myId, !isArchivedFor(menuChat, myId));
+                  const by = menuChat.participant_ids.find(canWriteAs) ?? myId ?? "admin";
+                  archiveChat(menuChat.id, by, !isArchived(menuChat));
                   closeMenu();
                 }}
               >
-                {isArchivedFor(menuChat, myId) ? "Aus dem Archiv holen" : "Archivieren"}
+                {isArchived(menuChat) ? "Aus dem Archiv holen" : "Archivieren (für alle)"}
               </SheetButton>
             )}
             {(isAdmin || menuChat.participant_ids.some(canWriteAs)) && (

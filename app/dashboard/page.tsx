@@ -11,7 +11,7 @@ import { SceneCard, SceneRow } from "@/components/SceneCard";
 import { ChatRow } from "@/components/phone/ChatRow";
 import { rememberPhone } from "@/lib/phone";
 import { formatInplayDateShort } from "@/lib/format";
-import { isArchivedFor, isLeftOnRead, lastMessages } from "@/lib/chats";
+import { isArchived, isLeftOnRead, lastMessages } from "@/lib/chats";
 import type { Character, Chat, Player, Scene } from "@/lib/types";
 
 export default function DashboardPage() {
@@ -64,7 +64,7 @@ export default function DashboardPage() {
       return (
         !!last &&
         ch.participant_ids.includes(charId) &&
-        !isArchivedFor(ch, charId) &&
+        !isArchived(ch) &&
         !isLeftOnRead(ch, charId, last)
       );
     });

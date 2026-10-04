@@ -8,7 +8,7 @@ import type { Chat, ChatMessageKind } from "@/lib/types";
 import { formatDateTime, formatInplayDate } from "@/lib/format";
 import { isEmojiOnly, QUICK_REACTIONS } from "@/lib/emoji";
 import { addMinutes, resolvePhone } from "@/lib/phone";
-import { chatTitle, isArchivedFor, messageSnippet } from "@/lib/chats";
+import { chatTitle, isArchived, messageSnippet } from "@/lib/chats";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DatePicker } from "@/components/DatePicker";
 import { Composer } from "@/components/phone/Composer";
@@ -97,11 +97,10 @@ function ChatView({ chat }: { chat: Chat }) {
   const lastReal = [...messages].reverse().find((m) => m.kind !== "date");
   const leftBy = lastReal ? parts.filter((p) => chat.left_on_read?.[p] === lastReal.id) : [];
   const myTurn = canWrite && !!lastReal && lastReal.character_id !== self;
-  // Archiviert wird auf dem Handy, das man in der Hand hat (auch beim Mitlesen)
-  const phoneId = reading ? (me?.id ?? "") : self;
-  const archived = !!phoneId && isArchivedFor(chat, phoneId);
-  // Löschen dürfen Beteiligte und Admins
+  // Archivieren (gilt für alle) und Löschen dürfen nur Beteiligte und Admins
   const canDeleteChat = canWrite || isAdmin;
+  const phoneId = canDeleteChat ? (reading ? (me?.id ?? "admin") : self) : "";
+  const archived = isArchived(chat);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDeleteChat, setConfirmDeleteChat] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -547,7 +546,7 @@ function ChatView({ chat }: { chat: Chat }) {
                     setMenuOpen(false);
                   }}
                 >
-                  {archived ? "Aus dem Archiv holen" : "Archivieren"}
+                  {archived ? "Aus dem Archiv holen" : "Archivieren (für alle)"}
                 </SheetButton>
               )}
               {canDeleteChat && (

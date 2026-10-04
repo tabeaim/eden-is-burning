@@ -142,7 +142,9 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Liste:** Reiter „Meine" (Chats dieses Charakters) und „Andere" (alle übrigen,
   zum Mitlesen); die Taste „Archiv" daneben schaltet für den gewählten Reiter
   aufs Archiv um (nur Icon, kein Text). Dazu ein Suchfeld (Namen und Nachrichtentext; ein Treffer
-  springt zur Nachricht). Eine neue Nachricht holt den Chat aus dem Archiv.
+  springt zur Nachricht). Archiviert ist ein Chat immer für
+  alle; archivieren dürfen nur Beteiligte und Admins. Eine neue Nachricht holt den
+  Chat aus dem Archiv.
 - **Chat-Optionen** (archivieren, löschen, „Left on read", „Als ungelesen
   markieren", bei pausierten Chats „Chat wieder aktivieren"): Rechtsklick bzw.
   langes Drücken auf den Chat in der Liste oder ⋯ in der Chat-Ansicht – immer als
@@ -177,8 +179,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   bleibt in der Telefon-App erreichbar. Einen eigenen klingelnden Anruf bricht
   man per Rechtsklick in der Anrufliste ab („abgebrochen").
 - **Handy folgt dem Chat:** Öffnet man den Chat eines anderen eigenen Charakters,
-  wechselt das Handy dauerhaft zu ihm (Archiv & Co. gelten immer fürs Handy in
-  der Hand).
+  wechselt das Handy dauerhaft zu ihm.
 - **Klingeln:** alles, was einen eingehenden Anruf meldet (Dashboard-Zeile,
   Banner im Display, Zähler im Menü, Telefon-App), vibriert mit `.phone-ring`
   (globals.css).

@@ -23,8 +23,9 @@ export function isLeftOnRead(chat: Chat, characterId: string, last: ChatMessage 
   return !!last && chat.left_on_read?.[characterId] === last.id;
 }
 
-export function isArchivedFor(chat: Chat, characterId: string): boolean {
-  return (chat.archived_by ?? []).includes(characterId);
+// Archiviert ist ein Chat für alle – `archived_by` hält nur fest, wer es war.
+export function isArchived(chat: Chat): boolean {
+  return (chat.archived_by ?? []).length > 0;
 }
 
 // Chat-Name: eine Person mit vollem Namen, mehrere nur mit Vornamen.

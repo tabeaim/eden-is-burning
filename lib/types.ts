@@ -186,7 +186,7 @@ export interface Chat {
   // „Left on read": Charakter-ID -> ID der Nachricht, die unbeantwortet stehen
   // bleibt. Gilt nur, solange das die neueste Nachricht ist (Chat pausiert).
   left_on_read?: Record<string, string> | null;
-  // Charaktere, die den Chat auf ihrem Handy archiviert haben
+  // Archiviert (für alle), sobald nicht leer; enthält den Charakter, der es getan hat
   archived_by?: string[] | null;
 }
 

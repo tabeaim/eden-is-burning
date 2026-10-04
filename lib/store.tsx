@@ -126,7 +126,7 @@ interface StoreValue extends PersistedState {
   deleteChat: (chatId: string) => void;
   // „Left on read": die neueste Nachricht bewusst unbeantwortet lassen (oder zurücknehmen)
   leaveOnRead: (chatId: string, characterId: string, messageId: string | null) => void;
-  // Chat auf dem Handy dieses Charakters archivieren / wieder hervorholen
+  // Chat für alle archivieren / wieder hervorholen (characterId: wer es getan hat)
   archiveChat: (chatId: string, characterId: string, archived: boolean) => void;
   toggleReaction: (messageId: string, emoji: string, characterId: string) => void;
   // Ungelesen: neueste Nachricht stammt von jemand anderem und ist neuer als der letzte Besuch
@@ -1184,8 +1184,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setState((s) => {
       const chat = s.chats.find((c) => c.id === chatId);
       if (!chat) return s;
-      const rest = (chat.archived_by ?? []).filter((id) => id !== characterId);
-      const archived_by = archived ? [...rest, characterId] : rest;
+      const archived_by = archived ? [characterId] : [];
       persist("archiveChat", supabase.from("chats").update({ archived_by }).eq("id", chatId));
       return {
         ...s,
