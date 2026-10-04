@@ -116,7 +116,7 @@ export default function PhoneAppPage() {
             })}
             {log.length === 0 && ringing.length === 0 && (
               <p className="px-8 pt-16 text-center text-[0.875rem] text-text-tertiary">
-                Noch keine Anrufe. Unter „Kontakte" kannst du jemanden anrufen.
+                Noch keine Anrufe. Unter „Kontakte“ kannst du jemanden anrufen.
               </p>
             )}
             {log.map((c) => {
