@@ -63,7 +63,7 @@ export async function uploadImage(
   const path = `${folder}/${name}`;
   const { error } = await supabase.storage.from(IMAGE_BUCKET).upload(path, blob, {
     contentType: blob.type,
-    cacheControl: "31536000", // ein Jahr — Dateinamen sind eindeutig
+    cacheControl: "31536000", // ein Jahr - Dateinamen sind eindeutig
   });
   if (error) {
     console.warn("[images] Upload in den Speicher fehlgeschlagen, nutze Data-URL:", error.message);

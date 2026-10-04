@@ -110,8 +110,8 @@ export default function ScenePage({
     scene?.status,
   );
 
-  // Szene als gesehen markieren (setzt das "neu"-Tag zurück) und – falls aus der
-  // Post-Suche verlinkt (#post-<id>) – zum passenden Post springen und hervorheben.
+  // Szene als gesehen markieren (setzt das "neu"-Tag zurück) und - falls aus der
+  // Post-Suche verlinkt (#post-<id>) - zum passenden Post springen und hervorheben.
   useEffect(() => {
     if (!scene) return;
     store.markSceneSeen(scene.id);
@@ -239,7 +239,7 @@ export default function ScenePage({
         </div>
       )}
 
-      {/* Antwort-Editor — nur für Teilnehmende, auf der letzten Seite */}
+      {/* Antwort-Editor - nur für Teilnehmende, auf der letzten Seite */}
       {scene.status === "active" && isParticipant && safePage === pages.length - 1 && (
         <ReplyBox
           sceneId={scene.id}
@@ -309,7 +309,7 @@ function SceneHeader({
     return (
       <div className="mb-6 rounded-xl border border-border-subtle bg-bg-surface p-4">
         <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary mb-2">
-          Szene beenden — Zusammenfassung (ein Satz, optional)
+          Szene beenden - Zusammenfassung (ein Satz, optional)
         </div>
         <input
           value={draft}
@@ -434,7 +434,7 @@ function SceneHeader({
         </p>
       ) : (
         <p className="mt-3 text-[0.875rem] text-text-tertiary">
-          Noch keine Zusammenfassung hinterlegt — beim Beenden der Szene ergänzbar.
+          Noch keine Zusammenfassung hinterlegt - beim Beenden der Szene ergänzbar.
         </p>
       )}
     </div>
@@ -503,7 +503,7 @@ function PostRow({
   term?: string;
 }) {
   const { addQuote, currentPlayer, isAdmin, updatePost, deletePost } = useStore();
-  // Eigene Posts – oder als Admin alle – dürfen bearbeitet/gelöscht werden.
+  // Eigene Posts - oder als Admin alle - dürfen bearbeitet/gelöscht werden.
   const canModify =
     !!currentPlayer && (character.player_id === currentPlayer.id || isAdmin);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -697,7 +697,7 @@ function ReplyBox({
   if (myChars.length === 0) {
     return (
       <div className="mt-10 rounded-xl border border-border-subtle bg-bg-surface px-5 py-4 text-[0.875rem] text-text-tertiary">
-        Du spielst in dieser Szene keinen Charakter mit — daher kannst du hier
+        Du spielst in dieser Szene keinen Charakter mit - daher kannst du hier
         nicht antworten.
       </div>
     );

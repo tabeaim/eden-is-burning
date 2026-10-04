@@ -136,7 +136,7 @@ export default function NewSmsPage() {
                   </div>
                 ) : (
                   <p className="text-[0.8125rem] text-text-tertiary">
-                    {from.name.split(" ")[0]} hat schon einen Chat mit {to.name.split(" ")[0]} —
+                    {from.name.split(" ")[0]} hat schon einen Chat mit {to.name.split(" ")[0]} -
                     deine Nachricht landet dort.
                   </p>
                 )}

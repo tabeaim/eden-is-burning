@@ -14,7 +14,7 @@ export function PageHeader({
 }: {
   title: string;
   subtitle?: string;
-  // Tailwind max-w-Klasse des Seiten-Containers — damit der Banner-Titel auf
+  // Tailwind max-w-Klasse des Seiten-Containers - damit der Banner-Titel auf
   // derselben Breite zentriert wird und bündig mit dem Inhalt startet.
   width?: string;
   bannerImage?: string; // überschreibt das Standard-Titelbild der Seite

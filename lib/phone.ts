@@ -23,7 +23,7 @@ export const PHONE_COLORS = [
 
 export const PHONE_WEAR = ["Wie neu", "Leichte Kratzer", "Zerkratzt", "Display gesprungen"];
 
-// Drei Vorlagen — alles andere per eigenem Bild
+// Drei Vorlagen - alles andere per eigenem Bild
 export const PHONE_WALLPAPERS = [
   { key: "ember", label: "Glut", css: "radial-gradient(120% 90% at 20% 0%, #e89a3c 0%, #7a2e12 38%, #120b0a 80%)" },
   { key: "night", label: "Nacht", css: "linear-gradient(165deg, #1b2a49 0%, #0d1326 55%, #05060b 100%)" },
@@ -52,7 +52,7 @@ export const STANDARD_APPS: PhoneApp[] = [
   { key: "einstellungen", label: "Einstellungen", glyph: "⚙️", bg: "linear-gradient(#a9a9af, #6b6b70)", href: "/einstellungen" },
 ];
 
-// Optionale Apps — sagen etwas über den Charakter. Bewusst ohne echte Marken.
+// Optionale Apps - sagen etwas über den Charakter. Bewusst ohne echte Marken.
 export const OPTIONAL_APPS: PhoneApp[] = [
   { key: "musik", label: "Musik", glyph: "🎵", bg: "linear-gradient(#fb5c74, #d81b47)" },
   { key: "dating", label: "Spark", glyph: "🔥", bg: "linear-gradient(#ff7a59, #e0245e)" },
@@ -111,7 +111,7 @@ export function resolvePhone(c: Pick<Character, "phone"> | null | undefined): Re
 }
 
 // Merkt sich, mit welchem eigenen Charakter man zuletzt aktiv war (Post in einer
-// Szene, SMS) — dessen Handy zeigt „Handy" im Seitenmenü dann zuerst.
+// Szene, SMS) - dessen Handy zeigt „Handy" im Seitenmenü dann zuerst.
 export const PHONE_OWNER_KEY = "eden:phone";
 export function rememberPhone(characterId: string) {
   try {

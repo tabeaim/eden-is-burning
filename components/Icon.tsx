@@ -158,7 +158,7 @@ const paths: Record<IconName, React.ReactNode> = {
   flame: (
     <path d="M12 3c.5 3-1.5 4-2.8 5.5C8 10 7 11.4 7 13.5A5 5 0 0 0 17 13.5c0-2-1-3.2-2-4.5-.8 1-1.5 1.5-2.4 1.6.7-2 .4-5-.6-7.6Z" />
   ),
-  // Streichholz — Szenen-Status: unangezündet, brennend, abgebrannt
+  // Streichholz - Szenen-Status: unangezündet, brennend, abgebrannt
   match: (
     <>
       <path d="M4 20.5 14.2 10.3" />

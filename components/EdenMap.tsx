@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Statische SVG-Karte von Eden, Virginia — 1:1 aus der aktualisierten Figma-Vorlage
+// Statische SVG-Karte von Eden, Virginia - 1:1 aus der aktualisierten Figma-Vorlage
 // "Stadtbezirks-Karte" (Frame 608×654) übernommen. Die exakten Vektorpfade sind aus
 // den Figma-Exporten transkribiert und per <g transform> an ihre Frame-Position
 // gesetzt; Orchid Valley ist rotiert wie im Original.
@@ -22,7 +22,7 @@ interface District {
   ly: number;
 }
 
-// Bezirke — Pfad-Koordinaten stammen aus dem jeweiligen Asset-viewBox (Ursprung
+// Bezirke - Pfad-Koordinaten stammen aus dem jeweiligen Asset-viewBox (Ursprung
 // nahe 0), transform verschiebt sie an die Frame-Position (left/top aus Figma).
 const DISTRICTS: District[] = [
   {
@@ -85,7 +85,7 @@ const DISTRICTS: District[] = [
   },
 ];
 
-// Wasser (Potomac → Chesapeake Bay) — rein dekorativ.
+// Wasser (Potomac → Chesapeake Bay) - rein dekorativ.
 const WATER: { d: string; transform: string; fill: string; stroke?: string }[] = [
   {
     d: "M156.562 18.3516L177.5 117.053V214.5L170.501 363.477L170.498 363.521L170.504 363.564L177.458 417.211L137.853 437.014L43.3555 448.453L14.9785 355.354L0.52832 301.041L43.4561 205.204L43.5 205.106V165.039L54.4922 101.585L54.5059 101.51L54.4961 101.435L43.5537 18.3789L116.95 0.525391L156.562 18.3516Z",
@@ -105,13 +105,13 @@ const WATER: { d: string; transform: string; fill: string; stroke?: string }[] =
   },
 ];
 
-// Belle View Beach — schmaler Sandstreifen an der Küste
+// Belle View Beach - schmaler Sandstreifen an der Küste
 const BEACH = {
   d: "M10 0L5.3125 1.43278L1.62947 4.19209L0 22.5902L1.62947 40.9872L3.97322 47.6102L9.66518 53V36.2992L10 0Z",
   transform: "translate(483 207)",
 };
 
-// Byron University — gestricheltes Highlight (Campus in Rivers Edge)
+// Byron University - gestricheltes Highlight (Campus in Rivers Edge)
 const BYRON = {
   d: "M23.1445 1.31364L35.3564 9.25253L54.3485 9.74645L57.5766 9.8304L65.1445 43.0766L48.1069 57.3136L29.1995 47.4429L7.51257 46.8789L1.14447 21.3136L11.5915 14.6712L23.1445 1.31364Z",
   transform: "translate(188.85 377.68)",
@@ -190,7 +190,7 @@ export function EdenMap({
 
   return (
     <svg viewBox="0 0 608 654" className="map-free w-full h-auto select-none">
-      {/* Unsichtbarer Hintergrund — die Karte liegt frei auf der Seite; die Fläche
+      {/* Unsichtbarer Hintergrund - die Karte liegt frei auf der Seite; die Fläche
           bleibt als klickbares "Umland" erhalten. */}
       <g onClick={() => onSelect("umland")} className="cursor-pointer">
         <rect x="0" y="0" width="608" height="654" fill="transparent" />
@@ -266,12 +266,12 @@ export function EdenMap({
         );
       })}
 
-      {/* Belle View Beach — Sandstreifen */}
+      {/* Belle View Beach - Sandstreifen */}
       <g transform={BEACH.transform} style={{ pointerEvents: "none" }}>
         <path d={BEACH.d} fill="#7F8263" />
       </g>
 
-      {/* Byron University — gestrichelter Campus (klickbar) */}
+      {/* Byron University - gestrichelter Campus (klickbar) */}
       <g onClick={() => onSelect("byron")} className="cursor-pointer">
         <g transform={BYRON.transform}>
           <path
@@ -292,7 +292,7 @@ export function EdenMap({
         </text>
       </g>
 
-      {/* Washington D.C. — Nordpfeil */}
+      {/* Washington D.C. - Nordpfeil */}
       <g onClick={() => onSelect("washington")} className="cursor-pointer">
         <path
           d="M4.65118 18.5117V1.51167M8.65118 8.51167L4.65118 1.51167L0.651182 8.51167"
@@ -310,7 +310,7 @@ export function EdenMap({
         <ExternalPill p={PILLS[1]} selected={selected === "rest"} labelRef={labelRef("rest")} />
       </g>
 
-      {/* Aktive Szenen pro Bereich — zuletzt gezeichnet, damit nichts sie verdeckt */}
+      {/* Aktive Szenen pro Bereich - zuletzt gezeichnet, damit nichts sie verdeckt */}
       {Object.entries(boxes).map(([key, b]) => {
         const pill = PILL_BY_KEY.get(key);
         const count = areaStats[key]?.active ?? 0;

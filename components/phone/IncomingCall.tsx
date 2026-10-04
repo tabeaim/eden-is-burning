@@ -59,7 +59,7 @@ export function PhoneSceneDialog({ call, onClose }: { call: PhoneCall; onClose: 
         />
         <div className="mt-4 flex items-center justify-end gap-3">
           <button onClick={onClose} className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
-            Nein, ohne Szene
+            Nein, nicht jetzt
           </button>
           <button
             onClick={() => {

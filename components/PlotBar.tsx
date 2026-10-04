@@ -33,7 +33,7 @@ export function PlotBar({
     <div className="flex flex-wrap items-center gap-2 border-t border-border-subtle pt-3">
       <span className="text-[0.8125rem] uppercase tracking-wider text-text-tertiary">Plots</span>
       {plots.length === 0 && !naming && (
-        <span className="text-[0.875rem] text-text-tertiary">— noch keine</span>
+        <span className="text-[0.875rem] text-text-tertiary">- noch keine</span>
       )}
       {plots.map((p) => (
         <button

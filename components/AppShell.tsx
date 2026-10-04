@@ -77,7 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <PageMetaProvider>
-      {/* Speichern fehlgeschlagen — die Änderung ist nur lokal sichtbar */}
+      {/* Speichern fehlgeschlagen - die Änderung ist nur lokal sichtbar */}
       {saveError && (
         <div
           role="alert"
@@ -147,7 +147,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <MenuIcon />
           </button>
-          {/* Die Karte bekommt ausnahmsweise kein Titelbild — nur den Seitentitel;
+          {/* Die Karte bekommt ausnahmsweise kein Titelbild - nur den Seitentitel;
               der Platz gehört der Karte. */}
           {!bare && (
             <BannerHeader
@@ -228,7 +228,7 @@ function BannerHeader({
 
   return (
     <header className="relative bg-bg-primary">
-      {/* Titelbild — Foto über Glut-Verlauf. background-image statt <img>, damit ein
+      {/* Titelbild - Foto über Glut-Verlauf. background-image statt <img>, damit ein
           fehlgeschlagener Ladevorgang kein kaputtes Icon zeigt, sondern den Verlauf. */}
       {!noBanner && (
       <div className="relative h-40 w-full overflow-hidden" style={{ backgroundImage: EMBER_BG }}>
@@ -240,7 +240,7 @@ function BannerHeader({
       </div>
       )}
 
-      {/* Titel — ragt halb über die Banner-Unterkante in die Seite (nicht beschnitten).
+      {/* Titel - ragt halb über die Banner-Unterkante in die Seite (nicht beschnitten).
           Container in der Seitenbreite zentriert → Titel startet bündig mit dem Inhalt. */}
       <div className={`relative ${width} mx-auto px-4 sm:px-8`}>
         <h1 className={`page-title inline-block ${
@@ -385,7 +385,7 @@ function Sidebar({
       </nav>
 
       <div className="px-2 pb-2 flex flex-col gap-0.5">
-        <SideLink href="/handy/telefon#kontakte" icon="phone" label="Neuer Anruf" pathname={pathname} />
+        <SideLink href="/handy/kontakte" icon="phone" label="Neuer Anruf" pathname={pathname} />
         <SideLink href="/handy/neu" icon="message" label="Neue SMS" pathname={pathname} />
         <SideLink href="/szenen/neu" icon="book" label="Neue Szene" pathname={pathname} />
         <SideLink href="/einstellungen" icon="settings" label="Einstellungen" pathname={pathname} />
@@ -406,7 +406,7 @@ function Sidebar({
         </button>
       </div>
 
-      {/* Alter Egos (eigene Charaktere) — aufklappbares Dropdown */}
+      {/* Alter Egos (eigene Charaktere) - aufklappbares Dropdown */}
       <div className="px-2 py-3 border-t border-border-subtle">
         <button
           onClick={() => setCharsOpen((o) => !o)}

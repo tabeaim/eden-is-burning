@@ -1,11 +1,11 @@
 // Seitenspezifische Banner-Header. Statt eines einzigen Titelbilds bekommt jede
 // Seite (und jede Szene) einen eigenen, dunkel gehaltenen Vektor-Header im Stil
-// der Eden-Skyline. Alles wird als data:-URI erzeugt — keine externen Bilder,
+// der Eden-Skyline. Alles wird als data:-URI erzeugt - keine externen Bilder,
 // lädt garantiert. Quick&dirty: schnelle Silhouetten + Verläufe, deterministisch
 // pro Seite/Szene, damit sich Header sichtbar unterscheiden.
 //
 // Später kann ein echtes Header-Bild pro Szene (scene.header_url) diese Vorlage
-// überschreiben — die Erzeugung hier ist nur die „Andeutung" verschiedener Header.
+// überschreiben - die Erzeugung hier ist nur die „Andeutung" verschiedener Header.
 
 const W = 1600;
 const H = 360;
@@ -77,7 +77,7 @@ function skyline(rand: () => number, t: Theme): string {
 }
 
 function industry(rand: () => number, t: Theme): string {
-  // niedrige Hallen, Kräne, Schornsteine — Hafen/Industrie
+  // niedrige Hallen, Kräne, Schornsteine - Hafen/Industrie
   let b = `<g fill="${t.silhouette}">`;
   let x = 20;
   while (x < W - 20) {
@@ -107,7 +107,7 @@ function industry(rand: () => number, t: Theme): string {
 }
 
 function spires(rand: () => number, t: Theme): string {
-  // spitze Türme / Giebel — erzählerisch, gotisch
+  // spitze Türme / Giebel - erzählerisch, gotisch
   let b = `<g fill="${t.silhouette}">`;
   let x = 20;
   while (x < W - 20) {
@@ -123,7 +123,7 @@ function spires(rand: () => number, t: Theme): string {
 }
 
 function hills(rand: () => number, t: Theme): string {
-  // gestaffelte Hügelketten — Orte/Karte
+  // gestaffelte Hügelketten - Orte/Karte
   let out = "";
   const layers = 3;
   for (let l = 0; l < layers; l++) {
@@ -148,7 +148,7 @@ function hills(rand: () => number, t: Theme): string {
 }
 
 function moon(rand: () => number, t: Theme): string {
-  // Mondsichel + dichter Sternenhimmel — Kalender/Zeit
+  // Mondsichel + dichter Sternenhimmel - Kalender/Zeit
   const cx = 1250 + Math.round(rand() * 200);
   const cy = 120;
   const r = 66;
@@ -160,7 +160,7 @@ function moon(rand: () => number, t: Theme): string {
 }
 
 function crowd(rand: () => number, t: Theme): string {
-  // Reihe von Kopf-Schulter-Silhouetten — Einwohner*innen
+  // Reihe von Kopf-Schulter-Silhouetten - Einwohner*innen
   let out = "";
   const rows = 2;
   for (let r = 0; r < rows; r++) {
@@ -185,7 +185,7 @@ function crowd(rand: () => number, t: Theme): string {
 }
 
 function waves(rand: () => number, t: Theme): string {
-  // horizontale Wellenbänder — Info/ruhig
+  // horizontale Wellenbänder - Info/ruhig
   let out = "";
   for (let l = 0; l < 5; l++) {
     const base = H - 30 - l * 46;
@@ -202,7 +202,7 @@ function waves(rand: () => number, t: Theme): string {
 }
 
 function arch(rand: () => number, t: Theme): string {
-  // Portal-Bögen — Profil/Charakter (Rahmen)
+  // Portal-Bögen - Profil/Charakter (Rahmen)
   let out = `<g fill="${t.silhouette}">`;
   let x = 60;
   while (x < W - 60) {
@@ -344,7 +344,7 @@ const PAGE_THEMES: Record<string, Theme> = {
   },
 };
 
-// Feste Themen-Reihe für Szenen — jede Szene bekommt (per Hash) eine andere.
+// Feste Themen-Reihe für Szenen - jede Szene bekommt (per Hash) eine andere.
 const SCENE_PALETTES: Omit<Theme, "glowX" | "motif">[] = [
   { sky: [[0, "#241436"], [0.45, "#3c1d3f"], [0.75, "#7a2f4a"], [0.9, "#180d14"], [1, "#0a0709"]], glow: "#d24f7a", silhouette: "#0f0810", windows: "#ffb3d1" },
   { sky: [[0, "#0f2338"], [0.45, "#163049"], [0.72, "#2f5a7a"], [0.9, "#0d151f"], [1, "#070a0e"]], glow: "#4f9fd1", silhouette: "#08101a", windows: "#bfe0ff" },
@@ -361,7 +361,7 @@ export function pageHeader(segment: string | undefined): string {
   return toDataUri(buildSvg(t, hashStr("page:" + (segment ?? "dashboard"))));
 }
 
-/** Header-Hintergrund für eine einzelne Szene — variiert deterministisch nach id. */
+/** Header-Hintergrund für eine einzelne Szene - variiert deterministisch nach id. */
 export function sceneHeader(id: string): string {
   const h = hashStr("scene:" + id);
   const pal = SCENE_PALETTES[h % SCENE_PALETTES.length];

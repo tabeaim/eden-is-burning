@@ -119,7 +119,7 @@ export default function CharaktereePage() {
             onChange={(e) => {
               const k = e.target.value as SortKey;
               setSortKey(k);
-              // sinnvolle Startrichtung: Name A–Z, sonst neueste/meiste zuerst
+              // sinnvolle Startrichtung: Name A-Z, sonst neueste/meiste zuerst
               setSortDir(k === "name" ? "asc" : "desc");
             }}
             aria-label="Sortieren nach"
@@ -157,7 +157,7 @@ export default function CharaktereePage() {
           {q
             ? `Kein Charakter passt zu „${query.trim()}“.`
             : tab === "npcs"
-              ? "Noch keine NPCs — sie lassen sich im Ortsprofil anlegen."
+              ? "Noch keine NPCs - sie lassen sich im Ortsprofil anlegen."
               : "Noch keine Charaktere."}
         </p>
       )}

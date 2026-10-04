@@ -53,7 +53,7 @@ interface StoreValue extends PersistedState {
   mobileIds: string[];
   ready: boolean;
   configured: boolean;
-  // Angemeldet, aber ohne (ladbaren) Spieler-Eintrag — Hinweis für den Login-Bildschirm
+  // Angemeldet, aber ohne (ladbaren) Spieler-Eintrag - Hinweis für den Login-Bildschirm
   loginProblem: string | null;
   // Auth / Login
   currentPlayerId: string | null;
@@ -98,7 +98,7 @@ interface StoreValue extends PersistedState {
   addScene: (scene: Omit<Scene, "id" | "created_at">) => string;
   updateScene: (id: string, patch: Partial<Scene>) => void;
   resetData: () => void;
-  // Ungelesene Posts ("neu"-Tag) — pro Gerät/Nutzer in localStorage
+  // Ungelesene Posts ("neu"-Tag) - pro Gerät/Nutzer in localStorage
   isSceneNew: (sceneId: string) => boolean;
   markSceneSeen: (sceneId: string) => void;
   markAllScenesSeen: () => void;
@@ -117,7 +117,7 @@ interface StoreValue extends PersistedState {
   ) => void;
   deleteMessage: (messageId: string) => void;
   updateMessage: (messageId: string, patch: Pick<ChatMessage, "content" | "inplay_time">) => void;
-  // Löscht den Chat samt aller Nachrichten — für alle
+  // Löscht den Chat samt aller Nachrichten - für alle
   deleteChat: (chatId: string) => void;
   // „Left on read": die neueste Nachricht bewusst unbeantwortet lassen (oder zurücknehmen)
   leaveOnRead: (chatId: string, characterId: string, messageId: string | null) => void;
@@ -152,7 +152,7 @@ const EMPTY: PersistedState = {
   calls: [],
 };
 
-// Supabase liefert höchstens 1000 Zeilen pro Abfrage — Nachrichten werden schnell
+// Supabase liefert höchstens 1000 Zeilen pro Abfrage - Nachrichten werden schnell
 // mehr, daher seitenweise laden. Fehlt die Tabelle noch, bleibt die Liste leer.
 async function fetchAll<T>(table: string): Promise<T[]> {
   const PAGE = 1000;
@@ -171,7 +171,7 @@ async function fetchAll<T>(table: string): Promise<T[]> {
   return rows;
 }
 
-// Gerade angelegte Chats, deren Zeile noch unterwegs ist — die erste Nachricht
+// Gerade angelegte Chats, deren Zeile noch unterwegs ist - die erste Nachricht
 // wartet darauf, sonst käme sie vor ihrem Chat an (Fremdschlüssel).
 const pendingChats = new Map<string, Promise<unknown>>();
 // Dasselbe für gerade angelegte Szenen (erster Post, Anruf mit Telefonszene)
@@ -187,7 +187,7 @@ function uid(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-// Schreibt asynchron in Supabase (die Änderung ist lokal bereits sichtbar —
+// Schreibt asynchron in Supabase (die Änderung ist lokal bereits sichtbar -
 // "optimistic update"). Schlägt das Speichern fehl, wird das sichtbar gemeldet:
 // sonst sähe die Änderung gespeichert aus und wäre nach dem Neuladen weg.
 // Übernimmt eine Live-Änderung (Supabase Realtime) in eine Liste. Felder, die in
@@ -210,7 +210,7 @@ function applyChange<T extends { id: string }>(
 }
 
 let reportSaveError: ((message: string) => void) | null = null;
-// Reine Anwesenheits-Updates melden wir nicht — da geht kein Inhalt verloren.
+// Reine Anwesenheits-Updates melden wir nicht - da geht kein Inhalt verloren.
 const SILENT = new Set(["touchPresence", "setLocation"]);
 function persist(label: string, p: unknown) {
   Promise.resolve(p as PromiseLike<{ error: unknown }>).then(
@@ -695,7 +695,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       };
       const loc: Location = { ...base, created_by: currentPlayer?.id ?? null };
       // Fallback ohne created_by, falls schema-locations-profile.sql noch nicht
-      // eingespielt ist — sonst ließen sich keine Orte/Szenen mehr anlegen.
+      // eingespielt ist - sonst ließen sich keine Orte/Szenen mehr anlegen.
       persist(
         "addLocation",
         supabase
@@ -715,7 +715,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const old = s.locations.find((l) => l.id === id);
       if (!old) return s;
       let scenes = s.scenes;
-      // Szenen hängen per Name am Ort — beim Umbenennen mitziehen.
+      // Szenen hängen per Name am Ort - beim Umbenennen mitziehen.
       if (patch.name && patch.name !== old.name) {
         persist(
           "updateLocation/scenes",

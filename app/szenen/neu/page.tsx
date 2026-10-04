@@ -3,12 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
-import {
-  AREA_ORDER,
-  AREAS,
-  LOCATION_SUGGESTIONS,
-  type AreaKey,
-} from "@/lib/world";
+import { Toggle } from "@/components/Toggle";
+import { LocationField, locationComplete } from "@/components/LocationField";
 import { PageHeader } from "@/components/PageHeader";
 import { CharacterPicker } from "@/components/CharacterPicker";
 import { sceneHeader } from "@/lib/headers";
@@ -35,11 +31,12 @@ export default function NewScenePage() {
     currentPlayer,
     charactersOf,
   } = useStore();
-  // Telefonat statt Ort: kein Bezirk/Ort nötig — die Szene spielt „am Telefon"
+  // Telefonat statt Ort: kein Bezirk/Ort nötig - die Szene spielt „am Telefon"
   const [phone, setPhone] = useState(false);
 
   const [title, setTitle] = useState("");
-  const [area, setArea] = useState<AreaKey>("rivers_edge");
+  // Bezirk kommt vom gewählten Ort; nur bei einem neuen Ort wird er abgefragt
+  const [area, setArea] = useState("");
   const [locationName, setLocationName] = useState("");
   const [date, setDate] = useState("2021-11-23");
   const [time, setTime] = useState("Nachmittag");
@@ -67,7 +64,7 @@ export default function NewScenePage() {
 
   const valid = phone
     ? date && selected.length > 0
-    : title.trim() && locationName.trim() && date && selected.length > 0;
+    : title.trim() && locationComplete(area, locationName) && date && selected.length > 0;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -116,11 +113,6 @@ export default function NewScenePage() {
           </div>
         </div>
 
-        <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
-          <input type="checkbox" checked={phone} onChange={(e) => setPhone(e.target.checked)} />
-          Telefonat — die Szene spielt am Telefon (kein Ort)
-        </label>
-
         <label className="text-[0.875rem] text-text-secondary">
           Titel {phone ? <span className="text-text-tertiary">(optional)</span> : <Req />}
           <input
@@ -141,50 +133,25 @@ export default function NewScenePage() {
           />
         </label>
 
+        <Toggle checked={phone} onChange={setPhone}>
+          Telefonat - die Szene spielt am Telefon (kein Ort)
+        </Toggle>
+
         {!phone && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label className="text-[0.875rem] text-text-secondary">
-            Bezirk <Req />
-            <select
-              value={area}
-              onChange={(e) => {
-                setArea(e.target.value as AreaKey);
-                setLocationName("");
+          <div className="text-[0.875rem] text-text-secondary">
+            <div className="mb-1">
+              Ort <Req />
+            </div>
+            <LocationField
+              area={area}
+              name={locationName}
+              onChange={(a, n) => {
+                setArea(a);
+                setLocationName(n);
               }}
-              className={`mt-1 ${field}`}
-            >
-              {AREA_ORDER.map((k) => (
-                <option key={k} value={k} className="bg-bg-surface">
-                  {AREAS[k].name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="text-[0.875rem] text-text-secondary">
-            Ort <Req />
-            <input
-              value={locationName}
-              onChange={(e) => setLocationName(e.target.value)}
-              placeholder={LOCATION_SUGGESTIONS[area][0]}
-              className={`mt-1 ${field}`}
             />
-          </label>
-        </div>
+          </div>
         )}
-
-        <div className={`flex flex-wrap gap-1.5 -mt-2 ${phone ? "hidden" : ""}`}>
-          {LOCATION_SUGGESTIONS[area].map((loc) => (
-            <button
-              type="button"
-              key={loc}
-              onClick={() => setLocationName(loc)}
-              className="rounded-full bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1 text-[0.8125rem] text-text-secondary"
-            >
-              {loc}
-            </button>
-          ))}
-        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="text-[0.875rem] text-text-secondary">
@@ -202,16 +169,13 @@ export default function NewScenePage() {
           </label>
         </div>
 
-        <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
-          <input type="checkbox" checked={tw} onChange={(e) => setTw(e.target.checked)} />
+        <Toggle checked={tw} onChange={setTw}>
           Triggerwarnung anzeigen
-        </label>
+        </Toggle>
 
-        <label className="flex items-center gap-2 text-[0.875rem] text-text-secondary">
-          <input type="checkbox" checked={au} onChange={(e) => setAu(e.target.checked)} />
-          <span className="italic">AU</span> — spielt in einem Alternate
-          Universe (Nicht-Canon)
-        </label>
+        <Toggle checked={au} onChange={setAu}>
+          <span className="italic">AU</span> - spielt in einem Alternate Universe (Nicht-Canon)
+        </Toggle>
         {au && (
           <AuNameField value={auName} onChange={setAuName} names={auNames(scenes)} />
         )}
@@ -238,7 +202,7 @@ export default function NewScenePage() {
               <span>
                 Erster Post{" "}
                 <span className="text-text-tertiary">
-                  (optional — kann auch später von einer teilnehmenden Person kommen)
+                  (optional - kann auch später von einer teilnehmenden Person kommen)
                 </span>
               </span>
               {eligibleFirst.length > 1 && (

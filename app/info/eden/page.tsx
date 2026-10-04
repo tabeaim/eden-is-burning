@@ -4,7 +4,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 
-// Info-Unterseite — Inhalt folgt
+// Info-Unterseite - Inhalt folgt
 export default function InfoSubPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">

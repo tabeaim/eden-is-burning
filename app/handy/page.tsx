@@ -14,7 +14,7 @@ import {
 } from "@/components/phone/AppIcon";
 
 // Startbildschirm des Handys: Hintergrundbild, angedeutete Apps und unten im
-// Dock die echten — Nachrichten und (wenn aktiviert) Captic.
+// Dock die echten - Nachrichten und (wenn aktiviert) Captic.
 export default function PhoneHomePage() {
   const { chats, calls, isChatNew } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
@@ -60,7 +60,7 @@ export default function PhoneHomePage() {
             <span>☎ Anrufliste</span>
             <span>{ringingCount > 0 ? `${ringingCount} klingelt` : "›"}</span>
           </Link>
-          <Link href="/handy/telefon#kontakte" className="flex items-center justify-between px-3 py-3 text-[1rem] font-bold text-text-primary">
+          <Link href="/handy/kontakte" className="flex items-center justify-between px-3 py-3 text-[1rem] font-bold text-text-primary">
             <span>☺ Kontakte</span>
             <span>›</span>
           </Link>
@@ -79,7 +79,7 @@ export default function PhoneHomePage() {
   return (
     <PhoneFrame owner={me.id} options={myChars.map((c) => c.id)} onOwner={setOwner} tone="home" callBanner={false}>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-black/15 px-4 pb-2 pt-5">
-        {/* Angedeutete Apps — nicht anklickbar (außer „Einstellungen") */}
+        {/* Angedeutete Apps - nicht anklickbar (außer „Einstellungen") */}
         <div className="grid grid-cols-4 justify-items-center gap-y-5">
           {phone.apps.map((a) => {
             const icon = (

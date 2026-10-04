@@ -8,7 +8,7 @@ import { characterImage } from "@/lib/avatar";
 import { PHONE_OWNER_KEY, resolvePhone, type PhoneModel } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
 
-// Das „Handy" (siehe DESIGN.md). Über dem Gerät — nicht auf dem Display — sitzt
+// Das „Handy" (siehe DESIGN.md). Über dem Gerät - nicht auf dem Display - sitzt
 // die Leiste, in der man das Handy wechselt. Auf dem Handy füllt das Display den
 // Rest des Bildschirms; ab `sm` steht das Gerät mit Gehäuse mittig auf der Seite.
 // Modell, Gehäusefarbe und Kratzer kommen aus den Einstellungen des Charakters.

@@ -8,7 +8,7 @@ import { rememberPhone } from "@/lib/phone";
 import { chatTitle } from "@/lib/chats";
 import { Icon } from "@/components/Icon";
 
-// Chat als kompakte Zeile fürs Dashboard — gleicher Aufbau wie `SceneRow`
+// Chat als kompakte Zeile fürs Dashboard - gleicher Aufbau wie `SceneRow`
 // (Symbol, Titel, Unterzeile; rechts wer zuletzt schrieb und wann). Zeigt nie
 // den Text der Nachricht. Führt direkt
 // in den Chat auf dem Handy; mit `forCharacter` auf dem Handy dieses Charakters.
@@ -58,7 +58,7 @@ export function ChatRow({
           </Link>
         </div>
         <div className="truncate text-[0.875rem] text-text-tertiary">
-          {/* bewusst ohne Vorschau der Nachricht — nichts spoilern */}
+          {/* bewusst ohne Vorschau der Nachricht - nichts spoilern */}
           SMS{date && ` · ${formatInplayDateShort(date.content.split("|")[0])}`}
         </div>
       </div>

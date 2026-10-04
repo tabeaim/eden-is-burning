@@ -38,7 +38,7 @@ export const AREAS: Record<AreaKey, AreaInfo> = {
     name: "Belle View",
     character:
       "Touristischer Kern, Promenade, Strand, Hotels, Einkaufsstraße. Luxus-Wohnobjekte inkl. zwei Glass Tower (bester Ausblick der Stadt).",
-    priceLevel: "$$–$$$$",
+    priceLevel: "$$-$$$$",
     residents: "Tourist*innen, wohlhabendere Studierende, Berufstätige",
     onMap: true,
   },
@@ -47,7 +47,7 @@ export const AREAS: Record<AreaKey, AreaInfo> = {
     name: "Oak Hill",
     character:
       "Vorörtliches Paradies, Eichenallee, Einfamilienhäuser, sehr sichere engagierte Nachbarschaft.",
-    priceLevel: "$$$–$$$$",
+    priceLevel: "$$$-$$$$",
     residents: "Familien, berufstätige Paare",
     onMap: true,
   },
@@ -74,7 +74,7 @@ export const AREAS: Record<AreaKey, AreaInfo> = {
     name: "Byron University",
     character:
       "Fiktive Ivy League, ~15.000 Studierende, riesiger Campus mit Locker Room, Library, Football Field, Cafeteria.",
-    priceLevel: "—",
+    priceLevel: "-",
     residents: "Studierende, Lehrende",
     onMap: false,
   },
@@ -83,7 +83,7 @@ export const AREAS: Record<AreaKey, AreaInfo> = {
     name: "Sutton Academy",
     character:
       "Privatschule mit Internat, Schuluniform. Früher \"Abercrombie Academy\", 2019 umbenannt.",
-    priceLevel: "—",
+    priceLevel: "-",
     residents: "Schüler*innen, Lehrkräfte",
     onMap: false,
   },
@@ -91,16 +91,16 @@ export const AREAS: Record<AreaKey, AreaInfo> = {
     key: "washington",
     name: "Washington D.C.",
     character:
-      "Die Hauptstadt, ~50 km nördlich — die nächstgrößere Stadt. Macht, Geld, Geheimnisse. Ebenfalls bespielbar.",
-    priceLevel: "—",
-    residents: "—",
+      "Die Hauptstadt, ~50 km nördlich - die nächstgrößere Stadt. Macht, Geld, Geheimnisse. Ebenfalls bespielbar.",
+    priceLevel: "-",
+    residents: "-",
     onMap: false,
   },
   umland: {
     key: "umland",
     name: "Umland",
     character:
-      "Wälder, Felder und einsame Landstraßen rund um Eden. Verlassene Scheunen, ein stiller See, der Highway Richtung D.C. — wo die Stadt in die Natur ausläuft.",
+      "Wälder, Felder und einsame Landstraßen rund um Eden. Verlassene Scheunen, ein stiller See, der Highway Richtung D.C. - wo die Stadt in die Natur ausläuft.",
     priceLevel: "$",
     residents: "Wenige, weit verstreut",
     onMap: true,
@@ -165,12 +165,12 @@ export const EXTRA_AREAS: Record<string, { name: string; character: string }> = 
   rest: {
     name: "Rest der Welt",
     character:
-      "Alles jenseits von Eden und D.C. — Reisen, Rückblenden, ferne Orte. Für Szenen, die nirgendwo sonst hingehören.",
+      "Alles jenseits von Eden und D.C. - Reisen, Rückblenden, ferne Orte. Für Szenen, die nirgendwo sonst hingehören.",
   },
   industrial: {
     name: "Industrial District & Eden Port",
     character:
-      "Hafen und Industriegürtel im Südosten — Lagerhallen, Docks, alte Fabriken. Wo Fracht umgeschlagen wird und die Stadt ihre raue Seite zeigt.",
+      "Hafen und Industriegürtel im Südosten - Lagerhallen, Docks, alte Fabriken. Wo Fracht umgeschlagen wird und die Stadt ihre raue Seite zeigt.",
   },
 };
 

@@ -12,10 +12,10 @@ import type { Character, Scene } from "@/lib/types";
 import { Icon } from "./Icon";
 import { SceneTurnBar } from "./SceneTurnBar";
 
-// Szenen-Boxen — es gibt genau zwei Varianten (siehe DESIGN.md):
-//  1. SceneCard — ausführliche Karte: Szenen-Übersicht, Dashboard, Ortsprofil,
+// Szenen-Boxen - es gibt genau zwei Varianten (siehe DESIGN.md):
+//  1. SceneCard - ausführliche Karte: Szenen-Übersicht, Dashboard, Ortsprofil,
 //     Charakterprofil
-//  2. SceneRow  — kompakte Zeile für schmale Spalten (Dashboard „letzte 24h", Karte)
+//  2. SceneRow  - kompakte Zeile für schmale Spalten (Dashboard „letzte 24h", Karte)
 // Beide tragen links das Streichholz als Status (statt „aktiv"/„geschlossen"-Tags).
 
 // Status als Streichholz: brennt orange, solange der neueste Post ungelesen ist;

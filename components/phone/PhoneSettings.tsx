@@ -15,9 +15,10 @@ import {
   resolvePhone,
 } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
+import { Toggle } from "@/components/Toggle";
 
 // Handy-Einstellungen eines Charakters (Einstellungen → Meine Charaktere). Jede
-// Änderung wird sofort gespeichert — unabhängig vom „Speichern" des Profils.
+// Änderung wird sofort gespeichert - unabhängig vom „Speichern" des Profils.
 export function PhoneSettings({ character }: { character: Character }) {
   const { updateCharacter } = useStore();
   const [uploading, setUploading] = useState(false);
@@ -123,33 +124,19 @@ export function PhoneSettings({ character }: { character: Character }) {
       {phone.burner ? (
         <p className="text-[0.8125rem] text-text-tertiary">
           Das Burner Phone ist ein altes Tastenhandy: kein Hintergrundbild, keine Apps, kein
-          Captic — nur SMS.
+          Captic - nur SMS.
         </p>
       ) : (
         <>
-          <div className="flex items-center justify-between gap-4">
-            <div className="text-[0.875rem] text-text-secondary">
-              Captic{" "}
-              <span className="text-text-tertiary">
-                (Foto-Netzwerk — das Profil bearbeitest du danach direkt in der App auf dem Handy)
-              </span>
-            </div>
-            <button
-              role="switch"
-              aria-checked={phone.captic}
-              aria-label="Captic"
-              onClick={() => save({ captic: { ...raw.captic, enabled: !phone.captic } })}
-              className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
-                phone.captic ? "bg-accent" : "bg-white/[0.14]"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-[left] ${
-                  phone.captic ? "left-[1.375rem]" : "left-0.5"
-                }`}
-              />
-            </button>
-          </div>
+          <Toggle
+            checked={phone.captic}
+            onChange={(on) => save({ captic: { ...raw.captic, enabled: on } })}
+          >
+            Captic{" "}
+            <span className="text-text-tertiary">
+              (Foto-Netzwerk - das Profil bearbeitest du danach direkt in der App auf dem Handy)
+            </span>
+          </Toggle>
 
           <div>
             <div className={label}>Hintergrundbild</div>
