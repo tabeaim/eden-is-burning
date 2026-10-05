@@ -100,7 +100,11 @@ interface StoreValue extends PersistedState {
   canEditPlot: (plot: Plot) => boolean;
   updateCharacter: (id: string, patch: Partial<Character>) => void;
   addCharacter: (playerId: string, name: string) => string;
-  // Löscht den Charakter samt seiner Posts, Zitate und Chats
+  // Papierkorb: Charakter verschwindet aus allen Listen, bleibt aber erhalten
+  trashCharacter: (id: string) => void;
+  restoreCharacter: (id: string) => void;
+  trashedCharacters: Character[];
+  // Löscht den Charakter ENDGÜLTIG samt seiner Posts, Zitate und Chats
   deleteCharacter: (id: string) => void;
   // Löscht die Szene samt aller Posts und Zitate
   deleteScene: (id: string) => void;
@@ -563,12 +567,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // --- Selektoren -----------------------------------------------------------
   // state.characters hält alle Zeilen; nach außen getrennt in spielbare und NPCs.
+  // Charaktere im Papierkorb tauchen in keiner Liste auf (`character(id)` findet
+  // sie weiterhin, damit alte Posts ihren Namen behalten).
   const playable = useMemo(
-    () => state.characters.filter((c) => !c.is_npc),
+    () => state.characters.filter((c) => !c.is_npc && !c.deleted_at),
     [state.characters],
   );
   const npcs = useMemo(
-    () => state.characters.filter((c) => c.is_npc),
+    () => state.characters.filter((c) => c.is_npc && !c.deleted_at),
+    [state.characters],
+  );
+  const trashedCharacters = useMemo(
+    () => state.characters.filter((c) => !!c.deleted_at),
     [state.characters],
   );
   const charactersOf = useCallback(
@@ -873,6 +883,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return id;
   }, []);
 
+  const trashCharacter = useCallback((id: string) => {
+    const deleted_at = new Date().toISOString();
+    persist("trashCharacter", supabase.from("characters").update({ deleted_at }).eq("id", id));
+    setState((s) => ({
+      ...s,
+      characters: s.characters.map((c) => (c.id === id ? { ...c, deleted_at } : c)),
+    }));
+  }, []);
+  const restoreCharacter = useCallback((id: string) => {
+    persist("restoreCharacter", supabase.from("characters").update({ deleted_at: null }).eq("id", id));
+    setState((s) => ({
+      ...s,
+      characters: s.characters.map((c) => (c.id === id ? { ...c, deleted_at: null } : c)),
+    }));
+  }, []);
+
   const deleteCharacter = useCallback((id: string) => {
     setState((s) => {
       // Posts, Zitate und Nachrichten hängen per „on delete cascade" am Charakter;
@@ -1087,7 +1113,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const canWriteAs = useCallback(
     (characterId: string) =>
       !!currentPlayer &&
-      state.characters.some((c) => c.id === characterId && playsAs(c, currentPlayer.id)),
+      state.characters.some(
+        (c) => c.id === characterId && !c.deleted_at && playsAs(c, currentPlayer.id),
+      ),
     [state.characters, currentPlayer],
   );
 
@@ -1270,7 +1298,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const unreadChatIds = useMemo(() => {
     const ids = new Set<string>();
     if (!currentPlayer) return ids;
-    const played = state.characters.filter((c) => playsAs(c, currentPlayer.id));
+    const played = state.characters.filter((c) => !c.deleted_at && playsAs(c, currentPlayer.id));
     const mine = new Set(played.map((c) => c.id));
     // Chats von Nebenfiguren zählen nur, wenn ich dort selbst mitgeschrieben habe
     const npcIds = new Set(played.filter((c) => c.is_npc).map((c) => c.id));
@@ -1330,7 +1358,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const incomingCalls = useMemo(() => {
     if (!currentPlayer) return [];
     const mine = new Set(
-      state.characters.filter((c) => playsAs(c, currentPlayer.id)).map((c) => c.id),
+      state.characters.filter((c) => !c.deleted_at && playsAs(c, currentPlayer.id)).map((c) => c.id),
     );
     return state.calls.filter((c) => c.status === "ringing" && mine.has(c.callee_id));
   }, [state.calls, state.characters, currentPlayer]);
@@ -1387,6 +1415,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updateCharacter,
       addCharacter,
       deleteCharacter,
+      trashCharacter,
+      restoreCharacter,
+      trashedCharacters,
       deleteScene,
       updatePlayer,
       addScene,
@@ -1462,6 +1493,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updateCharacter,
       addCharacter,
       deleteCharacter,
+      trashCharacter,
+      restoreCharacter,
+      trashedCharacters,
       deleteScene,
       updatePlayer,
       addScene,

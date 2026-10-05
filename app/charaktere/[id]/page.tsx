@@ -14,6 +14,7 @@ import { Facts, FactRow } from "@/components/Facts";
 import { TIER_NAMES, tierLabel, tierOf } from "@/lib/characters";
 import { PhonePreview } from "@/components/phone/PhonePreview";
 import { StatistActions } from "@/components/StatistActions";
+import { ProfileEditPanel } from "@/components/ProfileEditPanel";
 import type { Character, Scene } from "@/lib/types";
 
 type Tab = "general" | "character" | "inplay" | "relations" | "phone";
@@ -46,10 +47,11 @@ export default function CharacterPage({
   const c = character(id);
   const [tab, setTab] = useState<Tab>("general");
 
-  // Charaktername als Unterseiten-Titel in den Banner-Header heben; NPCs sind
-  // dort als solche gekennzeichnet.
+  const [editing, setEditing] = useState(false);
+
+  // Charaktername als Unterseiten-Titel in den Banner-Header heben
   useSetPageMeta(
-    c ? `${c.name}${c.is_npc ? ` (${tierLabel(c)})` : ""}` : "Charakter",
+    c ? c.name : "Charakter",
     undefined,
     undefined,
     "max-w-6xl",
@@ -89,6 +91,21 @@ export default function CharacterPage({
       <div className="max-w-4xl">
       {/* Zitat – direkt unter dem Seitentitel, über der Trennlinie */}
       <QuoteBlock c={c} canEdit={canEditCharacter(c)} />
+
+      {/* Inhaltliches wird direkt hier im Profil bearbeitet */}
+      {canEditCharacter(c) && !editing && (
+        <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+          {tierOf(c) === "extra" && <StatistActions character={c} />}
+          <button onClick={() => setEditing(true)} className={btn}>
+            <Icon name="edit" size={14} /> Profil bearbeiten
+          </button>
+        </div>
+      )}
+      {editing && (
+        <div className="mt-4">
+          <ProfileEditPanel character={c} onClose={() => setEditing(false)} />
+        </div>
+      )}
 
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mt-4 mb-6" />
@@ -190,21 +207,24 @@ export default function CharacterPage({
 // den Einstellungen ausfüllen – dann erscheint die volle Profilansicht.
 function NpcFacts({ c }: { c: Character }) {
   const { locations, scenes, player, canEditCharacter } = useStore();
+  const [editing, setEditing] = useState(false);
   const p = player(c.player_id);
   const foundAt = locations.filter((l) => l.people?.some((x) => x.id === c.id));
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-8">
-      {canEditCharacter(c) && (
-        <div className="mb-4 flex justify-end">
-          <Link
-            href="/einstellungen"
-            className={btn}
-          >
-            <Icon name="edit" size={14} /> Profil ausfüllen
-          </Link>
+      {(canEditCharacter(c) || tierOf(c) === "extra") && !editing && (
+        <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+          {/* Statist*in: bespielen (zeitweise oder als Supporting Character) / lösen */}
+          {tierOf(c) === "extra" && <StatistActions character={c} />}
+          {canEditCharacter(c) && (
+            <button onClick={() => setEditing(true)} className={btn}>
+              <Icon name="edit" size={14} /> Profil bearbeiten
+            </button>
+          )}
         </div>
       )}
+      {editing && <ProfileEditPanel character={c} onClose={() => setEditing(false)} />}
 
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mb-6" />
@@ -239,15 +259,6 @@ function NpcFacts({ c }: { c: Character }) {
         )}
       </div>
 
-      {/* Statist*in: bespielen (zeitweise oder als Supporting Character) / lösen */}
-      {tierOf(c) === "extra" && (
-        <div className="mt-8 flex flex-wrap items-center gap-3 rounded-lg border border-border-subtle p-3 sm:p-4">
-          <p className="min-w-0 flex-1 text-[0.8125rem] text-text-tertiary">
-            Statist*innen dürfen alle bearbeiten und zeitweise bespielen.
-          </p>
-          <StatistActions character={c} />
-        </div>
-      )}
       {p && (
         <div className="mt-10 text-[0.8125rem] text-text-tertiary">
           {TIER_NAMES[tierOf(c)]} · angelegt von {p.username}

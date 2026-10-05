@@ -77,18 +77,8 @@ export function CharacterSelect({
           role="listbox"
           className="absolute left-0 z-30 mt-1 max-h-72 w-72 max-w-[calc(100vw-3rem)] overflow-y-auto rounded-lg border border-border-subtle bg-bg-surface-2 p-1 shadow-2xl shadow-black/70"
         >
-          {search && (
-            <div className="sticky top-0 z-[1] -mx-1 -mt-1 mb-1 border-b border-border-subtle bg-bg-surface-2 p-1">
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={search.placeholder}
-                className="w-full rounded-md border border-border-subtle bg-bg-primary px-2 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
-              />
-            </div>
-          )}
-          {/* ohne Suchbegriff die eigene Liste, mit Suchbegriff die Treffer */}
-          {(query ? found : characters).map((c) => {
+          {/* zuerst die eigene Liste, darunter das Suchfeld für weitere (SC/Statist*in) */}
+          {characters.map((c) => {
             const note = tierLabel(c) ?? hint?.(c);
             return (
               <button
@@ -111,8 +101,42 @@ export function CharacterSelect({
               </button>
             );
           })}
-          {query && found.length === 0 && (
-            <div className="px-2 py-2 text-[0.8125rem] text-text-tertiary">Niemand gefunden.</div>
+          {search && (
+            <div className="mt-1 border-t border-border-subtle pt-1.5">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={search.placeholder}
+                className="w-full rounded-md border border-border-subtle bg-bg-primary px-2 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+              />
+              {query &&
+                found.map((c) => {
+                  const note = tierLabel(c) ?? hint?.(c);
+                  return (
+              <button
+                      type="button"
+                      key={c.id}
+                      role="option"
+                      aria-selected={c.id === current.id}
+                      onClick={() => {
+                        onChange(c.id);
+                        setOpen(false);
+                        setQ("");
+                      }}
+                      className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-[0.875rem] hover:bg-white/[0.06] ${
+                        c.id === current.id ? "text-accent" : "text-text-primary"
+                      }`}
+                    >
+                      {avatar(c, "h-6 w-6")}
+                      <span className="min-w-0 flex-1 truncate">{c.name}</span>
+                      {note && <span className="shrink-0 text-[0.75rem] text-text-tertiary">{note}</span>}
+                    </button>
+                  );
+                })}
+              {query && found.length === 0 && (
+                <div className="px-2 py-2 text-[0.8125rem] text-text-tertiary">Niemand gefunden.</div>
+              )}
+            </div>
           )}
         </div>
       )}

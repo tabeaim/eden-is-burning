@@ -9,7 +9,6 @@ import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { pageHeader } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
 import { TIER_NAMES, playsAs, tierLabel, tierOf } from "@/lib/characters";
-import { StatistActions } from "@/components/StatistActions";
 import { PhoneSettings } from "@/components/phone/PhoneSettings";
 import { NewCharacterButton } from "@/components/NewCharacterButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -334,12 +333,80 @@ function CharactersTab() {
           <CharacterEditor key={c.id} character={c} />
         ))}
       <NewCharacterButton kind="extra" />
+
+      <Trash />
     </div>
   );
 }
 
+// Papierkorb: gelöschte Charaktere aller Stufen wiederherstellen oder endgültig
+// löschen. Sichtbar sind die eigenen, alle Statist*innen (die gehören allen) und
+// für Admins alles.
+function Trash() {
+  const { trashedCharacters, restoreCharacter, deleteCharacter, currentPlayer, isAdmin, posts } =
+    useStore();
+  const [purge, setPurge] = useState<Character | null>(null);
+  if (!currentPlayer) return null;
+  const mine = trashedCharacters.filter(
+    (c) =>
+      isAdmin ||
+      tierOf(c) === "extra" ||
+      c.player_id === currentPlayer.id ||
+      (c.co_owner_ids ?? []).includes(currentPlayer.id),
+  );
+  if (mine.length === 0) return null;
+  const postCount = (c: Character) => posts.filter((p) => p.character_id === c.id).length;
+  return (
+    <>
+      <h2 className="font-display lowercase text-[2rem] leading-none text-accent mt-6">papierkorb.</h2>
+      {mine.map((c) => (
+        <div
+          key={c.id}
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-border-subtle bg-bg-surface px-4 py-3"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={characterImage(c)} alt="" className="h-10 w-10 rounded-full object-cover bg-bg-primary opacity-60" />
+          <div className="min-w-0 flex-1">
+            <div className="text-[0.875rem] text-text-primary">{c.name}</div>
+            <div className="text-[0.8125rem] text-text-tertiary">
+              {TIER_NAMES[tierOf(c)]} · {postCount(c)} {postCount(c) === 1 ? "Post" : "Posts"}
+            </div>
+          </div>
+          <button
+            onClick={() => restoreCharacter(c.id)}
+            className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08]"
+          >
+            Wiederherstellen
+          </button>
+          <button
+            onClick={() => setPurge(c)}
+            className="rounded-md border border-red-400/40 px-3 py-1.5 text-[0.8125rem] text-red-300 hover:bg-red-500/10"
+          >
+            Endgültig löschen
+          </button>
+        </div>
+      ))}
+      {purge && (
+        <ConfirmDialog
+          title={`${purge.name} endgültig löschen?`}
+          warning={`Das lässt sich NICHT rückgängig machen. Mit ${purge.name} werden ${postCount(purge)} ${
+            postCount(purge) === 1 ? "Post" : "Posts"
+          }, alle Zitate, Chats und Anrufe gelöscht – auch in Szenen anderer Spieler*innen.`}
+          text="Wenn du unsicher bist, lass den Charakter einfach im Papierkorb liegen."
+          confirmLabel="Endgültig löschen"
+          onCancel={() => setPurge(null)}
+          onConfirm={() => {
+            deleteCharacter(purge.id);
+            setPurge(null);
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 function CharacterEditor({ character }: { character: Character }) {
-  const { updateCharacter, deleteCharacter, posts, currentPlayer } = useStore();
+  const { updateCharacter, trashCharacter, posts, currentPlayer } = useStore();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmMain, setConfirmMain] = useState(false);
   const postCount = posts.filter((p) => p.character_id === character.id).length;
@@ -383,18 +450,15 @@ function CharacterEditor({ character }: { character: Character }) {
   const nameMissing = !draft.name.trim();
   function save() {
     if (nameMissing) return;
-    // Handy-Einstellungen speichern sich selbst (PhoneSettings) – nicht mit dem
-    // Stand vom Öffnen des Formulars überschreiben.
-    // Dasselbe gilt für Zuordnung und Stufe (eigene Knöpfe, speichern sofort) –
-    // sonst würfe „Speichern" sie auf den Stand vom Öffnen zurück.
-    const rest = { ...draft };
-    delete rest.phone;
-    delete rest.co_owner_ids;
-    delete rest.npc_tier;
-    delete rest.is_npc;
-    // … und wer den Charakter „besitzt" (ändert sich z.B. beim Wechsel der Stufe)
-    delete (rest as Partial<Character>).player_id;
-    updateCharacter(character.id, rest);
+    // Nur die Grunddaten dieses Formulars speichern – Inhaltliches (Profil),
+    // Handy, Zuordnung und Stufe haben eigene Stellen und speichern selbst.
+    updateCharacter(character.id, {
+      name: draft.name.trim(),
+      faceclaim: draft.faceclaim,
+      role: draft.role,
+      age: draft.age,
+      area: draft.area,
+    });
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
   }
@@ -488,14 +552,6 @@ function CharacterEditor({ character }: { character: Character }) {
                   className={field}
                 />
               </Labeled>
-              <Labeled label={`Tagline (${(draft.tagline ?? "").length}/60)`}>
-                <input
-                  value={draft.tagline ?? ""}
-                  maxLength={60}
-                  onChange={(e) => set("tagline", e.target.value)}
-                  className={field}
-                />
-              </Labeled>
               <Labeled label="Rolle">
                 <input
                   value={draft.role ?? ""}
@@ -534,22 +590,14 @@ function CharacterEditor({ character }: { character: Character }) {
             </div>
           </div>
 
-          <Labeled label={`Bio (${(draft.bio ?? "").length}/1000)`}>
-            <textarea
-              value={draft.bio ?? ""}
-              maxLength={1000}
-              rows={4}
-              onChange={(e) => set("bio", e.target.value)}
-              className={`${field} resize-y`}
-            />
-          </Labeled>
-          <Labeled label="Pinterest-URL">
-            <input
-              value={draft.pinterest_url ?? ""}
-              onChange={(e) => set("pinterest_url", e.target.value)}
-              className={field}
-            />
-          </Labeled>
+          <p className="text-[0.8125rem] text-text-tertiary">
+            Hier stehen nur die Grunddaten und Einstellungen. Alles Inhaltliche (Tagline, Zitat,
+            Beschreibung, Looks, Facts …) bearbeitest du direkt im{" "}
+            <Link href={`/charaktere/${character.id}`} className="text-accent hover:underline">
+              Profil
+            </Link>
+            .
+          </p>
 
           {/* Handy: Main Characters voll, Supporting Characters reduziert, Statist*innen gar nicht */}
           {tierOf(character) !== "extra" && (
@@ -591,15 +639,6 @@ function CharacterEditor({ character }: { character: Character }) {
               }}
             />
           )}
-          {tierOf(character) === "extra" && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-subtle p-3 sm:p-4">
-              <p className="min-w-0 flex-1 text-[0.8125rem] text-text-tertiary">
-                Statist*innen dürfen alle bearbeiten und zeitweise bespielen.
-              </p>
-              <StatistActions character={character} />
-            </div>
-          )}
-
           <div className="flex items-center gap-3">
             <button
               onClick={save}
@@ -621,7 +660,20 @@ function CharacterEditor({ character }: { character: Character }) {
             </Link>
           </div>
 
-          <div className="flex justify-end border-t border-border-subtle pt-3">
+          <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border-subtle pt-3">
+            {/* zeitweise bespielte Statist*in: wieder von mir lösen */}
+            {tierOf(character) === "extra" && currentPlayer && playsAs(character, currentPlayer.id) && (
+              <button
+                onClick={() =>
+                  updateCharacter(character.id, {
+                    co_owner_ids: (character.co_owner_ids ?? []).filter((id) => id !== currentPlayer.id),
+                  })
+                }
+                className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08]"
+              >
+                Von mir lösen
+              </button>
+            )}
             <button
               onClick={() => setConfirmDelete(true)}
               className="flex items-center gap-1.5 rounded-md border border-red-400/40 px-3 py-1.5 text-[0.8125rem] text-red-300 hover:bg-red-500/10"
@@ -631,15 +683,16 @@ function CharacterEditor({ character }: { character: Character }) {
           </div>
           {confirmDelete && (
             <ConfirmDialog
-              title={`${character.name} löschen?`}
-              text={`${kindName} wird endgültig gelöscht – samt ${postCount} ${
+              title={`${character.name} wirklich löschen?`}
+              warning={`Achtung: ${character.name} verschwindet für alle aus Listen, Szenen-Auswahl und Handy.`}
+              text={`${kindName} mit ${postCount} ${
                 postCount === 1 ? "Post" : "Posts"
-              }, Zitaten, Chats und Anrufen. Aus allen Szenen wird er ausgetragen. Das lässt sich nicht rückgängig machen.`}
-              confirmLabel={`${kindName} löschen`}
+              } kommt in den Papierkorb (unten bei „Meine Charaktere“) und lässt sich von dort wiederherstellen. Posts, Chats und Anrufe bleiben erhalten.`}
+              confirmLabel="In den Papierkorb"
               onCancel={() => setConfirmDelete(false)}
               onConfirm={() => {
                 setConfirmDelete(false);
-                deleteCharacter(character.id);
+                trashCharacter(character.id);
               }}
             />
           )}

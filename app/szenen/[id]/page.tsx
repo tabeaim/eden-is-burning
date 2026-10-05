@@ -828,12 +828,12 @@ function ReplyBox({
             <div className="mt-1">
               {myChars.length + extras.length > 1 ? (
                 <CharacterSelect
-                  characters={myChars}
+                  // In der Liste nur die Main Characters; Nebenfiguren über die Suche darunter
+                  characters={myChars.filter((c) => !c.is_npc)}
                   value={activeChar?.id ?? null}
                   onChange={setActiveCharId}
                   hint={(c) => (scene.participant_ids.includes(c.id) ? null : "steigt neu ein")}
-                  // Supporting Characters, denen ich zugeordnet bin, stehen schon in der
-                  // Liste; über die Suche kommen alle Statist*innen dazu.
+                  // Suche: Supporting Characters, denen ich zugeordnet bin, und alle Statist*innen
                   search={{ placeholder: "SC oder Statist*in …", characters: [...myChars.filter((c) => c.is_npc), ...extras] }}
                 />
               ) : (

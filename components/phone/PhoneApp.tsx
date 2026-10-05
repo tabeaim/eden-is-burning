@@ -167,6 +167,7 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
             owner={me}
             onPick={setContact}
             onEdit={setEditing}
+            onMark={(patch) => updateCharacter(me.id, { phone: { ...me.phone, ...patch } })}
             onMessage={(c) => {
               // „Neue SMS" mit diesem Kontakt als Empfänger*in öffnen
               try {

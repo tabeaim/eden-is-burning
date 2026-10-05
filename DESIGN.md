@@ -23,8 +23,9 @@ auch für Kommentare.
 - Alle drei lassen sich direkt anlegen (`NewCharacterButton`).
 - **Wer bespielt was:** `playsAs` / `canWriteAs` – Main: Besitzer*in; SC:
   Zugeordnete; Statist*in: wer sie gerade zeitweise bespielt (`co_owner_ids`).
-  Bespielte Nebenfiguren stehen im Handy-Wechsel und im „Antwort als"-Menü; dort
-  findet das Suchfeld „SC oder Statist*in …" zusätzlich alle Statist*innen.
+  Bespielte Nebenfiguren stehen im Handy-Wechsel. Im „Antwort als"-Menü stehen
+  die Main Characters; darunter findet das Suchfeld „SC oder Statist*in …" die
+  zugeordneten SCs und alle Statist*innen.
 - **Abonniert:** Szenen und Chats einer Nebenfigur erscheinen im Dashboard nur
   bei der Person, die dort selbst mit ihr gestartet oder geantwortet hat
   (`isSubscribed`) – mehrere können dieselbe Figur bespielen.
@@ -101,9 +102,16 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
 - **Hover in der Szene:** Die Bio erscheint nur über dem Avatar (benannte Gruppe
   `group/ava`), Bearbeiten/Löschen eines Posts beim Hovern über dem Post
   (`group/post`) – verschachtelte Hover immer als benannte Gruppen.
-- **Löschen** (Szene, Charakter, NPC, Chat): roter Rand-Button
+- **Löschen** (Szene, Charakter, Chat): roter Rand-Button
   (`border-red-400/40 text-red-300`) im Bearbeiten-Bereich, immer mit
-  `ConfirmDialog`, der nennt, was mit verschwindet.
+  `ConfirmDialog`, der nennt, was mit verschwindet; für wirklich Endgültiges mit
+  fetter `warning`. Charaktere aller Stufen kommen zuerst in den **Papierkorb**
+  (Einstellungen → Meine Charaktere, wiederherstellbar); erst von dort lässt sich
+  endgültig löschen.
+- **Profil bearbeiten:** Alles Inhaltliche (Tagline, Zitat, Texte, Looks, Facts,
+  Banner) wird direkt im Profil bearbeitet (`ProfileEditPanel`). Unter
+  Einstellungen → Meine Charaktere stehen nur Grunddaten (Name, Foto, Faceclaim,
+  Rolle, Alter, Gegend) und Einstellungen (Handy, Zuordnung, Stufe, Löschen).
 - **Einstellungen:** Reiter als runde Pills, Abschnitte mit Display-Überschrift
   („charaktere.", „npcs."), Buttons wie auf den Detailseiten. Ein Charakter oder
   NPC braucht immer einen Namen – „Neuer Charakter"/„Neuer NPC"
@@ -198,11 +206,13 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Design-Systems (`rounded-md`, Primär-Aktion `bg-accent/90 text-black`). Runde,
   farbige Knöpfe nur dort, wo das Handy selbst simuliert wird (Annehmen/Ablehnen,
   Senden, Dock).
-- **Kontakte** (`ContactList`): oben hervorgehoben („Favoriten") die fünf
-  Charaktere, mit denen der Handy-Besitzer am meisten zu tun hatte (Posts in
-  gemeinsamen Szenen + Nachrichten in gemeinsamen Chats), darunter alle, mit
-  denen es schon Kontakt gab. Die Pill neben dem Suchfeld schaltet zwischen
-  „Relevante" und „Alle"; die Suche findet immer alle. Je Kontakt: anrufen
+- **Kontakte** (`ContactList`): oben die „Favoriten" (von Hand gesetzt, ohne
+  farbige Hinterlegung; anfangs ein zufälliger), darunter alphabetisch die
+  relevanten Kontakte – wer schon Kontakt hatte (Szene, Chat, Anruf, eigener
+  Kontakt-Eintrag) oder von Hand als relevant markiert ist. Rechtsklick bzw.
+  langes Drücken auf einen Kontakt setzt Favorit und „relevant". Die Pill neben
+  dem Suchfeld schaltet zwischen „Relevante" und „Alle"; die Suche findet immer
+  alle. Je Kontakt: anrufen
   (Zeile), Nachricht schreiben, bearbeiten. Jeder Kontakt lässt sich je Handy
   umbenennen und mit Foto versehen: Der Name gilt überall auf diesem Handy
   (`contactName`/`chatTitle(…, owner)`), das Foto nur bei Kontakten und Anrufen

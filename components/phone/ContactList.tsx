@@ -7,25 +7,35 @@ import { contactName } from "@/lib/phone";
 import { tierLabel } from "@/lib/characters";
 import { Icon } from "@/components/Icon";
 import { ContactAvatar } from "./PhoneFrame";
+import { Sheet, SheetButton, SheetList } from "./Sheet";
+import { useLongPress } from "./useLongPress";
 
-// Kontaktliste eines Handys: oben hervorgehoben die fünf Charaktere, mit denen der
-// Besitzer am meisten geschrieben hat (Posts in gemeinsamen Szenen + Nachrichten
-// in gemeinsamen Chats), danach alle anderen alphabetisch. Namen und Fotos nach
-// den Kontakt-Einträgen dieses Handys. Ohne `onPick`/`onEdit` nur zum Ansehen.
+// Kontaktliste eines Handys: oben die Favoriten (von Hand gesetzt; solange noch
+// keiner gewählt wurde, ein zufälliger), darunter alphabetisch die relevanten
+// Kontakte – alle, mit denen der Besitzer schon zu tun hatte (gemeinsame Szene,
+// Chat, Anruf, eigener Kontakt-Eintrag) oder die von Hand als relevant markiert
+// sind. Namen und Fotos nach den Kontakt-Einträgen dieses Handys.
+// Ohne die on…-Handler nur zum Ansehen (Charakterprofil).
 export function ContactList({
   owner,
   onPick,
   onMessage,
   onEdit,
+  onMark,
 }: {
   owner: Character;
   onPick?: (c: Character) => void; // anrufen
   onMessage?: (c: Character) => void; // Nachricht schreiben
   onEdit?: (c: Character) => void;
+  // Favoriten / von Hand als relevant markierte Kontakte ändern (Rechtsklick
+  // bzw. langes Drücken auf einen Kontakt)
+  onMark?: (patch: { favorites?: string[]; relevant?: string[] }) => void;
 }) {
   const { characters, npcs, scenes, posts, chats, chatMessages, calls, currentPlayer } = useStore();
   // „Relevante": mit wem der Besitzer schon Kontakt hatte · „Alle": wirklich alle
   const [scope, setScope] = useState<"relevant" | "all">("relevant");
+  const [menuFor, setMenuFor] = useState<Character | null>(null);
+  const longPress = useLongPress<Character>((c) => onMark && setMenuFor(c));
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
 
@@ -60,10 +70,11 @@ export function ContactList({
     );
   const name = (c: Character) => contactName(owner, c);
   const byName = (a: Character, b: Character) => name(a).localeCompare(name(b), "de");
-  const top = everyone
-    .filter((c) => (shared.get(c.id) ?? 0) > 0)
-    .sort((a, b) => (shared.get(b.id) ?? 0) - (shared.get(a.id) ?? 0) || byName(a, b))
-    .slice(0, 5);
+  // Favoriten: gespeicherte Auswahl; ohne Auswahl ein zufälliger (fest je Handy)
+  const favoriteIds =
+    owner.phone?.favorites ?? (everyone.length ? [everyone[hash(owner.id) % everyone.length].id] : []);
+  const manualRelevant = owner.phone?.relevant ?? [];
+  const top = everyone.filter((c) => favoriteIds.includes(c.id)).sort(byName);
   const matches = everyone
     .filter(
       (c) => !query || name(c).toLowerCase().includes(query) || c.name.toLowerCase().includes(query),
@@ -73,9 +84,11 @@ export function ContactList({
   // sonst die Favoriten oben und darunter die Relevanten bzw. alle
   const rest = query
     ? matches
-    : matches.filter((c) => !top.includes(c) && (scope === "all" || known(c)));
+    : matches.filter(
+        (c) => !top.includes(c) && (scope === "all" || known(c) || manualRelevant.includes(c.id)),
+      );
 
-  const row = (c: Character, highlighted: boolean) => {
+  const row = (c: Character) => {
     const renamed = name(c) !== c.name;
     const body = (
       <>
@@ -100,7 +113,13 @@ export function ContactList({
     return (
       <div
         key={c.id}
-        className={`flex items-center gap-1 pr-2 ${highlighted ? "" : "hover:bg-white/[0.03]"}`}
+        {...(onMark ? longPress(c) : {})}
+        onContextMenu={(e) => {
+          if (!onMark) return;
+          e.preventDefault();
+          setMenuFor(c);
+        }}
+        className="flex select-none items-center gap-1 pr-2 [-webkit-touch-callout:none] hover:bg-white/[0.03]"
       >
         {onPick ? (
           <button
@@ -165,13 +184,11 @@ export function ContactList({
       {!query && top.length > 0 && (
         <>
           <div className={heading}>Favoriten</div>
-          <div className="mx-3 overflow-hidden rounded-xl border border-accent/40 bg-accent-soft">
-            {top.map((c) => row(c, true))}
-          </div>
+          {top.map((c) => row(c))}
           <div className={heading}>{scope === "all" ? "Alle Kontakte" : "Weitere Kontakte"}</div>
         </>
       )}
-      {rest.map((c) => row(c, false))}
+      {rest.map((c) => row(c))}
       {rest.length === 0 && (query || top.length === 0) && (
         <p className="p-6 text-center text-[0.875rem] text-text-tertiary">
           {query
@@ -179,6 +196,50 @@ export function ContactList({
             : "Noch keine Kontakte – such oben nach einem Namen oder schalte auf „Alle“."}
         </p>
       )}
+
+      {/* Rechtsklick / langes Drücken: Favorit und „relevant" von Hand setzen */}
+      {menuFor && onMark && (
+        <Sheet onClose={() => setMenuFor(null)}>
+          <div className="mb-2 truncate px-1 text-[0.8125rem] text-text-tertiary">{name(menuFor)}</div>
+          <SheetList>
+            <SheetButton
+              onClick={() => {
+                const on = favoriteIds.includes(menuFor.id);
+                onMark({
+                  favorites: on ? favoriteIds.filter((id) => id !== menuFor.id) : [...favoriteIds, menuFor.id],
+                });
+                setMenuFor(null);
+              }}
+            >
+              {favoriteIds.includes(menuFor.id) ? "Aus den Favoriten entfernen" : "Als Favorit markieren"}
+            </SheetButton>
+            {/* wer ohnehin Kontakt hatte, ist automatisch relevant */}
+            {(manualRelevant.includes(menuFor.id) || !known(menuFor)) && (
+              <SheetButton
+                onClick={() => {
+                  const on = manualRelevant.includes(menuFor.id);
+                  onMark({
+                    relevant: on ? manualRelevant.filter((id) => id !== menuFor.id) : [...manualRelevant, menuFor.id],
+                  });
+                  setMenuFor(null);
+                }}
+              >
+                {manualRelevant.includes(menuFor.id)
+                  ? "Nicht mehr als relevant markieren"
+                  : "Als relevanten Kontakt markieren"}
+              </SheetButton>
+            )}
+            <SheetButton onClick={() => setMenuFor(null)}>Abbrechen</SheetButton>
+          </SheetList>
+        </Sheet>
+      )}
     </>
   );
+}
+
+// Kleiner fester „Zufall" aus einer ID (für den vorgegebenen Favoriten)
+function hash(text: string): number {
+  let h = 0;
+  for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) >>> 0;
+  return h;
 }

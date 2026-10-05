@@ -163,7 +163,9 @@ export default function CharaktereePage() {
           <CharacterCard
             key={c.id}
             c={c}
-            player={player(c.player_id)}
+            players={(tierOf(c) === "supporting" ? [c.player_id, ...(c.co_owner_ids ?? [])] : [c.player_id])
+              .map((pid) => player(pid))
+              .filter((x): x is Player => !!x)}
             postCount={postCounts.get(c.id) ?? 0}
           />
         ))}
@@ -191,11 +193,11 @@ export default function CharaktereePage() {
 // dem Bild. Die ganze Karte führt zum Profil (Namens-Link, über die Karte gestreckt).
 function CharacterCard({
   c,
-  player,
+  players,
   postCount,
 }: {
   c: Character;
-  player?: Player;
+  players: Player[]; // Main: Besitzer*in · SC: alle Zugeordneten · Statist*in: wer sie angelegt hat
   postCount: number;
 }) {
   const tier = tierOf(c);
@@ -217,7 +219,12 @@ function CharacterCard({
       {/* Avatar im Originalformat, nie größer als das Bild selbst; mt-auto hält die
           Bilder einer Reihe auf gleicher Höhe, auch ohne Tagline */}
       <div className="mt-auto w-full pt-3">
-        <div className="relative mx-auto aspect-[600/502] w-full max-w-[600px] overflow-hidden rounded-lg bg-bg-primary">
+        <Link
+          href={`/charaktere/${c.id}`}
+          aria-label={c.name}
+          tabIndex={-1}
+          className="relative mx-auto block aspect-[600/502] w-full max-w-[600px] overflow-hidden rounded-lg bg-bg-primary"
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={characterImage(c)}
@@ -235,7 +242,7 @@ function CharacterCard({
               </p>
             </div>
           )}
-        </div>
+        </Link>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[0.8125rem] uppercase tracking-wider text-text-secondary">
@@ -243,26 +250,24 @@ function CharacterCard({
           <span className="font-bold text-text-primary">{postCount}</span>{" "}
           {postCount === 1 ? "Post" : "Posts"}
         </span>
-        {player && (
+        {players.length > 0 && (
           <>
             <span>· {tier === "extra" ? "angelegt von" : "played by"}</span>
-            <span className="relative z-10 normal-case tracking-normal">
-              <Bubble
-                href={`/spieler/${player.username}`}
-                leading={
-                  player.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={player.avatar_url}
-                      alt=""
-                      className="h-5 w-5 rounded-full object-cover"
-                    />
-                  ) : undefined
-                }
-              >
-                {player.username}
-              </Bubble>
-            </span>
+            {players.map((pl) => (
+              <span key={pl.id} className="relative z-10 normal-case tracking-normal">
+                <Bubble
+                  href={`/spieler/${pl.username}`}
+                  leading={
+                    pl.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={pl.avatar_url} alt="" className="h-5 w-5 rounded-full object-cover" />
+                    ) : undefined
+                  }
+                >
+                  {pl.username}
+                </Bubble>
+              </span>
+            ))}
           </>
         )}
       </div>

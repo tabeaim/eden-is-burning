@@ -5,8 +5,8 @@ import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { playsAs } from "@/lib/characters";
 
-// Was man mit einer Statist*in tun kann (Karte in der Übersicht, Profil,
-// Einstellungen): „Bespielen" fragt, ob sie zum Supporting Character werden soll
+// Was man mit einer Statist*in tun kann (Karte in der Übersicht, Profil):
+// „Bespielen" fragt, ob sie zum Supporting Character werden soll
 // (dann nur noch mir zugeordnet, nicht mehr bei den Statist*innen) oder ob ich sie
 // nur zeitweise bespiele (bleibt Statist*in, auch für andere). Wer sie zeitweise
 // bespielt, kann sie jederzeit wieder von sich lösen.
@@ -27,14 +27,9 @@ export function StatistActions({ character, className = "" }: { character: Chara
   return (
     <div className={`relative z-10 flex flex-wrap items-center justify-center gap-2 ${className}`}>
       {playing ? (
-        <>
-          <button onClick={() => updateCharacter(character.id, { co_owner_ids: co.filter((id) => id !== me) })} className={secondary}>
-            Von mir lösen
-          </button>
-          <button onClick={() => setAsking(true)} className={secondary}>
-            Zum Supporting Character machen
-          </button>
-        </>
+        <button onClick={() => updateCharacter(character.id, { co_owner_ids: co.filter((id) => id !== me) })} className={secondary}>
+          Von mir lösen
+        </button>
       ) : (
         <button onClick={() => setAsking(true)} className={primary}>
           Bespielen
