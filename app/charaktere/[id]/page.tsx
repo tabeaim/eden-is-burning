@@ -10,13 +10,10 @@ import { Icon } from "@/components/Icon";
 import { Bubble, LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
 import { SceneCard } from "@/components/SceneCard";
-import { Facts, FactRow } from "@/components/Facts";
 import {
   RELATION_CATEGORIES,
   TIER_NAMES,
   ageAt,
-  isHidden,
-  normalizeHeight,
   tierLabel,
   tierOf,
 } from "@/lib/characters";
@@ -97,7 +94,7 @@ export default function CharacterPage({
     !!prof.traits_minus?.length ||
     !!prof.likes?.length ||
     !!prof.dislikes?.length;
-  if (c.is_npc && !c.bio && !c.personality && !c.banner_url && !c.quote && !hasMore) {
+  if (c.is_npc && !c.bio && !c.personality && !c.quote && !hasMore) {
     return <NpcFacts c={c} />;
   }
 
@@ -115,10 +112,15 @@ export default function CharacterPage({
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-1 pb-8">
-      {/* Inhalt linksbündig in gewohnter Breite – Container-Breite bleibt einheitlich */}
-      <div className="max-w-4xl">
+      {/* Inhalt linksbündig – ohne Banner-Spalte nutzt das Profil die volle Breite */}
+      <div>
       {/* Zitat – direkt unter dem Seitentitel, über der Trennlinie */}
       <QuoteBlock c={c} />
+      {c.tagline && (
+        <div className="mt-3">
+          <Bubble className="uppercase tracking-wider">{c.tagline}</Bubble>
+        </div>
+      )}
 
       {/* Inhaltliches wird direkt hier im Profil bearbeitet */}
       {canEditCharacter(c) && !editing && (
@@ -138,18 +140,8 @@ export default function CharacterPage({
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mt-4 mb-6" />
 
-      <div className="grid md:grid-cols-[250px_1fr] gap-8 items-start">
-        {/* LINKS: Profil-Banner + Usertag */}
-        <div>
-          <ProfileBanner c={c} />
-          {c.tagline && (
-            <div className="mt-3 flex justify-center">
-              <Bubble className="uppercase tracking-wider">{c.tagline}</Bubble>
-            </div>
-          )}
-        </div>
-
-        {/* RECHTS: Tabs + Inhalt */}
+      <div>
+        {/* Reiter + Inhalt über die ganze Breite */}
         <div>
           {/* Tabs */}
           <div className="flex flex-wrap gap-1.5 mb-6">
@@ -304,46 +296,6 @@ function NpcFacts({ c }: { c: Character }) {
   );
 }
 
-// Profil-Banner (Seitenbild, NICHT der Avatar; Upload folgt in den Einstellungen).
-// Looks erscheinen beim Hover – Hintergrund dunkelt leicht ab, Schrift tritt hervor.
-function ProfileBanner({ c }: { c: Character }) {
-  return (
-    <div
-      className="group relative h-[492px] w-full overflow-hidden rounded-xl bg-bg-surface"
-      style={{
-        backgroundImage: c.banner_url
-          ? undefined
-          : "linear-gradient(180deg, rgba(163,163,128,0.16), rgba(10,10,11,0.7))",
-      }}
-    >
-      {c.banner_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={c.banner_url}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      )}
-      {!c.banner_url && (
-        <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-[0.875rem] text-text-tertiary">
-          Profil-Banner
-        </div>
-      )}
-
-      {/* Looks-Overlay bei Hover */}
-      <div className="absolute inset-0 flex flex-col bg-black/80 px-4 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-        <h2 className="font-display lowercase text-[2rem] text-accent leading-none">looks.</h2>
-        <Facts className="mt-3">
-          <FactRow label="Height" value={isHidden(c, "height") ? null : normalizeHeight(c.height)} />
-          <FactRow label="Figure" value={isHidden(c, "figure") ? null : c.figure} />
-          <FactRow label="Hair" value={isHidden(c, "hair") ? null : c.hair} />
-          <FactRow label="Eyes" value={isHidden(c, "eyes") ? null : c.eyes} />
-        </Facts>
-      </div>
-    </div>
-  );
-}
-
 // Zitat anzeigen/hinzufügen – volle Breite über "facts".
 // Zitat des Charakters (bearbeitet wird es über „Bearbeiten" im Profil)
 function QuoteBlock({ c }: { c: Character }) {
@@ -356,14 +308,15 @@ function QuoteBlock({ c }: { c: Character }) {
   );
 }
 
-// Vibes: Inspo-Bilder (Supporting Characters und Statist*innen)
+// Vibes: Inspo-Bilder nebeneinander wie Pinterest-Pins (unterschiedlich hoch,
+// in Spalten gestapelt)
 function Vibes({ c }: { c: Character }) {
   const vibes = c.vibes ?? [];
   if (vibes.length === 0) return null;
   return (
-    <section className="sm:col-span-2">
+    <section className="sm:col-span-2 lg:col-span-3">
       <Heading>vibes.</Heading>
-      <div className="columns-2 gap-3 sm:columns-3">
+      <div className="columns-2 gap-3 sm:columns-3 lg:columns-4">
         {vibes.map((src, i) => (
           <a
             key={i}
@@ -391,25 +344,22 @@ function Heading({ children }: { children: React.ReactNode }) {
 
 function GeneralTab({ c }: { c: Character }) {
   return (
-    <div className="grid sm:grid-cols-2 gap-x-8 gap-y-6 items-start">
-      {/* Kurzbeschreibung – links neben den Facts */}
-      <div>
-        {c.bio ? (
-          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary">
-            {c.bio}
-          </p>
-        ) : (
-          <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
-        )}
-      </div>
+    <div className="flex flex-col gap-8">
+      {c.bio ? (
+        <p className="max-w-3xl whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary">
+          {c.bio}
+        </p>
+      ) : (
+        <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
+      )}
 
-      {/* Facts, Studium/Arbeit, Looks – rechts */}
-      <div className="flex flex-col gap-7">
-        {/* Looks stehen nur im Hover über dem Profil-Banner */}
+      {/* Facts in Spalten: wer – Leben – Aussehen */}
+      <div className="grid items-start gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
         <ProfileFacts c={c} />
+        <ProfileLooks c={c} />
       </div>
 
-      {(c.vibes ?? []).length > 0 && <Vibes c={c} />}
+      <Vibes c={c} />
     </div>
   );
 }

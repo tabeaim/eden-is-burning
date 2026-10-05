@@ -34,6 +34,12 @@ export function ProfileFacts({ c }: { c: Character }) {
   const age = ageAt(c);
   const year = studyYearAt(c);
   const main = tierOf(c) === "main";
+  const life = [
+    ["Residence", shown(c, "area", c.area ? areaName(c.area) : null)],
+    ["Occupation", shown(c, "role", c.role)],
+    ["Status", shown(c, "status", c.status)],
+    ["Sexuality", shown(c, "sexuality", c.sexuality)],
+  ] as const;
   return (
     <>
       <section>
@@ -43,14 +49,20 @@ export function ProfileFacts({ c }: { c: Character }) {
           <FactRow label="Age" value={shown(c, "age", age != null ? `${age}` : null)} />
           <FactRow label="Zodiac" value={shown(c, "age", zodiacOf(p.birthdate)?.en)} />
           <FactRow label="Gender" value={shown(c, "gender", p.gender)} />
-          <FactRow label="Residence" value={shown(c, "area", c.area ? areaName(c.area) : null)} />
           <FactRow label="Origin" value={shown(c, "origin", c.origin)} />
-          <FactRow label="Status" value={shown(c, "status", c.status)} />
-          <FactRow label="Sexuality" value={shown(c, "sexuality", c.sexuality)} />
-          <FactRow label="Occupation" value={shown(c, "role", c.role)} />
-          <FactRow label="Faceclaim" value={c.faceclaim} />
         </Facts>
       </section>
+
+      {life.some(([, v]) => v) && (
+        <section>
+          <SectionHeading>life.</SectionHeading>
+          <Facts>
+            {life.map(([label, value]) => (
+              <FactRow key={label} label={label} value={value} />
+            ))}
+          </Facts>
+        </section>
+      )}
 
       {main && isStudent(c) && (
         <section>
@@ -91,6 +103,7 @@ export function ProfileLooks({ c }: { c: Character }) {
     ["Figure", shown(c, "figure", c.figure)],
     ["Hair", shown(c, "hair", c.hair)],
     ["Eyes", shown(c, "eyes", c.eyes)],
+    ["Faceclaim", c.faceclaim],
   ] as const;
   if (!rows.some(([, v]) => v)) return null;
   return (

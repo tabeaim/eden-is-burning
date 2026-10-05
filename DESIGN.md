@@ -125,7 +125,7 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   (Name, Age, Gender, Residence, Origin, Status, Sexuality, Occupation …).
 - **Alter und Studienjahr** werden berechnet (`ageAt`, `studyYearAt`): im Profil
   zum 1.1.2022 bzw. für den Herbst 2021, in einer Szene zum Datum der Szene.
-- **Profil-Reiter:** General (Kurzbeschreibung, Facts, Looks) · Character
+- **Profil-Reiter:** General (Kurzbeschreibung, Facts, Looks, Vibes) · Character
   (Beschreibung, Eigenschaften, Skills, Slider, Likes) · Biography (Timeline) ·
   Personal Things (Handy, nur Main Characters) · Inplay · Relations (nach
   Kategorie: love life, family, acquainted). Bausteine in
@@ -135,8 +135,12 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   (Bilder hinzufügen, verschieben, Größe, Drehung, Stapelfolge); gespeichert
   liegen die Bilder frei auf durchsichtigem Grund. Beim Hinzufügen kann ein
   einfarbiger Hintergrund entfernt werden (`lib/cutout.ts`).
-- **Facts:** Label und Wert in Großbuchstaben (`Facts`/`FactRow`). Looks stehen
-  nur im Hover über dem Profil-Banner. Größe immer in cm (`normalizeHeight`);
+- **Facts:** Label und Wert in Großbuchstaben (`Facts`/`FactRow`), in Spalten
+  nebeneinander: „facts." (wer), „life." (Leben), „studies."/„work.", „looks."
+  (Aussehen + Faceclaim). Das Profil hat keinen Hochkant-Banner mehr und nutzt
+  die volle Breite.
+- **Vibes:** Inspo-Bilder aller Charaktere nebeneinander wie Pinterest-Pins
+  (CSS-Spalten, unterschiedlich hohe Bilder), im Reiter General unter den Facts. Größe immer in cm (`normalizeHeight`);
   Sternzeichen wird aus dem Geburtsdatum berechnet (`zodiacOf`).
 - **Szenen im Profil:** `SceneCard compact` – Beteiligte als zusammengerückte
   Avatare + Vornamen, ohne Bubbles und ohne „Letzter Post".
