@@ -67,6 +67,13 @@ export default function LocationPage({
   const visitors = characters.filter((c) => visitorIds.has(c.id));
   const creator = loc.created_by ? player(loc.created_by) : undefined;
   const images = loc.images ?? [];
+  // Charaktere, die diesen Ort als Arbeitgeber eingetragen haben (und es zeigen)
+  const workers = characters.filter(
+    (c) =>
+      c.profile?.occupation_kind === "working" &&
+      c.profile.employer_location_id === loc.id &&
+      !(c.profile.hidden ?? []).includes("employer"),
+  );
   const people = loc.people ?? [];
 
   return (
@@ -120,6 +127,18 @@ export default function LocationPage({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={src} alt="" loading="lazy" className="block w-full h-auto" />
                   </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Wer hier arbeitet (Arbeitgeber in den Grunddaten des Charakters) */}
+          {workers.length > 0 && (
+            <section>
+              <Heading>works here.</Heading>
+              <div className="flex flex-wrap gap-1.5">
+                {workers.map((w) => (
+                  <CharacterBubble key={w.id} character={w} />
                 ))}
               </div>
             </section>

@@ -99,7 +99,7 @@ interface StoreValue extends PersistedState {
   deletePlot: (id: string) => void;
   canEditPlot: (plot: Plot) => boolean;
   updateCharacter: (id: string, patch: Partial<Character>) => void;
-  addCharacter: (playerId: string, name: string) => string;
+  addCharacter: (playerId: string, name: string, more?: Partial<Character>) => string;
   // Papierkorb: Charakter verschwindet aus allen Listen, bleibt aber erhalten
   trashCharacter: (id: string) => void;
   restoreCharacter: (id: string) => void;
@@ -849,7 +849,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  const addCharacter = useCallback((playerId: string, name: string) => {
+  const addCharacter = useCallback((playerId: string, name: string, more: Partial<Character> = {}) => {
     const id = uid("c");
     const newChar: Character = {
       id,
@@ -878,7 +878,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       personality: null,
       relationships: {},
     };
-    persist("addCharacter", supabase.from("characters").insert(newChar));
+    Object.assign(newChar, more);
+    // Rückfall ohne erweitertes Profil, falls schema-character-profile.sql noch fehlt
+    const { profile: _profile, ...legacy } = newChar;
+    void _profile;
+    persist(
+      "addCharacter",
+      supabase
+        .from("characters")
+        .insert(newChar)
+        .then((res) => (res.error && newChar.profile ? supabase.from("characters").insert(legacy) : res)),
+    );
     setState((s) => ({ ...s, characters: [...s.characters, newChar] }));
     return id;
   }, []);

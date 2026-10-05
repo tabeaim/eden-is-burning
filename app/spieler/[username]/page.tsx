@@ -73,7 +73,7 @@ export default function PlayerPage({
                 {areaName(c.area)}
               </div>
               {c.tagline && (
-                <div className="mt-1.5 inline-block rounded-full bg-white/[0.05] px-2 py-0.5 text-[0.875rem] text-text-secondary">
+                <div className="mt-1.5 inline-block rounded-full bg-white/[0.05] px-2 py-0.5 text-[0.6875rem] uppercase tracking-wider text-text-secondary">
                   {c.tagline}
                 </div>
               )}

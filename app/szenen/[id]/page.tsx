@@ -235,6 +235,7 @@ export default function ScenePage({
                 character={c}
                 player={player(c.player_id)}
                 term={searchTerm}
+                at={scene.inplay_date}
               />
             </div>
           );
@@ -563,11 +564,13 @@ function PostRow({
   character,
   player,
   term,
+  at,
 }: {
   post: Post;
   character: Character;
   player?: ReturnType<typeof useStore>["players"][number];
   term?: string;
+  at?: string; // Inplay-Datum der Szene (Alter der Charaktere zu diesem Zeitpunkt)
 }) {
   const { addQuote, currentPlayer, isAdmin, updatePost, deletePost, canWriteAs } = useStore();
   // Eigene Posts – oder als Admin alle – dürfen bearbeitet/gelöscht werden.
@@ -638,7 +641,7 @@ function PostRow({
     () => ({ __html: highlightTerm(renderPost(post.content), term ?? "") }),
     [post.content, term],
   );
-  const card = <SceneCharacterCard character={character} player={player} />;
+  const card = <SceneCharacterCard character={character} player={player} at={at} />;
   const prose = editing ? (
     <div className="flex-1 min-w-0">
       <div

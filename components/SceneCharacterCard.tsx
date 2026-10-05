@@ -4,6 +4,7 @@ import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
 import type { Character, Player } from "@/lib/types";
 import { Icon } from "./Icon";
+import { ageAt } from "@/lib/characters";
 
 // Große Charakterkarte für die Szenenansicht. Bildformat 600×502; die
 // Beschreibung (Bio) erscheint als Overlay, solange die Maus über dem Bild ist
@@ -11,10 +12,13 @@ import { Icon } from "./Icon";
 export function SceneCharacterCard({
   character,
   player,
+  at,
 }: {
   character: Character;
   player?: Player;
+  at?: string; // Inplay-Datum der Szene: Alter zu diesem Zeitpunkt
 }) {
+  const age = ageAt(character, at);
   return (
     <div className="w-[260px] max-w-full shrink-0">
       <div
@@ -35,7 +39,7 @@ export function SceneCharacterCard({
             className="pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 text-center opacity-0 transition-opacity duration-200 group-hover/ava:opacity-100"
           >
             <div className="mb-2 text-[0.875rem] font-semibold uppercase tracking-wider text-text-primary">
-              {[character.role, character.age ? `${character.age}` : null]
+              {[character.role, age != null ? `${age}` : null]
                 .filter(Boolean)
                 .join(" · ")}
             </div>

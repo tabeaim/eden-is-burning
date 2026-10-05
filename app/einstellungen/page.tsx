@@ -2,15 +2,14 @@
 
 import { characterImage } from "@/lib/avatar";
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useStore } from "@/lib/store";
-import { AREA_ORDER, AREAS, type AreaKey } from "@/lib/world";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { pageHeader } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
 import { TIER_NAMES, playsAs, tierLabel, tierOf } from "@/lib/characters";
 import { PhoneSettings } from "@/components/phone/PhoneSettings";
 import { NewCharacterButton } from "@/components/NewCharacterButton";
+import { CharacterBasicsForm } from "@/components/CharacterBasicsForm";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MultiSelect } from "@/components/MultiSelect";
 import { Icon } from "@/components/Icon";
@@ -428,39 +427,7 @@ function CharacterEditor({ character }: { character: Character }) {
     target?.scrollIntoView({ block: "start" });
     setJump(null);
   }, [jump, open, phoneAnchor]);
-  const [draft, setDraft] = useState(character);
-  const [saved, setSaved] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  function set<K extends keyof Character>(key: K, value: Character[K]) {
-    setDraft((d) => ({ ...d, [key]: value }));
-  }
-
-  async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = await uploadImage(file, "characters", IMAGE_SIZES.portrait);
-    set("faceclaim_image_url", url);
-    updateCharacter(character.id, { faceclaim_image_url: url });
-  }
-
   const kindName = TIER_NAMES[tierOf(character)];
-  // Ohne Namen wird nicht gespeichert
-  const nameMissing = !draft.name.trim();
-  function save() {
-    if (nameMissing) return;
-    // Nur die Grunddaten dieses Formulars speichern – Inhaltliches (Profil),
-    // Handy, Zuordnung und Stufe haben eigene Stellen und speichern selbst.
-    updateCharacter(character.id, {
-      name: draft.name.trim(),
-      faceclaim: draft.faceclaim,
-      role: draft.role,
-      age: draft.age,
-      area: draft.area,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
-  }
 
   return (
     <div
@@ -474,20 +441,20 @@ function CharacterEditor({ character }: { character: Character }) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={characterImage(draft)}
-          alt={draft.name}
+          src={characterImage(character)}
+          alt={character.name}
           className="w-10 h-10 rounded-full object-cover bg-bg-primary"
         />
         <div className="flex-1 min-w-0">
           <div className="text-[0.875rem] text-text-primary">
-            {draft.name}
+            {character.name}
             {character.is_npc && (
               <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
                 {tierLabel(character)}
               </span>
             )}
           </div>
-          <div className="text-[0.875rem] text-text-tertiary">{draft.role}</div>
+          <div className="text-[0.875rem] text-text-tertiary">{character.role}</div>
         </div>
         <span className="text-text-tertiary text-[0.875rem]">
           {open ? "Schließen" : "Bearbeiten"}
@@ -496,107 +463,7 @@ function CharacterEditor({ character }: { character: Character }) {
 
       {open && (
         <div className="px-4 pb-4 pt-1 flex flex-col gap-4 border-t border-border-subtle">
-          <div className="flex items-start gap-4 pt-4">
-            <div className="w-[110px] shrink-0">
-              <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-bg-primary border border-border-subtle">
-                {draft.faceclaim_image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={draft.faceclaim_image_url}
-                    alt=""
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-text-tertiary">
-                    <Icon name="photo" size={22} />
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={() => fileRef.current?.click()}
-                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-primary"
-              >
-                <Icon name="upload" size={13} /> Foto
-              </button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                onChange={onPhoto}
-                className="hidden"
-              />
-              <p className="mt-1 text-[0.875rem] text-text-tertiary text-center">
-                Pflicht für V1
-              </p>
-            </div>
-
-            <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Labeled label="Name *">
-                <input
-                  value={draft.name}
-                  onChange={(e) => set("name", e.target.value)}
-                  aria-invalid={nameMissing}
-                  className={`${field} ${nameMissing ? "!border-red-400/70" : ""}`}
-                />
-                {nameMissing && (
-                  <span className="mt-1 block text-[0.8125rem] text-red-300">
-                    Ohne Namen lässt sich {kindName} nicht speichern.
-                  </span>
-                )}
-              </Labeled>
-              <Labeled label="Faceclaim (Schauspieler)">
-                <input
-                  value={draft.faceclaim ?? ""}
-                  onChange={(e) => set("faceclaim", e.target.value)}
-                  className={field}
-                />
-              </Labeled>
-              <Labeled label="Rolle">
-                <input
-                  value={draft.role ?? ""}
-                  onChange={(e) => set("role", e.target.value)}
-                  className={field}
-                />
-              </Labeled>
-              <Labeled label="Alter">
-                <input
-                  type="number"
-                  value={draft.age ?? ""}
-                  onChange={(e) =>
-                    set("age", e.target.value ? parseInt(e.target.value) : null)
-                  }
-                  className={field}
-                />
-              </Labeled>
-              <Labeled label="Viertel">
-                <select
-                  value={draft.area}
-                  onChange={(e) => set("area", e.target.value as AreaKey)}
-                  className={field}
-                >
-                  {character.is_npc && (
-                    <option value="" className="bg-bg-surface">
-                      –
-                    </option>
-                  )}
-                  {AREA_ORDER.map((k) => (
-                    <option key={k} value={k} className="bg-bg-surface">
-                      {AREAS[k].name}
-                    </option>
-                  ))}
-                </select>
-              </Labeled>
-            </div>
-          </div>
-
-          <p className="text-[0.8125rem] text-text-tertiary">
-            Hier stehen nur die Grunddaten und Einstellungen. Alles Inhaltliche (Tagline, Zitat,
-            Beschreibung, Looks, Facts …) bearbeitest du direkt im{" "}
-            <Link href={`/charaktere/${character.id}`} className="text-accent hover:underline">
-              Profil
-            </Link>
-            .
-          </p>
+          <CharacterBasicsForm character={character} />
 
           {/* Handy: Main Characters voll, Supporting Characters reduziert, Statist*innen gar nicht */}
           {tierOf(character) !== "extra" && (
@@ -638,27 +505,6 @@ function CharacterEditor({ character }: { character: Character }) {
               }}
             />
           )}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={save}
-              disabled={nameMissing}
-              className="rounded-md bg-accent/90 hover:bg-accent px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
-            >
-              Speichern
-            </button>
-            {saved && (
-              <span className="text-[0.875rem] text-text-secondary">
-                Gespeichert ✓
-              </span>
-            )}
-            <Link
-              href={`/charaktere/${character.id}`}
-              className="ml-auto text-[0.875rem] text-text-tertiary hover:text-text-secondary"
-            >
-              Profil ansehen →
-            </Link>
-          </div>
-
           <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border-subtle pt-3">
             {/* zeitweise bespielte Statist*in: wieder von mir lösen */}
             {tierOf(character) === "extra" && currentPlayer && playsAs(character, currentPlayer.id) && (
@@ -729,20 +575,5 @@ function NpcOwners({ character }: { character: Character }) {
         </span>
       </div>
     </div>
-  );
-}
-
-function Labeled({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="text-[0.875rem] text-text-secondary block">
-      {label}
-      <div className="mt-1">{children}</div>
-    </label>
   );
 }

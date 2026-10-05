@@ -11,13 +11,22 @@ import { Bubble, LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
 import { SceneCard } from "@/components/SceneCard";
 import { Facts, FactRow } from "@/components/Facts";
-import { TIER_NAMES, tierLabel, tierOf } from "@/lib/characters";
+import { RELATION_CATEGORIES, TIER_NAMES, ageAt, tierLabel, tierOf } from "@/lib/characters";
 import { PhonePreview } from "@/components/phone/PhonePreview";
 import { StatistActions } from "@/components/StatistActions";
 import { ProfileEditPanel } from "@/components/ProfileEditPanel";
-import type { Character, Scene } from "@/lib/types";
+import {
+  ProfileFacts,
+  ProfileLikes,
+  ProfileLooks,
+  ProfileSkills,
+  ProfileSliders,
+  ProfileTimeline,
+  ProfileTraits,
+} from "@/components/ProfileSections";
+import type { Character, RelationCategory, Scene } from "@/lib/types";
 
-type Tab = "general" | "character" | "inplay" | "relations" | "phone";
+type Tab = "general" | "character" | "biography" | "personal" | "inplay" | "relations";
 
 // Bausteine aus DESIGN.md: Buttons, Primär-Aktion, Formularfelder
 const btn =
@@ -69,7 +78,16 @@ export default function CharacterPage({
   }
 
   // NPC ohne ausgefülltes Profil → nur die wichtigsten Facts
-  if (c.is_npc && !c.bio && !c.personality && !c.banner_url && !c.quote) {
+  const prof = c.profile ?? {};
+  const hasMore =
+    !!prof.skills?.length ||
+    !!prof.sliders?.length ||
+    !!prof.timeline?.length ||
+    !!prof.traits_plus?.length ||
+    !!prof.traits_minus?.length ||
+    !!prof.likes?.length ||
+    !!prof.dislikes?.length;
+  if (c.is_npc && !c.bio && !c.personality && !c.banner_url && !c.quote && !hasMore) {
     return <NpcFacts c={c} />;
   }
 
@@ -116,7 +134,7 @@ export default function CharacterPage({
           <ProfileBanner c={c} />
           {c.tagline && (
             <div className="mt-3 flex justify-center">
-              <Bubble>{c.tagline}</Bubble>
+              <Bubble className="uppercase tracking-wider">{c.tagline}</Bubble>
             </div>
           )}
         </div>
@@ -129,10 +147,11 @@ export default function CharacterPage({
               [
                 ["general", "General"],
                 ["character", "Character"],
+                ["biography", "Biography"],
+                // „Personal Things": das Handy (nur Main Characters haben eins)
+                ...(c.is_npc ? [] : [["personal", "Personal Things"]]),
                 ["inplay", "Inplay"],
                 ["relations", "Relations"],
-                // NPCs haben kein eigenes Handy
-                ...(c.is_npc ? [] : [["phone", "Handy"]]),
               ] as [Tab, string][]
             ).map(([key, label]) => (
               <button
@@ -165,9 +184,16 @@ export default function CharacterPage({
             </>
           )}
           {tab === "character" && <CharacterTab c={c} />}
+          {tab === "biography" && <ProfileTimeline c={c} />}
+          {/* Was der Charakter bei sich hat – bisher das Handy, nur zum Ansehen
+              (Look, Startbildschirm, Kontaktliste) */}
+          {tab === "personal" && !c.is_npc && (
+            <section>
+              <Heading>personal things.</Heading>
+              <PhonePreview character={c} />
+            </section>
+          )}
           {tab === "inplay" && <InplayTab inScenes={inScenes} />}
-          {/* Handy nur zum Ansehen: Look, Startbildschirm, Kontaktliste */}
-          {tab === "phone" && !c.is_npc && <PhonePreview character={c} />}
           {tab === "relations" && (
             <RelationsTab
               c={c}
@@ -230,17 +256,9 @@ function NpcFacts({ c }: { c: Character }) {
       <div className="border-b border-border-subtle mb-6" />
 
       <div className="grid sm:grid-cols-2 gap-x-8 gap-y-7 items-start max-w-4xl">
-        <section>
-          <Heading>facts.</Heading>
-          <Facts>
-            <FactRow label="Name" value={c.full_name ?? c.name} />
-            <FactRow label="Age" value={c.age ? `${c.age} Jahre` : null} />
-            <FactRow label="Occupation" value={c.role} />
-            <FactRow label="Residence" value={areaName(c.area)} />
-          </Facts>
-        </section>
-
-        <LooksAndVibes c={c} />
+        <ProfileFacts c={c} />
+        <ProfileLooks c={c} />
+        <Vibes c={c} />
 
         {foundAt.length > 0 && (
           <section>
@@ -323,44 +341,28 @@ function QuoteBlock({ c }: { c: Character }) {
   );
 }
 
-// Looks und Vibes (Inspo-Bilder) – bei Supporting Characters und Statist*innen als
-// eigene Abschnitte; leere Abschnitte fallen weg.
-function LooksAndVibes({ c }: { c: Character }) {
-  const hasLooks = c.height || c.figure || c.hair || c.eyes;
+// Vibes: Inspo-Bilder (Supporting Characters und Statist*innen)
+function Vibes({ c }: { c: Character }) {
   const vibes = c.vibes ?? [];
+  if (vibes.length === 0) return null;
   return (
-    <>
-      {hasLooks && (
-        <section>
-          <Heading>looks.</Heading>
-          <Facts>
-            <FactRow label="Height" value={c.height} />
-            <FactRow label="Figure" value={c.figure} />
-            <FactRow label="Hair" value={c.hair} />
-            <FactRow label="Eyes" value={c.eyes} />
-          </Facts>
-        </section>
-      )}
-      {vibes.length > 0 && (
-        <section className="sm:col-span-2">
-          <Heading>vibes.</Heading>
-          <div className="columns-2 gap-3 sm:columns-3">
-            {vibes.map((src, i) => (
-              <a
-                key={i}
-                href={src}
-                target="_blank"
-                rel="noreferrer"
-                className="mb-3 block w-full overflow-hidden rounded-lg border border-border-subtle bg-bg-surface transition-colors hover:border-accent/50"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" loading="lazy" className="block h-auto w-full" />
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-    </>
+    <section className="sm:col-span-2">
+      <Heading>vibes.</Heading>
+      <div className="columns-2 gap-3 sm:columns-3">
+        {vibes.map((src, i) => (
+          <a
+            key={i}
+            href={src}
+            target="_blank"
+            rel="noreferrer"
+            className="mb-3 block w-full overflow-hidden rounded-lg border border-border-subtle bg-bg-surface transition-colors hover:border-accent/50"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={src} alt="" loading="lazy" className="block h-auto w-full" />
+          </a>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -375,71 +377,51 @@ function Heading({ children }: { children: React.ReactNode }) {
 function GeneralTab({ c }: { c: Character }) {
   return (
     <div className="grid sm:grid-cols-2 gap-x-8 gap-y-6 items-start">
-      {/* Charaktertext – links neben den Facts */}
+      {/* Kurzbeschreibung – links neben den Facts */}
       <div>
         {c.bio ? (
-          <p className="text-left text-[0.875rem] leading-relaxed text-text-secondary">
+          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary">
             {c.bio}
           </p>
         ) : (
-          <p className="text-[0.875rem] text-text-tertiary">
-            Noch keine Beschreibung.
-          </p>
+          <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
         )}
       </div>
 
-      {/* Facts + occupation – rechts */}
+      {/* Facts, Studium/Arbeit, Looks – rechts */}
       <div className="flex flex-col gap-7">
-        <section>
-          <Heading>facts.</Heading>
-          <Facts>
-            <FactRow label="Name" value={c.full_name ?? c.name} />
-            <FactRow label="Age" value={c.age ? `${c.age} Jahre` : null} />
-            <FactRow label="Occupation" value={c.role} />
-            <FactRow label="Residence" value={areaName(c.area)} />
-            <FactRow label="Sexuality" value={c.sexuality} />
-            <FactRow label="Status" value={c.status} />
-            <FactRow label="Origin" value={c.origin} />
-          </Facts>
-        </section>
-
-        {c.is_npc && <LooksAndVibes c={c} />}
-
-        {(c.job || c.company) && (
-          <section>
-            <Heading>occupation.</Heading>
-            <Facts>
-              <FactRow label="Job" value={c.job} />
-              <FactRow label="Company" value={c.company} />
-            </Facts>
-          </section>
-        )}
-        </div>
+        <ProfileFacts c={c} />
+        <ProfileLooks c={c} />
       </div>
+
+      {(c.vibes ?? []).length > 0 && <Vibes c={c} />}
+    </div>
   );
 }
 
+// Ausführliche Beschreibung und alles, was den Charakter ausmacht
 function CharacterTab({ c }: { c: Character }) {
+  const p = c.profile ?? {};
+  const empty =
+    !c.personality &&
+    !(p.traits_plus?.length || p.traits_minus?.length || p.skills?.length || p.sliders?.length) &&
+    !(p.likes?.length || p.dislikes?.length);
   return (
-    <div className="flex flex-col gap-7">
+    <div className="flex flex-col gap-9">
       {c.personality && (
         <section>
-          <Heading>personality.</Heading>
-          <p className="text-left text-[0.875rem] leading-relaxed text-text-secondary">
+          <Heading>about.</Heading>
+          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary">
             {c.personality}
           </p>
         </section>
       )}
-      {c.bio && (
-        <section>
-          <Heading>biography.</Heading>
-          <p className="text-left text-[0.875rem] leading-relaxed text-text-secondary">{c.bio}</p>
-        </section>
-      )}
-      {!c.personality && !c.bio && (
-        <p className="text-[0.875rem] text-text-tertiary">
-          Noch keine Charakterbeschreibung hinterlegt.
-        </p>
+      <ProfileTraits c={c} />
+      <ProfileSkills c={c} />
+      <ProfileSliders c={c} />
+      <ProfileLikes c={c} />
+      {empty && (
+        <p className="text-[0.875rem] text-text-tertiary">Noch keine Charakterbeschreibung hinterlegt.</p>
       )}
     </div>
   );
@@ -487,11 +469,23 @@ function RelationsTab({
               ? " Trag ein, um was für eine Beziehung es sich handelt."
               : ` Nur wer ${c.name} spielt, kann die Art der Beziehung eintragen.`}
           </p>
-          <div className="flex flex-col gap-4">
-            {coChars.map((rc) => (
-              <RelationRow key={rc.id} c={c} rc={rc} canEdit={canEdit} />
-            ))}
-          </div>
+          {/* nach Kategorie gruppiert; ohne Kategorie stehen sie zuletzt */}
+          {[...RELATION_CATEGORIES, [null, "others."] as const].map(([key, title]) => {
+            const rows = coChars.filter((rc) => (c.relationships?.[rc.id]?.category ?? null) === key);
+            if (rows.length === 0) return null;
+            return (
+              <div key={title} className="mb-6">
+                <h3 className="mb-2 font-display lowercase text-[1.5rem] leading-none text-text-primary">
+                  {title}
+                </h3>
+                <div className="flex flex-col gap-4">
+                  {rows.map((rc) => (
+                    <RelationRow key={rc.id} c={c} rc={rc} canEdit={canEdit} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </>
       )}
     </section>
@@ -515,18 +509,20 @@ function RelationRow({
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(rel.label ?? "");
   const [note, setNote] = useState(rel.note ?? "");
+  const [category, setCategory] = useState<RelationCategory | "">(rel.category ?? "");
 
   function save() {
     updateCharacter(c.id, {
       relationships: {
         ...c.relationships,
-        [rc.id]: { label: label.trim() || null, note: note.trim() || null },
+        [rc.id]: { label: label.trim() || null, note: note.trim() || null, category: category || null },
       },
     });
     setEditing(false);
   }
 
-  const facts = [rc.age ? `${rc.age}` : null, rc.role, rel.label].filter(Boolean).join(" · ");
+  const rcAge = ageAt(rc);
+  const facts = [rcAge != null ? `${rcAge}` : null, rc.role, rel.label].filter(Boolean).join(" · ");
 
   return (
     <div className="flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-surface p-3">
@@ -578,6 +574,25 @@ function RelationRow({
       {/* Anpassbare Erläuterung zur Beziehung */}
       {editing ? (
         <div className="mt-3 flex flex-col gap-2">
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value as RelationCategory | "")}
+            aria-label="Kategorie"
+            className={field}
+          >
+            <option value="" className="bg-bg-surface">
+              Kategorie wählen …
+            </option>
+            <option value="love" className="bg-bg-surface">
+              Love Life
+            </option>
+            <option value="family" className="bg-bg-surface">
+              Family
+            </option>
+            <option value="acquainted" className="bg-bg-surface">
+              Acquainted
+            </option>
+          </select>
           <input
             value={label}
             onChange={(e) => setLabel(e.target.value)}

@@ -74,7 +74,7 @@ function CapticProfile({ me }: { me: Character }) {
   const { updateCharacter } = useStore();
   const profile = me.phone?.captic ?? {};
   const handle = profile.handle || defaultHandle(me.name);
-  const bio = profile.bio ?? me.tagline ?? "";
+  const bio = profile.bio ?? me.tagline?.toUpperCase() ?? "";
   const [editing, setEditing] = useState(false);
   const [draftHandle, setDraftHandle] = useState(handle);
   const [draftBio, setDraftBio] = useState(bio);

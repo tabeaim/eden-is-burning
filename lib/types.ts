@@ -56,7 +56,10 @@ export interface Character {
   quote: string | null; // Zitat unter dem Bild
   personality: string | null; // CHARACTER-Tab
   // Beziehungen zu anderen Charakteren (RELATIONS-Tab), keyed by Charakter-ID
-  relationships?: Record<string, { label?: string | null; note?: string | null }>;
+  relationships?: Record<
+    string,
+    { label?: string | null; note?: string | null; category?: RelationCategory | null }
+  >;
   // NPC: Nebenfigur mit optional ausfüllbarem Profil; gehört (player_id) dem/der
   // Ersteller*in, zählt aber nicht zu deren spielbaren Charakteren.
   is_npc?: boolean;
@@ -68,10 +71,37 @@ export interface Character {
   // Ohne Angabe gilt eine Nebenfigur als Supporting Character (Altbestand).
   npc_tier?: "extra" | "supporting" | null;
   vibes?: string[] | null; // Inspo-Bilder im Profil (SCs und Statist*innen)
+  // Erweitertes Profil (siehe CharacterProfile)
+  profile?: CharacterProfile | null;
   // Im Papierkorb seit … (aus allen Listen verschwunden, aber wiederherstellbar)
   deleted_at?: string | null;
   // Look des Handys im Messenger (Modell, Abnutzung, Hintergrund, Apps)
   phone?: PhoneSettings | null;
+}
+
+// Erweitertes Charakterprofil (JSON-Spalte `profile`). Grunddaten pflegt man in
+// den Einstellungen, die beschreibenden Teile direkt im Profil.
+export interface CharacterProfile {
+  // --- Grunddaten ---
+  birthdate?: string | null; // ISO-Datum; daraus wird das Alter berechnet
+  gender?: string | null; // "weiblich" | "männlich" | "divers" | frei
+  hidden?: string[]; // Angaben, die im Profil nicht gezeigt werden (Feld-Schlüssel)
+  // Student*in oder arbeitstätig (oder nichts davon)
+  occupation_kind?: "student" | "working" | null;
+  university?: string | null;
+  major?: string | null; // Studiengang
+  degree?: "undergraduate" | "graduate" | "phd" | "mba" | null;
+  study_start?: string | null; // ISO-Datum; daraus das Studienjahr
+  employer?: string | null; // Arbeitgeber (freier Text oder Name eines Orts)
+  employer_location_id?: string | null; // … falls ein Ort gewählt wurde („works here")
+  // --- Beschreibung ---
+  skills?: { name: string; value: number }[]; // 0–100 %
+  traits_plus?: string[];
+  traits_minus?: string[];
+  sliders?: { left: string; right: string; value: number }[]; // 0–100 von links
+  likes?: string[];
+  dislikes?: string[];
+  timeline?: { year: string; title: string; text: string }[];
 }
 
 // Alle Felder optional – Fehlendes füllt `resolvePhone` (lib/phone.ts) mit Standards.
@@ -102,6 +132,8 @@ export interface CustomPhoneApp {
   name: string;
   icon: string; // Bild-Adresse
 }
+
+export type RelationCategory = "love" | "family" | "acquainted";
 
 export interface Scene {
   id: string;

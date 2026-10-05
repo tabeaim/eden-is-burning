@@ -108,19 +108,31 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   fetter `warning`. Charaktere aller Stufen kommen zuerst in den **Papierkorb**
   (Einstellungen → Meine Charaktere, wiederherstellbar); erst von dort lässt sich
   endgültig löschen.
+- **Charakter: Grunddaten vs. Profil.** Die Grunddaten („hard facts") stehen
+  unter Einstellungen → Meine Charaktere (`CharacterBasicsForm`): Anzeigename,
+  voller Name, Geburtsdatum, Geschlecht, Faceclaim, Tagline, Kurzbeschreibung,
+  Wohngegend, Herkunft, Beziehungsstatus, sexuelle Orientierung, Beschäftigung
+  (dazu Student*in mit Universität/Studiengang/Abschluss/Studienbeginn oder
+  arbeitstätig mit Arbeitgeber), Größe, Figur, Haare, Augen. Pflicht für Main
+  Characters: Name, Geburtsdatum, Faceclaim, Beschäftigung. Jede Angabe lässt
+  sich im Profil verstecken („sichtbar/versteckt" am Feld).
 - **Profil bearbeiten:** Im Profil gibt es genau einen Knopf „Bearbeiten"; er
-  öffnet `ProfileEditPanel` mit allem Inhaltlichen (Tagline, Zitat, Texte, Looks,
-  Facts, Banner; bei Supporting Characters und Statist*innen dazu „Vibes" –
-  Inspo-Bilder). Keine Einzel-Bearbeiten-Knöpfe an Zitat oder Abschnitten; die
-  Relations lassen sich bearbeiten, solange das Formular offen ist. Unter
-  Einstellungen → Meine Charaktere stehen nur Grunddaten (Name, Foto, Faceclaim,
-  Rolle, Alter, Gegend) und Einstellungen (Handy, Zuordnung, Stufe, Löschen).
-- **Einstellungen:** Reiter als runde Pills, Abschnitte mit Display-Überschrift
-  („charaktere.", „npcs."), Buttons wie auf den Detailseiten. Ein Charakter oder
-  NPC braucht immer einen Namen – „Neuer Charakter"/„Neuer NPC"
-  (`NewCharacterButton`) fragt ihn vor dem Anlegen ab, Speichern ohne Namen geht nicht.
-- **Alter Egos** im Seitenmenü klappen als Overlay über dem Menü auf (scrollbar),
-  statt das Menü zu verschieben.
+  öffnet `ProfileEditPanel` mit allem Beschreibenden: Zitat, Banner, ausführliche
+  Beschreibung, Eigenschaften (+/–), Skills (Prozent), Slider, Likes/Dislikes,
+  Timeline; bei Supporting Characters und Statist*innen dazu „Vibes". Die
+  Relations lassen sich bearbeiten, solange das Formular offen ist.
+- **Sprache der Labels:** Formulare (Eingabe) deutsch, Facts im Profil englisch
+  (Name, Age, Gender, Residence, Origin, Status, Sexuality, Occupation …).
+- **Alter und Studienjahr** werden berechnet (`ageAt`, `studyYearAt`): im Profil
+  zum 1.1.2022 bzw. für den Herbst 2021, in einer Szene zum Datum der Szene.
+- **Profil-Reiter:** General (Kurzbeschreibung, Facts, Looks) · Character
+  (Beschreibung, Eigenschaften, Skills, Slider, Likes) · Biography (Timeline) ·
+  Personal Things (Handy, nur Main Characters) · Inplay · Relations (nach
+  Kategorie: love life, family, acquainted). Bausteine in
+  `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
+- **Tagline** immer in Großbuchstaben (`uppercase`), überall.
+- **Arbeitgeber = Ort:** Wählt ein Charakter einen Ort als Arbeitgeber, steht er
+  im Ortsprofil unter „works here.".
 - **Zähler im Seitenmenü** (orange Pill): „Szenen" = alle ungelesenen Szenen,
   „Dashboard" = Bewegung bei den eigenen Charakteren (Szenen, Chats, Anrufe),
   „Handy" = ungelesene Chats und klingelnde Anrufe.
