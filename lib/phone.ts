@@ -121,6 +121,27 @@ export function rememberPhone(characterId: string) {
   }
 }
 
+// --- Kontakte ---------------------------------------------------------------
+type Owner = Pick<Character, "phone"> | null | undefined;
+type Other = Pick<Character, "id" | "name"> | null | undefined;
+
+// Wie heißt dieser Charakter auf dem Handy von `owner`? (eigener Kontaktname,
+// sonst der echte Name)
+export function contactName(owner: Owner, other: Other): string {
+  if (!other) return "Unbekannt";
+  return owner?.phone?.contacts?.[other.id]?.name?.trim() || other.name;
+}
+// Kurzform für Stellen, an denen sonst der Vorname steht: ein eigener Kontaktname
+// bleibt ganz, vom echten Namen nur der Vorname.
+export function contactShortName(owner: Owner, other: Other): string {
+  if (!other) return "?";
+  return owner?.phone?.contacts?.[other.id]?.name?.trim() || other.name.split(" ")[0];
+}
+// Eigenes Kontaktfoto (nur Kontakte und Anrufe), falls gesetzt
+export function contactPhoto(owner: Owner, other: Other): string | null {
+  return (other && owner?.phone?.contacts?.[other.id]?.photo) || null;
+}
+
 // --- Telefonszenen ----------------------------------------------------------
 // Eine Telefonszene ist eine normale Szene (Zusammenfassung, Timeline, …) mit
 // festem „Ort": keine Gegend, sondern das Telefon.

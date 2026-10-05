@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import type { ChatMessageKind } from "@/lib/types";
-import { addMinutes, resolvePhone } from "@/lib/phone";
+import { addMinutes, contactName, contactShortName, resolvePhone } from "@/lib/phone";
 import { DatePicker } from "@/components/DatePicker";
 import { Composer } from "@/components/phone/Composer";
 import { PhoneAvatar, PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
@@ -25,8 +25,12 @@ export default function NewSmsPage() {
   const to = everyone.find((c) => c.id === toId && c.id !== from?.id);
   const query = q.trim().toLowerCase();
   const suggestions = everyone
-    .filter((c) => c.id !== from?.id && (!query || c.name.toLowerCase().includes(query)))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .filter(
+      (c) =>
+        c.id !== from?.id &&
+        (!query || c.name.toLowerCase().includes(query) || contactName(from, c).toLowerCase().includes(query)),
+    )
+    .sort((a, b) => contactName(from, a).localeCompare(contactName(from, b), "de"));
   const existing =
     from && to
       ? chats.find(
@@ -72,7 +76,7 @@ export default function NewSmsPage() {
                 className="flex items-center gap-1.5 rounded-full bg-white/[0.08] py-1 pl-1 pr-2.5 text-[0.8125rem] text-text-primary"
               >
                 <PhoneAvatar character={to} size={24} />
-                {to.name}
+                {contactName(from, to)}
                 <span className="text-text-tertiary">✕</span>
               </button>
             ) : (
@@ -101,7 +105,7 @@ export default function NewSmsPage() {
                   <PhoneAvatar character={c} size={40} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[0.9375rem] text-text-primary">
-                      {c.name}
+                      {contactName(from, c)}
                       {c.is_npc && (
                         <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
                           NPC
@@ -122,7 +126,7 @@ export default function NewSmsPage() {
             {to && (
               <div className="flex flex-col items-center gap-2 px-5 pt-6 text-center">
                 <PhoneAvatar character={to} size={64} />
-                <div className="text-[1rem] font-semibold text-text-primary">{to.name}</div>
+                <div className="text-[1rem] font-semibold text-text-primary">{contactName(from, to)}</div>
                 {needsDate ? (
                   <div className="mt-2 w-full max-w-[17rem] text-left">
                     <div className="mb-1 text-[0.8125rem] text-text-secondary">
@@ -136,7 +140,7 @@ export default function NewSmsPage() {
                   </div>
                 ) : (
                   <p className="text-[0.8125rem] text-text-tertiary">
-                    {from.name.split(" ")[0]} hat schon einen Chat mit {to.name.split(" ")[0]} –
+                    {from.name.split(" ")[0]} hat schon einen Chat mit {contactShortName(from, to)} –
                     deine Nachricht landet dort.
                   </p>
                 )}

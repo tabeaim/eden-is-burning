@@ -11,9 +11,10 @@ import { Bubble, LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
 import { SceneCard } from "@/components/SceneCard";
 import { Facts, FactRow } from "@/components/Facts";
+import { PhonePreview } from "@/components/phone/PhonePreview";
 import type { Character, Scene } from "@/lib/types";
 
-type Tab = "general" | "character" | "inplay" | "relations";
+type Tab = "general" | "character" | "inplay" | "relations" | "phone";
 
 // Bausteine aus DESIGN.md: Buttons, Primär-Aktion, Formularfelder
 const btn =
@@ -111,6 +112,8 @@ export default function CharacterPage({
                 ["character", "Character"],
                 ["inplay", "Inplay"],
                 ["relations", "Relations"],
+                // NPCs haben kein eigenes Handy
+                ...(c.is_npc ? [] : [["phone", "Handy"]]),
               ] as [Tab, string][]
             ).map(([key, label]) => (
               <button
@@ -144,6 +147,8 @@ export default function CharacterPage({
           )}
           {tab === "character" && <CharacterTab c={c} />}
           {tab === "inplay" && <InplayTab inScenes={inScenes} />}
+          {/* Handy nur zum Ansehen: Look, Startbildschirm, Kontaktliste */}
+          {tab === "phone" && !c.is_npc && <PhonePreview character={c} />}
           {tab === "relations" && (
             <RelationsTab
               c={c}

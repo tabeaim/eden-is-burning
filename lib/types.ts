@@ -76,6 +76,11 @@ export interface PhoneSettings {
   wallpaper?: string | null; // "preset:<key>" oder Bild-Adresse
   apps?: string[]; // zusätzlich gewählte Apps (OPTIONAL_APPS); Standard-Apps sind immer da
   custom_apps?: CustomPhoneApp[]; // selbst erstellte Apps (Name + Icon)
+  // Eigene Kontakt-Einträge dieses Handys: Charakter-ID -> abweichender Name und
+  // Foto. Der Name gilt überall auf diesem Handy, das Foto nur bei Kontakten und
+  // Anrufen (nicht im Messenger).
+  contacts?: Record<string, { name?: string; photo?: string }> | null;
+  hidden_calls?: string[] | null; // aus der Anrufliste dieses Handys gelöschte Anrufe
   // Captic ist optional: erst nach dem Aktivieren liegt die App auf dem Handy.
   // Profilangaben werden in der App selbst bearbeitet.
   captic?: { enabled?: boolean; handle?: string; bio?: string } | null;

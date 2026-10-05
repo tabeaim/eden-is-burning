@@ -146,7 +146,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   springt zur Nachricht). Archiviert ist ein Chat immer für
   alle; archivieren dürfen nur Beteiligte und Admins. Eine neue Nachricht holt den
   Chat aus dem Archiv.
-- **Chat-Optionen** (archivieren, löschen, „Left on read", „Als ungelesen
+- **Chat-Optionen** (archivieren, löschen, „Leave on read", „Als ungelesen
   markieren", bei pausierten Chats „Chat wieder aktivieren"): Rechtsklick bzw.
   langes Drücken auf den Chat in der Liste oder ⋯ in der Chat-Ansicht – immer als
   Blatt von unten (`components/phone/Sheet.tsx`). Löschen dürfen Beteiligte und
@@ -155,7 +155,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Aufbau wie `SceneRow`, Handy-Icon statt Streichholz) – in „letzte 24h" als
   „Neue Nachrichten bei A & B", unter „Du bist dran" als „Chat mit …" (nie mit
   Vorschau des Nachrichtentexts – nichts spoilern) samt Knopf
-  „Left on read" (pausiert den Chat, bis wieder jemand schreibt).
+  „Leave on read" (pausiert den Chat, bis wieder jemand schreibt).
 - **Captic ist optional** (An/Aus-Schalter in `PhoneSettings`); das Profil wird
   in der App auf dem Handy bearbeitet.
 - **Telefon** (`/handy/telefon` Anrufliste, `/handy/kontakte` Kontakte; im Dock, „Neuer
@@ -174,6 +174,20 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Design-Systems (`rounded-md`, Primär-Aktion `bg-accent/90 text-black`). Runde,
   farbige Knöpfe nur dort, wo das Handy selbst simuliert wird (Annehmen/Ablehnen,
   Senden, Dock).
+- **Kontakte** (`ContactList`): oben hervorgehoben („Häufig") die fünf
+  Charaktere, mit denen der Handy-Besitzer am meisten geschrieben hat, danach alle
+  alphabetisch; Suchfeld darüber. Eigene App im Dock. Jeder Kontakt lässt sich je
+  Handy umbenennen und mit Foto versehen: Der Name gilt überall auf diesem Handy
+  (`contactName`/`chatTitle(…, owner)`), das Foto nur bei Kontakten und Anrufen
+  (`ContactAvatar`) – im Messenger immer `PhoneAvatar`.
+- **Handy wechseln:** Das Aufklappmenü zeigt nur Vornamen und je Handy einen
+  orangen Zähler, wenn dort etwas Neues wartet (Punkt an der Taste, wenn es ein
+  anderes Handy betrifft).
+- **Anrufliste:** Rechtsklick auf einen Eintrag: „Anruf abbrechen" (eigener,
+  klingelnder) und „Aus der Anrufliste löschen" (nur auf diesem Handy).
+- **Handy im Charakterprofil** (Reiter „Handy", `PhonePreview`): Look,
+  Startbildschirm und Kontaktliste nur zum Ansehen (`PhoneFrame preview`,
+  `PhoneHome readOnly`) – nichts führt irgendwohin, nichts ist bearbeitbar.
 - **Eingehender Anruf zuerst:** „Handy" im Seitenmenü öffnet das Handy des
   gerade angerufenen Charakters, die Anruf-Karte liegt über dem Startbildschirm.
   „Später reagieren" (nur Text) stellt sie zurück – der Anruf klingelt weiter und

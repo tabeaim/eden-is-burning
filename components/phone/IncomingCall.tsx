@@ -5,8 +5,8 @@ import { useState } from "react";
 import type { PhoneCall } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { formatInplayDateShort } from "@/lib/format";
-import { PHONE_AREA, PHONE_LOCATION, phoneSceneTitle } from "@/lib/phone";
-import { PhoneAvatar } from "./PhoneFrame";
+import { PHONE_AREA, PHONE_LOCATION, contactName, phoneSceneTitle } from "@/lib/phone";
+import { ContactAvatar } from "./PhoneFrame";
 
 type CallData = Pick<PhoneCall, "caller_id" | "callee_id" | "inplay_date" | "inplay_time">;
 
@@ -99,14 +99,15 @@ export function IncomingCall({ characterId, always = false }: { characterId: str
   if (accepted) return <PhoneSceneDialog call={accepted} onClose={() => setAccepted(null)} />;
   if (!call) return null;
   const caller = character(call.caller_id);
+  const callee = character(characterId); // dessen Kontaktname und -foto gelten
   return (
     <div className="absolute inset-0 z-20 flex items-center bg-black/60 p-4">
       <div className="w-full rounded-2xl border border-accent/60 bg-[#2a211b] p-4 text-center">
         <div className="flex justify-center">
-          {caller && <PhoneAvatar character={caller} size={64} className="phone-ring" />}
+          {caller && <ContactAvatar owner={callee} character={caller} size={64} className="phone-ring" />}
         </div>
         <div className="mt-2 text-[1rem] font-semibold text-text-primary">
-          {caller?.name ?? "Unbekannt"} ruft an
+          {contactName(callee, caller)} ruft an
         </div>
         <div className="text-[0.8125rem] text-text-tertiary">
           {[formatInplayDateShort(call.inplay_date), call.inplay_time].filter(Boolean).join(", ")}

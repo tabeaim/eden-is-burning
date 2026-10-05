@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
-import { PHONE_OWNER_KEY, resolvePhone, type PhoneModel } from "@/lib/phone";
+import { PHONE_OWNER_KEY, contactName, contactPhoto, resolvePhone, type PhoneModel } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
 
 // Das „Handy" (siehe DESIGN.md). Über dem Gerät – nicht auf dem Display – sitzt
@@ -18,6 +18,7 @@ export function PhoneFrame({
   onOwner,
   tone = "app",
   callBanner = true,
+  preview = false,
   children,
 }: {
   owner: string | null; // Charakter-ID (null: neutrales Handy)
@@ -25,12 +26,15 @@ export function PhoneFrame({
   onOwner?: (id: string) => void;
   tone?: "app" | "home"; // "home": Hintergrundbild füllt das Display
   callBanner?: boolean; // eingehenden Anruf oben im Display melden
+  // Nur ansehen (Charakterprofil): keine Wechsel-Leiste, nichts anklickbar, feste
+  // Größe statt bildschirmfüllend
+  preview?: boolean;
   children: React.ReactNode;
 }) {
   const { character, calls } = useStore();
   const ownerChar = owner ? character(owner) : undefined;
   const phone = resolvePhone(ownerChar);
-  const ringing = callBanner
+  const ringing = callBanner && !preview
     ? calls.find((c) => c.status === "ringing" && c.callee_id === owner)
     : undefined;
   const classic = phone.model === "classic";
@@ -41,7 +45,7 @@ export function PhoneFrame({
   // Bildschirmtastatur bleibt (iOS verkleinert 100dvh dafür nicht).
   useEffect(() => {
     const vv = window.visualViewport;
-    if (!vv) return;
+    if (!vv || preview) return;
     const fit = () => {
       ref.current?.style.setProperty("--phone-h", `${Math.round(vv.height)}px`);
       if (window.innerWidth < 640) window.scrollTo(0, 0);
@@ -49,7 +53,7 @@ export function PhoneFrame({
     fit();
     vv.addEventListener("resize", fit);
     return () => vv.removeEventListener("resize", fit);
-  }, []);
+  }, [preview]);
 
   const radius = burner
     ? "sm:rounded-[2.75rem_2.75rem_4rem_4rem]"
@@ -69,9 +73,13 @@ export function PhoneFrame({
   return (
     <div
       ref={ref}
-      className="flex h-[var(--phone-h,100dvh)] flex-col sm:h-auto sm:items-center sm:py-4"
+      className={
+        preview
+          ? "flex h-[640px] flex-col overflow-hidden rounded-2xl border border-border-subtle sm:h-auto sm:items-start sm:overflow-visible sm:rounded-none sm:border-0"
+          : "flex h-[var(--phone-h,100dvh)] flex-col sm:h-auto sm:items-center sm:py-4"
+      }
     >
-      <OwnerBar owner={owner} options={options} onOwner={onOwner} />
+      {!preview && <OwnerBar owner={owner} options={options} onOwner={onOwner} />}
       {/* Gehäuse (nur ab sm sichtbar) */}
       <div
         style={{ ["--frame" as string]: phone.frame }}
@@ -106,7 +114,7 @@ export function PhoneFrame({
             >
               <Icon name="phone" size={18} className="phone-ring shrink-0" />
               <span className="min-w-0 flex-1 truncate">
-                {character(ringing.caller_id)?.name ?? "Jemand"} ruft an
+                {contactName(ownerChar, character(ringing.caller_id))} ruft an
               </span>
               <span className="shrink-0">Reagieren ›</span>
             </Link>
@@ -114,10 +122,12 @@ export function PhoneFrame({
           <div className="burner-content relative flex min-h-0 flex-1 flex-col">{children}</div>
           {/* Home-Leiste: zurück zum Startbildschirm (altes Modell ab sm: Home-Button) */}
           <Link
-            href="/handy"
+            href={preview ? "#" : "/handy"}
+            onClick={(e) => preview && e.preventDefault()}
+            tabIndex={preview ? -1 : undefined}
             aria-label="Startbildschirm"
-            title="Startbildschirm"
-            className={`flex h-5 shrink-0 items-center justify-center ${
+            title={preview ? undefined : "Startbildschirm"}
+            className={`flex h-5 shrink-0 items-center justify-center ${preview ? "cursor-default" : ""} ${
               tone === "home" ? "" : "bg-bg-surface"
             } ${classic || burner ? "sm:hidden" : ""}`}
           >
@@ -132,21 +142,24 @@ export function PhoneFrame({
         {classic && (
           <div className="hidden h-[3.75rem] shrink-0 items-center justify-center sm:flex">
             <Link
-              href="/handy"
+              href={preview ? "#" : "/handy"}
+              onClick={(e) => preview && e.preventDefault()}
+              tabIndex={preview ? -1 : undefined}
               aria-label="Startbildschirm"
-              title="Startbildschirm"
-              className="h-10 w-10 rounded-full border-2 border-black/35 bg-black/10 hover:bg-black/20"
+              className={`h-10 w-10 rounded-full border-2 border-black/35 bg-black/10 ${
+                preview ? "cursor-default" : "hover:bg-black/20"
+              }`}
             />
           </div>
         )}
-        {burner && <BurnerKeypad />}
+        {burner && <BurnerKeypad inert={preview} />}
       </div>
     </div>
   );
 }
 
 // Tastenfeld des Burner Phones (nur ab sm; reine Deko bis auf die Menü-Taste).
-function BurnerKeypad() {
+function BurnerKeypad({ inert = false }: { inert?: boolean }) {
   const key =
     "flex h-8 items-center justify-center rounded-[0.6rem] bg-black/25 text-[0.8125rem] font-semibold text-white/75 shadow-inner shadow-black/30";
   return (
@@ -154,9 +167,10 @@ function BurnerKeypad() {
       <div className="flex items-center justify-between gap-3">
         <span className="h-6 flex-1 rounded-full bg-black/25" />
         <Link
-          href="/handy"
+          href={inert ? "#" : "/handy"}
+          onClick={(e) => inert && e.preventDefault()}
+          tabIndex={inert ? -1 : undefined}
           aria-label="Menü"
-          title="Menü"
           className="flex h-11 w-20 items-center justify-center rounded-full border-2 border-black/40 bg-black/15 text-[0.625rem] font-bold tracking-widest text-white/75 hover:bg-black/30"
         >
           MENÜ
@@ -185,9 +199,14 @@ function OwnerBar({
   options: string[];
   onOwner?: (id: string) => void;
 }) {
-  const { character } = useStore();
+  const { character, chats, calls, isChatNew } = useStore();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // Neues auf einem Handy: ungelesene Chats und klingelnde Anrufe dieses Charakters
+  const news = (id: string) =>
+    chats.filter((c) => c.participant_ids.includes(id) && isChatNew(c.id)).length +
+    calls.filter((c) => c.status === "ringing" && c.callee_id === id).length;
+  const newsElsewhere = options.some((id) => id !== owner && news(id) > 0);
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
@@ -209,7 +228,7 @@ function OwnerBar({
           </span>
         )}
         <span className="min-w-0 truncate">
-          {c ? `Handy von ${c.name}` : "Handy"}
+          {c ? `Handy von ${c.name.split(" ")[0]}` : "Handy"}
         </span>
       </>
     );
@@ -230,6 +249,10 @@ function OwnerBar({
         className="flex min-w-0 max-w-full items-center gap-2 rounded-full border border-border-subtle bg-bg-surface py-1 pl-1 pr-3 text-[0.8125rem] text-text-primary disabled:border-transparent disabled:bg-transparent"
       >
         {entry(owner)}
+        {/* auf einem anderen Handy wartet etwas – man muss nicht suchen */}
+        {choosable && newsElsewhere && (
+          <span className="h-2 w-2 shrink-0 rounded-full bg-accent" title="Neues auf einem anderen Handy" />
+        )}
         {choosable && (
           <Icon
             name="chevron-right"
@@ -257,6 +280,11 @@ function OwnerBar({
               }`}
             >
               {entry(id)}
+              {news(id) > 0 && (
+                <span className="ml-auto flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-accent px-1 text-[0.6875rem] font-semibold text-black">
+                  {news(id)}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -439,6 +467,32 @@ export function PhoneAvatar({
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={character.phone?.avatar || characterImage(character)}
+      alt=""
+      style={{ width: size, height: size }}
+      className={`shrink-0 rounded-full bg-bg-surface-2 object-cover ${className}`}
+    />
+  );
+}
+
+// Avatar bei Kontakten und Anrufen: das eigene Kontaktfoto dieses Handys, sonst
+// wie `PhoneAvatar`. Im Messenger immer `PhoneAvatar` (kein Kontaktfoto).
+export function ContactAvatar({
+  owner,
+  character,
+  size = 40,
+  className = "",
+}: {
+  owner: Pick<Character, "phone"> | null | undefined;
+  character: Character;
+  size?: number;
+  className?: string;
+}) {
+  const photo = contactPhoto(owner, character);
+  if (!photo) return <PhoneAvatar character={character} size={size} className={className} />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={photo}
       alt=""
       style={{ width: size, height: size }}
       className={`shrink-0 rounded-full bg-bg-surface-2 object-cover ${className}`}

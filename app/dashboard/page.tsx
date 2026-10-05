@@ -56,7 +56,7 @@ export default function DashboardPage() {
     new Date(lastPostAt(a.id) ?? a.created_at).getTime();
 
   // Chats (Handy): unbeantwortet = die neueste Nachricht kommt von jemand anderem.
-  // Archivierte und „left on read" markierte Chats sind pausiert.
+  // Archivierte und „leave on read" markierte Chats sind pausiert.
   const lastMsg = lastMessages(chatMessages);
   const openChatsOf = (charId: string) =>
     chats.filter((ch) => {
@@ -456,7 +456,7 @@ function CharacterGroup({
                   title="Nachricht unbeantwortet lassen – der Chat pausiert, bis jemand wieder schreibt"
                   className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
                 >
-                  Left on read
+                  Leave on read
                 </button>
               ) : undefined
             }

@@ -21,7 +21,7 @@ export function ChatRow({
   chat: Chat;
   forCharacter?: string;
   muted?: boolean;
-  action?: React.ReactNode; // z.B. „Left on read"
+  action?: React.ReactNode; // z.B. „Leave on read"
 }) {
   const { messagesOf, character, isChatFresh } = useStore();
   const messages = messagesOf(chat.id);
@@ -30,7 +30,7 @@ export function ChatRow({
   const lastChar = last ? character(last.character_id) : undefined;
   const others = chat.participant_ids.filter((id) => id !== forCharacter).map((id) => character(id));
   const title = forCharacter
-    ? `Chat mit ${chatTitle(others)}`
+    ? `Chat mit ${chatTitle(others, character(forCharacter))}`
     : `Neue Nachrichten bei ${chatTitle(chat.participant_ids.map((id) => character(id)))}`;
 
   return (

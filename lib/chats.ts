@@ -1,5 +1,6 @@
 // Messenger-Logik, die Handy und Dashboard teilen.
 import type { Character, Chat, ChatMessage } from "./types";
+import { contactName, contactShortName } from "./phone";
 
 // Neueste echte Nachricht je Chat (Tagestrenner zählen nicht)
 export function lastMessages(messages: ChatMessage[]): Map<string, ChatMessage> {
@@ -28,12 +29,16 @@ export function isArchived(chat: Chat): boolean {
   return (chat.archived_by ?? []).length > 0;
 }
 
-// Chat-Name: eine Person mit vollem Namen, mehrere nur mit Vornamen.
-export function chatTitle(people: (Character | undefined)[]): string {
+// Chat-Name: eine Person mit vollem Namen, mehrere nur mit Vornamen. Mit `owner`
+// gelten die Kontaktnamen dieses Handys.
+export function chatTitle(
+  people: (Character | undefined)[],
+  owner?: Pick<Character, "phone"> | null,
+): string {
   const known = people.filter(Boolean) as Character[];
   if (known.length === 0) return "Unbekannt";
-  if (known.length === 1) return known[0].name;
-  return known.map((p) => p.name.split(" ")[0]).join(" & ");
+  if (known.length === 1) return contactName(owner, known[0]);
+  return known.map((p) => contactShortName(owner, p)).join(" & ");
 }
 
 // Kurzfassung einer Nachricht (Chat-Liste, Antwort-Zitat)

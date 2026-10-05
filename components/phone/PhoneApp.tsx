@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import type { Character, PhoneCall } from "@/lib/types";
 import { formatInplayDateShort } from "@/lib/format";
@@ -13,28 +13,38 @@ import {
   PhoneSceneDialog,
   useCreatePhoneScene,
 } from "@/components/phone/IncomingCall";
-import { PhoneAvatar, PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
+import { contactName, contactShortName } from "@/lib/phone";
+import { uploadImage, IMAGE_SIZES } from "@/lib/images";
+import { ContactList } from "@/components/phone/ContactList";
+import {
+  ContactAvatar,
+  PhoneAvatar,
+  PhoneFrame,
+  PhoneHeader,
+  useMyPhone,
+} from "@/components/phone/PhoneFrame";
 import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
 
 const first = (c: Character | undefined) => c?.name.split(" ")[0] ?? "?";
 const when = (c: Pick<PhoneCall, "inplay_date" | "inplay_time">) =>
   [formatInplayDateShort(c.inplay_date), c.inplay_time].filter(Boolean).join(", ");
 
-// Telefon-App: Anrufliste (/handy/telefon) und Kontakte (/handy/kontakte). Aus den Kontakten klingelt man einen
-// Charakter an (der nimmt an oder lehnt ab) oder erstellt direkt eine Telefonszene.
+// Telefon-App: Anrufliste (/handy/telefon) und Kontakte (/handy/kontakte). Aus den
+// Kontakten klingelt man einen Charakter an (der nimmt an oder lehnt ab) oder
+// erstellt direkt eine Telefonszene; Kontakte lassen sich umbenennen und mit
+// eigenem Foto versehen (gilt nur auf diesem Handy).
 export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
   const router = useRouter();
-  const { calls, scenes, character, characters, npcs, addCall, updateCall, currentPlayer } =
-    useStore();
+  const { calls, scenes, character, addCall, updateCall, updateCharacter } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
   const [view, setView] = useState(initialView);
-  const [q, setQ] = useState("");
   const [contact, setContact] = useState<Character | null>(null);
+  const [editing, setEditing] = useState<Character | null>(null);
   // Angenommener Anruf ohne Szene: lässt sich aus der Anrufliste nachholen
   const [sceneFor, setSceneFor] = useState<PhoneCall | null>(null);
   const createScene = useCreatePhoneScene();
-  // Eigener klingelnder Anruf, der gerade abgebrochen werden soll
-  const [cancelFor, setCancelFor] = useState<PhoneCall | null>(null);
+  // Anruf, dessen Optionen (abbrechen, löschen) gerade offen sind
+  const [menuFor, setMenuFor] = useState<PhoneCall | null>(null);
 
   if (!me) {
     return (
@@ -46,16 +56,19 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
     );
   }
 
+  const hidden = me.phone?.hidden_calls ?? [];
   const myCalls = calls
-    .filter((c) => c.caller_id === me.id || c.callee_id === me.id)
+    .filter((c) => (c.caller_id === me.id || c.callee_id === me.id) && !hidden.includes(c.id))
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
   const ringing = myCalls.filter((c) => c.status === "ringing" && c.callee_id === me.id);
   const log = myCalls.filter((c) => !ringing.includes(c));
 
-  const query = q.trim().toLowerCase();
-  const contacts = [...characters, ...npcs]
-    .filter((c) => c.id !== me.id && (!query || c.name.toLowerCase().includes(query)))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // Aus der Anrufliste dieses Handys löschen (beim Gegenüber bleibt der Eintrag).
+  // Ein eigener, noch klingelnder Anruf wird dabei abgebrochen.
+  function removeFromLog(c: PhoneCall) {
+    if (c.status === "ringing" && c.caller_id === me!.id) updateCall(c.id, { status: "cancelled" });
+    updateCharacter(me!.id, { phone: { ...me!.phone, hidden_calls: [...hidden, c.id] } });
+  }
 
   const tabBtn = (active: boolean) =>
     `flex flex-1 flex-col items-center gap-0.5 py-2 text-[0.6875rem] font-medium ${
@@ -92,7 +105,7 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
                       : "klingelt …";
               const body = (
                 <>
-                  {other && <PhoneAvatar character={other} size={44} />}
+                  {other && <ContactAvatar owner={me} character={other} size={44} />}
                   <span className="min-w-0 flex-1 border-b border-border-subtle pb-2.5">
                     <span className="flex items-baseline gap-2">
                       <span
@@ -100,7 +113,7 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
                           c.status === "declined" ? "text-red-300" : "text-text-primary"
                         }`}
                       >
-                        {other?.name ?? "Unbekannt"}
+                        {contactName(me, other)}
                       </span>
                       <span className="shrink-0 text-[0.75rem] text-text-tertiary">{when(c)}</span>
                     </span>
@@ -113,75 +126,38 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
                   </span>
                 </>
               );
-              const cls = "flex items-center gap-3 px-3 py-2.5";
-              return scene ? (
-                <Link key={c.id} href={`/szenen/${scene.id}`} className={`${cls} hover:bg-white/[0.03]`}>
-                  {body}
-                </Link>
-              ) : c.status === "accepted" ? (
-                // angenommen, aber (noch) ohne Szene: lässt sich nachholen
-                <button
-                  key={c.id}
-                  onClick={() => setSceneFor(c)}
-                  title="Szene zu diesem Anruf erstellen"
-                  className={`${cls} w-full text-left hover:bg-white/[0.03]`}
-                >
-                  {body}
-                </button>
-              ) : (
-                // eigener, noch klingelnder Anruf: Rechtsklick (lange drücken) bricht ab
+              const cls = "flex w-full items-center gap-3 px-3 py-2.5 text-left";
+              return (
+                // Rechtsklick auf einen Eintrag: abbrechen (eigener klingelnder Anruf) / löschen
                 <div
                   key={c.id}
-                  className={cls}
-                  title={outgoing && c.status === "ringing" ? "Rechtsklick: Anruf abbrechen" : undefined}
                   onContextMenu={(e) => {
-                    if (!outgoing || c.status !== "ringing") return;
                     e.preventDefault();
-                    setCancelFor(c);
+                    setMenuFor(c);
                   }}
                 >
-                  {body}
+                  {scene ? (
+                    <Link href={`/szenen/${scene.id}`} className={`${cls} hover:bg-white/[0.03]`}>
+                      {body}
+                    </Link>
+                  ) : c.status === "accepted" ? (
+                    // angenommen, aber (noch) ohne Szene: lässt sich nachholen
+                    <button
+                      onClick={() => setSceneFor(c)}
+                      title="Szene zu diesem Anruf erstellen"
+                      className={`${cls} hover:bg-white/[0.03]`}
+                    >
+                      {body}
+                    </button>
+                  ) : (
+                    <div className={cls}>{body}</div>
+                  )}
                 </div>
               );
             })}
           </>
         ) : (
-          <>
-            <div className="px-3 py-2">
-              <label className="flex items-center gap-2 rounded-full bg-white/[0.06] px-3 py-1.5 text-text-tertiary">
-                <Icon name="search" size={15} className="shrink-0" />
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Kontakt suchen"
-                  className="min-w-0 flex-1 bg-transparent text-[16px] text-text-primary outline-none placeholder:text-text-tertiary sm:text-[0.875rem]"
-                />
-              </label>
-            </div>
-            {contacts.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setContact(c)}
-                className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-white/[0.03] active:bg-white/[0.06]"
-              >
-                <PhoneAvatar character={c} size={40} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[0.9375rem] text-text-primary">
-                    {c.name}
-                    {c.is_npc && (
-                      <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
-                        NPC
-                      </span>
-                    )}
-                  </span>
-                  <span className="block truncate text-[0.75rem] text-text-tertiary">
-                    {[c.role, c.player_id === currentPlayer?.id ? "du" : null].filter(Boolean).join(" · ")}
-                  </span>
-                </span>
-                <Icon name="phone" size={18} className="shrink-0 text-accent" />
-              </button>
-            ))}
-          </>
+          <ContactList owner={me} onPick={setContact} onEdit={setEditing} />
         )}
       </div>
 
@@ -216,19 +192,45 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
         />
       )}
 
-      {cancelFor && (
-        <Sheet onClose={() => setCancelFor(null)}>
+      {editing && (
+        <ContactDialog
+          key={editing.id}
+          me={me}
+          contact={editing}
+          onClose={() => setEditing(null)}
+          onSave={(entry) => {
+            const contacts = { ...(me.phone?.contacts ?? {}) };
+            if (entry) contacts[editing.id] = entry;
+            else delete contacts[editing.id];
+            updateCharacter(me.id, { phone: { ...me.phone, contacts } });
+            setEditing(null);
+          }}
+        />
+      )}
+
+      {menuFor && (
+        <Sheet onClose={() => setMenuFor(null)}>
           <SheetList>
+            {menuFor.status === "ringing" && menuFor.caller_id === me.id && (
+              <SheetButton
+                onClick={() => {
+                  updateCall(menuFor.id, { status: "cancelled" });
+                  setMenuFor(null);
+                }}
+              >
+                Anruf abbrechen
+              </SheetButton>
+            )}
             <SheetButton
               danger
               onClick={() => {
-                updateCall(cancelFor.id, { status: "cancelled" });
-                setCancelFor(null);
+                removeFromLog(menuFor);
+                setMenuFor(null);
               }}
             >
-              Anruf abbrechen
+              Aus der Anrufliste löschen
             </SheetButton>
-            <SheetButton onClick={() => setCancelFor(null)}>Weiter klingeln lassen</SheetButton>
+            <SheetButton onClick={() => setMenuFor(null)}>Abbrechen</SheetButton>
           </SheetList>
         </Sheet>
       )}
@@ -272,9 +274,9 @@ function CallDialog({
     <div className={dialogWrap} onClick={onCancel}>
       <div onClick={(e) => e.stopPropagation()} className={dialogBox}>
         <div className="flex items-center gap-3">
-          <PhoneAvatar character={contact} size={48} />
+          <ContactAvatar owner={me} character={contact} size={48} />
           <div className="min-w-0">
-            <div className="truncate text-[1rem] font-semibold text-text-primary">{contact.name}</div>
+            <div className="truncate text-[1rem] font-semibold text-text-primary">{contactName(me, contact)}</div>
             <div className="text-[0.8125rem] text-text-tertiary">{first(me)} ruft an</div>
           </div>
         </div>
@@ -297,10 +299,10 @@ function CallDialog({
           onClick={() => onRing(date, time)}
           className={`${button} mt-4 border-transparent bg-accent/90 text-black hover:bg-accent`}
         >
-          {first(contact)} anklingeln
+          {contactShortName(me, contact)} anklingeln
         </button>
         <p className={hint}>
-          {first(contact)} bekommt den Anruf aufs Handy und kann annehmen oder ablehnen.
+          {contactShortName(me, contact)} bekommt den Anruf aufs Handy und kann annehmen oder ablehnen.
         </p>
 
         <div className="mt-4 border-t border-border-subtle pt-4">
@@ -325,6 +327,114 @@ function CallDialog({
         >
           Abbrechen
         </button>
+      </div>
+    </div>
+  );
+}
+
+// Kontakt bearbeiten: eigener Name und eigenes Foto für diesen Charakter – nur auf
+// dem Handy, von dem aus man gerade arbeitet. Der Name gilt dort überall, das
+// Foto nur bei Kontakten und Anrufen (nicht im Messenger).
+function ContactDialog({
+  me,
+  contact,
+  onSave,
+  onClose,
+}: {
+  me: Character;
+  contact: Character;
+  onSave: (entry: { name?: string; photo?: string } | null) => void;
+  onClose: () => void;
+}) {
+  const current = me.phone?.contacts?.[contact.id] ?? {};
+  const [name, setName] = useState(current.name ?? "");
+  const [photo, setPhoto] = useState(current.photo ?? "");
+  const [uploading, setUploading] = useState(false);
+  const file = useRef<HTMLInputElement>(null);
+  const button = "rounded-md border px-3 py-1.5 text-[0.8125rem] disabled:opacity-40";
+
+  async function onPhoto(f: File | undefined) {
+    if (!f) return;
+    setUploading(true);
+    try {
+      setPhoto(await uploadImage(f, "phones", IMAGE_SIZES.avatar));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className={dialogWrap} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className={dialogBox}>
+        <div className="text-[0.9375rem] font-semibold text-text-primary">Kontakt bearbeiten</div>
+        <p className="mt-0.5 text-[0.8125rem] text-text-tertiary">
+          So ist {contact.name} auf dem Handy von {first(me)} gespeichert. Das Foto erscheint nur
+          bei Kontakten und Anrufen.
+        </p>
+        <div className="mt-3 flex items-center gap-3">
+          {photo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photo} alt="" className="h-14 w-14 shrink-0 rounded-full object-cover" />
+          ) : (
+            <PhoneAvatar character={contact} size={56} />
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              disabled={uploading}
+              onClick={() => file.current?.click()}
+              className={`${button} border-border-subtle bg-white/[0.04] text-text-primary hover:bg-white/[0.08]`}
+            >
+              {uploading ? "Lädt…" : "Foto hochladen"}
+            </button>
+            {photo && (
+              <button onClick={() => setPhoto("")} className="text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+                Foto entfernen
+              </button>
+            )}
+          </div>
+          <input
+            ref={file}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              void onPhoto(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+        </div>
+        <label className="mt-3 block text-[0.8125rem] text-text-secondary">
+          Name
+          <input
+            value={name}
+            maxLength={40}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={contact.name}
+            className="mt-1 w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/20 sm:text-[0.875rem]"
+          />
+        </label>
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+          <button onClick={onClose} className="mr-auto px-1 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+            Abbrechen
+          </button>
+          {(current.name || current.photo) && (
+            <button
+              onClick={() => onSave(null)}
+              className={`${button} border-border-subtle bg-white/[0.04] text-text-primary hover:bg-white/[0.08]`}
+            >
+              Zurücksetzen
+            </button>
+          )}
+          <button
+            onClick={() => {
+              const entry = { ...(name.trim() ? { name: name.trim() } : {}), ...(photo ? { photo } : {}) };
+              onSave(Object.keys(entry).length ? entry : null);
+            }}
+            className={`${button} border-transparent bg-accent/90 font-medium text-black hover:bg-accent`}
+          >
+            Speichern
+          </button>
+        </div>
       </div>
     </div>
   );

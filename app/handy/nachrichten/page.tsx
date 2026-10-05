@@ -8,6 +8,7 @@ import type { Chat, ChatMessage } from "@/lib/types";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
 import { chatTitle, isArchived, isLeftOnRead, messageSnippet } from "@/lib/chats";
+import { contactShortName } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
 import {
   PhoneAvatar,
@@ -106,7 +107,7 @@ export default function MessagesPage() {
       const people = chat.participant_ids
         .filter((id) => id !== myId)
         .map((id) => character(id));
-      return { chat, people, title: chatTitle(people), last: last.get(chat.id), hit: hits.get(chat.id) };
+      return { chat, people, title: chatTitle(people, me), last: last.get(chat.id), hit: hits.get(chat.id) };
     })
     .filter((r) => !query || r.hit || r.title.toLowerCase().includes(query))
     .sort((a, b) =>
@@ -275,7 +276,7 @@ export default function MessagesPage() {
                         {shown.character_id === myId && tab === "mine"
                           ? "Du: "
                           : people.length > 1
-                            ? `${character(shown.character_id)?.name.split(" ")[0] ?? "?"}: `
+                            ? `${contactShortName(me, character(shown.character_id))}: `
                             : ""}
                         {messageSnippet(shown)}
                       </>
@@ -285,7 +286,7 @@ export default function MessagesPage() {
                   </span>
                   {paused && (
                     <span className="shrink-0 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
-                      left on read
+                      leave on read
                     </span>
                   )}
                   {unread && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-accent" />}
@@ -299,7 +300,7 @@ export default function MessagesPage() {
       {menuChat && (
         <Sheet onClose={() => closeMenu()}>
           <div className="mb-2 truncate px-1 text-[0.8125rem] text-text-tertiary">
-            {chatTitle(menuChat.participant_ids.filter((id) => id !== myId).map((id) => character(id)))}
+            {chatTitle(menuChat.participant_ids.filter((id) => id !== myId).map((id) => character(id)), me)}
           </div>
           <SheetList>
             {/* eigener Chat, in dem man dran ist: pausieren, als ungelesen markieren
@@ -330,7 +331,7 @@ export default function MessagesPage() {
                       closeMenu();
                     }}
                   >
-                    Left on read – Chat pausieren
+                    Leave on read – Chat pausieren
                   </SheetButton>
                   {!isChatNew(menuChat.id) && (
                     <SheetButton

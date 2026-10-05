@@ -7,7 +7,7 @@ import { useStore } from "@/lib/store";
 import type { Chat, ChatMessageKind } from "@/lib/types";
 import { formatDateTime, formatInplayDate } from "@/lib/format";
 import { isEmojiOnly, QUICK_REACTIONS } from "@/lib/emoji";
-import { addMinutes, resolvePhone } from "@/lib/phone";
+import { addMinutes, contactShortName, resolvePhone } from "@/lib/phone";
 import { chatTitle, isArchived, messageSnippet } from "@/lib/chats";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DatePicker } from "@/components/DatePicker";
@@ -91,9 +91,11 @@ function ChatView({ chat }: { chat: Chat }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [self, stored]);
   const others = parts.filter((p) => p !== self).map((p) => character(p));
+  // Namen wie auf dem Handy, das man in der Hand hat (eigene Kontaktnamen)
+  const viewer = selfChar ?? me;
   const other = others.length === 1 ? others[0] : undefined;
 
-  // „Left on read": wer hat die neueste Nachricht bewusst unbeantwortet gelassen?
+  // „Leave on read": wer hat die neueste Nachricht bewusst unbeantwortet gelassen?
   const lastReal = [...messages].reverse().find((m) => m.kind !== "date");
   const leftBy = lastReal ? parts.filter((p) => chat.left_on_read?.[p] === lastReal.id) : [];
   const myTurn = canWrite && !!lastReal && lastReal.character_id !== self;
@@ -197,7 +199,7 @@ function ChatView({ chat }: { chat: Chat }) {
           </span>
           <span className="min-w-0">
             <span className="block truncate text-[0.9375rem] font-semibold leading-tight text-text-primary">
-              {chatTitle(others)}
+              {chatTitle(others, viewer)}
             </span>
             {(reading || archived) && (
               <span className="block truncate text-[0.75rem] text-text-tertiary">
@@ -255,7 +257,7 @@ function ChatView({ chat }: { chat: Chat }) {
             >
               {reading && first && (
                 <span className="mb-0.5 ml-1 text-[0.6875rem] font-semibold text-text-tertiary">
-                  {sender?.name.split(" ")[0] ?? "?"}
+                  {contactShortName(viewer, sender)}
                 </span>
               )}
               {reading && lastOfGroup && sender && (
@@ -294,7 +296,7 @@ function ChatView({ chat }: { chat: Chat }) {
                     } ${media ? "mx-3 mt-2" : ""}`}
                   >
                     <span className="block font-semibold">
-                      {character(quoted.character_id)?.name.split(" ")[0] ?? "?"}
+                      {contactShortName(viewer, character(quoted.character_id))}
                     </span>
                     <span className="line-clamp-2 break-words">{snippet(quoted)}</span>
                   </span>
@@ -358,8 +360,8 @@ function ChatView({ chat }: { chat: Chat }) {
             {!reading && lastReal.character_id === self
               ? "Gelesen"
               : reading
-                ? `Gelesen · ${chatTitle(leftBy.map((p) => character(p)))} antwortet nicht`
-                : "Left on read · Chat pausiert"}
+                ? `Gelesen · ${chatTitle(leftBy.map((p) => character(p)), viewer)} antwortet nicht`
+                : "Leave on read · Chat pausiert"}
           </div>
         )}
       </div>
@@ -389,7 +391,7 @@ function ChatView({ chat }: { chat: Chat }) {
               <div className="mb-2 flex items-center gap-2 rounded-lg border-l-2 border-accent bg-white/[0.05] py-1.5 pl-2.5 pr-1">
                 <div className="min-w-0 flex-1 text-[0.75rem]">
                   <div className="font-semibold text-accent">
-                    Antwort an {character(replyMsg.character_id)?.name.split(" ")[0] ?? "?"}
+                    Antwort an {contactShortName(viewer, character(replyMsg.character_id))}
                   </div>
                   <div className="truncate text-text-tertiary">{snippet(replyMsg)}</div>
                 </div>
@@ -493,7 +495,7 @@ function ChatView({ chat }: { chat: Chat }) {
         </div>
       )}
 
-      {/* Chat-Optionen: pausieren („left on read") und archivieren */}
+      {/* Chat-Optionen: pausieren („leave on read") und archivieren */}
       {menuOpen && (
         <div
           className="absolute inset-0 z-20 flex flex-col justify-end bg-black/55"
@@ -513,7 +515,7 @@ function ChatView({ chat }: { chat: Chat }) {
                       leaveOnRead(chat.id, self, lastReal.id);
                     }}
                   >
-                    Left on read – nicht antworten, Chat pausieren
+                    Leave on read – nicht antworten, Chat pausieren
                   </SheetButton>
                   <SheetButton
                     onClick={() => {
