@@ -11,7 +11,16 @@ import { Bubble, LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
 import { SceneCard } from "@/components/SceneCard";
 import { Facts, FactRow } from "@/components/Facts";
-import { RELATION_CATEGORIES, TIER_NAMES, ageAt, tierLabel, tierOf } from "@/lib/characters";
+import {
+  RELATION_CATEGORIES,
+  TIER_NAMES,
+  ageAt,
+  isHidden,
+  normalizeHeight,
+  tierLabel,
+  tierOf,
+} from "@/lib/characters";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PhonePreview } from "@/components/phone/PhonePreview";
 import { StatistActions } from "@/components/StatistActions";
 import { ProfileEditPanel } from "@/components/ProfileEditPanel";
@@ -198,7 +207,7 @@ export default function CharacterPage({
             <RelationsTab
               c={c}
               coChars={coChars}
-              canEdit={canEditCharacter(c) && editing}
+              canEdit={canEditCharacter(c)}
             />
           )}
 
@@ -318,11 +327,10 @@ function ProfileBanner({ c }: { c: Character }) {
       <div className="absolute inset-0 flex flex-col bg-black/80 px-4 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
         <h2 className="font-display lowercase text-[2rem] text-accent leading-none">looks.</h2>
         <Facts className="mt-3">
-          <FactRow label="Height" value={c.height} />
-          <FactRow label="Figure" value={c.figure} />
-          <FactRow label="Hair" value={c.hair} />
-          <FactRow label="Eyes" value={c.eyes} />
-          <FactRow label="Face" value={c.faceclaim} />
+          <FactRow label="Height" value={isHidden(c, "height") ? null : normalizeHeight(c.height)} />
+          <FactRow label="Figure" value={isHidden(c, "figure") ? null : c.figure} />
+          <FactRow label="Hair" value={isHidden(c, "hair") ? null : c.hair} />
+          <FactRow label="Eyes" value={isHidden(c, "eyes") ? null : c.eyes} />
         </Facts>
       </div>
     </div>
@@ -390,8 +398,8 @@ function GeneralTab({ c }: { c: Character }) {
 
       {/* Facts, Studium/Arbeit, Looks – rechts */}
       <div className="flex flex-col gap-7">
+        {/* Looks stehen nur im Hover über dem Profil-Banner */}
         <ProfileFacts c={c} />
-        <ProfileLooks c={c} />
       </div>
 
       {(c.vibes ?? []).length > 0 && <Vibes c={c} />}
@@ -436,7 +444,7 @@ function InplayTab({ inScenes }: { inScenes: Scene[] }) {
       ) : (
         <div className="flex flex-col gap-2">
           {inScenes.map((s) => (
-            <SceneCard key={s.id} scene={s} />
+            <SceneCard key={s.id} scene={s} compact />
           ))}
         </div>
       )}
@@ -510,6 +518,7 @@ function RelationRow({
   const [label, setLabel] = useState(rel.label ?? "");
   const [note, setNote] = useState(rel.note ?? "");
   const [category, setCategory] = useState<RelationCategory | "">(rel.category ?? "");
+  const [confirmClear, setConfirmClear] = useState(false);
 
   function save() {
     updateCharacter(c.id, {
@@ -525,7 +534,49 @@ function RelationRow({
   const facts = [rcAge != null ? `${rcAge}` : null, rc.role, rel.label].filter(Boolean).join(" · ");
 
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-surface p-3">
+    <div className="group/rel relative flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-surface p-3">
+      {/* Mini-Menü beim Hover (wie bei den Posts): bearbeiten / Eintrag leeren */}
+      {canEdit && !editing && (
+        <div className="absolute right-1.5 top-1.5 flex gap-0.5 rounded-md bg-bg-surface opacity-0 transition-opacity group-hover/rel:opacity-100 focus-within:opacity-100">
+          <button
+            onClick={() => {
+              setLabel(rel.label ?? "");
+              setNote(rel.note ?? "");
+              setCategory(rel.category ?? "");
+              setEditing(true);
+            }}
+            title="Beziehung bearbeiten"
+            aria-label="Beziehung bearbeiten"
+            className="rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-accent"
+          >
+            <Icon name="edit" size={14} />
+          </button>
+          {(rel.label || rel.note || rel.category) && (
+            <button
+              onClick={() => setConfirmClear(true)}
+              title="Angaben zur Beziehung löschen"
+              aria-label="Angaben zur Beziehung löschen"
+              className="rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-red-400"
+            >
+              <Icon name="trash" size={14} />
+            </button>
+          )}
+        </div>
+      )}
+      {confirmClear && (
+        <ConfirmDialog
+          title={`Angaben zu ${rc.name} löschen?`}
+          text="Kategorie, Beziehung und Erläuterung werden geleert. Die Verbindung selbst bleibt stehen – sie ergibt sich aus den gemeinsamen Szenen."
+          confirmLabel="Angaben löschen"
+          onCancel={() => setConfirmClear(false)}
+          onConfirm={() => {
+            const next = { ...c.relationships };
+            delete next[rc.id];
+            updateCharacter(c.id, { relationships: next });
+            setConfirmClear(false);
+          }}
+        />
+      )}
       <Link href={`/charaktere/${rc.id}`} className="shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -552,22 +603,10 @@ function RelationRow({
           </Link>
           {facts && <div className="text-[0.8125rem] text-text-tertiary">{facts}</div>}
         </div>
-        <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+        <div className={`flex shrink-0 flex-wrap justify-end gap-1.5 ${canEdit ? "mr-12" : ""}`}>
           <Link href={`/szenen?chars=${c.id},${rc.id}`} className={btn}>
             Szenen
           </Link>
-          {canEdit && !editing && (
-            <button
-              onClick={() => {
-                setLabel(rel.label ?? "");
-                setNote(rel.note ?? "");
-                setEditing(true);
-              }}
-              className={btn}
-            >
-              <Icon name="edit" size={14} /> Bearbeiten
-            </button>
-          )}
         </div>
       </div>
 

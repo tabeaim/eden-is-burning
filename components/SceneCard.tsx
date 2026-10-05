@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useContextMenu } from "./ContextMenu";
+import { characterImage } from "@/lib/avatar";
 import { useStore, whoseTurn } from "@/lib/store";
 import {
   formatDateTime,
@@ -91,10 +92,14 @@ export function SceneCard({
   scene,
   href,
   muted = false,
+  compact = false,
 }: {
   scene: Scene;
   href?: string; // abweichendes Ziel, z.B. Sprung zu einem Suchtreffer
   muted?: boolean;
+  // Reduziert (Charakterprofil): Beteiligte nur als zusammengerückte Avatare +
+  // Vornamen, ohne Bubbles und ohne die Zeile zum letzten Post
+  compact?: boolean;
 }) {
   const { character, postsOf } = useStore();
   const participants = scene.participant_ids
@@ -145,6 +150,23 @@ export function SceneCard({
           )}
         </div>
 
+        {compact ? (
+          <div className="mt-2 flex items-center gap-2 text-[0.8125rem] text-text-tertiary">
+            <span className="flex shrink-0 -space-x-2">
+              {participants.map((c) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={c.id}
+                  src={characterImage(c)}
+                  alt=""
+                  className="h-6 w-6 rounded-full object-cover ring-2 ring-bg-surface"
+                />
+              ))}
+            </span>
+            <span className="min-w-0 truncate">{participants.map((c) => c.name.split(" ")[0]).join(", ")}</span>
+          </div>
+        ) : (
+          <>
         <div className="mt-2.5">
           <SceneTurnBar
             participants={participants}
@@ -168,6 +190,8 @@ export function SceneCard({
             "Noch kein Post"
           )}
         </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -82,3 +82,50 @@ export const RELATION_CATEGORIES: [RelationCategory, string][] = [
   ["family", "family."],
   ["acquainted", "acquainted."],
 ];
+
+// Student*in / arbeitstätig – beides zugleich möglich (liest auch den Altbestand)
+export function isStudent(c: Pick<Character, "profile">): boolean {
+  return c.profile?.is_student ?? c.profile?.occupation_kind === "student";
+}
+export function isWorking(c: Pick<Character, "profile">): boolean {
+  return c.profile?.is_working ?? c.profile?.occupation_kind === "working";
+}
+
+// Sternzeichen aus dem Geburtsdatum: [englisch, deutsch]
+const ZODIAC: [number, number, string, string][] = [
+  // [bis Monat, bis Tag, englisch, deutsch]
+  [1, 19, "Capricorn", "Steinbock"],
+  [2, 18, "Aquarius", "Wassermann"],
+  [3, 20, "Pisces", "Fische"],
+  [4, 19, "Aries", "Widder"],
+  [5, 20, "Taurus", "Stier"],
+  [6, 20, "Gemini", "Zwillinge"],
+  [7, 22, "Cancer", "Krebs"],
+  [8, 22, "Leo", "Löwe"],
+  [9, 22, "Virgo", "Jungfrau"],
+  [10, 22, "Libra", "Waage"],
+  [11, 21, "Scorpio", "Skorpion"],
+  [12, 21, "Sagittarius", "Schütze"],
+  [12, 31, "Capricorn", "Steinbock"],
+];
+export function zodiacOf(birthdate: string | null | undefined): { en: string; de: string } | null {
+  const d = birthdate ? parts(birthdate) : null;
+  if (!d) return null;
+  const hit = ZODIAC.find(([m, day]) => d[1] < m || (d[1] === m && d[2] <= day));
+  return hit ? { en: hit[2], de: hit[3] } : null;
+}
+
+// Größe einheitlich in Zentimetern: „183", „1,83 m", „1.83", „6'0" → „183 cm".
+// Was sich nicht deuten lässt, bleibt, wie es eingegeben wurde.
+export function normalizeHeight(input: string | null | undefined): string | null {
+  const raw = (input ?? "").trim();
+  if (!raw) return null;
+  const t = raw.toLowerCase().replace(",", ".");
+  const feet = /^(\d)\s*(?:'|′|ft|fuß)\s*(\d{1,2})?/.exec(t);
+  if (feet) return `${Math.round(parseInt(feet[1], 10) * 30.48 + parseInt(feet[2] ?? "0", 10) * 2.54)} cm`;
+  const meters = /^(\d)\.(\d{1,2})\s*m?$/.exec(t);
+  if (meters) return `${Math.round(parseFloat(`${meters[1]}.${meters[2]}`) * 100)} cm`;
+  const cm = /^(\d{2,3})(?:\.\d+)?\s*(?:cm)?$/.exec(t);
+  if (cm) return `${parseInt(cm[1], 10)} cm`;
+  return raw;
+}

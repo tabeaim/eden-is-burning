@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import type { Character, CharacterProfile } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { tierOf } from "@/lib/characters";
+import { normalizeHeight, tierOf } from "@/lib/characters";
 import { AREA_ORDER, AREAS } from "@/lib/world";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { characterImage } from "@/lib/avatar";
@@ -112,7 +112,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         age: d.age,
         area: d.area,
         faceclaim_image_url: d.faceclaim_image_url,
-        height: d.height,
+        height: normalizeHeight(d.height),
         figure: d.figure,
         hair: d.hair,
         eyes: d.eyes,

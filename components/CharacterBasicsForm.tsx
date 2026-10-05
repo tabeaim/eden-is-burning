@@ -4,7 +4,17 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import type { Character, CharacterProfile } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { DEGREES, ageAt, studyYearAt, tierOf } from "@/lib/characters";
+import {
+  DEGREES,
+  ageAt,
+  isStudent,
+  isWorking,
+  normalizeHeight,
+  studyYearAt,
+  tierOf,
+  zodiacOf,
+} from "@/lib/characters";
+import { Toggle } from "./Toggle";
 import { AREA_ORDER, AREAS, areaName } from "@/lib/world";
 import { PHONE_AREA } from "@/lib/phone";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
@@ -76,8 +86,11 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       birthdate: p.birthdate ?? null,
       gender: p.gender ?? null,
       hidden,
-      occupation_kind: p.occupation_kind ?? null,
+      is_student: student,
+      is_working: working,
+      occupation_kind: null, // abgelöst durch is_student / is_working
       university: p.university ?? null,
+      university_location_id: p.university_location_id ?? null,
       major: p.major ?? null,
       degree: p.degree ?? null,
       study_start: p.study_start ?? null,
@@ -95,7 +108,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       origin: d.origin,
       status: d.status,
       sexuality: d.sexuality,
-      height: d.height,
+      height: normalizeHeight(d.height), // immer in cm
       figure: d.figure,
       hair: d.hair,
       eyes: d.eyes,
@@ -107,8 +120,38 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
     setTimeout(() => setSaved(false), 1500);
   }
 
+  const student = isStudent({ profile: p });
+  const working = isWorking({ profile: p });
+  const zodiac = zodiacOf(p.birthdate);
+
+  // Universität und Arbeitgeber: Orte und ganze Gegenden (z.B. „Byron University")
+  // werden vorgeschlagen. Ein Ort wird verknüpft („works here" / „studies here"),
+  // eine Gegend nur als Name übernommen.
   const places = locations.filter((l) => l.area !== PHONE_AREA);
-  const employerQuery = (p.employer ?? "").trim().toLowerCase();
+  const placeByName = (value: string) =>
+    places.find((l) => l.name.toLowerCase() === value.trim().toLowerCase());
+  const placeSuggestions = (value: string | null | undefined) => {
+    const q = (value ?? "").trim().toLowerCase();
+    return [
+      ...AREA_ORDER.filter((k) => !q || AREAS[k].name.toLowerCase().includes(q)).map((k) => ({
+        key: `area:${k}`,
+        label: AREAS[k].name,
+        hint: "Gegend",
+      })),
+      ...places
+        .filter((l) => !q || l.name.toLowerCase().includes(q))
+        .sort((a, b) => a.name.localeCompare(b.name, "de"))
+        .map((l) => ({ key: l.id, label: l.name, hint: areaName(l.area) })),
+    ].slice(0, 8);
+  };
+  const pickPlace = (key: string): { name: string; id: string | null } | null => {
+    if (key.startsWith("area:")) {
+      const k = key.slice(5) as (typeof AREA_ORDER)[number];
+      return AREAS[k] ? { name: AREAS[k].name, id: null } : null;
+    }
+    const l = places.find((x) => x.id === key);
+    return l ? { name: l.name, id: l.id } : null;
+  };
 
   // Feld mit Beschriftung; `hideKey`: lässt sich im Profil verstecken
   const F = ({
@@ -153,10 +196,6 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
   );
   const group = "text-[0.8125rem] uppercase tracking-wider font-semibold text-text-tertiary";
   const grid = "grid grid-cols-1 gap-3 sm:grid-cols-2";
-  const pill = (active: boolean) =>
-    `rounded-full px-3 py-1.5 text-[0.8125rem] transition-colors ${
-      active ? "bg-accent text-black font-medium" : "bg-white/[0.06] text-text-secondary hover:text-text-primary"
-    }`;
 
   return (
     <div className="flex flex-col gap-4 pt-4">
@@ -190,7 +229,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
             children: <input {...text("full_name")} placeholder={d.name} />,
           })}
           {F({
-            label: `Geburtsdatum${age != null ? ` – ${age} Jahre` : ""}`,
+            label: `Geburtsdatum${age != null ? ` – ${age} Jahre` : ""}${zodiac ? `, ${zodiac.de}` : ""}`,
             required: main,
             hideKey: "age",
             error: missing.age,
@@ -231,8 +270,8 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         </div>
       </div>
       <p className="-mt-2 text-[0.8125rem] text-text-tertiary">
-        Das Alter wird aus dem Geburtsdatum berechnet: im Profil zum {formatInplayDate("2022-01-01")},
-        in einer Szene zum Datum der Szene.
+        Alter und Sternzeichen werden aus dem Geburtsdatum berechnet: das Alter im Profil zum{" "}
+        {formatInplayDate("2022-01-01")}, in einer Szene zum Datum der Szene.
       </p>
       {F({
         label: `Kurzbeschreibung (${(d.bio ?? "").length}/1000)`,
@@ -277,35 +316,35 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       })}
       {main && (
         <>
-          <div className="flex flex-wrap gap-1.5">
-            {(
-              [
-                [null, "Keine Angabe"],
-                ["student", "Student*in"],
-                ["working", "Arbeitstätig"],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => setProfile({ occupation_kind: key })}
-                className={pill((p.occupation_kind ?? null) === key)}
-              >
-                {label}
-              </button>
-            ))}
+          {/* beides zugleich möglich */}
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <Toggle checked={student} onChange={(on) => setProfile({ is_student: on })}>
+              Student*in
+            </Toggle>
+            <Toggle checked={working} onChange={(on) => setProfile({ is_working: on })}>
+              Arbeitstätig
+            </Toggle>
           </div>
-          {p.occupation_kind === "student" && (
+          {student && (
             <div className={grid}>
               {F({
                 label: "Universität",
                 hideKey: "university",
                 children: (
-                  <input
+                  <SuggestInput
                     value={p.university ?? ""}
-                    onChange={(e) => setProfile({ university: e.target.value || null })}
                     placeholder="z. B. Byron University"
-                    className={field}
+                    onChange={(value) =>
+                      setProfile({
+                        university: value || null,
+                        university_location_id: placeByName(value)?.id ?? null,
+                      })
+                    }
+                    suggestions={placeSuggestions(p.university)}
+                    onPick={(key) => {
+                      const hit = pickPlace(key);
+                      if (hit) setProfile({ university: hit.name, university_location_id: hit.id });
+                    }}
                   />
                 ),
               })}
@@ -353,7 +392,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
               </p>
             </div>
           )}
-          {p.occupation_kind === "working" &&
+          {working &&
             F({
               label: "Arbeitgeber",
               hideKey: "employer",
@@ -362,19 +401,13 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
                   <SuggestInput
                     value={p.employer ?? ""}
                     placeholder="Arbeitgeber eintippen – Orte werden vorgeschlagen"
-                    onChange={(value) => {
-                      // getippter Name passt genau auf einen Ort: verknüpfen
-                      const hit = places.find((l) => l.name.toLowerCase() === value.trim().toLowerCase());
-                      setProfile({ employer: value || null, employer_location_id: hit?.id ?? null });
-                    }}
-                    suggestions={places
-                      .filter((l) => !employerQuery || l.name.toLowerCase().includes(employerQuery))
-                      .sort((a, b) => a.name.localeCompare(b.name, "de"))
-                      .slice(0, 8)
-                      .map((l) => ({ key: l.id, label: l.name, hint: areaName(l.area) }))}
-                    onPick={(id) => {
-                      const l = places.find((x) => x.id === id);
-                      if (l) setProfile({ employer: l.name, employer_location_id: l.id });
+                    onChange={(value) =>
+                      setProfile({ employer: value || null, employer_location_id: placeByName(value)?.id ?? null })
+                    }
+                    suggestions={placeSuggestions(p.employer)}
+                    onPick={(key) => {
+                      const hit = pickPlace(key);
+                      if (hit) setProfile({ employer: hit.name, employer_location_id: hit.id });
                     }}
                   />
                   <span className="mt-1 block text-[0.8125rem] text-text-tertiary">
@@ -391,7 +424,18 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       {/* --- Aussehen --- */}
       <div className={group}>Aussehen</div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {F({ label: "Größe", hideKey: "height", children: <input {...text("height")} placeholder="183 cm" /> })}
+        {F({
+          label: "Größe (cm)",
+          hideKey: "height",
+          children: (
+            <input
+              {...text("height")}
+              placeholder="183"
+              // beim Verlassen in Zentimeter umrechnen (1,83 m, 6'0 …)
+              onBlur={() => set("height", normalizeHeight(d.height))}
+            />
+          ),
+        })}
         {F({ label: "Figur", hideKey: "figure", children: <input {...text("figure")} /> })}
         {F({ label: "Haare", hideKey: "hair", children: <input {...text("hair")} /> })}
         {F({ label: "Augen", hideKey: "eyes", children: <input {...text("eyes")} /> })}

@@ -86,9 +86,12 @@ export interface CharacterProfile {
   birthdate?: string | null; // ISO-Datum; daraus wird das Alter berechnet
   gender?: string | null; // "weiblich" | "männlich" | "divers" | frei
   hidden?: string[]; // Angaben, die im Profil nicht gezeigt werden (Feld-Schlüssel)
-  // Student*in oder arbeitstätig (oder nichts davon)
-  occupation_kind?: "student" | "working" | null;
+  // Student*in und/oder arbeitstätig (beides zugleich möglich)
+  is_student?: boolean;
+  is_working?: boolean;
+  occupation_kind?: "student" | "working" | null; // Altbestand, siehe isStudent/isWorking
   university?: string | null;
+  university_location_id?: string | null; // … falls ein Ort gewählt wurde („studies here")
   major?: string | null; // Studiengang
   degree?: "undergraduate" | "graduate" | "phd" | "mba" | null;
   study_start?: string | null; // ISO-Datum; daraus das Studienjahr

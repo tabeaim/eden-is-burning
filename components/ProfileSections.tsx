@@ -1,5 +1,15 @@
 import type { Character } from "@/lib/types";
-import { DEGREES, ageAt, isHidden, studyYearAt, tierOf } from "@/lib/characters";
+import {
+  DEGREES,
+  ageAt,
+  isHidden,
+  isStudent,
+  isWorking,
+  normalizeHeight,
+  studyYearAt,
+  tierOf,
+  zodiacOf,
+} from "@/lib/characters";
 import { areaName } from "@/lib/world";
 import { Facts, FactRow } from "./Facts";
 
@@ -31,6 +41,7 @@ export function ProfileFacts({ c }: { c: Character }) {
         <Facts>
           <FactRow label="Name" value={shown(c, "full_name", c.full_name) ?? c.name} />
           <FactRow label="Age" value={shown(c, "age", age != null ? `${age}` : null)} />
+          <FactRow label="Zodiac" value={shown(c, "age", zodiacOf(p.birthdate)?.en)} />
           <FactRow label="Gender" value={shown(c, "gender", p.gender)} />
           <FactRow label="Residence" value={shown(c, "area", c.area ? areaName(c.area) : null)} />
           <FactRow label="Origin" value={shown(c, "origin", c.origin)} />
@@ -41,7 +52,7 @@ export function ProfileFacts({ c }: { c: Character }) {
         </Facts>
       </section>
 
-      {main && p.occupation_kind === "student" && (
+      {main && isStudent(c) && (
         <section>
           <SectionHeading>studies.</SectionHeading>
           <Facts>
@@ -52,7 +63,7 @@ export function ProfileFacts({ c }: { c: Character }) {
           </Facts>
         </section>
       )}
-      {main && p.occupation_kind === "working" && shown(c, "employer", p.employer) && (
+      {main && isWorking(c) && shown(c, "employer", p.employer) && (
         <section>
           <SectionHeading>work.</SectionHeading>
           <Facts>
@@ -61,7 +72,7 @@ export function ProfileFacts({ c }: { c: Character }) {
         </section>
       )}
       {/* Altbestand: Job/Company aus dem früheren Profil */}
-      {!p.occupation_kind && (c.job || c.company) && (
+      {!isStudent(c) && !isWorking(c) && (c.job || c.company) && (
         <section>
           <SectionHeading>occupation.</SectionHeading>
           <Facts>
@@ -76,7 +87,7 @@ export function ProfileFacts({ c }: { c: Character }) {
 
 export function ProfileLooks({ c }: { c: Character }) {
   const rows = [
-    ["Height", shown(c, "height", c.height)],
+    ["Height", shown(c, "height", normalizeHeight(c.height))],
     ["Figure", shown(c, "figure", c.figure)],
     ["Hair", shown(c, "hair", c.hair)],
     ["Eyes", shown(c, "eyes", c.eyes)],
