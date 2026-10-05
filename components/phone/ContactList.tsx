@@ -10,8 +10,7 @@ import { ContactAvatar } from "./PhoneFrame";
 import { Sheet, SheetButton, SheetList } from "./Sheet";
 import { useLongPress } from "./useLongPress";
 
-// Kontaktliste eines Handys: oben die Favoriten (von Hand gesetzt; solange noch
-// keiner gewählt wurde, ein zufälliger), darunter alphabetisch die relevanten
+// Kontaktliste eines Handys: oben die Favoriten (von Hand gesetzt), darunter alphabetisch die relevanten
 // Kontakte – alle, mit denen der Besitzer schon zu tun hatte (gemeinsame Szene,
 // Chat, Anruf, eigener Kontakt-Eintrag) oder die von Hand als relevant markiert
 // sind. Namen und Fotos nach den Kontakt-Einträgen dieses Handys.
@@ -70,9 +69,8 @@ export function ContactList({
     );
   const name = (c: Character) => contactName(owner, c);
   const byName = (a: Character, b: Character) => name(a).localeCompare(name(b), "de");
-  // Favoriten: gespeicherte Auswahl; ohne Auswahl ein zufälliger (fest je Handy)
-  const favoriteIds =
-    owner.phone?.favorites ?? (everyone.length ? [everyone[hash(owner.id) % everyone.length].id] : []);
+  // Favoriten: nur, was von Hand markiert wurde
+  const favoriteIds = owner.phone?.favorites ?? [];
   const manualRelevant = owner.phone?.relevant ?? [];
   const top = everyone.filter((c) => favoriteIds.includes(c.id)).sort(byName);
   const matches = everyone
@@ -235,11 +233,4 @@ export function ContactList({
       )}
     </>
   );
-}
-
-// Kleiner fester „Zufall" aus einer ID (für den vorgegebenen Favoriten)
-function hash(text: string): number {
-  let h = 0;
-  for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) >>> 0;
-  return h;
 }

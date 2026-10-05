@@ -4,15 +4,26 @@ import { useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { playsAs } from "@/lib/characters";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 // Was man mit einer Statist*in tun kann (Karte in der Übersicht, Profil):
 // „Bespielen" fragt, ob sie zum Supporting Character werden soll
 // (dann nur noch mir zugeordnet, nicht mehr bei den Statist*innen) oder ob ich sie
 // nur zeitweise bespiele (bleibt Statist*in, auch für andere). Wer sie zeitweise
 // bespielt, kann sie jederzeit wieder von sich lösen.
-export function StatistActions({ character, className = "" }: { character: Character; className?: string }) {
+// `upgrade` (Profil): zusätzlich ein eigener Knopf „Zum Supporting Character machen".
+export function StatistActions({
+  character,
+  className = "",
+  upgrade = false,
+}: {
+  character: Character;
+  className?: string;
+  upgrade?: boolean;
+}) {
   const { currentPlayer, updateCharacter } = useStore();
   const [asking, setAsking] = useState(false);
+  const [confirmSc, setConfirmSc] = useState(false);
   if (!currentPlayer) return null;
   const me = currentPlayer.id;
   const co = character.co_owner_ids ?? [];
@@ -34,6 +45,24 @@ export function StatistActions({ character, className = "" }: { character: Chara
         <button onClick={() => setAsking(true)} className={primary}>
           Bespielen
         </button>
+      )}
+
+      {upgrade && (
+        <button onClick={() => setConfirmSc(true)} className={secondary}>
+          Zum Supporting Character machen
+        </button>
+      )}
+      {confirmSc && (
+        <ConfirmDialog
+          title={`${character.name} zum Supporting Character machen?`}
+          text={`${character.name} ist dann nur noch dir zugeordnet und verschwindet aus den Statist*innen. Wer sie gerade zeitweise bespielt, verliert den Zugriff. Weitere Spieler*innen kannst du in den Einstellungen zuordnen.`}
+          confirmLabel="Zum Supporting Character machen"
+          onCancel={() => setConfirmSc(false)}
+          onConfirm={() => {
+            setConfirmSc(false);
+            makeSc();
+          }}
+        />
       )}
 
       {asking && (

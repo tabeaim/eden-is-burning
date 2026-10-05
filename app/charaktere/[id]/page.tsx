@@ -90,14 +90,14 @@ export default function CharacterPage({
       {/* Inhalt linksbündig in gewohnter Breite – Container-Breite bleibt einheitlich */}
       <div className="max-w-4xl">
       {/* Zitat – direkt unter dem Seitentitel, über der Trennlinie */}
-      <QuoteBlock c={c} canEdit={canEditCharacter(c)} />
+      <QuoteBlock c={c} />
 
       {/* Inhaltliches wird direkt hier im Profil bearbeitet */}
       {canEditCharacter(c) && !editing && (
         <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
-          {tierOf(c) === "extra" && <StatistActions character={c} />}
+          {tierOf(c) === "extra" && <StatistActions character={c} upgrade />}
           <button onClick={() => setEditing(true)} className={btn}>
-            <Icon name="edit" size={14} /> Profil bearbeiten
+            <Icon name="edit" size={14} /> Bearbeiten
           </button>
         </div>
       )}
@@ -172,7 +172,7 @@ export default function CharacterPage({
             <RelationsTab
               c={c}
               coChars={coChars}
-              canEdit={canEditCharacter(c)}
+              canEdit={canEditCharacter(c) && editing}
             />
           )}
 
@@ -216,10 +216,10 @@ function NpcFacts({ c }: { c: Character }) {
       {(canEditCharacter(c) || tierOf(c) === "extra") && !editing && (
         <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
           {/* Statist*in: bespielen (zeitweise oder als Supporting Character) / lösen */}
-          {tierOf(c) === "extra" && <StatistActions character={c} />}
+          {tierOf(c) === "extra" && <StatistActions character={c} upgrade />}
           {canEditCharacter(c) && (
             <button onClick={() => setEditing(true)} className={btn}>
-              <Icon name="edit" size={14} /> Profil bearbeiten
+              <Icon name="edit" size={14} /> Bearbeiten
             </button>
           )}
         </div>
@@ -239,6 +239,8 @@ function NpcFacts({ c }: { c: Character }) {
             <FactRow label="Residence" value={areaName(c.area)} />
           </Facts>
         </section>
+
+        <LooksAndVibes c={c} />
 
         {foundAt.length > 0 && (
           <section>
@@ -310,73 +312,55 @@ function ProfileBanner({ c }: { c: Character }) {
 }
 
 // Zitat anzeigen/hinzufügen – volle Breite über "facts".
-function QuoteBlock({ c, canEdit }: { c: Character; canEdit: boolean }) {
-  const { updateCharacter } = useStore();
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-
-  function save() {
-    updateCharacter(c.id, { quote: draft.trim() || null });
-    setEditing(false);
-  }
-
-  if (editing) {
-    return (
-      <div className="rounded-lg border border-border-subtle bg-bg-surface p-3">
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Ein Zitat des Charakters…"
-          autoFocus
-          rows={2}
-          className={`${field} resize-y`}
-        />
-        <div className="mt-2 flex items-center justify-end gap-2">
-          <button onClick={() => setEditing(false)} className={btnQuiet}>
-            Abbrechen
-          </button>
-          <button onClick={save} className={btnPrimary}>
-            Speichern
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (c.quote) {
-    return (
-      <div className="flex items-start gap-3">
-        <p className="min-w-0 flex-1 text-left text-[1.125rem] leading-snug text-text-primary">
-          <span className="mr-1.5 text-[2.125rem] leading-none text-accent">„</span>
-          {c.quote}
-        </p>
-        {canEdit && (
-          <button
-            onClick={() => {
-              setDraft(c.quote ?? "");
-              setEditing(true);
-            }}
-            className={`${btn} shrink-0`}
-          >
-            <Icon name="edit" size={14} /> Bearbeiten
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  if (!canEdit) return null;
-
+// Zitat des Charakters (bearbeitet wird es über „Bearbeiten" im Profil)
+function QuoteBlock({ c }: { c: Character }) {
+  if (!c.quote) return null;
   return (
-    <button
-      onClick={() => {
-        setDraft("");
-        setEditing(true);
-      }}
-      className="flex items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-0.5 text-[0.8125rem] text-text-tertiary hover:text-accent hover:border-accent/50"
-    >
-      <Icon name="plus" size={11} /> Zitat hinzufügen
-    </button>
+    <p className="text-left text-[1.125rem] leading-snug text-text-primary">
+      <span className="mr-1.5 text-[2.125rem] leading-none text-accent">„</span>
+      {c.quote}
+    </p>
+  );
+}
+
+// Looks und Vibes (Inspo-Bilder) – bei Supporting Characters und Statist*innen als
+// eigene Abschnitte; leere Abschnitte fallen weg.
+function LooksAndVibes({ c }: { c: Character }) {
+  const hasLooks = c.height || c.figure || c.hair || c.eyes;
+  const vibes = c.vibes ?? [];
+  return (
+    <>
+      {hasLooks && (
+        <section>
+          <Heading>looks.</Heading>
+          <Facts>
+            <FactRow label="Height" value={c.height} />
+            <FactRow label="Figure" value={c.figure} />
+            <FactRow label="Hair" value={c.hair} />
+            <FactRow label="Eyes" value={c.eyes} />
+          </Facts>
+        </section>
+      )}
+      {vibes.length > 0 && (
+        <section className="sm:col-span-2">
+          <Heading>vibes.</Heading>
+          <div className="columns-2 gap-3 sm:columns-3">
+            {vibes.map((src, i) => (
+              <a
+                key={i}
+                href={src}
+                target="_blank"
+                rel="noreferrer"
+                className="mb-3 block w-full overflow-hidden rounded-lg border border-border-subtle bg-bg-surface transition-colors hover:border-accent/50"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" loading="lazy" className="block h-auto w-full" />
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+    </>
   );
 }
 
@@ -418,6 +402,8 @@ function GeneralTab({ c }: { c: Character }) {
             <FactRow label="Origin" value={c.origin} />
           </Facts>
         </section>
+
+        {c.is_npc && <LooksAndVibes c={c} />}
 
         {(c.job || c.company) && (
           <section>

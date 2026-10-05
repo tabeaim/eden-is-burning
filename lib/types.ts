@@ -67,6 +67,7 @@ export interface Character {
   // im Pool), "supporting" = Supporting Character (zugeordnet und bespielt).
   // Ohne Angabe gilt eine Nebenfigur als Supporting Character (Altbestand).
   npc_tier?: "extra" | "supporting" | null;
+  vibes?: string[] | null; // Inspo-Bilder im Profil (SCs und Statist*innen)
   // Im Papierkorb seit … (aus allen Listen verschwunden, aber wiederherstellbar)
   deleted_at?: string | null;
   // Look des Handys im Messenger (Modell, Abnutzung, Hintergrund, Apps)

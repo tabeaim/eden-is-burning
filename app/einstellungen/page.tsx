@@ -300,10 +300,9 @@ function CharactersTab() {
   if (!currentPlayer) return null;
   const chars = charactersOf(currentPlayer.id);
   // NPCs, die man selbst angelegt hat (Admins: alle) – Profil optional ausfüllbar
-  // Nebenfiguren, die ich bespiele; dazu Statist*innen, die ich angelegt habe
-  const mine = npcs.filter(
-    (c) => playsAs(c, currentPlayer.id) || (tierOf(c) === "extra" && c.player_id === currentPlayer.id),
-  );
+  // Nebenfiguren, die ich bespiele (zugeordnete SCs, zeitweise Statist*innen).
+  // Selbst angelegte Statist*innen stehen erst hier, wenn ich sie auch bespiele.
+  const mine = npcs.filter((c) => playsAs(c, currentPlayer.id));
 
   const heading = "font-display lowercase text-[2rem] leading-none text-accent";
   return (
@@ -324,8 +323,8 @@ function CharactersTab() {
 
       <h2 className={`${heading} mt-6`}>statist*innen.</h2>
       <p className="-mt-1 text-[0.8125rem] text-text-tertiary">
-        Hier stehen die Statist*innen, die du angelegt hast oder gerade bespielst. Alle anderen
-        findest du unter Charaktere.
+        Hier stehen nur die Statist*innen, die du gerade bespielst. Alle anderen findest du
+        unter Charaktere – dort lassen sie sich auch direkt im Profil bearbeiten.
       </p>
       {mine
         .filter((c) => tierOf(c) === "extra")

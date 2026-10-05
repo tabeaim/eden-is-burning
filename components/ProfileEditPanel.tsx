@@ -9,11 +9,14 @@ import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { characterImage } from "@/lib/avatar";
 import { Icon } from "./Icon";
 
+const MAX_VIBES = 12;
+
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
 // Profil direkt im Profil bearbeiten: alles Inhaltliche (Tagline, Zitat,
-// Beschreibung, Persönlichkeit, Looks, Facts, Banner). Die harten Fakten und
+// Beschreibung, Persönlichkeit, Looks, Facts, Banner; bei Supporting Characters
+// und Statist*innen dazu „Vibes" – Inspo-Bilder). Die harten Fakten und
 // Einstellungen (Name, Foto, Handy, Zuordnung …) stehen unter Einstellungen →
 // Meine Charaktere – außer bei Statist*innen: Die darf jede*r bearbeiten, deshalb
 // stehen ihre Grunddaten gleich hier mit.
@@ -21,7 +24,22 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   const { updateCharacter } = useStore();
   const tier = tierOf(character);
   const [d, setD] = useState(character);
-  const [uploading, setUploading] = useState<null | "banner" | "photo">(null);
+  const [uploading, setUploading] = useState<null | "banner" | "photo" | "vibes">(null);
+  const vibesFile = useRef<HTMLInputElement>(null);
+  const vibes = d.vibes ?? [];
+  async function uploadVibes(files: FileList | null) {
+    const room = Math.max(0, MAX_VIBES - vibes.length);
+    const picked = Array.from(files ?? []).slice(0, room);
+    if (picked.length === 0) return;
+    setUploading("vibes");
+    try {
+      const urls: string[] = [];
+      for (const f of picked) urls.push(await uploadImage(f, "characters", IMAGE_SIZES.gallery));
+      setD((x) => ({ ...x, vibes: [...(x.vibes ?? []), ...urls] }));
+    } finally {
+      setUploading(null);
+    }
+  }
   const bannerFile = useRef<HTMLInputElement>(null);
   const photoFile = useRef<HTMLInputElement>(null);
   const set = <K extends keyof Character>(key: K, value: Character[K]) => setD((x) => ({ ...x, [key]: value }));
@@ -55,12 +73,12 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       banner_url: d.banner_url,
       full_name: d.full_name,
     };
+    // Looks haben alle Stufen
+    Object.assign(patch, { height: d.height, figure: d.figure, hair: d.hair, eyes: d.eyes });
+    // Vibes (Inspo-Bilder) nur Supporting Characters und Statist*innen
+    if (tier !== "main") patch.vibes = d.vibes ?? [];
     if (tier === "main") {
       Object.assign(patch, {
-        height: d.height,
-        figure: d.figure,
-        hair: d.hair,
-        eyes: d.eyes,
         sexuality: d.sexuality,
         status: d.status,
         origin: d.origin,
@@ -205,8 +223,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         )}
       </div>
 
-      {tier === "main" && (
-        <>
+      <>
           <div className={group}>Looks</div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {(
@@ -223,10 +240,61 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
               </label>
             ))}
           </div>
-          <label className={label}>
-            Pinterest-URL
-            <input {...text("pinterest_url")} className={`mt-1 ${field}`} />
-          </label>
+      </>
+
+      {tier === "main" && (
+        <label className={label}>
+          Pinterest-URL
+          <input {...text("pinterest_url")} className={`mt-1 ${field}`} />
+        </label>
+      )}
+
+      {tier !== "main" && (
+        <>
+          <div className={group}>
+            Vibes{" "}
+            <span className="font-normal normal-case tracking-normal">
+              ({vibes.length}/{MAX_VIBES} Inspo-Bilder)
+            </span>
+          </div>
+          {vibes.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {vibes.map((src, i) => (
+                <div key={i} className="relative overflow-hidden rounded-lg border border-border-subtle bg-bg-primary">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className="aspect-square w-full object-cover" />
+                  <button
+                    onClick={() => set("vibes", vibes.filter((_, j) => j !== i))}
+                    aria-label="Bild entfernen"
+                    title="Bild entfernen"
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-[0.75rem] text-white hover:bg-red-500/80"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div>
+            <button
+              disabled={uploading !== null || vibes.length >= MAX_VIBES}
+              onClick={() => vibesFile.current?.click()}
+              className={uploadBtn}
+            >
+              <Icon name="upload" size={13} /> {uploading === "vibes" ? "Lädt…" : "Bilder hochladen"}
+            </button>
+            <input
+              ref={vibesFile}
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={(e) => {
+                void uploadVibes(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </div>
         </>
       )}
 

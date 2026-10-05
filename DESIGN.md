@@ -108,8 +108,11 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   fetter `warning`. Charaktere aller Stufen kommen zuerst in den **Papierkorb**
   (Einstellungen → Meine Charaktere, wiederherstellbar); erst von dort lässt sich
   endgültig löschen.
-- **Profil bearbeiten:** Alles Inhaltliche (Tagline, Zitat, Texte, Looks, Facts,
-  Banner) wird direkt im Profil bearbeitet (`ProfileEditPanel`). Unter
+- **Profil bearbeiten:** Im Profil gibt es genau einen Knopf „Bearbeiten"; er
+  öffnet `ProfileEditPanel` mit allem Inhaltlichen (Tagline, Zitat, Texte, Looks,
+  Facts, Banner; bei Supporting Characters und Statist*innen dazu „Vibes" –
+  Inspo-Bilder). Keine Einzel-Bearbeiten-Knöpfe an Zitat oder Abschnitten; die
+  Relations lassen sich bearbeiten, solange das Formular offen ist. Unter
   Einstellungen → Meine Charaktere stehen nur Grunddaten (Name, Foto, Faceclaim,
   Rolle, Alter, Gegend) und Einstellungen (Handy, Zuordnung, Stufe, Löschen).
 - **Einstellungen:** Reiter als runde Pills, Abschnitte mit Display-Überschrift
@@ -206,8 +209,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Design-Systems (`rounded-md`, Primär-Aktion `bg-accent/90 text-black`). Runde,
   farbige Knöpfe nur dort, wo das Handy selbst simuliert wird (Annehmen/Ablehnen,
   Senden, Dock).
-- **Kontakte** (`ContactList`): oben die „Favoriten" (von Hand gesetzt, ohne
-  farbige Hinterlegung; anfangs ein zufälliger), darunter alphabetisch die
+- **Kontakte** (`ContactList`): oben die „Favoriten" (nur von Hand gesetzt, ohne
+  farbige Hinterlegung), darunter alphabetisch die
   relevanten Kontakte – wer schon Kontakt hatte (Szene, Chat, Anruf, eigener
   Kontakt-Eintrag) oder von Hand als relevant markiert ist. Rechtsklick bzw.
   langes Drücken auf einen Kontakt setzt Favorit und „relevant". Die Pill neben
