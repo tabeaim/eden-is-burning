@@ -119,17 +119,18 @@ export default function CharacterPage({
       {/* Inhalt linksbündig in gewohnter Breite – Container-Breite bleibt einheitlich */}
       <div className="max-w-4xl">
       {/* Zitat – direkt unter dem Seitentitel, über der Trennlinie */}
-      <QuoteBlock c={c} />
-
-      {/* Inhaltliches wird direkt hier im Profil bearbeitet */}
-      {canEditCharacter(c) && !editing && (
-        <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
-          {tierOf(c) === "extra" && <StatistActions character={c} upgrade />}
-          <button onClick={() => setEditing(true)} className={btn}>
-            <Icon name="edit" size={14} /> Bearbeiten
-          </button>
-        </div>
-      )}
+      {/* Der Knopf sitzt rechts oben, das Zitat fließt um ihn herum */}
+      <div className="flow-root">
+        {canEditCharacter(c) && !editing && (
+          <div className="float-right mb-2 ml-4 flex flex-wrap items-center justify-end gap-2">
+            {tierOf(c) === "extra" && <StatistActions character={c} upgrade />}
+            <button onClick={() => setEditing(true)} className={btn}>
+              <Icon name="edit" size={14} /> Bearbeiten
+            </button>
+          </div>
+        )}
+        <QuoteBlock c={c} />
+      </div>
       {editing && (
         <div className="mt-4">
           <ProfileEditPanel character={c} onClose={() => setEditing(false)} />
@@ -181,8 +182,9 @@ export default function CharacterPage({
           </div>
 
           {/* Lange Reiter scrollen in sich, damit der Text nicht viel länger läuft
-              als der Banner daneben hoch ist (nur neben dem Banner, also ab md) */}
-          <div className="md:max-h-[436px] md:overflow-y-auto md:pr-3">
+              als der Banner daneben hoch ist (nur neben dem Banner, also ab md). Im
+              ersten Reiter scrollt nur die Kurzbeschreibung, die Facts bleiben stehen. */}
+          <div className={tab === "general" ? "" : "md:max-h-[436px] md:overflow-y-auto md:pr-3"}>
           {tab === "general" && <GeneralTab c={c} />}
           {tab === "moodboard" && c.pinterest_url && (
             <section>
@@ -398,7 +400,7 @@ function GeneralTab({ c }: { c: Character }) {
       {/* Kurzbeschreibung – links neben den Facts (die brauchen den Platz für lange Namen) */}
       <div>
         {c.bio ? (
-          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary">
+          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary lg:max-h-[420px] lg:overflow-y-auto lg:pr-3">
             {c.bio}
           </p>
         ) : (

@@ -20,7 +20,7 @@ import {
   SectionHeading,
 } from "@/components/ProfileSections";
 
-type Tab = "characters" | "scenes";
+type Tab = "characters" | "scenes" | "about";
 
 // „seit 3 Jahren", „seit 5 Monaten", „seit 12 Tagen"
 function since(iso: string): string {
@@ -31,8 +31,8 @@ function since(iso: string): string {
 }
 
 // Spieler*innen-Profil: Name (mit Avatar) im Seitentitel, eigener Header,
-// Beschreibung und Facts, darunter Skills, Slider und Likes (wie bei den
-// Charakteren) und Reiter für Charaktere und Szenen. Alles außer Avatar und
+// Beschreibung und Facts, darunter die Reiter Characters, Scenes und About
+// (Skills, Slider und Likes wie bei den Charakteren). Alles außer Avatar und
 // Username wird hier im Profil bearbeitet.
 export default function PlayerPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params);
@@ -76,6 +76,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
   const tabs: [Tab, string][] = [
     ["characters", "Characters"],
     ["scenes", "Scenes"],
+    ["about", "About"],
   ];
   const btn =
     "inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
@@ -111,15 +112,6 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
           </div>
         </section>
       </div>
-
-      {/* Skills, Slider, Likes – direkt im Profil, kein eigener Reiter */}
-      {hasAbout && (
-        <div className="mt-8 flex max-w-4xl flex-col gap-9">
-          <ProfileSkills c={p} />
-          <ProfileSliders c={p} />
-          <ProfileLikes c={p} />
-        </div>
-      )}
 
       <div className="mt-6 mb-6 border-b border-border-subtle" />
 
@@ -174,6 +166,22 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
             ))}
           </div>
         </section>
+      )}
+
+      {/* Skills, Slider, Likes – wie bei den Charakteren */}
+      {tab === "about" && (
+        <div className="flex max-w-4xl flex-col gap-9">
+          <ProfileSkills c={p} />
+          <ProfileSliders c={p} />
+          <ProfileLikes c={p} />
+          {!hasAbout && (
+            <p className="text-[0.875rem] text-text-tertiary">
+              {canEdit
+                ? "Noch nichts hinterlegt – über „Bearbeiten“ kannst du Skills, Slider und Likes eintragen."
+                : "Noch nichts hinterlegt."}
+            </p>
+          )}
+        </div>
       )}
 
       {tab === "scenes" && (
