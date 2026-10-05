@@ -218,7 +218,8 @@ function applyChange<T extends { id: string }>(
 
 let reportSaveError: ((message: string) => void) | null = null;
 // Reine Anwesenheits-Updates melden wir nicht – da geht kein Inhalt verloren.
-const SILENT = new Set(["touchPresence", "setLocation"]);
+// Ebenso der Gelesen-Status: fehlt die Tabelle (noch), bleibt er eben im Browser.
+const SILENT = new Set(["touchPresence", "setLocation", "markSeen", "markUnread"]);
 function persist(label: string, p: unknown) {
   Promise.resolve(p as PromiseLike<{ error: unknown }>).then(
     ({ error }) => {
@@ -442,18 +443,75 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
   }, [approvedId, loadWorld]);
 
-  // Lese-Status des aktuellen Nutzers laden (localStorage, pro Gerät)
+  // Lese-Status ändern: sofort im Browser (auch als Rückfall, falls die Tabelle
+  // read_marks fehlt) und in der Datenbank, damit er Geräte und Deployments übersteht.
+  const applyReads = useCallback(
+    (pid: string, set: Record<string, string>, remove: string[] = []) => {
+      setReads((r) => {
+        const next = { ...r, ...set };
+        for (const id of remove) delete next[id];
+        try {
+          localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+      const rows = Object.entries(set).map(([item_id, seen_at]) => ({ player_id: pid, item_id, seen_at }));
+      if (rows.length) persist("markSeen", supabase.from("read_marks").upsert(rows));
+      if (remove.length) {
+        persist(
+          "markUnread",
+          supabase.from("read_marks").delete().eq("player_id", pid).in("item_id", remove),
+        );
+      }
+    },
+    [],
+  );
+
+  // Lese-Status laden: erst aus dem Browser (sofort da), dann aus der Datenbank.
+  // Je Eintrag gilt der neuere Zeitpunkt; was nur im Browser stand, wird einmalig
+  // hochgeladen. (Jede Vercel-Preview hat eine eigene Adresse und damit einen
+  // leeren Browser-Speicher – ohne Datenbank wäre dort alles wieder ungelesen.)
   useEffect(() => {
     if (!currentPlayer) {
       setReads({});
       return;
     }
+    const pid = currentPlayer.id;
+    let local: Record<string, string> = {};
     try {
-      const raw = localStorage.getItem(`eden:reads:${currentPlayer.id}`);
-      setReads(raw ? (JSON.parse(raw) as Record<string, string>) : {});
+      const raw = localStorage.getItem(`eden:reads:${pid}`);
+      local = raw ? (JSON.parse(raw) as Record<string, string>) : {};
     } catch {
-      setReads({});
+      /* ignore */
     }
+    setReads(local);
+    let cancelled = false;
+    void (async () => {
+      const server: Record<string, string> = {};
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await supabase
+          .from("read_marks")
+          .select("item_id, seen_at")
+          .eq("player_id", pid)
+          .range(from, from + 999);
+        if (error || !data) return; // Tabelle fehlt (noch): beim Browser-Stand bleiben
+        for (const row of data as { item_id: string; seen_at: string }[]) server[row.item_id] = row.seen_at;
+        if (data.length < 1000) break;
+      }
+      if (cancelled) return;
+      const newer: Record<string, string> = {};
+      for (const [id, at] of Object.entries(local)) {
+        if (!server[id] || new Date(at).getTime() > new Date(server[id]).getTime()) newer[id] = at;
+      }
+      setReads((r) => ({ ...server, ...newer, ...r }));
+      const rows = Object.entries(newer).map(([item_id, seen_at]) => ({ player_id: pid, item_id, seen_at }));
+      if (rows.length) persist("markSeen", supabase.from("read_marks").upsert(rows));
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPlayer?.id]);
 
@@ -948,58 +1006,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     void refresh();
   }, [refresh]);
 
+  const myPlayerId = currentPlayer?.id;
   const markSceneSeen = useCallback(
     (sceneId: string) => {
-      if (!currentPlayer) return;
-      const pid = currentPlayer.id;
-      setReads((r) => {
-        const next = { ...r, [sceneId]: new Date().toISOString() };
-        try {
-          localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
-        } catch {
-          /* ignore */
-        }
-        return next;
-      });
+      if (myPlayerId) applyReads(myPlayerId, { [sceneId]: new Date().toISOString() });
     },
-    [currentPlayer?.id],
+    [myPlayerId, applyReads],
   );
 
   const markSceneUnread = useCallback(
     (sceneId: string) => {
-      if (!currentPlayer) return;
-      const pid = currentPlayer.id;
-      setReads((r) => {
-        const next = { ...r };
-        delete next[sceneId];
-        try {
-          localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
-        } catch {
-          /* ignore */
-        }
-        return next;
-      });
+      if (myPlayerId) applyReads(myPlayerId, {}, [sceneId]);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentPlayer?.id],
+    [myPlayerId, applyReads],
   );
 
   const markAllScenesSeen = useCallback(() => {
-    if (!currentPlayer) return;
-    const pid = currentPlayer.id;
+    if (!myPlayerId) return;
     const now = new Date().toISOString();
-    setReads((r) => {
-      const next = { ...r };
-      for (const s of state.scenes) next[s.id] = now;
-      try {
-        localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPlayer?.id, state.scenes]);
+    applyReads(myPlayerId, Object.fromEntries(state.scenes.map((s) => [s.id, now])));
+  }, [myPlayerId, applyReads, state.scenes]);
 
   const isSceneNew = useCallback(
     (sceneId: string) => {
@@ -1062,38 +1088,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const markChatSeen = useCallback(
     (chatId: string) => {
-      if (!currentPlayer) return;
-      const pid = currentPlayer.id;
-      setReads((r) => {
-        const next = { ...r, [chatId]: new Date().toISOString() };
-        try {
-          localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
-        } catch {
-          /* ignore */
-        }
-        return next;
-      });
+      if (myPlayerId) applyReads(myPlayerId, { [chatId]: new Date().toISOString() });
     },
-    [currentPlayer?.id],
+    [myPlayerId, applyReads],
   );
 
   const markChatUnread = useCallback(
     (chatId: string) => {
-      if (!currentPlayer) return;
-      const pid = currentPlayer.id;
-      setReads((r) => {
-        const next = { ...r };
-        delete next[chatId];
-        try {
-          localStorage.setItem(`eden:reads:${pid}`, JSON.stringify(next));
-        } catch {
-          /* ignore */
-        }
-        return next;
-      });
+      if (myPlayerId) applyReads(myPlayerId, {}, [chatId]);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentPlayer?.id],
+    [myPlayerId, applyReads],
   );
 
   const addMessage = useCallback(
