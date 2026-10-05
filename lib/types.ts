@@ -79,6 +79,15 @@ export interface Character {
   phone?: PhoneSettings | null;
 }
 
+export interface ThingItem {
+  id: string;
+  src: string;
+  x: number;
+  y: number;
+  w: number;
+  r: number;
+}
+
 // Erweitertes Charakterprofil (JSON-Spalte `profile`). Grunddaten pflegt man in
 // den Einstellungen, die beschreibenden Teile direkt im Profil.
 export interface CharacterProfile {
@@ -105,6 +114,10 @@ export interface CharacterProfile {
   likes?: string[];
   dislikes?: string[];
   timeline?: { year: string; title: string; text: string }[];
+  // „Personal Things": Collage der Gegenstände, die der Charakter bei sich hat.
+  // x/y = Mitte in % der Fläche, w = Breite in % der Flächenbreite, r = Drehung
+  // in Grad; die Reihenfolge ist die Stapelfolge (letztes liegt oben).
+  things?: ThingItem[];
 }
 
 // Alle Felder optional – Fehlendes füllt `resolvePhone` (lib/phone.ts) mit Standards.

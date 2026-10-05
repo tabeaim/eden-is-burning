@@ -112,8 +112,8 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   unter Einstellungen → Meine Charaktere (`CharacterBasicsForm`): Anzeigename,
   voller Name, Geburtsdatum, Geschlecht, Faceclaim, Tagline, Kurzbeschreibung,
   Wohngegend, Herkunft, Beziehungsstatus, sexuelle Orientierung, Beschäftigung
-  (dazu Student*in mit Universität/Studiengang/Abschluss/Studienbeginn oder
-  arbeitstätig mit Arbeitgeber), Größe, Figur, Haare, Augen. Pflicht für Main
+  (dazu per Schalter Student*in mit Universität/Studiengang/Abschluss/
+  Studienbeginn und/oder arbeitstätig mit Arbeitgeber – beides zugleich möglich), Größe, Figur, Haare, Augen. Pflicht für Main
   Characters: Name, Geburtsdatum, Faceclaim, Beschäftigung. Jede Angabe lässt
   sich im Profil verstecken („sichtbar/versteckt" am Feld).
 - **Profil bearbeiten:** Im Profil gibt es genau einen Knopf „Bearbeiten"; er
@@ -130,9 +130,22 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   Personal Things (Handy, nur Main Characters) · Inplay · Relations (nach
   Kategorie: love life, family, acquainted). Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
+- **Personal Things** (`ThingsBoard`): neben dem Handy eine Collage der
+  Gegenstände, die der Charakter bei sich hat. Bearbeiten öffnet ein Whiteboard
+  (Bilder hinzufügen, verschieben, Größe, Drehung, Stapelfolge); gespeichert
+  liegen die Bilder frei auf durchsichtigem Grund. Beim Hinzufügen kann ein
+  einfarbiger Hintergrund entfernt werden (`lib/cutout.ts`).
+- **Facts:** Label und Wert in Großbuchstaben (`Facts`/`FactRow`). Looks stehen
+  nur im Hover über dem Profil-Banner. Größe immer in cm (`normalizeHeight`);
+  Sternzeichen wird aus dem Geburtsdatum berechnet (`zodiacOf`).
+- **Szenen im Profil:** `SceneCard compact` – Beteiligte als zusammengerückte
+  Avatare + Vornamen, ohne Bubbles und ohne „Letzter Post".
+- **Relations:** Bearbeiten und Löschen als Icon-Menü beim Hover über der Box
+  (`group/rel`), wie bei den Posts.
 - **Tagline** immer in Großbuchstaben (`uppercase`), überall.
-- **Arbeitgeber = Ort:** Wählt ein Charakter einen Ort als Arbeitgeber, steht er
-  im Ortsprofil unter „works here.".
+- **Arbeitgeber / Universität = Ort:** Beide Felder schlagen Orte und Gegenden
+  vor. Ist ein Ort gewählt, steht der Charakter im Ortsprofil unter „works here."
+  bzw. „studies here.".
 - **Zähler im Seitenmenü** (orange Pill): „Szenen" = alle ungelesenen Szenen,
   „Dashboard" = Bewegung bei den eigenen Charakteren (Szenen, Chats, Anrufe),
   „Handy" = ungelesene Chats und klingelnde Anrufe.

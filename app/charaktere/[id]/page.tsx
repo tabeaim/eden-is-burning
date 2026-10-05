@@ -21,6 +21,7 @@ import {
   tierOf,
 } from "@/lib/characters";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { ThingsBoard } from "@/components/ThingsBoard";
 import { PhonePreview } from "@/components/phone/PhonePreview";
 import { StatistActions } from "@/components/StatistActions";
 import { ProfileEditPanel } from "@/components/ProfileEditPanel";
@@ -199,7 +200,13 @@ export default function CharacterPage({
           {tab === "personal" && !c.is_npc && (
             <section>
               <Heading>personal things.</Heading>
-              <PhonePreview character={c} />
+              {/* links das Handy, daneben die Collage der Gegenstände */}
+              <div className="flex flex-col items-start gap-6 sm:flex-row">
+                <div className="shrink-0">
+                  <PhonePreview character={c} />
+                </div>
+                <ThingsBoard character={c} canEdit={canEditCharacter(c)} />
+              </div>
             </section>
           )}
           {tab === "inplay" && <InplayTab inScenes={inScenes} />}
