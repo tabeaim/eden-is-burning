@@ -88,10 +88,10 @@ export function PhoneSettings({ character, reduced = false }: { character: Chara
   const label = "mb-1.5 text-[0.875rem] text-text-secondary";
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-border-subtle p-3 sm:p-4">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-[0.875rem] font-semibold text-text-primary">
-          <Icon name="phone" size={17} className="text-accent" /> Handy
+        <div className="flex items-center gap-2 text-[0.8125rem] text-text-tertiary">
+          <Icon name="phone" size={17} className="text-accent" /> Look und Apps des Handys
         </div>
         {!reduced && (
           <Link href="/handy" className="text-[0.875rem] text-text-tertiary hover:text-text-secondary">

@@ -15,6 +15,7 @@ import {
   zodiacOf,
 } from "@/lib/characters";
 import { Toggle } from "./Toggle";
+import { Collapsible } from "./Collapsible";
 import { AREA_ORDER, AREAS, areaName } from "@/lib/world";
 import { PHONE_AREA } from "@/lib/phone";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
@@ -159,6 +160,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
     required,
     hideKey,
     error,
+    hint,
     className = "",
     children,
   }: {
@@ -166,12 +168,14 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
     required?: boolean;
     hideKey?: string;
     error?: boolean;
+    hint?: string | null; // klein unter dem Feld (z.B. berechnetes Alter)
     className?: string;
     children: React.ReactNode;
   }) => (
-    <div className={`text-[0.875rem] text-text-secondary ${className}`}>
+    <div className={`min-w-0 text-[0.875rem] text-text-secondary ${className}`}>
+      {/* Beschriftung bleibt einzeilig, damit nebeneinander stehende Felder fluchten */}
       <div className="mb-1 flex items-center justify-between gap-2">
-        <span>
+        <span className="min-w-0 truncate">
           {label} {required && <span className="text-accent">*</span>}
         </span>
         {hideKey && (
@@ -180,7 +184,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
             onClick={() => toggleHidden(hideKey)}
             aria-pressed={hidden.includes(hideKey)}
             title={hidden.includes(hideKey) ? "Im Profil versteckt – klicken zum Zeigen" : "Im Profil sichtbar – klicken zum Verstecken"}
-            className={`rounded-full px-2 py-0.5 text-[0.6875rem] uppercase tracking-wider ${
+            className={`shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] uppercase tracking-wider ${
               hidden.includes(hideKey)
                 ? "bg-white/[0.1] text-text-primary"
                 : "text-text-tertiary hover:text-text-secondary"
@@ -191,16 +195,16 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         )}
       </div>
       {children}
+      {hint && <span className="mt-1 block text-[0.75rem] text-text-tertiary">{hint}</span>}
       {error && <span className="mt-1 block text-[0.8125rem] text-red-300">Pflichtangabe</span>}
     </div>
   );
-  const group = "text-[0.8125rem] uppercase tracking-wider font-semibold text-text-tertiary";
   const grid = "grid grid-cols-1 gap-3 sm:grid-cols-2";
 
   return (
     <div className="flex flex-col gap-4 pt-4">
       {/* --- Wer --- */}
-      <div className={group}>Identität</div>
+      <Collapsible title="Identität" defaultOpen forceOpen={missing.name || missing.age || missing.faceclaim}>
       <div className="flex items-start gap-4">
         <div className="w-[110px] shrink-0">
           <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-border-subtle bg-bg-primary">
@@ -212,7 +216,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
             onClick={() => file.current?.click()}
             className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08] disabled:opacity-50"
           >
-            <Icon name="upload" size={13} /> {uploading ? "Lädt…" : "Foto"}
+            <Icon name="upload" size={13} /> {uploading ? "Lädt…" : "Avatar"}
           </button>
           <input ref={file} type="file" accept="image/*" hidden onChange={(e) => void onPhoto(e.target.files?.[0])} />
         </div>
@@ -229,10 +233,11 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
             children: <input {...text("full_name")} placeholder={d.name} />,
           })}
           {F({
-            label: `Geburtsdatum${age != null ? ` – ${age} Jahre` : ""}${zodiac ? `, ${zodiac.de}` : ""}`,
+            label: "Geburtsdatum",
             required: main,
             hideKey: "age",
             error: missing.age,
+            hint: [age != null ? `${age} Jahre` : null, zodiac?.de].filter(Boolean).join(" · ") || null,
             children: (
               <DatePicker value={p.birthdate ?? ""} onChange={(iso) => setProfile({ birthdate: iso || null })} />
             ),
@@ -269,7 +274,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
           })}
         </div>
       </div>
-      <p className="-mt-2 text-[0.8125rem] text-text-tertiary">
+      <p className="text-[0.8125rem] text-text-tertiary">
         Alter und Sternzeichen werden aus dem Geburtsdatum berechnet: das Alter im Profil zum{" "}
         {formatInplayDate("2022-01-01")}, in einer Szene zum Datum der Szene.
       </p>
@@ -278,8 +283,10 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         children: <textarea {...text("bio")} maxLength={1000} rows={3} className={`${field} resize-y`} />,
       })}
 
+      </Collapsible>
+
       {/* --- Leben --- */}
-      <div className={group}>Leben</div>
+      <Collapsible title="Leben">
       <div className={grid}>
         {F({
           label: "Wohngegend",
@@ -305,8 +312,10 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
           F({ label: "Sexuelle Orientierung", hideKey: "sexuality", children: <input {...text("sexuality")} /> })}
       </div>
 
+      </Collapsible>
+
       {/* --- Beschäftigung --- */}
-      <div className={group}>Beschäftigung</div>
+      <Collapsible title="Beschäftigung" forceOpen={missing.role}>
       {F({
         label: "Beschäftigung",
         required: main,
@@ -380,8 +389,9 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
                 ),
               })}
               {F({
-                label: `Studienbeginn${studyYear != null ? ` – ${studyYear}. Studienjahr` : ""}`,
+                label: "Studienbeginn",
                 hideKey: "study_year",
+                hint: studyYear != null ? `${studyYear}. Studienjahr` : null,
                 children: (
                   <DatePicker value={p.study_start ?? ""} onChange={(iso) => setProfile({ study_start: iso || null })} />
                 ),
@@ -421,11 +431,14 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         </>
       )}
 
+      </Collapsible>
+
       {/* --- Aussehen --- */}
-      <div className={group}>Aussehen</div>
+      <Collapsible title="Aussehen">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {F({
-          label: "Größe (cm)",
+          label: "Größe",
+          hint: "in cm",
           hideKey: "height",
           children: (
             <input
@@ -440,6 +453,8 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         {F({ label: "Haare", hideKey: "hair", children: <input {...text("hair")} /> })}
         {F({ label: "Augen", hideKey: "eyes", children: <input {...text("eyes")} /> })}
       </div>
+
+      </Collapsible>
 
       <p className="text-[0.8125rem] text-text-tertiary">
         Alles Beschreibende (Zitat, ausführliche Beschreibung, Skills, Eigenschaften, Slider, Likes,

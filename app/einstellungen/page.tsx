@@ -9,7 +9,10 @@ import { PageHeader } from "@/components/PageHeader";
 import { TIER_NAMES, playsAs, tierLabel, tierOf } from "@/lib/characters";
 import { PhoneSettings } from "@/components/phone/PhoneSettings";
 import { NewCharacterButton } from "@/components/NewCharacterButton";
+import Link from "next/link";
 import { CharacterBasicsForm } from "@/components/CharacterBasicsForm";
+import { Collapsible } from "@/components/Collapsible";
+import { PlayExistingButton } from "@/components/PlayExistingButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MultiSelect } from "@/components/MultiSelect";
 import { Icon } from "@/components/Icon";
@@ -319,6 +322,7 @@ function CharactersTab() {
           <CharacterEditor key={c.id} character={c} />
         ))}
       <NewCharacterButton kind="sc" />
+      <PlayExistingButton tier="supporting" />
 
       <h2 className={`${heading} mt-6`}>statist*innen.</h2>
       <p className="-mt-1 text-[0.8125rem] text-text-tertiary">
@@ -331,6 +335,7 @@ function CharactersTab() {
           <CharacterEditor key={c.id} character={c} />
         ))}
       <NewCharacterButton kind="extra" />
+      <PlayExistingButton tier="extra" />
 
       <Trash />
     </div>
@@ -415,10 +420,12 @@ function CharacterEditor({ character }: { character: Character }) {
   const box = useRef<HTMLDivElement>(null);
   // Gezielt angesprungen: aufklappen und – sobald der Inhalt da ist – hinscrollen
   const [jump, setJump] = useState<"top" | "phone" | null>(null);
+  const [phoneOpen, setPhoneOpen] = useState(false); // Handy-Abschnitt gezielt geöffnet
   useEffect(() => {
     const hash = window.location.hash;
     if (hash !== `#${anchor}` && hash !== `#${phoneAnchor}`) return;
     setOpen(true);
+    if (hash === `#${phoneAnchor}`) setPhoneOpen(true);
     setJump(hash === `#${phoneAnchor}` ? "phone" : "top");
   }, [anchor, phoneAnchor]);
   useEffect(() => {
@@ -435,16 +442,20 @@ function CharacterEditor({ character }: { character: Character }) {
       id={anchor}
       className="scroll-mt-4 rounded-xl border border-border-subtle bg-bg-surface overflow-hidden"
     >
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.02]"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={characterImage(character)}
-          alt={character.name}
-          className="w-10 h-10 rounded-full object-cover bg-bg-primary"
-        />
+      <div className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02]">
+        <Link href={`/charaktere/${character.id}`} title="Zum Profil" className="shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={characterImage(character)}
+            alt={`Profil von ${character.name}`}
+            className="w-10 h-10 rounded-full object-cover bg-bg-primary ring-1 ring-transparent hover:ring-accent/60"
+          />
+        </Link>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        >
         <div className="flex-1 min-w-0">
           <div className="text-[0.875rem] text-text-primary">
             {character.name}
@@ -459,7 +470,8 @@ function CharacterEditor({ character }: { character: Character }) {
         <span className="text-text-tertiary text-[0.875rem]">
           {open ? "Schließen" : "Bearbeiten"}
         </span>
-      </button>
+        </button>
+      </div>
 
       {open && (
         <div className="px-4 pb-4 pt-1 flex flex-col gap-4 border-t border-border-subtle">
@@ -468,12 +480,19 @@ function CharacterEditor({ character }: { character: Character }) {
           {/* Handy: Main Characters voll, Supporting Characters reduziert, Statist*innen gar nicht */}
           {tierOf(character) !== "extra" && (
             <div id={phoneAnchor} className="scroll-mt-4">
-              <PhoneSettings character={character} reduced={character.is_npc} />
+              <Collapsible title="Handy" forceOpen={phoneOpen}>
+                <PhoneSettings character={character} reduced={character.is_npc} />
+              </Collapsible>
             </div>
           )}
-          {tierOf(character) === "supporting" && <NpcOwners character={character} />}
           {tierOf(character) === "supporting" && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-subtle p-3 sm:p-4">
+            <Collapsible title="Zuordnung">
+              <NpcOwners character={character} />
+            </Collapsible>
+          )}
+          {tierOf(character) === "supporting" && (
+            <Collapsible title="Stufe">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="min-w-0 flex-1 text-[0.8125rem] text-text-tertiary">
                 Aus einem Supporting Character kann ein Main Character werden – mit vollem Profil
                 und eigenem Handy. Er gehört dann nur noch dir.
@@ -485,6 +504,7 @@ function CharacterEditor({ character }: { character: Character }) {
                 Zum Main Character machen
               </button>
             </div>
+            </Collapsible>
           )}
           {confirmMain && (
             <ConfirmDialog
@@ -555,8 +575,7 @@ function NpcOwners({ character }: { character: Character }) {
   const others = players.filter((p) => p.id !== character.player_id);
   const save = (ids: string[]) => updateCharacter(character.id, { co_owner_ids: ids });
   return (
-    <div className="rounded-lg border border-border-subtle p-3 sm:p-4">
-      <div className="text-[0.875rem] font-semibold text-text-primary">Zugeordnet</div>
+    <div>
       <p className="mt-0.5 text-[0.8125rem] text-text-tertiary">
         Angelegt von {creator?.username ?? "?"}. Alle Zugeordneten dürfen den Supporting Character bearbeiten und
         für ihn schreiben.
