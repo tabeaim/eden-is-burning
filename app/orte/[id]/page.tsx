@@ -299,7 +299,7 @@ function PeopleEditor({
 
   return (
     <div>
-      <div className="text-[0.875rem] text-text-secondary mb-1">Characters, SCs &amp; Statisten</div>
+      <div className="text-[0.875rem] text-text-secondary mb-1">Characters, SCs &amp; Statist*innen</div>
 
       {people.length > 0 && (
         <div className="mb-2 flex flex-col gap-2">
@@ -345,7 +345,7 @@ function PeopleEditor({
           onChange={(e) => setPick(e.target.value)}
           className={`${field} flex-1 min-w-[200px]`}
         >
-          <option value="">Charakter, SC oder Statist auswählen…</option>
+          <option value="">Charakter, SC oder Statist*in auswählen…</option>
           {freeChars.length > 0 && (
             <optgroup label="Charaktere">
               {freeChars.map((c) => (
@@ -356,7 +356,7 @@ function PeopleEditor({
             </optgroup>
           )}
           {freeNpcs.length > 0 && (
-            <optgroup label="SCs &amp; Statisten">
+            <optgroup label="SCs &amp; Statist*innen">
               {freeNpcs.map((n) => (
                 <option key={n.id} value={`npc:${n.id}`}>
                   {n.name}
@@ -380,7 +380,7 @@ function PeopleEditor({
             onClick={() => setCreating(true)}
             className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-2 text-[0.8125rem] text-text-primary"
           >
-            <Icon name="plus" size={13} /> Neuer Statist
+            <Icon name="plus" size={13} /> Neue*r Statist*in
           </button>
         )}
       </div>
@@ -388,7 +388,7 @@ function PeopleEditor({
       {creating && (
         <div className="mt-2 rounded-lg border border-border-subtle bg-bg-primary p-3 flex flex-col gap-2">
           <div className="text-[0.875rem] text-text-secondary">
-            Neuer Statist{" "}
+            Neue*r Statist*in{" "}
             <span className="text-text-tertiary">
               – Basis-Infos; das Profil kannst du später in den Einstellungen ausfüllen
             </span>
@@ -429,7 +429,7 @@ function PeopleEditor({
               disabled={!npcName.trim()}
               className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-3 py-1.5 disabled:opacity-40"
             >
-              Statist anlegen
+              Statist*in anlegen
             </button>
           </div>
         </div>

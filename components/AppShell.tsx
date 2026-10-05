@@ -308,18 +308,31 @@ function Sidebar({
   onPeek: (v: boolean) => void;
   onToggleHidden: () => void;
 }) {
-  const { currentPlayer, charactersOf, logout, unreadChatCount, incomingCalls, scenes, isSceneNew } =
-    useStore();
+  const {
+    currentPlayer,
+    charactersOf,
+    logout,
+    unreadChatCount,
+    incomingCalls,
+    scenes,
+    isSceneNew,
+    myNpcs,
+    isSubscribed,
+  } = useStore();
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
   const phoneBadge = unreadChatCount + incomingCalls.length;
   // Orange Zähler im Menü: Szenen = alle ungelesenen; Dashboard = Bewegung bei
   // den eigenen Charakteren (eigene Szenen, Chats, Anrufe)
   const myIds = new Set(myChars.map((c) => c.id));
+  // bespielte Nebenfiguren zählen nur in abonnierten Szenen
+  const myNpcIds = new Set(myNpcs.map((c) => c.id));
   const newScenes = scenes.filter((s) => isSceneNew(s.id));
   const badges: Record<string, number> = {
     "/szenen": newScenes.length,
     "/dashboard":
-      newScenes.filter((s) => s.participant_ids.some((id) => myIds.has(id))).length + phoneBadge,
+      newScenes.filter((s) =>
+        s.participant_ids.some((id) => myIds.has(id) || (myNpcIds.has(id) && isSubscribed(s.id))),
+      ).length + phoneBadge,
     "/handy": phoneBadge,
   };
   const [charsOpen, setCharsOpen] = useState(false);

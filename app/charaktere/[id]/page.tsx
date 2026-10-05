@@ -13,6 +13,7 @@ import { SceneCard } from "@/components/SceneCard";
 import { Facts, FactRow } from "@/components/Facts";
 import { TIER_NAMES, tierLabel, tierOf } from "@/lib/characters";
 import { PhonePreview } from "@/components/phone/PhonePreview";
+import { StatistActions } from "@/components/StatistActions";
 import type { Character, Scene } from "@/lib/types";
 
 type Tab = "general" | "character" | "inplay" | "relations" | "phone";
@@ -238,6 +239,15 @@ function NpcFacts({ c }: { c: Character }) {
         )}
       </div>
 
+      {/* Statist*in: bespielen (zeitweise oder als Supporting Character) / lösen */}
+      {tierOf(c) === "extra" && (
+        <div className="mt-8 flex flex-wrap items-center gap-3 rounded-lg border border-border-subtle p-3 sm:p-4">
+          <p className="min-w-0 flex-1 text-[0.8125rem] text-text-tertiary">
+            Statist*innen dürfen alle bearbeiten und zeitweise bespielen.
+          </p>
+          <StatistActions character={c} />
+        </div>
+      )}
       {p && (
         <div className="mt-10 text-[0.8125rem] text-text-tertiary">
           {TIER_NAMES[tierOf(c)]} · angelegt von {p.username}

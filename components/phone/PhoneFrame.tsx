@@ -8,6 +8,7 @@ import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
 import { PHONE_OWNER_KEY, contactName, contactPhoto, resolvePhone, type PhoneModel } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
+import { tierLabel } from "@/lib/characters";
 
 // Das „Handy" (siehe DESIGN.md). Über dem Gerät – nicht auf dem Display – sitzt
 // die Leiste, in der man das Handy wechselt. Auf dem Handy füllt das Display den
@@ -230,6 +231,11 @@ function OwnerBar({
         )}
         <span className="min-w-0 truncate">
           {c ? `Handy von ${c.name.split(" ")[0]}` : "Handy"}
+          {c?.is_npc && (
+            <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
+              {tierLabel(c)}
+            </span>
+          )}
         </span>
       </>
     );
@@ -557,8 +563,10 @@ export function usePhoneOwner(): [string | null, (id: string) => void] {
 // Das eigene Handy: der zuletzt gewählte eigene Charakter (sonst der erste).
 // Startbildschirm, Captic und „Neue SMS" sind immer aus dessen Sicht.
 export function useMyPhone() {
-  const { currentPlayer, charactersOf } = useStore();
-  const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
+  const { currentPlayer, charactersOf, myNpcs } = useStore();
+  // Main Characters und die Nebenfiguren, die ich bespiele (zugeordnete SCs,
+  // zeitweise Statist*innen) – sie alle haben ein Handy zum In-die-Hand-nehmen
+  const myChars = currentPlayer ? [...charactersOf(currentPlayer.id), ...myNpcs] : [];
   const [stored, setOwner] = usePhoneOwner();
   const me = myChars.find((c) => c.id === stored) ?? myChars[0];
   return { myChars, me: me as Character | undefined, stored, setOwner };

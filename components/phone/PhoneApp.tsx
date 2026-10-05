@@ -176,7 +176,6 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
               }
               router.push("/handy/neu");
             }}
-            onHideTiers={(hide_tiers) => updateCharacter(me.id, { phone: { ...me.phone, hide_tiers } })}
           />
         )}
       </div>

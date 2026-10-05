@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { NewCharacterButton } from "@/components/NewCharacterButton";
 import { TIER_NAMES, tierOf } from "@/lib/characters";
+import { StatistActions } from "@/components/StatistActions";
 import { useStore } from "@/lib/store";
 import { formatInplayDateShort } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
@@ -12,13 +13,13 @@ import { characterImage } from "@/lib/avatar";
 import { Icon } from "@/components/Icon";
 import type { Character, Player } from "@/lib/types";
 
-// Main Characters · Supporting Characters · Statisten-Pool (noch von niemandem
-// bespielt; wer sich einen schnappt, macht ihn zum Supporting Character) · Alle
+// Main Characters · Supporting Characters · Statist*innen (für alle: bearbeiten,
+// zeitweise bespielen oder zum Supporting Character machen) · Alle
 type Tab = "played" | "scs" | "extras" | "all";
 const TABS: [Tab, string][] = [
   ["played", "Main Characters"],
   ["scs", "Supporting Characters"],
-  ["extras", "Statisten-Pool"],
+  ["extras", "Statist*innen"],
   ["all", "Alle"],
 ];
 
@@ -31,7 +32,7 @@ const SORT_LABELS: Record<SortKey, string> = {
 };
 
 export default function CharaktereePage() {
-  const { characters, npcs, posts, player, currentPlayer, updateCharacter } = useStore();
+  const { characters, npcs, posts, player } = useStore();
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<Tab>("played");
   const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -107,7 +108,8 @@ export default function CharaktereePage() {
         ))}
         <div className="ml-auto flex flex-wrap items-center gap-1.5">
           {(tab === "played" || tab === "all") && <NewCharacterButton kind="character" />}
-          {(tab === "extras" || tab === "all") && <NewCharacterButton kind="npc" />}
+          {(tab === "scs" || tab === "all") && <NewCharacterButton kind="sc" />}
+          {(tab === "extras" || tab === "all") && <NewCharacterButton kind="extra" />}
         </div>
       </div>
 
@@ -163,20 +165,6 @@ export default function CharaktereePage() {
             c={c}
             player={player(c.player_id)}
             postCount={postCounts.get(c.id) ?? 0}
-            // Statist*in aus dem Pool übernehmen: wird Supporting Character und der
-            // eigenen Person (zusätzlich) zugeordnet
-            onClaim={
-              currentPlayer && tierOf(c) === "extra"
-                ? () =>
-                    updateCharacter(c.id, {
-                      npc_tier: "supporting",
-                      co_owner_ids:
-                        c.player_id === currentPlayer.id || (c.co_owner_ids ?? []).includes(currentPlayer.id)
-                          ? (c.co_owner_ids ?? [])
-                          : [...(c.co_owner_ids ?? []), currentPlayer.id],
-                    })
-                : undefined
-            }
           />
         ))}
       </div>
@@ -186,9 +174,9 @@ export default function CharaktereePage() {
           {q
             ? `Kein Charakter passt zu „${query.trim()}“.`
             : tab === "extras"
-              ? "Der Statisten-Pool ist leer – leg oben den ersten Statisten an."
+              ? "Noch keine Statist*innen – leg oben die erste an."
               : tab === "scs"
-                ? "Noch keine Supporting Characters – schnapp dir einen Statisten aus dem Pool."
+                ? "Noch keine Supporting Characters."
                 : "Noch keine Charaktere."}
         </p>
       )}
@@ -205,12 +193,10 @@ function CharacterCard({
   c,
   player,
   postCount,
-  onClaim,
 }: {
   c: Character;
   player?: Player;
   postCount: number;
-  onClaim?: () => void; // nur im Statisten-Pool
 }) {
   const tier = tierOf(c);
   return (
@@ -284,15 +270,7 @@ function CharacterCard({
         {tier !== "main" && <span className="uppercase tracking-wider">{TIER_NAMES[tier]} · </span>}
         Lebendig seit {formatInplayDateShort(c.created_at.slice(0, 10))}
       </div>
-      {onClaim && (
-        <button
-          onClick={onClaim}
-          title="Du bespielst diesen Statisten ab jetzt – er wird zum Supporting Character"
-          className="relative z-10 mx-auto mt-3 rounded-md bg-accent/90 px-3 py-1.5 text-[0.8125rem] font-medium text-black hover:bg-accent"
-        >
-          Schnappen &amp; bespielen
-        </button>
-      )}
+      {tier === "extra" && <StatistActions character={c} className="mt-3" />}
     </div>
   );
 }

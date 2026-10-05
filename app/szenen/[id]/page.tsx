@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Icon } from "@/components/Icon";
 import { CharacterBubble, LocationBubble } from "@/components/Bubble";
 import { PHONE_AREA } from "@/lib/phone";
+import { tierOf } from "@/lib/characters";
 import { AuTag } from "@/components/SceneCard";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { CharacterSelect } from "@/components/CharacterSelect";
@@ -160,13 +161,18 @@ export default function ScenePage({
     );
   }
 
-  const myChars: Character[] = currentPlayer ? charactersOf(currentPlayer.id) : [];
+  // Meine Charaktere: Main Characters und Nebenfiguren, die ich bespiele
+  const myChars: Character[] = currentPlayer
+    ? [...charactersOf(currentPlayer.id), ...store.myNpcs]
+    : [];
   const myCharsInScene = myChars.filter((c) => scene.participant_ids.includes(c.id));
   const myTurn = !!turnId && myCharsInScene.some((c) => c.id === turnId);
   const isParticipant = myCharsInScene.length > 0;
   // Antworten darf jede*r mit einem eigenen Charakter – auch in fremden Szenen;
   // wer mit einem neuen Charakter schreibt, steigt damit in die Szene ein.
-  const canReply = scene.status === "active" && myChars.length > 0;
+  // Über das Suchfeld erreichbar: alle Statist*innen (jede*r darf sie bespielen)
+  const extras = store.npcs.filter((c) => tierOf(c) === "extra" && !myChars.includes(c));
+  const canReply = scene.status === "active" && !!currentPlayer && myChars.length + extras.length > 0;
   const sceneId = scene.id;
   const participantIds = scene.participant_ids;
 
@@ -274,10 +280,11 @@ export default function ScenePage({
           scene={scene}
           // Charaktere der Szene zuerst, dann die übrigen eigenen
           myChars={[...myCharsInScene, ...myChars.filter((c) => !myCharsInScene.includes(c))]}
+          extras={extras}
           suggestedCharId={
             turnId && myCharsInScene.some((c) => c.id === turnId)
               ? turnId
-              : (myCharsInScene[0] ?? myChars[0])?.id ?? null
+              : (myCharsInScene[0] ?? myChars[0] ?? extras[0])?.id ?? null
           }
           onClose={() => setReplyOpen(false)}
         />
@@ -562,10 +569,9 @@ function PostRow({
   player?: ReturnType<typeof useStore>["players"][number];
   term?: string;
 }) {
-  const { addQuote, currentPlayer, isAdmin, updatePost, deletePost } = useStore();
+  const { addQuote, currentPlayer, isAdmin, updatePost, deletePost, canWriteAs } = useStore();
   // Eigene Posts – oder als Admin alle – dürfen bearbeitet/gelöscht werden.
-  const canModify =
-    !!currentPlayer && (character.player_id === currentPlayer.id || isAdmin);
+  const canModify = !!currentPlayer && (canWriteAs(character.id) || isAdmin);
   const wrapRef = useRef<HTMLDivElement>(null);
   const proseRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLDivElement>(null);
@@ -727,15 +733,17 @@ function PostRow({
 function ReplyBox({
   scene,
   myChars,
+  extras,
   suggestedCharId,
   onClose,
 }: {
   scene: Scene;
   myChars: Character[]; // alle eigenen Charaktere – auch die (noch) nicht in der Szene
+  extras: Character[]; // Statist*innen, die ich (noch) nicht bespiele – per Suche wählbar
   suggestedCharId: string | null;
   onClose: () => void;
 }) {
-  const { addPost, updateScene, character, player } = useStore();
+  const { addPost, updateScene, updateCharacter, character, player, currentPlayer } = useStore();
   const [activeCharId, setActiveCharId] = useState<string | null>(suggestedCharId);
   const [preview, setPreview] = useState<string | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -760,6 +768,16 @@ function ReplyBox({
     const html = editorRef.current?.innerHTML ?? "";
     const text = editorRef.current?.textContent?.trim() ?? "";
     if (!activeChar || !text) return;
+    // Als Statist*in antworten heißt: sie (zeitweise) bespielen
+    if (
+      currentPlayer &&
+      tierOf(activeChar) === "extra" &&
+      !(activeChar.co_owner_ids ?? []).includes(currentPlayer.id)
+    ) {
+      updateCharacter(activeChar.id, {
+        co_owner_ids: [...(activeChar.co_owner_ids ?? []), currentPlayer.id],
+      });
+    }
     // Mit einem neuen Charakter antworten heißt: in die Szene einsteigen
     if (!scene.participant_ids.includes(activeChar.id)) {
       updateScene(scene.id, { participant_ids: [...scene.participant_ids, activeChar.id] });
@@ -808,12 +826,15 @@ function ReplyBox({
               Antwort als
             </div>
             <div className="mt-1">
-              {myChars.length > 1 ? (
+              {myChars.length + extras.length > 1 ? (
                 <CharacterSelect
                   characters={myChars}
                   value={activeChar?.id ?? null}
                   onChange={setActiveCharId}
                   hint={(c) => (scene.participant_ids.includes(c.id) ? null : "steigt neu ein")}
+                  // Supporting Characters, denen ich zugeordnet bin, stehen schon in der
+                  // Liste; über die Suche kommen alle Statist*innen dazu.
+                  search={{ placeholder: "SC oder Statist*in …", characters: [...myChars.filter((c) => c.is_npc), ...extras] }}
                 />
               ) : (
                 <div className="text-[0.875rem] text-text-primary">{activeChar?.name}</div>

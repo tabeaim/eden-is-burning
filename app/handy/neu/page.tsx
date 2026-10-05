@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import type { ChatMessageKind } from "@/lib/types";
 import { SMS_TO_KEY, addMinutes, contactName, contactShortName, resolvePhone } from "@/lib/phone";
-import { tierLabel, tierOf } from "@/lib/characters";
+import { tierLabel } from "@/lib/characters";
 import { DatePicker } from "@/components/DatePicker";
 import { Composer } from "@/components/phone/Composer";
 import { PhoneAvatar, PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
@@ -31,17 +31,10 @@ export default function NewSmsPage() {
   const [date, setDate] = useState("");
   const [timeOverride, setTimeOverride] = useState<string | null>(null);
 
-  // In den Kontakten ausgeblendete Stufen (SCs/Statisten) fehlen auch hier in den
-  // Vorschlägen – ein schon gewählter Kontakt bleibt gültig.
-  const hiddenTiers = from?.phone?.hide_tiers ?? [];
   const everyone = [...characters, ...npcs];
-  const visible = everyone.filter((c) => {
-    const tier = tierOf(c);
-    return tier === "main" || !hiddenTiers.includes(tier);
-  });
   const to = everyone.find((c) => c.id === toId && c.id !== from?.id);
   const query = q.trim().toLowerCase();
-  const suggestions = visible
+  const suggestions = everyone
     .filter(
       (c) =>
         c.id !== from?.id &&

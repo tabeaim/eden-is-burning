@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { contactName } from "@/lib/phone";
-import { tierLabel, tierOf } from "@/lib/characters";
+import { tierLabel } from "@/lib/characters";
 import { Icon } from "@/components/Icon";
 import { ContactAvatar } from "./PhoneFrame";
 
@@ -17,17 +17,15 @@ export function ContactList({
   onPick,
   onMessage,
   onEdit,
-  onHideTiers,
 }: {
   owner: Character;
   onPick?: (c: Character) => void; // anrufen
   onMessage?: (c: Character) => void; // Nachricht schreiben
   onEdit?: (c: Character) => void;
-  // SCs/Statisten aus- und einblenden (gespeichert am Handy); ohne: nur anzeigen
-  onHideTiers?: (tiers: ("extra" | "supporting")[]) => void;
 }) {
-  const { characters, npcs, scenes, posts, chats, chatMessages, currentPlayer } = useStore();
-  const hidden = owner.phone?.hide_tiers ?? [];
+  const { characters, npcs, scenes, posts, chats, chatMessages, calls, currentPlayer } = useStore();
+  // „Relevante": mit wem der Besitzer schon Kontakt hatte · „Alle": wirklich alle
+  const [scope, setScope] = useState<"relevant" | "all">("relevant");
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
 
@@ -49,10 +47,17 @@ export function ContactList({
     return count;
   }, [owner.id, scenes, posts, chats, chatMessages]);
 
-  const everyone = [...characters, ...npcs].filter((c) => {
-    const tier = tierOf(c);
-    return c.id !== owner.id && (tier === "main" || !hidden.includes(tier));
-  });
+  const everyone = [...characters, ...npcs].filter((c) => c.id !== owner.id);
+  // Kontakt gehabt: gemeinsame Szene oder Chat, ein Anruf, oder ein eigener
+  // Kontakt-Eintrag (umbenannt / mit Foto)
+  const known = (c: Character) =>
+    (shared.get(c.id) ?? 0) > 0 ||
+    !!owner.phone?.contacts?.[c.id] ||
+    calls.some(
+      (x) =>
+        (x.caller_id === owner.id && x.callee_id === c.id) ||
+        (x.callee_id === owner.id && x.caller_id === c.id),
+    );
   const name = (c: Character) => contactName(owner, c);
   const byName = (a: Character, b: Character) => name(a).localeCompare(name(b), "de");
   const top = everyone
@@ -64,8 +69,11 @@ export function ContactList({
       (c) => !query || name(c).toLowerCase().includes(query) || c.name.toLowerCase().includes(query),
     )
     .sort(byName);
-  // Bei einer Suche eine einzige Liste; sonst die Top 5 oben und der Rest darunter
-  const rest = query ? matches : matches.filter((c) => !top.includes(c));
+  // Bei einer Suche eine einzige Liste über alle (auch wer sonst nicht auftaucht);
+  // sonst die Favoriten oben und darunter die Relevanten bzw. alle
+  const rest = query
+    ? matches
+    : matches.filter((c) => !top.includes(c) && (scope === "all" || known(c)));
 
   const row = (c: Character, highlighted: boolean) => {
     const renamed = name(c) !== c.name;
@@ -133,8 +141,8 @@ export function ContactList({
 
   return (
     <>
-      <div className="px-3 py-2">
-        <label className="flex items-center gap-2 rounded-full bg-white/[0.06] px-3 py-1.5 text-text-tertiary">
+      <div className="flex items-center gap-2 px-3 py-2">
+        <label className="flex min-w-0 flex-1 items-center gap-2 rounded-full bg-white/[0.06] px-3 py-1.5 text-text-tertiary">
           <Icon name="search" size={15} className="shrink-0" />
           <input
             value={q}
@@ -143,36 +151,16 @@ export function ContactList({
             className="min-w-0 flex-1 bg-transparent text-[16px] text-text-primary outline-none placeholder:text-text-tertiary sm:text-[0.875rem]"
           />
         </label>
-        {/* Supporting Characters und Statisten lassen sich ausblenden */}
-        {(onHideTiers || hidden.length > 0) && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {(
-              [
-                ["supporting", "SCs"],
-                ["extra", "Statisten"],
-              ] as const
-            ).map(([tier, label]) => {
-              const shown = !hidden.includes(tier);
-              return (
-                <button
-                  key={tier}
-                  disabled={!onHideTiers}
-                  aria-pressed={shown}
-                  onClick={() =>
-                    onHideTiers?.(shown ? [...hidden, tier] : hidden.filter((t) => t !== tier))
-                  }
-                  className={`rounded-full px-2.5 py-1 text-[0.75rem] transition-colors ${
-                    shown
-                      ? "bg-white/[0.1] text-text-primary"
-                      : "bg-white/[0.03] text-text-tertiary line-through"
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {/* Umschalter: nur Relevante oder alle Charaktere */}
+        <button
+          onClick={() => setScope((v) => (v === "relevant" ? "all" : "relevant"))}
+          title={scope === "relevant" ? "Zeigt nur Kontakte, mit denen es schon Kontakt gab – klicken für alle" : "Zeigt alle – klicken für nur relevante"}
+          className={`shrink-0 rounded-full px-3 py-1.5 text-[0.8125rem] font-medium transition-colors ${
+            scope === "all" ? "bg-accent text-black" : "bg-white/[0.06] text-text-secondary hover:text-text-primary"
+          }`}
+        >
+          {scope === "relevant" ? "Relevante" : "Alle"}
+        </button>
       </div>
       {!query && top.length > 0 && (
         <>
@@ -180,12 +168,16 @@ export function ContactList({
           <div className="mx-3 overflow-hidden rounded-xl border border-accent/40 bg-accent-soft">
             {top.map((c) => row(c, true))}
           </div>
-          <div className={heading}>Alle Kontakte</div>
+          <div className={heading}>{scope === "all" ? "Alle Kontakte" : "Weitere Kontakte"}</div>
         </>
       )}
       {rest.map((c) => row(c, false))}
       {rest.length === 0 && (query || top.length === 0) && (
-        <p className="p-6 text-center text-[0.875rem] text-text-tertiary">Niemand gefunden.</p>
+        <p className="p-6 text-center text-[0.875rem] text-text-tertiary">
+          {query
+            ? "Niemand gefunden."
+            : "Noch keine Kontakte – such oben nach einem Namen oder schalte auf „Alle“."}
+        </p>
       )}
     </>
   );

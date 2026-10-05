@@ -24,7 +24,7 @@ import type {
 } from "./types";
 import { supabase, supabaseConfigured } from "./supabase";
 import { rememberPhone } from "./phone";
-import { tierOf } from "./characters";
+import { playsAs, tierOf } from "./characters";
 
 interface PersistedState {
   players: Player[];
@@ -77,6 +77,11 @@ interface StoreValue extends PersistedState {
   location: (id: string) => Location | undefined;
   canEditLocation: (loc: Location) => boolean;
   canEditCharacter: (c: Character) => boolean;
+  // Nebenfiguren, die ich bespiele (zugeordnete SCs und zeitweise Statist*innen)
+  myNpcs: Character[];
+  // Abonniert: Szenen/Chats, in denen ich mit einer Nebenfigur mitgemacht habe –
+  // nur die tauchen für diese Figuren im Dashboard auf (privat, pro Spieler*in)
+  isSubscribed: (itemId: string) => boolean;
   // mutations
   addPost: (sceneId: string, characterId: string, content: string) => void;
   updatePost: (postId: string, content: string) => void;
@@ -88,7 +93,7 @@ interface StoreValue extends PersistedState {
   // Legt den Ort an (oder findet den bestehenden) und gibt seine ID zurück.
   addLocation: (area: string, name: string, description?: string | null) => string | null;
   updateLocation: (id: string, patch: Partial<Location>) => void;
-  addNpc: (npc: Pick<Character, "name" | "role" | "age">) => string;
+  addNpc: (npc: Pick<Character, "name" | "role" | "age">, tier?: "extra" | "supporting") => string;
   addPlot: (name: string, tokens: string[], aus: string[], areas?: string[]) => string;
   updatePlot: (id: string, patch: Partial<Plot>) => void;
   deletePlot: (id: string) => void;
@@ -470,6 +475,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const myPlayerId = currentPlayer?.id;
+  const subscribe = useCallback(
+    (itemId: string) => {
+      if (myPlayerId) applyReads(myPlayerId, { [`sub:${itemId}`]: new Date().toISOString() });
+    },
+    [myPlayerId, applyReads],
+  );
+  const isSubscribed = useCallback((itemId: string) => !!reads[`sub:${itemId}`], [reads]);
+
   // Lese-Status laden: erst aus dem Browser (sofort da), dann aus der Datenbank.
   // Je Eintrag gilt der neuere Zeitpunkt; was nur im Browser stand, wird einmalig
   // hochgeladen. (Jede Vercel-Preview hat eine eigene Adresse und damit einen
@@ -600,9 +614,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     (c: Character) =>
       !!currentPlayer &&
       (Boolean(currentPlayer.is_admin) ||
+        tierOf(c) === "extra" || // Statist*innen dürfen alle bearbeiten
         c.player_id === currentPlayer.id ||
         (c.co_owner_ids ?? []).includes(currentPlayer.id)),
     [currentPlayer],
+  );
+  // Nebenfiguren, die ich gerade bespiele (zugeordnete SCs, zeitweise Statist*innen)
+  const myNpcs = useMemo(
+    () => npcs.filter((c) => playsAs(c, currentPlayer?.id)),
+    [npcs, currentPlayer?.id],
   );
   // Orte bearbeiten dürfen Admins und wer den Ort erstellt hat.
   const canEditLocation = useCallback(
@@ -685,6 +705,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const nextNumber =
           scenePosts.reduce((m, p) => Math.max(m, p.post_number), 0) + 1;
         rememberPhone(characterId);
+        subscribe(sceneId); // wer mitschreibt, hat die Szene abonniert (zählt bei Nebenfiguren)
         const post: Post = {
           id: uid("post"),
           scene_id: sceneId,
@@ -709,7 +730,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return { ...s, posts: [...s.posts, post], scenes };
       });
     },
-    [],
+    [subscribe],
   );
 
   const updatePost = useCallback((postId: string, content: string) => {
@@ -885,7 +906,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // NPC = Charakter mit is_npc; Profil ist optional ausfüllbar.
   const addNpc = useCallback(
-    (input: Pick<Character, "name" | "role" | "age">) => {
+    (input: Pick<Character, "name" | "role" | "age">, tier: "extra" | "supporting" = "extra") => {
       const id = uid("npc");
       const newNpc: Character = {
         id,
@@ -914,7 +935,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         personality: null,
         relationships: {},
         is_npc: true,
-        npc_tier: "extra", // neu angelegt = Statist*in; wer ihn bespielt, macht ihn zum SC
+        npc_tier: tier,
       };
       // Rückfall ohne npc_tier, falls schema-npc-tiers.sql noch nicht eingespielt ist
       const { npc_tier: _tier, ...legacy } = newNpc;
@@ -990,8 +1011,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     void req.finally(() => pendingScenes.delete(id));
     persist("addScene", req);
     setState((s) => ({ ...s, scenes: [...s.scenes, newScene] }));
+    subscribe(id);
     return id;
-  }, []);
+  }, [subscribe]);
 
   const deleteScene = useCallback((id: string) => {
     // Posts und Zitate hängen per „on delete cascade" an der Szene
@@ -1017,7 +1039,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     void refresh();
   }, [refresh]);
 
-  const myPlayerId = currentPlayer?.id;
   const markSceneSeen = useCallback(
     (sceneId: string) => {
       if (myPlayerId) applyReads(myPlayerId, { [sceneId]: new Date().toISOString() });
@@ -1066,13 +1087,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const canWriteAs = useCallback(
     (characterId: string) =>
       !!currentPlayer &&
-      state.characters.some(
-        (c) =>
-          c.id === characterId &&
-          // Statist*innen werden (noch) von niemandem bespielt
-          tierOf(c) !== "extra" &&
-          (c.player_id === currentPlayer.id || (c.co_owner_ids ?? []).includes(currentPlayer.id)),
-      ),
+      state.characters.some((c) => c.id === characterId && playsAs(c, currentPlayer.id)),
     [state.characters, currentPlayer],
   );
 
@@ -1140,7 +1155,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const send = () => supabase.from("chat_messages").insert(message);
       const pending = pendingChats.get(chatId);
       persist("addMessage", pending ? pending.then(send, send) : send());
-      if (kind !== "date") rememberPhone(characterId);
+      if (kind !== "date") {
+        rememberPhone(characterId);
+        subscribe(chatId);
+      }
       setState((s) => {
         // Eine neue Nachricht holt den Chat bei allen aus dem Archiv
         const chat = s.chats.find((c) => c.id === chatId);
@@ -1155,7 +1173,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return { ...s, chats, chatMessages: [...s.chatMessages, message] };
       });
     },
-    [],
+    [subscribe],
   );
 
   const updateMessage = useCallback(
@@ -1252,9 +1270,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const unreadChatIds = useMemo(() => {
     const ids = new Set<string>();
     if (!currentPlayer) return ids;
-    const mine = new Set(
-      state.characters.filter((c) => c.player_id === currentPlayer.id).map((c) => c.id),
-    );
+    const played = state.characters.filter((c) => playsAs(c, currentPlayer.id));
+    const mine = new Set(played.map((c) => c.id));
+    // Chats von Nebenfiguren zählen nur, wenn ich dort selbst mitgeschrieben habe
+    const npcIds = new Set(played.filter((c) => c.is_npc).map((c) => c.id));
     const last = new Map<string, ChatMessage>();
     for (const m of state.chatMessages) {
       if (m.kind === "date") continue;
@@ -1264,7 +1283,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     for (const chat of state.chats) {
       const m = last.get(chat.id);
       if (!m || mine.has(m.character_id)) continue;
-      if (!chat.participant_ids.some((id) => mine.has(id))) continue;
+      const involved = chat.participant_ids.some(
+        (id) => mine.has(id) && (!npcIds.has(id) || !!reads[`sub:${chat.id}`]),
+      );
+      if (!involved) continue;
       const seen = reads[chat.id] ? new Date(reads[chat.id]).getTime() : 0;
       if (new Date(m.created_at).getTime() > seen) ids.add(chat.id);
     }
@@ -1308,7 +1330,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const incomingCalls = useMemo(() => {
     if (!currentPlayer) return [];
     const mine = new Set(
-      state.characters.filter((c) => c.player_id === currentPlayer.id).map((c) => c.id),
+      state.characters.filter((c) => playsAs(c, currentPlayer.id)).map((c) => c.id),
     );
     return state.calls.filter((c) => c.status === "ringing" && mine.has(c.callee_id));
   }, [state.calls, state.characters, currentPlayer]);
@@ -1346,6 +1368,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       location,
       canEditLocation,
       canEditCharacter,
+      myNpcs,
+      isSubscribed,
       addPost,
       updatePost,
       deletePost,
@@ -1419,6 +1443,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       loginProblem,
       canEditLocation,
       canEditCharacter,
+      myNpcs,
+      isSubscribed,
       addPost,
       updatePost,
       deletePost,

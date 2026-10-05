@@ -85,7 +85,6 @@ export interface PhoneSettings {
   // Anrufen (nicht im Messenger).
   contacts?: Record<string, { name?: string; photo?: string }> | null;
   hidden_calls?: string[] | null; // aus der Anrufliste dieses Handys gelöschte Anrufe
-  hide_tiers?: ("extra" | "supporting")[] | null; // in Kontakten/Neue SMS ausgeblendete Stufen
   // Captic ist optional: erst nach dem Aktivieren liegt die App auf dem Handy.
   // Profilangaben werden in der App selbst bearbeitet.
   captic?: { enabled?: boolean; handle?: string; bio?: string } | null;

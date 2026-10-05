@@ -20,7 +20,9 @@ import { PhoneAvatar } from "./PhoneFrame";
 
 // Handy-Einstellungen eines Charakters (Einstellungen → Meine Charaktere). Jede
 // Änderung wird sofort gespeichert – unabhängig vom „Speichern" des Profils.
-export function PhoneSettings({ character }: { character: Character }) {
+// `reduced` (Supporting Characters): nur Profilbild, Modell, Farbe und Zustand –
+// kein Hintergrundbild, keine Apps, kein Captic.
+export function PhoneSettings({ character, reduced = false }: { character: Character; reduced?: boolean }) {
   const { updateCharacter } = useStore();
   const [uploading, setUploading] = useState(false);
   const file = useRef<HTMLInputElement>(null);
@@ -91,9 +93,11 @@ export function PhoneSettings({ character }: { character: Character }) {
         <div className="flex items-center gap-2 text-[0.875rem] font-semibold text-text-primary">
           <Icon name="phone" size={17} className="text-accent" /> Handy
         </div>
-        <Link href="/handy" className="text-[0.875rem] text-text-tertiary hover:text-text-secondary">
-          Handy ansehen →
-        </Link>
+        {!reduced && (
+          <Link href="/handy" className="text-[0.875rem] text-text-tertiary hover:text-text-secondary">
+            Handy ansehen →
+          </Link>
+        )}
       </div>
 
       <div>
@@ -165,7 +169,7 @@ export function PhoneSettings({ character }: { character: Character }) {
         </div>
       </div>
 
-      {phone.burner ? (
+      {reduced ? null : phone.burner ? (
         <p className="text-[0.8125rem] text-text-tertiary">
           Das Burner Phone ist ein altes Tastenhandy: kein Hintergrundbild, keine Apps, kein
           Captic – nur SMS.

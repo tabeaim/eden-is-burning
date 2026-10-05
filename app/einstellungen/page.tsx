@@ -8,7 +8,8 @@ import { AREA_ORDER, AREAS, type AreaKey } from "@/lib/world";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { pageHeader } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
-import { TIER_NAMES, tierLabel, tierOf } from "@/lib/characters";
+import { TIER_NAMES, playsAs, tierLabel, tierOf } from "@/lib/characters";
+import { StatistActions } from "@/components/StatistActions";
 import { PhoneSettings } from "@/components/phone/PhoneSettings";
 import { NewCharacterButton } from "@/components/NewCharacterButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -22,9 +23,12 @@ export default function SettingsPage() {
   const { currentPlayer, isAdmin } = useStore();
   // „#charakter-<id>" (z.B. aus der Einstellungen-App auf dem Handy) öffnet gleich
   // den Reiter „Meine Charaktere" mit diesem Charakter
-  const [tab, setTab] = useState<SettingsTab>(() =>
-    typeof window !== "undefined" && /^#(charakter|handy)-/.test(window.location.hash) ? "characters" : "profile",
-  );
+  const [tab, setTab] = useState<SettingsTab>("profile");
+  // Die Adresse steht erst nach dem ersten Rendern fest (Seitenwechsel innerhalb
+  // der App) – deshalb hier und nicht schon beim Anlegen des Zustands lesen.
+  useEffect(() => {
+    if (/^#(charakter|handy)-/.test(window.location.hash)) setTab("characters");
+  }, []);
   if (!currentPlayer) return null;
 
   const tabs: [SettingsTab, string][] = [
@@ -293,58 +297,71 @@ function AppearanceTab() {
 }
 
 function CharactersTab() {
-  const { currentPlayer, charactersOf, npcs, canEditCharacter } = useStore();
+  const { currentPlayer, charactersOf, npcs } = useStore();
   if (!currentPlayer) return null;
   const chars = charactersOf(currentPlayer.id);
   // NPCs, die man selbst angelegt hat (Admins: alle) – Profil optional ausfüllbar
-  const myNpcs = npcs.filter(canEditCharacter);
+  // Nebenfiguren, die ich bespiele; dazu Statist*innen, die ich angelegt habe
+  const mine = npcs.filter(
+    (c) => playsAs(c, currentPlayer.id) || (tierOf(c) === "extra" && c.player_id === currentPlayer.id),
+  );
 
   const heading = "font-display lowercase text-[2rem] leading-none text-accent";
   return (
     <div className="flex flex-col gap-3">
-      <h2 className={heading}>charaktere.</h2>
+      <h2 className={heading}>main characters.</h2>
       {chars.map((c) => (
         <CharacterEditor key={c.id} character={c} />
       ))}
       <NewCharacterButton kind="character" />
 
       <h2 className={`${heading} mt-6`}>supporting characters.</h2>
-      {myNpcs
+      {mine
         .filter((c) => tierOf(c) === "supporting")
         .map((c) => (
           <CharacterEditor key={c.id} character={c} />
         ))}
+      <NewCharacterButton kind="sc" />
 
-      <h2 className={`${heading} mt-6`}>statisten.</h2>
-      {myNpcs
+      <h2 className={`${heading} mt-6`}>statist*innen.</h2>
+      <p className="-mt-1 text-[0.8125rem] text-text-tertiary">
+        Hier stehen die Statist*innen, die du angelegt hast oder gerade bespielst. Alle anderen
+        findest du unter Charaktere.
+      </p>
+      {mine
         .filter((c) => tierOf(c) === "extra")
         .map((c) => (
           <CharacterEditor key={c.id} character={c} />
         ))}
-      <NewCharacterButton kind="npc" />
+      <NewCharacterButton kind="extra" />
     </div>
   );
 }
 
 function CharacterEditor({ character }: { character: Character }) {
-  const { updateCharacter, deleteCharacter, posts } = useStore();
+  const { updateCharacter, deleteCharacter, posts, currentPlayer } = useStore();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmMain, setConfirmMain] = useState(false);
   const postCount = posts.filter((p) => p.character_id === character.id).length;
   const anchor = `charakter-${character.id}`;
   // „#handy-<id>" (Einstellungen-App auf dem Handy) springt direkt zum Handy-Block
   const phoneAnchor = `handy-${character.id}`;
-  const [open, setOpen] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      [`#${anchor}`, `#${phoneAnchor}`].includes(window.location.hash),
-  );
+  const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  // Gezielt angesprungen: aufklappen und – sobald der Inhalt da ist – hinscrollen
+  const [jump, setJump] = useState<"top" | "phone" | null>(null);
   useEffect(() => {
-    if (window.location.hash === `#${anchor}`) box.current?.scrollIntoView({ block: "start" });
-    if (window.location.hash === `#${phoneAnchor}`) {
-      document.getElementById(phoneAnchor)?.scrollIntoView({ block: "start" });
-    }
+    const hash = window.location.hash;
+    if (hash !== `#${anchor}` && hash !== `#${phoneAnchor}`) return;
+    setOpen(true);
+    setJump(hash === `#${phoneAnchor}` ? "phone" : "top");
   }, [anchor, phoneAnchor]);
+  useEffect(() => {
+    if (!jump || !open) return;
+    const target = jump === "phone" ? document.getElementById(phoneAnchor) : box.current;
+    target?.scrollIntoView({ block: "start" });
+    setJump(null);
+  }, [jump, open, phoneAnchor]);
   const [draft, setDraft] = useState(character);
   const [saved, setSaved] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -374,6 +391,9 @@ function CharacterEditor({ character }: { character: Character }) {
     delete rest.phone;
     delete rest.co_owner_ids;
     delete rest.npc_tier;
+    delete rest.is_npc;
+    // … und wer den Charakter „besitzt" (ändert sich z.B. beim Wechsel der Stufe)
+    delete (rest as Partial<Character>).player_id;
     updateCharacter(character.id, rest);
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
@@ -531,24 +551,52 @@ function CharacterEditor({ character }: { character: Character }) {
             />
           </Labeled>
 
-          {!character.is_npc && (
+          {/* Handy: Main Characters voll, Supporting Characters reduziert, Statist*innen gar nicht */}
+          {tierOf(character) !== "extra" && (
             <div id={phoneAnchor} className="scroll-mt-4">
-              <PhoneSettings character={character} />
+              <PhoneSettings character={character} reduced={character.is_npc} />
             </div>
           )}
           {tierOf(character) === "supporting" && <NpcOwners character={character} />}
+          {tierOf(character) === "supporting" && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-subtle p-3 sm:p-4">
+              <p className="min-w-0 flex-1 text-[0.8125rem] text-text-tertiary">
+                Aus einem Supporting Character kann ein Main Character werden – mit vollem Profil
+                und eigenem Handy. Er gehört dann nur noch dir.
+              </p>
+              <button
+                onClick={() => setConfirmMain(true)}
+                className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08]"
+              >
+                Zum Main Character machen
+              </button>
+            </div>
+          )}
+          {confirmMain && (
+            <ConfirmDialog
+              title={`${character.name} zum Main Character machen?`}
+              text="Der Charakter bekommt das volle Profil und gehört danach nur noch dir. Andere Zuordnungen entfallen. Zurück zum Supporting Character geht es nicht."
+              confirmLabel="Zum Main Character machen"
+              onCancel={() => setConfirmMain(false)}
+              onConfirm={() => {
+                setConfirmMain(false);
+                if (currentPlayer) {
+                  updateCharacter(character.id, {
+                    is_npc: false,
+                    npc_tier: null,
+                    player_id: currentPlayer.id,
+                    co_owner_ids: [],
+                  });
+                }
+              }}
+            />
+          )}
           {tierOf(character) === "extra" && (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-subtle p-3 sm:p-4">
               <p className="min-w-0 flex-1 text-[0.8125rem] text-text-tertiary">
-                Statisten werden noch nicht bespielt und liegen im Statisten-Pool. Wer einen
-                bespielt, macht ihn zum Supporting Character.
+                Statist*innen dürfen alle bearbeiten und zeitweise bespielen.
               </p>
-              <button
-                onClick={() => updateCharacter(character.id, { npc_tier: "supporting" })}
-                className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08]"
-              >
-                Selbst bespielen
-              </button>
+              <StatistActions character={character} />
             </div>
           )}
 

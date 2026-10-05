@@ -11,14 +11,26 @@ auch für Kommentare.
 
 ## Charakter-Stufen (`lib/characters.ts`)
 
-- **Main Character:** normaler Charakter.
-- **Supporting Character (SC):** Nebenfigur, bestimmten Spieler*innen zugeordnet,
-  nur von ihnen bespielt und bearbeitet. Etikett „SC".
-- **Statist:** Nebenfigur, die (noch) niemand bespielt; liegt im Statisten-Pool
-  (Charaktere → Reiter). „Schnappen & bespielen" macht sie zum SC. Etikett
-  „Statist". Neu angelegte Nebenfiguren beginnen immer als Statist.
+- **Main Character:** normaler Charakter, gehört einer Person. Volles Profil,
+  eigenes Handy (auch im Profil sichtbar).
+- **Supporting Character:** Nebenfigur, bestimmten Spieler*innen zugeordnet; nur
+  sie bespielen und bearbeiten ihn. Reduziertes Profil, Handy nur reduziert
+  einstellbar. Kann zum Main Character werden. Etikett „SC".
+- **Statist*in:** Nebenfigur für alle – jede*r darf sie bearbeiten. „Bespielen"
+  (`StatistActions`) fragt: nur zeitweise bespielen (bleibt Statist*in, auch für
+  andere; jederzeit wieder „lösen") oder zum Supporting Character machen (dann
+  nur noch mir zugeordnet). Etikett „Statist*in".
+- Alle drei lassen sich direkt anlegen (`NewCharacterButton`).
+- **Wer bespielt was:** `playsAs` / `canWriteAs` – Main: Besitzer*in; SC:
+  Zugeordnete; Statist*in: wer sie gerade zeitweise bespielt (`co_owner_ids`).
+  Bespielte Nebenfiguren stehen im Handy-Wechsel und im „Antwort als"-Menü; dort
+  findet das Suchfeld „SC oder Statist*in …" zusätzlich alle Statist*innen.
+- **Abonniert:** Szenen und Chats einer Nebenfigur erscheinen im Dashboard nur
+  bei der Person, die dort selbst mit ihr gestartet oder geantwortet hat
+  (`isSubscribed`) – mehrere können dieselbe Figur bespielen.
 
-Etiketten nie von Hand schreiben, immer `tierLabel(c)` bzw. `TIER_NAMES`. Ohne
+Etiketten nie von Hand schreiben, immer `tierLabel(c)` bzw. `TIER_NAMES`
+(ausgeschrieben „Supporting Character" und „Statist*in"; als Etikett „SC"). Ohne
 eigenes Bild zeigen alle den Silhouetten-Avatar (`characterImage`).
 
 ## Farben & Schrift
@@ -188,10 +200,11 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Senden, Dock).
 - **Kontakte** (`ContactList`): oben hervorgehoben („Favoriten") die fünf
   Charaktere, mit denen der Handy-Besitzer am meisten zu tun hatte (Posts in
-  gemeinsamen Szenen + Nachrichten in gemeinsamen Chats), danach alle
-  alphabetisch; Suchfeld darüber, darunter Pills zum Ausblenden von SCs und
-  Statisten. Je Kontakt: anrufen (Zeile), Nachricht schreiben, bearbeiten. Eigene App im Dock. Jeder Kontakt lässt sich je
-  Handy umbenennen und mit Foto versehen: Der Name gilt überall auf diesem Handy
+  gemeinsamen Szenen + Nachrichten in gemeinsamen Chats), darunter alle, mit
+  denen es schon Kontakt gab. Die Pill neben dem Suchfeld schaltet zwischen
+  „Relevante" und „Alle"; die Suche findet immer alle. Je Kontakt: anrufen
+  (Zeile), Nachricht schreiben, bearbeiten. Jeder Kontakt lässt sich je Handy
+  umbenennen und mit Foto versehen: Der Name gilt überall auf diesem Handy
   (`contactName`/`chatTitle(…, owner)`), das Foto nur bei Kontakten und Anrufen
   (`ContactAvatar`) – im Messenger immer `PhoneAvatar`.
 - **Profilbilder im Handy** führen per Klick immer aufs Charakterprofil

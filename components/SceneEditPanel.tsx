@@ -35,6 +35,7 @@ export function SceneEditPanel({
     deleteScene,
     addLocation,
     characters,
+    npcs,
     scenes,
     posts,
     currentPlayer,
@@ -223,7 +224,7 @@ export function SceneEditPanel({
           </span>
         </div>
         <CharacterPicker
-          characters={characters}
+          characters={[...characters, ...npcs]}
           selected={selected}
           onChange={setSelected}
           myCharIds={myCharIds}

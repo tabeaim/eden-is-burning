@@ -30,6 +30,8 @@ export default function DashboardPage() {
     chatMessages,
     incomingCalls,
     character,
+    myNpcs,
+    isSubscribed,
   } = store;
   const [showWarten, setShowWarten] = useState(false);
   // "Du bist dran": null = noch nicht selbst umgeschaltet → Standard (s.u.)
@@ -44,7 +46,11 @@ export default function DashboardPage() {
   }, []);
   if (!currentPlayer) return null;
 
-  const myChars = charactersOf(currentPlayer.id);
+  // Main Characters und bespielte Nebenfiguren. Für Nebenfiguren (SC, Statist*in)
+  // zählen nur „abonnierte" Szenen und Chats – also die, in denen ich selbst mit
+  // ihnen gestartet oder geantwortet habe (mehrere können dieselbe Figur bespielen).
+  const myChars = [...charactersOf(currentPlayer.id), ...myNpcs];
+  const follows = (c: Character, itemId: string) => !c.is_npc || isSubscribed(itemId);
 
   // Zeitpunkt des letzten Posts einer Szene (postsOf ist nach post_number sortiert)
   const lastPostAt = (sceneId: string): string | null => {
@@ -59,12 +65,14 @@ export default function DashboardPage() {
   // Chats (Handy): unbeantwortet = die neueste Nachricht kommt von jemand anderem.
   // Archivierte und „leave on read" markierte Chats sind pausiert.
   const lastMsg = lastMessages(chatMessages);
-  const openChatsOf = (charId: string) =>
+  const openChatsOf = (c: Character) =>
     chats.filter((ch) => {
       const last = lastMsg.get(ch.id);
+      const charId = c.id;
       return (
         !!last &&
         ch.participant_ids.includes(charId) &&
+        follows(c, ch.id) &&
         !isArchived(ch) &&
         !isLeftOnRead(ch, charId, last)
       );
@@ -79,7 +87,8 @@ export default function DashboardPage() {
         (s) =>
           s.status === "active" &&
           !s.paused &&
-          s.participant_ids.includes(c.id),
+          s.participant_ids.includes(c.id) &&
+          follows(c, s.id),
       );
       const dran: Scene[] = [];
       const warten: Scene[] = [];
@@ -90,7 +99,7 @@ export default function DashboardPage() {
       }
       dran.sort(byLastPostDesc);
       warten.sort(byLastPostDesc);
-      const open = openChatsOf(c.id).sort(byLastMsgDesc);
+      const open = openChatsOf(c).sort(byLastMsgDesc);
       const chatsDran = open.filter((ch) => lastMsg.get(ch.id)!.character_id !== c.id);
       const chatsWarten = open.filter((ch) => lastMsg.get(ch.id)!.character_id === c.id);
       return { char: c, dran, warten, chatsDran, chatsWarten };
@@ -109,7 +118,7 @@ export default function DashboardPage() {
     (s) =>
       s.status === "active" &&
       !s.paused &&
-      s.participant_ids.some((id) => myCharIds.has(id)),
+      myChars.some((c) => s.participant_ids.includes(c.id) && follows(c, s.id)),
   );
   // Chats zählen mit (jeder Chat einmal, auch wenn mehrere eigene Charaktere dabei sind)
   const openChatIds = new Set(grouped.flatMap((g) => [...g.chatsDran, ...g.chatsWarten].map((c) => c.id)));

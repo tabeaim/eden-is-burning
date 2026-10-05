@@ -191,7 +191,7 @@ export default function NewScenePage() {
             </span>
           </div>
           <CharacterPicker
-            characters={phone ? [...characters, ...npcs] : characters}
+            characters={[...characters, ...npcs]}
             selected={selected}
             onChange={setSelected}
             myCharIds={myCharIds}
