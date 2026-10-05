@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Character, ThingItem } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { loadImageFile, removeBackground, toCanvas, uploadCanvas } from "@/lib/cutout";
@@ -30,17 +30,13 @@ export function ThingsBoard({ character, canEdit }: { character: Character; canE
   const [pending, setPending] = useState<HTMLImageElement | null>(null);
   const [cut, setCut] = useState(true);
   const [tolerance, setTolerance] = useState(30);
-  const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (!pending) {
-      setPreview(null);
-      return;
-    }
-    // kleine Vorschau – das eigentliche Bild wird erst beim Hinzufügen gerechnet
+  // kleine Vorschau – das eigentliche Bild wird erst beim Hinzufügen gerechnet
+  const preview = useMemo(() => {
+    if (!pending) return null;
     const small = toCanvas(pending, 360);
-    setPreview((cut ? removeBackground(small, tolerance) : small).toDataURL("image/png"));
+    return (cut ? removeBackground(small, tolerance) : small).toDataURL("image/png");
   }, [pending, cut, tolerance]);
 
   async function addPending() {
