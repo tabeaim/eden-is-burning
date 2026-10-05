@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useContextMenu } from "./ContextMenu";
 import { characterImage } from "@/lib/avatar";
+import { joinNames } from "@/lib/format";
 import { useStore, whoseTurn } from "@/lib/store";
 import {
   formatDateTime,
@@ -163,7 +164,7 @@ export function SceneCard({
                 />
               ))}
             </span>
-            <span className="min-w-0 truncate">{participants.map((c) => c.name.split(" ")[0]).join(", ")}</span>
+            <span className="min-w-0 truncate">{joinNames(participants.map((c) => c.name.split(" ")[0]))}</span>
           </div>
         ) : (
           <>

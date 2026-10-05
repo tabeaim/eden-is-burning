@@ -109,3 +109,8 @@ export function timeAgo(iso: string): string {
 export function withinHours(iso: string, hours: number): boolean {
   return Date.now() - new Date(iso).getTime() <= hours * 3600 * 1000;
 }
+
+// Namen aufzählen: zwei mit „&", mehr mit Kommas („A & B", „A, B, C")
+export function joinNames(names: string[]): string {
+  return names.length === 2 ? names.join(" & ") : names.join(", ");
+}
