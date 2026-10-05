@@ -19,12 +19,14 @@ export function Facts({
 // Eine Zeile der Fakten-Liste; ohne Wert entfällt sie ganz.
 export function FactRow({ label, value }: { label: string; value: React.ReactNode }) {
   if (value === null || value === undefined || value === "") return null;
+  // Werte beginnen immer mit einem Großbuchstaben, egal wie sie eingetragen wurden
+  const shown = typeof value === "string" ? value.charAt(0).toUpperCase() + value.slice(1) : value;
   return (
     <>
       <dt className="text-[0.75rem] font-bold uppercase tracking-wider text-text-tertiary">
         {label}:
       </dt>
-      <dd className="break-words text-text-primary">{value}</dd>
+      <dd className="break-words text-text-primary">{shown}</dd>
     </>
   );
 }

@@ -58,7 +58,6 @@ export function ProfileFacts({ c }: { c: Character }) {
           <FactRow label="Status" value={shown(c, "status", c.status)} />
           <FactRow label="Sexuality" value={shown(c, "sexuality", c.sexuality)} />
           <FactRow label="Occupation" value={shown(c, "role", c.role)} />
-          <FactRow label="Faceclaim" value={c.faceclaim} />
         </Facts>
       </FactBox>
 
@@ -98,6 +97,7 @@ export function ProfileLooks({ c }: { c: Character }) {
     ["Figure", shown(c, "figure", c.figure)],
     ["Hair", shown(c, "hair", c.hair)],
     ["Eyes", shown(c, "eyes", c.eyes)],
+    ["Faceclaim", c.faceclaim],
   ] as const;
   const note = c.profile?.looks_note;
   if (!rows.some(([, v]) => v) && !note) return null;

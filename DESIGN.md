@@ -127,7 +127,7 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   zum 1.1.2022 bzw. für den Herbst 2021, in einer Szene zum Datum der Szene.
 - **Profil-Reiter:** General (Kurzbeschreibung, Facts) · Character
   (Beschreibung, Eigenschaften, Skills, Slider, Likes, Timeline) ·
-  Personal Things (Handy, nur Main Characters) · Inplay · Relations (nach
+  Pockets (Handy und Gegenstände, nur Main Characters) · Scenes · Relations (nach
   Kategorie: love life, family, acquainted). Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
 - **Personal Things** (`ThingsBoard`): neben dem Handy eine Collage der
@@ -142,6 +142,10 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   (`rounded-lg border bg-bg-surface`); die Facts-Spalte ist breit genug für lange
   Namen. Looks (samt kurzem Beschreibungstext) stehen nur im Hover über dem
   Hochkant-Banner. Lange Reiter scrollen ab `md` in sich.
+- **Reiter ohne doppelte Überschrift:** Pockets, Moodboard, Scenes und Relations
+  tragen keine eigene Abschnitts-Überschrift – der Reiter genügt.
+- **Fact-Werte** beginnen immer mit einem Großbuchstaben (macht `FactRow`).
+  Faceclaim steht bei den Looks (Banner-Hover), nicht bei den Facts.
 - **Schlagwort-Kacheln** (Eigenschaften, Likes/Dislikes): klein (0.6875rem,
   Großbuchstaben, `rounded-md bg-white/[0.08]`); Plus/Minus bzw. Likes/Dislikes
   stehen nebeneinander.

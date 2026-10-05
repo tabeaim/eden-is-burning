@@ -30,6 +30,7 @@ export interface Player {
 
 export interface PlayerProfile {
   header_url?: string | null;
+  quote?: string | null;
   skills?: { name: string; value: number }[];
   sliders?: { left: string; right: string; value: number }[];
   likes?: string[];

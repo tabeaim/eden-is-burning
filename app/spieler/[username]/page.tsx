@@ -83,13 +83,20 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-8">
-      {canEdit && !editing && (
-        <div className="mb-3 flex justify-end">
-          <button onClick={() => setEditing(true)} className={btn}>
+      {/* Zitat – der Bearbeiten-Knopf sitzt rechts oben, der Text fließt um ihn herum */}
+      <div className="mb-4 flow-root">
+        {canEdit && !editing && (
+          <button onClick={() => setEditing(true)} className={`${btn} float-right mb-2 ml-4`}>
             <Icon name="edit" size={14} /> Bearbeiten
           </button>
-        </div>
-      )}
+        )}
+        {prof.quote && (
+          <p className="text-left text-[1.125rem] leading-snug text-text-primary">
+            <span className="mr-1.5 text-[2.125rem] leading-none text-accent">„</span>
+            {prof.quote}
+          </p>
+        )}
+      </div>
       {editing && <PlayerEditPanel player={p} onClose={() => setEditing(false)} />}
 
       <div className="grid items-start gap-x-10 gap-y-6 md:grid-cols-[minmax(0,1fr)_minmax(22rem,1fr)]">
@@ -174,13 +181,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
           <ProfileSkills c={p} />
           <ProfileSliders c={p} />
           <ProfileLikes c={p} />
-          {!hasAbout && (
-            <p className="text-[0.875rem] text-text-tertiary">
-              {canEdit
-                ? "Noch nichts hinterlegt – über „Bearbeiten“ kannst du Skills, Slider und Likes eintragen."
-                : "Noch nichts hinterlegt."}
-            </p>
-          )}
+          {!hasAbout && <p className="text-[0.875rem] text-text-tertiary">Noch nichts hinterlegt.</p>}
         </div>
       )}
 
@@ -210,12 +211,13 @@ const toList = (text: string) =>
     .map((t) => t.trim())
     .filter(Boolean);
 
-// Eigenes Profil bearbeiten: Beschreibung, Header-Bild, Skills, Slider,
+// Eigenes Profil bearbeiten: Zitat, Beschreibung, Header-Bild, Skills, Slider,
 // Likes/Dislikes. Nur Avatar und Username stehen unter Einstellungen → Mein Profil.
 function PlayerEditPanel({ player, onClose }: { player: Player; onClose: () => void }) {
   const { updatePlayer } = useStore();
   const prof = player.profile ?? {};
   const [bio, setBio] = useState(player.bio ?? "");
+  const [quote, setQuote] = useState(prof.quote ?? "");
   const [header, setHeader] = useState(prof.header_url ?? "");
   const [skills, setSkills] = useState(prof.skills ?? []);
   const [sliders, setSliders] = useState(prof.sliders ?? []);
@@ -238,6 +240,7 @@ function PlayerEditPanel({ player, onClose }: { player: Player; onClose: () => v
     const profile: PlayerProfile = {
       ...prof,
       header_url: header || null,
+      quote: quote.trim() || null,
       skills: skills.filter((s) => s.name.trim()).map((s) => ({ name: s.name.trim(), value: s.value })),
       sliders: sliders.filter((s) => s.left.trim() || s.right.trim()),
       likes: toList(likes),
@@ -267,6 +270,10 @@ function PlayerEditPanel({ player, onClose }: { player: Player; onClose: () => v
         .
       </p>
 
+      <label className={label}>
+        Zitat
+        <input value={quote} maxLength={300} onChange={(e) => setQuote(e.target.value)} className={`mt-1 ${field}`} />
+      </label>
       <label className={label}>
         Beschreibung ({bio.length}/500)
         <textarea

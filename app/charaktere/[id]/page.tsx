@@ -160,10 +160,10 @@ export default function CharacterPage({
                 ["general", "General"],
                 ["character", "Character"],
                 // „Personal Things": das Handy (nur Main Characters haben eins)
-                ...(c.is_npc ? [] : [["personal", "Personal Things"]]),
+                ...(c.is_npc ? [] : [["personal", "Pockets"]]),
                 // eingebundenes Pinterest-Board, falls eines hinterlegt ist
                 ...(c.pinterest_url ? [["moodboard", "Moodboard"]] : []),
-                ["inplay", "Inplay"],
+                ["inplay", "Scenes"],
                 ["relations", "Relations"],
               ] as [Tab, string][]
             ).map(([key, label]) => (
@@ -184,20 +184,18 @@ export default function CharacterPage({
           {/* Lange Reiter scrollen in sich, damit der Text nicht viel länger läuft
               als der Banner daneben hoch ist (nur neben dem Banner, also ab md). Im
               ersten Reiter scrollt nur die Kurzbeschreibung, die Facts bleiben stehen. */}
-          <div className={tab === "general" ? "" : "md:max-h-[436px] md:overflow-y-auto md:pr-3"}>
+          <div className={tab === "general" ? "" : "md:max-h-[624px] md:overflow-y-auto md:pr-3"}>
           {tab === "general" && <GeneralTab c={c} />}
           {tab === "moodboard" && c.pinterest_url && (
             <section>
-              <Heading>moodboard.</Heading>
               <PinterestBoard url={c.pinterest_url} />
             </section>
           )}
           {tab === "character" && <CharacterTab c={c} />}
-          {/* Was der Charakter bei sich hat – bisher das Handy, nur zum Ansehen
+          {/* „Pockets": was der Charakter bei sich hat – das Handy, nur zum Ansehen
               (Look, Startbildschirm, Kontaktliste) */}
           {tab === "personal" && !c.is_npc && (
             <section>
-              <Heading>personal things.</Heading>
               {/* links das Handy, daneben die Collage der Gegenstände */}
               <div className="flex flex-col items-start gap-6 sm:flex-row">
                 <div className="shrink-0">
@@ -309,7 +307,7 @@ function NpcFacts({ c }: { c: Character }) {
 function ProfileBanner({ c }: { c: Character }) {
   return (
     <div
-      className="group relative h-[492px] w-full overflow-hidden rounded-xl bg-bg-surface"
+      className="group relative h-[680px] w-full overflow-hidden rounded-xl bg-bg-surface"
       style={{
         backgroundImage: c.banner_url
           ? undefined
@@ -343,6 +341,7 @@ function ProfileBanner({ c }: { c: Character }) {
           <FactRow label="Figure" value={isHidden(c, "figure") ? null : c.figure} />
           <FactRow label="Hair" value={isHidden(c, "hair") ? null : c.hair} />
           <FactRow label="Eyes" value={isHidden(c, "eyes") ? null : c.eyes} />
+          <FactRow label="Faceclaim" value={c.faceclaim} />
         </Facts>
       </div>
     </div>
@@ -400,7 +399,7 @@ function GeneralTab({ c }: { c: Character }) {
       {/* Kurzbeschreibung – links neben den Facts (die brauchen den Platz für lange Namen) */}
       <div>
         {c.bio ? (
-          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary lg:max-h-[420px] lg:overflow-y-auto lg:pr-3">
+          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary lg:max-h-[600px] lg:overflow-y-auto lg:pr-3">
             {c.bio}
           </p>
         ) : (
@@ -451,7 +450,6 @@ function CharacterTab({ c }: { c: Character }) {
 function InplayTab({ inScenes }: { inScenes: Scene[] }) {
   return (
     <section>
-      <Heading>scenes.</Heading>
       {inScenes.length === 0 ? (
         <p className="text-[0.875rem] text-text-tertiary">Noch in keiner Szene.</p>
       ) : (
@@ -476,7 +474,6 @@ function RelationsTab({
 }) {
   return (
     <section>
-      <Heading>relations.</Heading>
       {coChars.length === 0 ? (
         <p className="text-[0.875rem] text-text-tertiary">
           Noch keine Verbindungen – sobald zwei Charaktere eine gemeinsame Szene
