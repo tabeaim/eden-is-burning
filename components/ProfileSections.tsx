@@ -18,6 +18,17 @@ import { Facts, FactRow } from "./Facts";
 // Likes/Dislikes und Timeline. Leere Abschnitte fallen weg; im Profil versteckte
 // Angaben (`profile.hidden`) ebenso.
 
+// Fakten-Kategorie: Überschrift + Liste in einer dezenten Box (Label links in
+// einer Flucht, Werte daneben)
+function FactBox({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <SectionHeading>{title}</SectionHeading>
+      <div className="rounded-lg border border-border-subtle bg-bg-surface px-3.5 py-3">{children}</div>
+    </section>
+  );
+}
+
 export function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="mb-3 font-display lowercase text-[2rem] leading-none text-accent">{children}</h2>
@@ -36,8 +47,7 @@ export function ProfileFacts({ c }: { c: Character }) {
   const main = tierOf(c) === "main";
   return (
     <>
-      <section>
-        <SectionHeading>facts.</SectionHeading>
+      <FactBox title="facts.">
         <Facts>
           <FactRow label="Name" value={shown(c, "full_name", c.full_name) ?? c.name} />
           <FactRow label="Age" value={shown(c, "age", age != null ? `${age}` : null)} />
@@ -50,36 +60,33 @@ export function ProfileFacts({ c }: { c: Character }) {
           <FactRow label="Occupation" value={shown(c, "role", c.role)} />
           <FactRow label="Faceclaim" value={c.faceclaim} />
         </Facts>
-      </section>
+      </FactBox>
 
       {main && isStudent(c) && (
-        <section>
-          <SectionHeading>studies.</SectionHeading>
+        <FactBox title="studies.">
           <Facts>
             <FactRow label="University" value={shown(c, "university", p.university)} />
             <FactRow label="Major" value={shown(c, "major", p.major)} />
             <FactRow label="Degree" value={shown(c, "degree", p.degree ? DEGREES[p.degree] : null)} />
             <FactRow label="Year" value={shown(c, "study_year", year != null ? `${year}` : null)} />
           </Facts>
-        </section>
+        </FactBox>
       )}
       {main && isWorking(c) && shown(c, "employer", p.employer) && (
-        <section>
-          <SectionHeading>work.</SectionHeading>
+        <FactBox title="work.">
           <Facts>
             <FactRow label="Employer" value={p.employer} />
           </Facts>
-        </section>
+        </FactBox>
       )}
       {/* Altbestand: Job/Company aus dem früheren Profil */}
       {!isStudent(c) && !isWorking(c) && (c.job || c.company) && (
-        <section>
-          <SectionHeading>occupation.</SectionHeading>
+        <FactBox title="occupation.">
           <Facts>
             <FactRow label="Job" value={c.job} />
             <FactRow label="Company" value={c.company} />
           </Facts>
-        </section>
+        </FactBox>
       )}
     </>
   );
@@ -92,16 +99,17 @@ export function ProfileLooks({ c }: { c: Character }) {
     ["Hair", shown(c, "hair", c.hair)],
     ["Eyes", shown(c, "eyes", c.eyes)],
   ] as const;
-  if (!rows.some(([, v]) => v)) return null;
+  const note = c.profile?.looks_note;
+  if (!rows.some(([, v]) => v) && !note) return null;
   return (
-    <section>
-      <SectionHeading>looks.</SectionHeading>
+    <FactBox title="looks.">
+      {note && <p className="mb-2 whitespace-pre-wrap text-[0.875rem] leading-relaxed text-text-secondary">{note}</p>}
       <Facts>
         {rows.map(([label, value]) => (
           <FactRow key={label} label={label} value={value} />
         ))}
       </Facts>
-    </section>
+    </FactBox>
   );
 }
 
@@ -112,7 +120,7 @@ function Tags({ items }: { items: string[] }) {
       {items.map((t, i) => (
         <span
           key={`${t}-${i}`}
-          className="rounded-md bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] uppercase tracking-wider text-text-primary"
+          className="rounded-md bg-white/[0.08] px-2.5 py-1 text-[0.6875rem] uppercase tracking-wider text-text-primary"
         >
           {t}
         </span>
@@ -132,13 +140,13 @@ export function ProfileSkills({ c }: { c: WithProfile }) {
       <div className="grid grid-cols-[minmax(0,auto)_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2">
         {skills.map((s, i) => (
           <div key={i} className="contents">
-            <div className="max-w-[16rem] text-right text-[0.8125rem] uppercase tracking-wider text-text-primary">
+            <div className="max-w-[14rem] text-right text-[0.6875rem] uppercase tracking-wider text-text-primary">
               {s.name}
             </div>
-            <div className="h-7 min-w-24 bg-white/[0.12]" role="img" aria-label={`${s.name}: ${s.value} %`}>
+            <div className="h-5 min-w-24 bg-white/[0.12]" role="img" aria-label={`${s.name}: ${s.value} %`}>
               <div className="h-full bg-text-primary/85" style={{ width: `${Math.min(100, Math.max(0, s.value))}%` }} />
             </div>
-            <div className="text-[0.8125rem] tabular-nums text-text-secondary">{s.value}%</div>
+            <div className="text-[0.6875rem] tabular-nums text-text-secondary">{s.value}%</div>
           </div>
         ))}
       </div>
@@ -177,7 +185,7 @@ export function ProfileSliders({ c }: { c: WithProfile }) {
       <div className="flex flex-col gap-4">
         {sliders.map((s, i) => (
           <div key={i} className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] items-center gap-3">
-            <div className="text-right text-[0.8125rem] uppercase leading-tight tracking-wider text-text-primary">
+            <div className="text-right text-[0.6875rem] uppercase leading-tight tracking-wider text-text-primary">
               {s.left}
             </div>
             <div className="relative h-5" role="img" aria-label={`${s.left} – ${s.right}: ${s.value} %`}>
@@ -187,7 +195,7 @@ export function ProfileSliders({ c }: { c: WithProfile }) {
                 style={{ left: `${Math.min(100, Math.max(0, s.value))}%` }}
               />
             </div>
-            <div className="text-[0.8125rem] uppercase leading-tight tracking-wider text-text-primary">{s.right}</div>
+            <div className="text-[0.6875rem] uppercase leading-tight tracking-wider text-text-primary">{s.right}</div>
           </div>
         ))}
       </div>
@@ -202,31 +210,28 @@ export function ProfileLikes({ c }: { c: WithProfile }) {
   return (
     <section>
       <SectionHeading>likes/dislikes.</SectionHeading>
-      {likes.length > 0 && (
-        <>
-          <div className="mb-2 text-center text-[1.125rem] leading-none" aria-label="Likes">
-            ❤️
+      <div className="grid gap-6 sm:grid-cols-2">
+        {(
+          [
+            ["❤️", "Likes", likes],
+            ["💔", "Dislikes", dislikes],
+          ] as const
+        ).map(([icon, name, items]) => (
+          <div key={name}>
+            <div className="mb-2 text-center text-[1.125rem] leading-none" aria-label={name}>
+              {icon}
+            </div>
+            <Tags items={[...items]} />
           </div>
-          <Tags items={likes} />
-        </>
-      )}
-      {dislikes.length > 0 && (
-        <>
-          <div className="mb-2 mt-5 text-center text-[1.125rem] leading-none" aria-label="Dislikes">
-            💔
-          </div>
-          <Tags items={dislikes} />
-        </>
-      )}
+        ))}
+      </div>
     </section>
   );
 }
 
 export function ProfileTimeline({ c }: { c: Character }) {
   const items = c.profile?.timeline ?? [];
-  if (items.length === 0) {
-    return <p className="text-[0.875rem] text-text-tertiary">Noch keine Timeline hinterlegt.</p>;
-  }
+  if (items.length === 0) return null;
   return (
     <section>
       <SectionHeading>timeline.</SectionHeading>

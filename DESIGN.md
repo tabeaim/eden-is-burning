@@ -126,7 +126,7 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
 - **Alter und Studienjahr** werden berechnet (`ageAt`, `studyYearAt`): im Profil
   zum 1.1.2022 bzw. für den Herbst 2021, in einer Szene zum Datum der Szene.
 - **Profil-Reiter:** General (Kurzbeschreibung, Facts) · Character
-  (Beschreibung, Eigenschaften, Skills, Slider, Likes) · Biography (Timeline) ·
+  (Beschreibung, Eigenschaften, Skills, Slider, Likes, Timeline) ·
   Personal Things (Handy, nur Main Characters) · Inplay · Relations (nach
   Kategorie: love life, family, acquainted). Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
@@ -136,13 +136,19 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   Größe an den Ecken, Drehung am Griff oben, Stapelfolge); gespeichert
   liegen die Bilder frei auf durchsichtigem Grund. Beim Hinzufügen kann ein
   einfarbiger Hintergrund entfernt werden (`lib/cutout.ts`).
-- **Facts:** Label und Wert in derselben Schrift (Großbuchstaben, 0.75rem), nur
-  das Label fett (`Facts`/`FactRow`). Looks stehen nur im Hover über dem
-  Hochkant-Banner links im Profil. Lange Reiter scrollen ab `md` in sich, damit
-  der Text nicht viel länger läuft als der Banner hoch ist.
+- **Facts:** Label fett in Großbuchstaben (0.75rem, grau), Wert in normaler
+  Schreibweise (0.875rem) – `Facts`/`FactRow`. Im Profil steht jede Kategorie
+  („facts.", „studies.", „work.") in einer dezenten Box
+  (`rounded-lg border bg-bg-surface`); die Facts-Spalte ist breit genug für lange
+  Namen. Looks (samt kurzem Beschreibungstext) stehen nur im Hover über dem
+  Hochkant-Banner. Lange Reiter scrollen ab `md` in sich.
+- **Schlagwort-Kacheln** (Eigenschaften, Likes/Dislikes): klein (0.6875rem,
+  Großbuchstaben, `rounded-md bg-white/[0.08]`); Plus/Minus bzw. Likes/Dislikes
+  stehen nebeneinander.
 - **Moodboard:** Ist ein Pinterest-Board hinterlegt, bindet der Reiter
   „Moodboard" es direkt ein (`PinterestBoard`, Pinterests Einbett-Skript, erst
-  beim Öffnen des Reiters geladen).
+  beim Öffnen des Reiters geladen; ohne Kopf mit Nutzer*in und mit durchsichtigem
+  Hintergrund – `.pinterest-board` in globals.css).
 - **Namen aufzählen:** zwei mit „&", mehr mit Kommas (`joinNames`).
 - **Formular-Abschnitte** in den Charakter-Einstellungen sind aufklappbar
   (`Collapsible`); Abschnitte mit fehlender Pflichtangabe bleiben offen. Kleine
@@ -150,8 +156,10 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   Feld, nicht im Label.
 - **Spieler*innen-Profil:** Name mit rundem Avatar im Seitentitel
   (`useSetPageMeta(…, avatar)`), eigener Header, Facts (Member since, Characters,
-  Scenes, Posts, Last seen) und Reiter Characters · About (Skills, Slider, Likes
-  wie bei Charakteren) · Scenes. Bearbeitet wird direkt im Profil.
+  Scenes, Posts, Last seen), darunter Skills, Slider, Likes wie bei Charakteren,
+  dann die Reiter Characters · Scenes. Bearbeitet wird direkt im Profil; unter
+  Einstellungen → Mein Profil stehen nur Avatar, Username (jederzeit änderbar)
+  und das Konto (E-Mail, Passwort).
 - **Szenen im Profil:** `SceneCard compact` – Beteiligte als zusammengerückte
   Avatare + Vornamen, ohne Bubbles und ohne „Letzter Post".
 - **Relations:** Bearbeiten und Löschen als Icon-Menü beim Hover über der Box

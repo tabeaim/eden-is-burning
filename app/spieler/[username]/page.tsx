@@ -20,7 +20,7 @@ import {
   SectionHeading,
 } from "@/components/ProfileSections";
 
-type Tab = "characters" | "about" | "scenes";
+type Tab = "characters" | "scenes";
 
 // „seit 3 Jahren", „seit 5 Monaten", „seit 12 Tagen"
 function since(iso: string): string {
@@ -30,9 +30,10 @@ function since(iso: string): string {
   return `${days} ${days === 1 ? "Tag" : "Tagen"}`;
 }
 
-// Spieler*innen-Profil: Name (mit Avatar) im Seitentitel, eigener Header, Facts,
-// dazu Reiter für Charaktere, „About" (Skills, Slider, Likes – wie bei den
-// Charakteren) und Szenen.
+// Spieler*innen-Profil: Name (mit Avatar) im Seitentitel, eigener Header,
+// Beschreibung und Facts, darunter Skills, Slider und Likes (wie bei den
+// Charakteren) und Reiter für Charaktere und Szenen. Alles außer Avatar und
+// Username wird hier im Profil bearbeitet.
 export default function PlayerPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params);
   const { playerByUsername, charactersOf, npcs, scenes, posts, currentPlayer, isAdmin } = useStore();
@@ -74,7 +75,6 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
 
   const tabs: [Tab, string][] = [
     ["characters", "Characters"],
-    ["about", "About"],
     ["scenes", "Scenes"],
   ];
   const btn =
@@ -91,7 +91,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
       )}
       {editing && <PlayerEditPanel player={p} onClose={() => setEditing(false)} />}
 
-      <div className="grid items-start gap-x-10 gap-y-6 md:grid-cols-[1fr_auto]">
+      <div className="grid items-start gap-x-10 gap-y-6 md:grid-cols-[minmax(0,1fr)_minmax(22rem,1fr)]">
         {p.bio ? (
           <p className="max-w-2xl whitespace-pre-wrap text-[0.875rem] leading-relaxed text-text-secondary">{p.bio}</p>
         ) : (
@@ -99,6 +99,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
         )}
         <section>
           <SectionHeading>facts.</SectionHeading>
+          <div className="rounded-lg border border-border-subtle bg-bg-surface px-3.5 py-3">
           <Facts>
             <FactRow label="Member since" value={`${formatInplayDate(p.created_at.slice(0, 10))} · seit ${since(p.created_at)}`} />
             <FactRow label="Characters" value={`${chars.length}`} />
@@ -107,8 +108,18 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
             <FactRow label="Posts" value={`${postCount}`} />
             <FactRow label="Last seen" value={formatDateTime(p.last_seen)} />
           </Facts>
+          </div>
         </section>
       </div>
+
+      {/* Skills, Slider, Likes – direkt im Profil, kein eigener Reiter */}
+      {hasAbout && (
+        <div className="mt-8 flex max-w-4xl flex-col gap-9">
+          <ProfileSkills c={p} />
+          <ProfileSliders c={p} />
+          <ProfileLikes c={p} />
+        </div>
+      )}
 
       <div className="mt-6 mb-6 border-b border-border-subtle" />
 
@@ -165,21 +176,6 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
         </section>
       )}
 
-      {tab === "about" && (
-        <div className="flex max-w-4xl flex-col gap-9">
-          <ProfileSkills c={p} />
-          <ProfileSliders c={p} />
-          <ProfileLikes c={p} />
-          {!hasAbout && (
-            <p className="text-[0.875rem] text-text-tertiary">
-              {canEdit
-                ? "Noch nichts hinterlegt – über „Bearbeiten“ kannst du Skills, Slider und Likes eintragen."
-                : "Noch nichts hinterlegt."}
-            </p>
-          )}
-        </div>
-      )}
-
       {tab === "scenes" && (
         <section>
           <SectionHeading>scenes.</SectionHeading>
@@ -206,11 +202,12 @@ const toList = (text: string) =>
     .map((t) => t.trim())
     .filter(Boolean);
 
-// Eigenes Profil bearbeiten: Header-Bild, Skills, Slider, Likes/Dislikes. Avatar,
-// Name und Beschreibung stehen unter Einstellungen → Mein Profil.
+// Eigenes Profil bearbeiten: Beschreibung, Header-Bild, Skills, Slider,
+// Likes/Dislikes. Nur Avatar und Username stehen unter Einstellungen → Mein Profil.
 function PlayerEditPanel({ player, onClose }: { player: Player; onClose: () => void }) {
   const { updatePlayer } = useStore();
   const prof = player.profile ?? {};
+  const [bio, setBio] = useState(player.bio ?? "");
   const [header, setHeader] = useState(prof.header_url ?? "");
   const [skills, setSkills] = useState(prof.skills ?? []);
   const [sliders, setSliders] = useState(prof.sliders ?? []);
@@ -238,7 +235,7 @@ function PlayerEditPanel({ player, onClose }: { player: Player; onClose: () => v
       likes: toList(likes),
       dislikes: toList(dislikes),
     };
-    updatePlayer(player.id, { profile });
+    updatePlayer(player.id, { bio: bio.trim() || null, profile });
     onClose();
   }
 
@@ -255,12 +252,23 @@ function PlayerEditPanel({ player, onClose }: { player: Player; onClose: () => v
     <div className="mb-6 flex flex-col gap-4 rounded-xl border border-border-subtle bg-bg-surface p-4 sm:p-5">
       <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">Profil bearbeiten</div>
       <p className="-mt-2 text-[0.8125rem] text-text-tertiary">
-        Avatar, Name und Beschreibung änderst du unter{" "}
+        Avatar und Username änderst du unter{" "}
         <Link href="/einstellungen" className="text-accent hover:underline">
           Einstellungen → Mein Profil
         </Link>
         .
       </p>
+
+      <label className={label}>
+        Beschreibung ({bio.length}/500)
+        <textarea
+          value={bio}
+          maxLength={500}
+          rows={4}
+          onChange={(e) => setBio(e.target.value)}
+          className={`mt-1 resize-y ${field}`}
+        />
+      </label>
 
       <div className={group}>Header</div>
       <div className="flex flex-wrap items-center gap-3">

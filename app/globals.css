@@ -263,3 +263,23 @@ body {
 .phone-burner .text-red-300 {
   color: var(--text-primary);
 }
+
+/* Eingebundenes Pinterest-Board (Reiter „Moodboard"): Pinterests Skript baut
+   Elemente mit Klassen wie PIN_<Zahl>_embed_grid, …_hd (Kopf mit Nutzer*in),
+   …_bd (Pins), …_ft (Folgen-Knopf). Kopf und Fuß weg, Hintergrund durchsichtig. */
+.pinterest-board [class*="_embed_grid"] {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+.pinterest-board [class*="_embed_grid"] [class$="_hd"],
+.pinterest-board [class*="_embed_grid"] [class$="_ft"] {
+  display: none !important;
+}
+.pinterest-board [class*="_embed_grid"] [class$="_bd"] {
+  background: transparent !important;
+  border: 0 !important;
+}

@@ -15,7 +15,8 @@ const SCRIPT_ID = "pinterest-pinit";
 // macht Pinterests eigenes Einbett-Skript: Es ersetzt den Link unten durch die
 // Pin-Wand. Geladen wird es erst, wenn der Reiter geöffnet ist – vorher geht
 // nichts an Pinterest. Klappt nur mit Board-Adressen (pinterest.com/<name>/<board>/)
-// und öffentlichen Boards; sonst bleibt der Link stehen.
+// und öffentlichen Boards; sonst bleibt der Link stehen. Das Aussehen (kein Kopf
+// mit Nutzer*in, durchsichtiger Hintergrund) regelt `.pinterest-board` in globals.css.
 export function PinterestBoard({ url }: { url: string }) {
   const box = useRef<HTMLDivElement>(null);
 
@@ -38,7 +39,7 @@ export function PinterestBoard({ url }: { url: string }) {
   return (
     <div>
       {/* key: bei anderem Board den von Pinterest umgebauten Inhalt verwerfen */}
-      <div ref={box} key={url} className="overflow-hidden rounded-lg">
+      <div ref={box} key={url} className="pinterest-board overflow-hidden rounded-lg">
         <a
           data-pin-do="embedBoard"
           data-pin-board-width="900"

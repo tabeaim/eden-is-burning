@@ -37,7 +37,7 @@ import {
 } from "@/components/ProfileSections";
 import type { Character, RelationCategory, Scene } from "@/lib/types";
 
-type Tab = "general" | "character" | "biography" | "personal" | "moodboard" | "inplay" | "relations";
+type Tab = "general" | "character" | "personal" | "moodboard" | "inplay" | "relations";
 
 // Bausteine aus DESIGN.md: Buttons, Primär-Aktion, Formularfelder
 const btn =
@@ -158,7 +158,6 @@ export default function CharacterPage({
               [
                 ["general", "General"],
                 ["character", "Character"],
-                ["biography", "Biography"],
                 // „Personal Things": das Handy (nur Main Characters haben eins)
                 ...(c.is_npc ? [] : [["personal", "Personal Things"]]),
                 // eingebundenes Pinterest-Board, falls eines hinterlegt ist
@@ -192,7 +191,6 @@ export default function CharacterPage({
             </section>
           )}
           {tab === "character" && <CharacterTab c={c} />}
-          {tab === "biography" && <ProfileTimeline c={c} />}
           {/* Was der Charakter bei sich hat – bisher das Handy, nur zum Ansehen
               (Look, Startbildschirm, Kontaktliste) */}
           {tab === "personal" && !c.is_npc && (
@@ -333,6 +331,11 @@ function ProfileBanner({ c }: { c: Character }) {
       {/* Looks-Overlay bei Hover */}
       <div className="absolute inset-0 flex flex-col bg-black/80 px-4 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
         <h2 className="font-display lowercase text-[2rem] text-accent leading-none">looks.</h2>
+        {c.profile?.looks_note && (
+          <p className="mt-3 whitespace-pre-wrap text-[0.875rem] leading-relaxed text-text-secondary">
+            {c.profile.looks_note}
+          </p>
+        )}
         <Facts className="mt-3">
           <FactRow label="Height" value={isHidden(c, "height") ? null : normalizeHeight(c.height)} />
           <FactRow label="Figure" value={isHidden(c, "figure") ? null : c.figure} />
@@ -391,8 +394,8 @@ function Heading({ children }: { children: React.ReactNode }) {
 
 function GeneralTab({ c }: { c: Character }) {
   return (
-    <div className="grid sm:grid-cols-2 gap-x-8 gap-y-6 items-start">
-      {/* Kurzbeschreibung – links neben den Facts */}
+    <div className="grid items-start gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1fr)_minmax(19rem,1.1fr)]">
+      {/* Kurzbeschreibung – links neben den Facts (die brauchen den Platz für lange Namen) */}
       <div>
         {c.bio ? (
           <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary">
@@ -420,7 +423,7 @@ function CharacterTab({ c }: { c: Character }) {
   const empty =
     !c.personality &&
     !(p.traits_plus?.length || p.traits_minus?.length || p.skills?.length || p.sliders?.length) &&
-    !(p.likes?.length || p.dislikes?.length);
+    !(p.likes?.length || p.dislikes?.length || p.timeline?.length);
   return (
     <div className="flex flex-col gap-9">
       {c.personality && (
@@ -435,6 +438,7 @@ function CharacterTab({ c }: { c: Character }) {
       <ProfileSkills c={c} />
       <ProfileSliders c={c} />
       <ProfileLikes c={c} />
+      <ProfileTimeline c={c} />
       {empty && (
         <p className="text-[0.875rem] text-text-tertiary">Noch keine Charakterbeschreibung hinterlegt.</p>
       )}

@@ -106,6 +106,7 @@ export interface CharacterProfile {
   birthdate?: string | null; // ISO-Datum; daraus wird das Alter berechnet
   gender?: string | null; // "weiblich" | "männlich" | "divers" | frei
   hidden?: string[]; // Angaben, die im Profil nicht gezeigt werden (Feld-Schlüssel)
+  looks_note?: string | null; // kurzer Beschreibungstext zum Aussehen
   // Student*in und/oder arbeitstätig (beides zugleich möglich)
   is_student?: boolean;
   is_working?: boolean;

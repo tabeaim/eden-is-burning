@@ -144,10 +144,16 @@ const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
 function ProfileTab() {
-  const { currentPlayer, updatePlayer } = useStore();
-  const [bio, setBio] = useState(currentPlayer?.bio ?? "");
+  const { currentPlayer, players, updatePlayer, changeEmail, changePassword } = useStore();
+  const [username, setUsername] = useState(currentPlayer?.username ?? "");
   const [saved, setSaved] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  // Konto
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
   if (!currentPlayer) return null;
 
   async function onAvatar(e: React.ChangeEvent<HTMLInputElement>) {
@@ -157,11 +163,48 @@ function ProfileTab() {
     updatePlayer(currentPlayer.id, { avatar_url: url });
   }
 
-  function save() {
-    updatePlayer(currentPlayer!.id, { bio });
+  const name = username.trim();
+  const taken = players.some(
+    (p) => p.id !== currentPlayer.id && p.username.toLowerCase() === name.toLowerCase(),
+  );
+  const nameOk = name.length >= 2 && !taken;
+  function saveName() {
+    if (!nameOk || name === currentPlayer!.username) return;
+    updatePlayer(currentPlayer!.id, { username: name });
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
   }
+
+  async function saveEmail() {
+    setBusy(true);
+    setNotice(null);
+    const { error } = await changeEmail(email);
+    setBusy(false);
+    setNotice(
+      error
+        ? { ok: false, text: `E-Mail nicht geändert: ${error}` }
+        : {
+            ok: true,
+            text: "Gespeichert. Falls eine Bestätigung nötig ist, kommt eine Mail an die neue Adresse – erst danach gilt sie für die Anmeldung.",
+          },
+    );
+    if (!error) setEmail("");
+  }
+  async function savePassword() {
+    setBusy(true);
+    setNotice(null);
+    const { error } = await changePassword(pw);
+    setBusy(false);
+    setNotice(error ? { ok: false, text: `Passwort nicht geändert: ${error}` } : { ok: true, text: "Passwort geändert." });
+    if (!error) {
+      setPw("");
+      setPw2("");
+    }
+  }
+
+  const primary =
+    "rounded-md bg-accent/90 hover:bg-accent px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40";
+  const heading = "font-display lowercase text-[2rem] leading-none text-accent";
 
   return (
     <div className="flex flex-col gap-5">
@@ -179,41 +222,89 @@ function ProfileTab() {
           >
             <Icon name="upload" size={15} /> Avatar hochladen
           </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            onChange={onAvatar}
-            className="hidden"
-          />
+          <input ref={fileRef} type="file" accept="image/*" onChange={onAvatar} className="hidden" />
         </div>
       </div>
 
-      <label className="text-[0.875rem] text-text-secondary">
+      <div className="text-[0.875rem] text-text-secondary">
         Username
-        <input value={currentPlayer.username} readOnly className={`mt-1 ${field} opacity-60`} />
-      </label>
-
-      <label className="text-[0.875rem] text-text-secondary">
-        Bio <span className="text-text-tertiary">({bio.length}/500)</span>
-        <textarea
-          value={bio}
-          maxLength={500}
-          rows={4}
-          onChange={(e) => setBio(e.target.value)}
-          className={`mt-1 ${field} resize-y`}
-        />
-      </label>
-
-      <div className="flex items-center gap-3">
-        <button
-          onClick={save}
-          className="rounded-md bg-accent/90 hover:bg-accent px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
-        >
-          Speichern
-        </button>
-        {saved && <span className="text-[0.875rem] text-text-secondary">Gespeichert ✓</span>}
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <input
+            value={username}
+            maxLength={30}
+            onChange={(e) => setUsername(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && saveName()}
+            className={`${field} max-w-xs`}
+          />
+          <button onClick={saveName} disabled={!nameOk || name === currentPlayer.username} className={primary}>
+            Speichern
+          </button>
+          {saved && <span className="text-[0.875rem] text-text-secondary">Gespeichert ✓</span>}
+        </div>
+        {taken && <span className="mt-1 block text-[0.8125rem] text-red-300">Diesen Namen gibt es schon.</span>}
+        <span className="mt-1 block text-[0.8125rem] text-text-tertiary">
+          Lässt sich jederzeit ändern. Mit dem neuen Namen meldest du dich dann auch an.
+        </span>
       </div>
+
+      <p className="text-[0.8125rem] text-text-tertiary">
+        Beschreibung, Header, Skills, Slider und Likes bearbeitest du direkt in deinem{" "}
+        <Link href={`/spieler/${encodeURIComponent(currentPlayer.username)}`} className="text-accent hover:underline">
+          Profil
+        </Link>
+        .
+      </p>
+
+      {/* Konto: Anmelde-Adresse und Passwort */}
+      <h2 className={`${heading} mt-4`}>konto.</h2>
+      <div className="text-[0.875rem] text-text-secondary">
+        E-Mail-Adresse <span className="text-text-tertiary">(aktuell: {currentPlayer.email})</span>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="neue Adresse"
+            autoComplete="email"
+            className={`${field} max-w-xs`}
+          />
+          <button onClick={() => void saveEmail()} disabled={busy || !/^\S+@\S+\.\S+$/.test(email.trim())} className={primary}>
+            E-Mail ändern
+          </button>
+        </div>
+      </div>
+      <div className="text-[0.875rem] text-text-secondary">
+        Neues Passwort <span className="text-text-tertiary">(mindestens 6 Zeichen)</span>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <input
+            type="password"
+            value={pw}
+            onChange={(e) => setPw(e.target.value)}
+            placeholder="neues Passwort"
+            autoComplete="new-password"
+            className={`${field} max-w-[14rem]`}
+          />
+          <input
+            type="password"
+            value={pw2}
+            onChange={(e) => setPw2(e.target.value)}
+            placeholder="wiederholen"
+            autoComplete="new-password"
+            className={`${field} max-w-[14rem]`}
+          />
+          <button onClick={() => void savePassword()} disabled={busy || pw.length < 6 || pw !== pw2} className={primary}>
+            Passwort ändern
+          </button>
+        </div>
+        {pw2 && pw !== pw2 && (
+          <span className="mt-1 block text-[0.8125rem] text-red-300">Die beiden Eingaben stimmen nicht überein.</span>
+        )}
+      </div>
+      {notice && (
+        <p role="status" className={`text-[0.8125rem] ${notice.ok ? "text-text-secondary" : "text-red-300"}`}>
+          {notice.text}
+        </p>
+      )}
     </div>
   );
 }
@@ -321,8 +412,10 @@ function CharactersTab() {
         .map((c) => (
           <CharacterEditor key={c.id} character={c} />
         ))}
-      <NewCharacterButton kind="sc" />
-      <PlayExistingButton tier="supporting" />
+      <div className="flex flex-wrap items-start gap-2">
+        <NewCharacterButton kind="sc" />
+        <PlayExistingButton tier="supporting" />
+      </div>
 
       <h2 className={`${heading} mt-6`}>statist*innen.</h2>
       <p className="-mt-1 text-[0.8125rem] text-text-tertiary">
@@ -334,8 +427,10 @@ function CharactersTab() {
         .map((c) => (
           <CharacterEditor key={c.id} character={c} />
         ))}
-      <NewCharacterButton kind="extra" />
-      <PlayExistingButton tier="extra" />
+      <div className="flex flex-wrap items-start gap-2">
+        <NewCharacterButton kind="extra" />
+        <PlayExistingButton tier="extra" />
+      </div>
 
       <Trash />
     </div>
@@ -480,7 +575,7 @@ function CharacterEditor({ character }: { character: Character }) {
           {/* Handy: Main Characters voll, Supporting Characters reduziert, Statist*innen gar nicht */}
           {tierOf(character) !== "extra" && (
             <div id={phoneAnchor} className="scroll-mt-4">
-              <Collapsible title="Handy" forceOpen={phoneOpen}>
+              <Collapsible title="Handy-Einstellungen" forceOpen={phoneOpen}>
                 <PhoneSettings character={character} reduced={character.is_npc} />
               </Collapsible>
             </div>

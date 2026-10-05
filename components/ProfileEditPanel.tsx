@@ -325,7 +325,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         </label>
       </div>
 
-      <div className={group}>Timeline (Reiter „Biography“)</div>
+      <div className={group}>Timeline (steht im Reiter „Character“)</div>
       <p className={`-mt-2 ${hint}`}>Wird beim Speichern nach Jahr sortiert.</p>
       {timeline.map((t, i) => (
         <div key={i} className="flex items-start gap-2 rounded-lg border border-border-subtle p-2">

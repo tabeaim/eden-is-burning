@@ -87,6 +87,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       birthdate: p.birthdate ?? null,
       gender: p.gender ?? null,
       hidden,
+      looks_note: p.looks_note?.trim() || null,
       is_student: student,
       is_working: working,
       occupation_kind: null, // abgelöst durch is_student / is_working
@@ -435,6 +436,19 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
 
       {/* --- Aussehen --- */}
       <Collapsible title="Aussehen">
+        {F({
+          label: `Beschreibung (${(p.looks_note ?? "").length}/300)`,
+          children: (
+            <textarea
+              value={p.looks_note ?? ""}
+              maxLength={300}
+              rows={2}
+              onChange={(e) => setProfile({ looks_note: e.target.value || null })}
+              placeholder="Kurz in Worten: Wie wirkt der Charakter, woran erkennt man ihn?"
+              className={`${field} resize-y`}
+            />
+          ),
+        })}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {F({
           label: "Größe",
@@ -457,8 +471,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       </Collapsible>
 
       <p className="text-[0.8125rem] text-text-tertiary">
-        Alles Beschreibende (Zitat, ausführliche Beschreibung, Skills, Eigenschaften, Slider, Likes,
-        Timeline …) bearbeitest du direkt im{" "}
+        Alles Beschreibende (Ausführliche Beschreibung, Timeline …) bearbeitest du direkt im{" "}
         <Link href={`/charaktere/${character.id}`} className="text-accent hover:underline">
           Profil
         </Link>

@@ -64,6 +64,9 @@ interface StoreValue extends PersistedState {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  // Konto: neues Passwort bzw. neue E-Mail-Adresse für die Anmeldung
+  changePassword: (password: string) => Promise<{ error: string | null }>;
+  changeEmail: (email: string) => Promise<{ error: string | null }>;
   logout: () => Promise<void>; // Alias für signOut (bestehende Aufrufe)
   refresh: () => Promise<void>;
   // selectors
@@ -310,7 +313,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         .select("*")
         .eq("auth_user_id", session.user.id)
         .maybeSingle();
-      const player = (me as Player | null) ?? null;
+      let player = (me as Player | null) ?? null;
+      // Wurde die Anmelde-Adresse geändert, zieht der Spieler-Eintrag nach (er
+      // dient u.a. dazu, beim Login den Usernamen zur Adresse aufzulösen).
+      const authEmail = session.user.email;
+      if (player && authEmail && player.email.toLowerCase() !== authEmail.toLowerCase()) {
+        const { error } = await supabase.from("players").update({ email: authEmail }).eq("id", player.id);
+        if (!error) player = { ...player, email: authEmail };
+      }
       // Ohne Spieler-Eintrag bliebe man kommentarlos auf dem Login-Bildschirm
       setLoginProblem(
         player
@@ -558,6 +568,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setCurrentPlayer(null);
     setState(EMPTY);
+  }, []);
+
+  const changePassword = useCallback(async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    return { error: error?.message ?? null };
+  }, []);
+  // Je nach Einstellung des Projekts gilt die neue Adresse sofort oder erst nach
+  // Bestätigung per Mail; der Spieler-Eintrag zieht beim nächsten Laden nach
+  // (siehe loadForSession).
+  const changeEmail = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.updateUser({ email: email.trim() });
+    return { error: error?.message ?? null };
   }, []);
 
   const refresh = useCallback(async () => {
@@ -1395,6 +1417,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signOut,
       logout: signOut,
+      changePassword,
+      changeEmail,
       refresh,
       charactersOf,
       postsOf,
@@ -1465,6 +1489,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       signIn,
       signUp,
       signOut,
+      changePassword,
+      changeEmail,
       refresh,
       charactersOf,
       postsOf,

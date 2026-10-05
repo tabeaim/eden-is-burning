@@ -267,7 +267,7 @@ export function ThingsBoard({ character, canEdit }: { character: Character; canE
                   className={range}
                 />
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-1.5 [&>button]:flex-1 [&>button]:justify-center [&>button]:whitespace-nowrap [&>button]:px-2">
                 <button
                   onClick={() => setItems((list) => [...list.filter((t) => t.id !== active.id), active])}
                   className={btn}
