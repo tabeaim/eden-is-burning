@@ -343,8 +343,16 @@ export default function ScenesPage() {
         />
       </div>
 
-      {/* Über den Ergebnissen: links Filter zurücksetzen, rechts „Alle gelesen" + Sortierung */}
+      {/* Über den Ergebnissen: links „Alle gelesen" und Filter zurücksetzen, rechts die Sortierung */}
       <div className="flex flex-wrap items-center gap-1.5 mt-4 mb-2">
+        <button
+          onClick={markAllScenesSeen}
+          disabled={!scenes.some((s) => isSceneNew(s.id))}
+          title="Alle Szenen als gelesen markieren"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-bg-primary px-2.5 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary disabled:opacity-40 disabled:hover:text-text-secondary"
+        >
+          <Icon name="check" size={13} /> Alle gelesen
+        </button>
         {activeFilters > 0 && (
           <button
             onClick={resetFilters}
@@ -357,15 +365,7 @@ export default function ScenesPage() {
         {plot && canEditPlot(plot) && (
           <PlotTools key={plot.id} plot={plot} onDeleted={() => togglePlot(plot)} />
         )}
-        <button
-          onClick={markAllScenesSeen}
-          disabled={!scenes.some((s) => isSceneNew(s.id))}
-          title="Alle Szenen als gelesen markieren"
-          className="ml-auto mr-2 inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-bg-primary px-2.5 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary disabled:opacity-40 disabled:hover:text-text-secondary"
-        >
-          <Icon name="check" size={13} /> Alle gelesen
-        </button>
-        <span className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
+        <span className="ml-auto text-[0.875rem] uppercase tracking-wider text-text-tertiary">
           Sortieren
         </span>
         <select

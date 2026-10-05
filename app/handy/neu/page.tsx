@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import type { ChatMessageKind } from "@/lib/types";
-import { addMinutes, contactName, contactShortName, resolvePhone } from "@/lib/phone";
+import { SMS_TO_KEY, addMinutes, contactName, contactShortName, resolvePhone } from "@/lib/phone";
+import { tierLabel, tierOf } from "@/lib/characters";
 import { DatePicker } from "@/components/DatePicker";
 import { Composer } from "@/components/phone/Composer";
 import { PhoneAvatar, PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
@@ -16,15 +17,31 @@ export default function NewSmsPage() {
   const router = useRouter();
   const { characters, npcs, chats, currentPlayer, openChat, addMessage, messagesOf } = useStore();
   const { myChars, me: from, setOwner } = useMyPhone();
-  const [toId, setToId] = useState<string | null>(null);
+  // Aus den Kontakten kommend ist der/die Empfänger*in schon gewählt
+  const [toId, setToId] = useState<string | null>(() => {
+    try {
+      const id = typeof window === "undefined" ? null : sessionStorage.getItem(SMS_TO_KEY);
+      if (id) sessionStorage.removeItem(SMS_TO_KEY);
+      return id;
+    } catch {
+      return null;
+    }
+  });
   const [q, setQ] = useState("");
   const [date, setDate] = useState("");
   const [timeOverride, setTimeOverride] = useState<string | null>(null);
 
+  // In den Kontakten ausgeblendete Stufen (SCs/Statisten) fehlen auch hier in den
+  // Vorschlägen – ein schon gewählter Kontakt bleibt gültig.
+  const hiddenTiers = from?.phone?.hide_tiers ?? [];
   const everyone = [...characters, ...npcs];
+  const visible = everyone.filter((c) => {
+    const tier = tierOf(c);
+    return tier === "main" || !hiddenTiers.includes(tier);
+  });
   const to = everyone.find((c) => c.id === toId && c.id !== from?.id);
   const query = q.trim().toLowerCase();
-  const suggestions = everyone
+  const suggestions = visible
     .filter(
       (c) =>
         c.id !== from?.id &&
@@ -83,7 +100,7 @@ export default function NewSmsPage() {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Charakter oder NPC suchen…"
+                placeholder="Charakter suchen…"
                 autoFocus
                 className="min-w-0 flex-1 bg-transparent py-1 text-[16px] text-text-primary outline-none placeholder:text-text-tertiary sm:text-[0.9375rem]"
               />
@@ -108,7 +125,7 @@ export default function NewSmsPage() {
                       {contactName(from, c)}
                       {c.is_npc && (
                         <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
-                          NPC
+                          {tierLabel(c)}
                         </span>
                       )}
                     </span>

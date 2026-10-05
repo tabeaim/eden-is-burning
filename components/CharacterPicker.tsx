@@ -1,5 +1,6 @@
 "use client";
 
+import { characterImage } from "@/lib/avatar";
 import { useState } from "react";
 import type { Character } from "@/lib/types";
 
@@ -48,7 +49,7 @@ export function CharacterPicker({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={c.faceclaim_image_url ?? ""}
+                src={characterImage(c)}
                 alt={c.name}
                 className="w-5 h-5 rounded-full object-cover"
               />
@@ -85,7 +86,7 @@ export function CharacterPicker({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={c.faceclaim_image_url ?? ""}
+                  src={characterImage(c)}
                   alt={c.name}
                   className="w-6 h-6 rounded-full object-cover"
                 />

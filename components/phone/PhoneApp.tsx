@@ -24,6 +24,8 @@ import {
   useMyPhone,
 } from "@/components/phone/PhoneFrame";
 import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
+import { useLongPress } from "@/components/phone/useLongPress";
+import { SMS_TO_KEY } from "@/lib/phone";
 
 const first = (c: Character | undefined) => c?.name.split(" ")[0] ?? "?";
 const when = (c: Pick<PhoneCall, "inplay_date" | "inplay_time">) =>
@@ -45,6 +47,7 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
   const createScene = useCreatePhoneScene();
   // Anruf, dessen Optionen (abbrechen, löschen) gerade offen sind
   const [menuFor, setMenuFor] = useState<PhoneCall | null>(null);
+  const longPress = useLongPress<PhoneCall>(setMenuFor);
 
   if (!me) {
     return (
@@ -128,13 +131,16 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
               );
               const cls = "flex w-full items-center gap-3 px-3 py-2.5 text-left";
               return (
-                // Rechtsklick auf einen Eintrag: abbrechen (eigener klingelnder Anruf) / löschen
+                // Rechtsklick oder langes Drücken auf einen Eintrag: abbrechen (eigener
+                // klingelnder Anruf) / löschen
                 <div
                   key={c.id}
+                  {...longPress(c)}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     setMenuFor(c);
                   }}
+                  className="select-none [-webkit-touch-callout:none]"
                 >
                   {scene ? (
                     <Link href={`/szenen/${scene.id}`} className={`${cls} hover:bg-white/[0.03]`}>
@@ -157,7 +163,21 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
             })}
           </>
         ) : (
-          <ContactList owner={me} onPick={setContact} onEdit={setEditing} />
+          <ContactList
+            owner={me}
+            onPick={setContact}
+            onEdit={setEditing}
+            onMessage={(c) => {
+              // „Neue SMS" mit diesem Kontakt als Empfänger*in öffnen
+              try {
+                sessionStorage.setItem(SMS_TO_KEY, c.id);
+              } catch {
+                /* ignore */
+              }
+              router.push("/handy/neu");
+            }}
+            onHideTiers={(hide_tiers) => updateCharacter(me.id, { phone: { ...me.phone, hide_tiers } })}
+          />
         )}
       </div>
 
@@ -376,7 +396,7 @@ function ContactDialog({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photo} alt="" className="h-14 w-14 shrink-0 rounded-full object-cover" />
           ) : (
-            <PhoneAvatar character={contact} size={56} />
+            <PhoneAvatar character={contact} size={56} link={false} />
           )}
           <div className="flex flex-wrap items-center gap-2">
             <button

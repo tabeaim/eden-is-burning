@@ -1,5 +1,6 @@
 "use client";
 
+import { characterImage } from "@/lib/avatar";
 import { use } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
@@ -59,7 +60,7 @@ export default function PlayerPage({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={c.faceclaim_image_url ?? ""}
+              src={characterImage(c)}
               alt={c.name}
               className="w-16 h-24 rounded-lg object-cover shrink-0"
             />

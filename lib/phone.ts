@@ -48,7 +48,7 @@ export const STANDARD_APPS: PhoneApp[] = [
   { key: "wetter", label: "Wetter", glyph: "⛅", bg: "linear-gradient(#4aa3f0, #1d5fc2)" },
   { key: "karten", label: "Karten", glyph: "🗺️", bg: "linear-gradient(#7ed0a0, #3c8f6a)" },
   { key: "notizen", label: "Notizen", glyph: "📝", bg: "linear-gradient(#ffe27a, #f2b824)" },
-  // führt in die Charakter-Einstellungen (Handy-Look, Captic, Apps)
+  // führt zu den Handy-Einstellungen des Charakters (Look, Captic, Apps)
   { key: "einstellungen", label: "Einstellungen", glyph: "⚙️", bg: "linear-gradient(#a9a9af, #6b6b70)", href: "/einstellungen" },
 ];
 
@@ -141,6 +141,9 @@ export function contactShortName(owner: Owner, other: Other): string {
 export function contactPhoto(owner: Owner, other: Other): string | null {
   return (other && owner?.phone?.contacts?.[other.id]?.photo) || null;
 }
+
+// Übergabe „Nachricht schreiben" aus den Kontakten an „Neue SMS" (sessionStorage)
+export const SMS_TO_KEY = "eden:sms-to";
 
 // --- Telefonszenen ----------------------------------------------------------
 // Eine Telefonszene ist eine normale Szene (Zusammenfassung, Timeline, …) mit

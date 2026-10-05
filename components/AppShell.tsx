@@ -1,5 +1,6 @@
 "use client";
 
+import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -429,7 +430,7 @@ function Sidebar({
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={c.faceclaim_image_url ?? placeholder(c.name)}
+                    src={characterImage(c)}
                     alt={c.name}
                     className="h-[17px] w-[17px] shrink-0 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
                   />

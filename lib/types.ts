@@ -63,6 +63,10 @@ export interface Character {
   // NPCs: weitere Spieler*innen (IDs), denen der NPC zugeordnet ist – sie dürfen
   // ihn wie die Person, die ihn angelegt hat, bearbeiten und für ihn schreiben
   co_owner_ids?: string[] | null;
+  // Stufe einer Nebenfigur (is_npc): "extra" = Statist*in (noch nicht bespielt,
+  // im Pool), "supporting" = Supporting Character (zugeordnet und bespielt).
+  // Ohne Angabe gilt eine Nebenfigur als Supporting Character (Altbestand).
+  npc_tier?: "extra" | "supporting" | null;
   // Look des Handys im Messenger (Modell, Abnutzung, Hintergrund, Apps)
   phone?: PhoneSettings | null;
 }
@@ -81,6 +85,7 @@ export interface PhoneSettings {
   // Anrufen (nicht im Messenger).
   contacts?: Record<string, { name?: string; photo?: string }> | null;
   hidden_calls?: string[] | null; // aus der Anrufliste dieses Handys gelöschte Anrufe
+  hide_tiers?: ("extra" | "supporting")[] | null; // in Kontakten/Neue SMS ausgeblendete Stufen
   // Captic ist optional: erst nach dem Aktivieren liegt die App auf dem Handy.
   // Profilangaben werden in der App selbst bearbeitet.
   captic?: { enabled?: boolean; handle?: string; bio?: string } | null;

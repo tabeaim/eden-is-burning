@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { NewCharacterButton } from "@/components/NewCharacterButton";
+import { TIER_NAMES, tierOf } from "@/lib/characters";
 import { useStore } from "@/lib/store";
 import { formatInplayDateShort } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
@@ -11,10 +12,13 @@ import { characterImage } from "@/lib/avatar";
 import { Icon } from "@/components/Icon";
 import type { Character, Player } from "@/lib/types";
 
-type Tab = "played" | "npcs" | "all";
+// Main Characters · Supporting Characters · Statisten-Pool (noch von niemandem
+// bespielt; wer sich einen schnappt, macht ihn zum Supporting Character) · Alle
+type Tab = "played" | "scs" | "extras" | "all";
 const TABS: [Tab, string][] = [
-  ["played", "Bespielte"],
-  ["npcs", "NPCs"],
+  ["played", "Main Characters"],
+  ["scs", "Supporting Characters"],
+  ["extras", "Statisten-Pool"],
   ["all", "Alle"],
 ];
 
@@ -27,7 +31,7 @@ const SORT_LABELS: Record<SortKey, string> = {
 };
 
 export default function CharaktereePage() {
-  const { characters, npcs, posts, player } = useStore();
+  const { characters, npcs, posts, player, currentPlayer, updateCharacter } = useStore();
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<Tab>("played");
   const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -48,7 +52,13 @@ export default function CharaktereePage() {
 
   const q = query.trim().toLowerCase();
   const pool =
-    tab === "played" ? characters : tab === "npcs" ? npcs : [...characters, ...npcs];
+    tab === "played"
+      ? characters
+      : tab === "scs"
+        ? npcs.filter((c) => tierOf(c) === "supporting")
+        : tab === "extras"
+          ? npcs.filter((c) => tierOf(c) === "extra")
+          : [...characters, ...npcs];
   const list = pool
     .filter(
       (c) =>
@@ -96,8 +106,8 @@ export default function CharaktereePage() {
           </button>
         ))}
         <div className="ml-auto flex flex-wrap items-center gap-1.5">
-          {tab !== "npcs" && <NewCharacterButton kind="character" />}
-          {tab !== "played" && <NewCharacterButton kind="npc" />}
+          {(tab === "played" || tab === "all") && <NewCharacterButton kind="character" />}
+          {(tab === "extras" || tab === "all") && <NewCharacterButton kind="npc" />}
         </div>
       </div>
 
@@ -153,6 +163,20 @@ export default function CharaktereePage() {
             c={c}
             player={player(c.player_id)}
             postCount={postCounts.get(c.id) ?? 0}
+            // Statist*in aus dem Pool übernehmen: wird Supporting Character und der
+            // eigenen Person (zusätzlich) zugeordnet
+            onClaim={
+              currentPlayer && tierOf(c) === "extra"
+                ? () =>
+                    updateCharacter(c.id, {
+                      npc_tier: "supporting",
+                      co_owner_ids:
+                        c.player_id === currentPlayer.id || (c.co_owner_ids ?? []).includes(currentPlayer.id)
+                          ? (c.co_owner_ids ?? [])
+                          : [...(c.co_owner_ids ?? []), currentPlayer.id],
+                    })
+                : undefined
+            }
           />
         ))}
       </div>
@@ -161,9 +185,11 @@ export default function CharaktereePage() {
         <p className="text-[0.875rem] text-text-tertiary">
           {q
             ? `Kein Charakter passt zu „${query.trim()}“.`
-            : tab === "npcs"
-              ? "Noch keine NPCs – leg oben den ersten an."
-              : "Noch keine Charaktere."}
+            : tab === "extras"
+              ? "Der Statisten-Pool ist leer – leg oben den ersten Statisten an."
+              : tab === "scs"
+                ? "Noch keine Supporting Characters – schnapp dir einen Statisten aus dem Pool."
+                : "Noch keine Charaktere."}
         </p>
       )}
 
@@ -179,11 +205,14 @@ function CharacterCard({
   c,
   player,
   postCount,
+  onClaim,
 }: {
   c: Character;
   player?: Player;
   postCount: number;
+  onClaim?: () => void; // nur im Statisten-Pool
 }) {
+  const tier = tierOf(c);
   return (
     <div className="group relative flex flex-col rounded-xl border border-border-subtle bg-bg-surface p-4 text-center transition-colors hover:bg-white/[0.03]">
       <div className="font-display lowercase text-[1.625rem] leading-none text-text-primary">
@@ -230,7 +259,7 @@ function CharacterCard({
         </span>
         {player && (
           <>
-            <span>· {c.is_npc ? "NPC von" : "played by"}</span>
+            <span>· {tier === "extra" ? "angelegt von" : "played by"}</span>
             <span className="relative z-10 normal-case tracking-normal">
               <Bubble
                 href={`/spieler/${player.username}`}
@@ -252,8 +281,18 @@ function CharacterCard({
         )}
       </div>
       <div className="mt-1 text-[0.8125rem] text-text-tertiary">
+        {tier !== "main" && <span className="uppercase tracking-wider">{TIER_NAMES[tier]} · </span>}
         Lebendig seit {formatInplayDateShort(c.created_at.slice(0, 10))}
       </div>
+      {onClaim && (
+        <button
+          onClick={onClaim}
+          title="Du bespielst diesen Statisten ab jetzt – er wird zum Supporting Character"
+          className="relative z-10 mx-auto mt-3 rounded-md bg-accent/90 px-3 py-1.5 text-[0.8125rem] font-medium text-black hover:bg-accent"
+        >
+          Schnappen &amp; bespielen
+        </button>
+      )}
     </div>
   );
 }

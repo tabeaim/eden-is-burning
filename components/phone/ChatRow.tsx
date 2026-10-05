@@ -30,7 +30,7 @@ export function ChatRow({
   const lastChar = last ? character(last.character_id) : undefined;
   const others = chat.participant_ids.filter((id) => id !== forCharacter).map((id) => character(id));
   const title = forCharacter
-    ? `Chat mit ${chatTitle(others, character(forCharacter))}`
+    ? `Chat mit ${chatTitle(others)}`
     : `Neue Nachrichten bei ${chatTitle(chat.participant_ids.map((id) => character(id)))}`;
 
   return (

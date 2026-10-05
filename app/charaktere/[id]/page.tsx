@@ -11,6 +11,7 @@ import { Bubble, LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
 import { SceneCard } from "@/components/SceneCard";
 import { Facts, FactRow } from "@/components/Facts";
+import { TIER_NAMES, tierLabel, tierOf } from "@/lib/characters";
 import { PhonePreview } from "@/components/phone/PhonePreview";
 import type { Character, Scene } from "@/lib/types";
 
@@ -47,7 +48,7 @@ export default function CharacterPage({
   // Charaktername als Unterseiten-Titel in den Banner-Header heben; NPCs sind
   // dort als solche gekennzeichnet.
   useSetPageMeta(
-    c ? `${c.name}${c.is_npc ? " (NPC)" : ""}` : "Charakter",
+    c ? `${c.name}${c.is_npc ? ` (${tierLabel(c)})` : ""}` : "Charakter",
     undefined,
     undefined,
     "max-w-6xl",
@@ -239,7 +240,7 @@ function NpcFacts({ c }: { c: Character }) {
 
       {p && (
         <div className="mt-10 text-[0.8125rem] text-text-tertiary">
-          NPC · angelegt von {p.username}
+          {TIER_NAMES[tierOf(c)]} · angelegt von {p.username}
         </div>
       )}
     </div>
@@ -542,7 +543,7 @@ function RelationRow({
             {rc.name}
             {rc.is_npc && (
               <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
-                NPC
+                {tierLabel(rc)}
               </span>
             )}
           </Link>

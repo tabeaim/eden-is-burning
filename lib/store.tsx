@@ -24,6 +24,7 @@ import type {
 } from "./types";
 import { supabase, supabaseConfigured } from "./supabase";
 import { rememberPhone } from "./phone";
+import { tierOf } from "./characters";
 
 interface PersistedState {
   players: Player[];
@@ -913,8 +914,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         personality: null,
         relationships: {},
         is_npc: true,
+        npc_tier: "extra", // neu angelegt = Statist*in; wer ihn bespielt, macht ihn zum SC
       };
-      persist("addNpc", supabase.from("characters").insert(newNpc));
+      // Rückfall ohne npc_tier, falls schema-npc-tiers.sql noch nicht eingespielt ist
+      const { npc_tier: _tier, ...legacy } = newNpc;
+      void _tier;
+      persist(
+        "addNpc",
+        supabase
+          .from("characters")
+          .insert(newNpc)
+          .then((res) => (res.error ? supabase.from("characters").insert(legacy) : res)),
+      );
       setState((s) => ({ ...s, characters: [...s.characters, newNpc] }));
       return id;
     },
@@ -1058,6 +1069,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       state.characters.some(
         (c) =>
           c.id === characterId &&
+          // Statist*innen werden (noch) von niemandem bespielt
+          tierOf(c) !== "extra" &&
           (c.player_id === currentPlayer.id || (c.co_owner_ids ?? []).includes(currentPlayer.id)),
       ),
     [state.characters, currentPlayer],

@@ -9,6 +9,18 @@ Als Gedankenstrich immer der Halbgeviertstrich „–" (mit Leerzeichen davor un
 dahinter) – nie der lange Geviertstrich und nie ein Bindestrich als Ersatz. Gilt
 auch für Kommentare.
 
+## Charakter-Stufen (`lib/characters.ts`)
+
+- **Main Character:** normaler Charakter.
+- **Supporting Character (SC):** Nebenfigur, bestimmten Spieler*innen zugeordnet,
+  nur von ihnen bespielt und bearbeitet. Etikett „SC".
+- **Statist:** Nebenfigur, die (noch) niemand bespielt; liegt im Statisten-Pool
+  (Charaktere → Reiter). „Schnappen & bespielen" macht sie zum SC. Etikett
+  „Statist". Neu angelegte Nebenfiguren beginnen immer als Statist.
+
+Etiketten nie von Hand schreiben, immer `tierLabel(c)` bzw. `TIER_NAMES`. Ohne
+eigenes Bild zeigen alle den Silhouetten-Avatar (`characterImage`).
+
 ## Farben & Schrift
 
 Tokens stehen in `app/globals.css` (`--accent`, `--olive`, `--bg-*`, `--text-*`,
@@ -174,12 +186,18 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Design-Systems (`rounded-md`, Primär-Aktion `bg-accent/90 text-black`). Runde,
   farbige Knöpfe nur dort, wo das Handy selbst simuliert wird (Annehmen/Ablehnen,
   Senden, Dock).
-- **Kontakte** (`ContactList`): oben hervorgehoben („Häufig") die fünf
-  Charaktere, mit denen der Handy-Besitzer am meisten geschrieben hat, danach alle
-  alphabetisch; Suchfeld darüber. Eigene App im Dock. Jeder Kontakt lässt sich je
+- **Kontakte** (`ContactList`): oben hervorgehoben („Favoriten") die fünf
+  Charaktere, mit denen der Handy-Besitzer am meisten zu tun hatte (Posts in
+  gemeinsamen Szenen + Nachrichten in gemeinsamen Chats), danach alle
+  alphabetisch; Suchfeld darüber, darunter Pills zum Ausblenden von SCs und
+  Statisten. Je Kontakt: anrufen (Zeile), Nachricht schreiben, bearbeiten. Eigene App im Dock. Jeder Kontakt lässt sich je
   Handy umbenennen und mit Foto versehen: Der Name gilt überall auf diesem Handy
   (`contactName`/`chatTitle(…, owner)`), das Foto nur bei Kontakten und Anrufen
   (`ContactAvatar`) – im Messenger immer `PhoneAvatar`.
+- **Profilbilder im Handy** führen per Klick immer aufs Charakterprofil
+  (`PhoneAvatar`/`ContactAvatar`; `link={false}` nur für reine Anzeige).
+- **Dashboard** nennt Charaktere immer mit echtem Namen, nie mit Kontaktnamen.
+- **Langes Drücken** ersetzt am Handy den Rechtsklick (`useLongPress`).
 - **Handy wechseln:** Das Aufklappmenü zeigt nur Vornamen und je Handy einen
   orangen Zähler, wenn dort etwas Neues wartet (Punkt an der Taste, wenn es ein
   anderes Handy betrifft).

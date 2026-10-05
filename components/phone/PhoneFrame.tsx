@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
@@ -75,7 +76,7 @@ export function PhoneFrame({
       ref={ref}
       className={
         preview
-          ? "flex h-[640px] flex-col overflow-hidden rounded-2xl border border-border-subtle sm:h-auto sm:items-start sm:overflow-visible sm:rounded-none sm:border-0"
+          ? "flex h-[780px] w-[390px] flex-col overflow-hidden rounded-[2rem] border border-border-subtle [zoom:0.58] sm:h-auto sm:w-auto sm:items-start sm:overflow-visible sm:rounded-none sm:border-0"
           : "flex h-[var(--phone-h,100dvh)] flex-col sm:h-auto sm:items-center sm:py-4"
       }
     >
@@ -221,7 +222,7 @@ function OwnerBar({
     return (
       <>
         {c ? (
-          <PhoneAvatar character={c} size={26} />
+          <PhoneAvatar character={c} size={26} link={false} />
         ) : (
           <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-bg-surface-2 text-text-secondary">
             <Icon name="phone" size={14} />
@@ -452,16 +453,41 @@ export function PhoneHeader({
   );
 }
 
+// Klick auf ein Profilbild führt immer aufs Charakterprofil. Kein <a>, damit das
+// auch in Zeilen funktioniert, die selbst schon Link oder Knopf sind.
+function ProfileTarget({ id, children }: { id: string; children: React.ReactNode }) {
+  const router = useRouter();
+  const go = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/charaktere/${id}`);
+  };
+  return (
+    <span
+      role="link"
+      tabIndex={0}
+      title="Zum Profil"
+      onClick={go}
+      onKeyDown={(e) => e.key === "Enter" && go(e)}
+      className="shrink-0 cursor-pointer rounded-full"
+    >
+      {children}
+    </span>
+  );
+}
+
 export function PhoneAvatar({
   character,
   size = 40,
   className = "",
+  link = true,
 }: {
-  character: Pick<Character, "faceclaim_image_url" | "phone">;
+  character: Pick<Character, "faceclaim_image_url" | "phone"> & { id?: string };
   size?: number;
   className?: string;
+  link?: boolean; // false: reine Anzeige (z.B. in Auswahllisten)
 }) {
-  return (
+  const img = (
     // Im Handy zeigt sich ein Charakter mit seinem Messenger-Profilbild, falls er
     // eines festgelegt hat – sonst mit dem normalen Charakterbild.
     // eslint-disable-next-line @next/next/no-img-element
@@ -472,6 +498,7 @@ export function PhoneAvatar({
       className={`shrink-0 rounded-full bg-bg-surface-2 object-cover ${className}`}
     />
   );
+  return link && character.id ? <ProfileTarget id={character.id}>{img}</ProfileTarget> : img;
 }
 
 // Avatar bei Kontakten und Anrufen: das eigene Kontaktfoto dieses Handys, sonst
@@ -490,13 +517,15 @@ export function ContactAvatar({
   const photo = contactPhoto(owner, character);
   if (!photo) return <PhoneAvatar character={character} size={size} className={className} />;
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={photo}
-      alt=""
-      style={{ width: size, height: size }}
-      className={`shrink-0 rounded-full bg-bg-surface-2 object-cover ${className}`}
-    />
+    <ProfileTarget id={character.id}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={photo}
+        alt=""
+        style={{ width: size, height: size }}
+        className={`shrink-0 rounded-full bg-bg-surface-2 object-cover ${className}`}
+      />
+    </ProfileTarget>
   );
 }
 

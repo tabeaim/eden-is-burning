@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Character } from "@/lib/types";
 import { Icon, type IconName } from "./Icon";
 import { characterImage } from "@/lib/avatar";
+import { tierLabel } from "@/lib/characters";
 
 // Bubbles – die EINE runde Pill-Form der App (siehe DESIGN.md). Charaktere, NPCs
 // und Orte sehen überall gleich aus; nur der Inhalt (Avatar bzw. Icon) wechselt.
@@ -92,7 +93,7 @@ export function CharacterBubble({
       {firstNameOnly ? c.name.split(" ")[0] : c.name}
       {c.is_npc && (
         <span className="text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
-          NPC
+          {tierLabel(c)}
         </span>
       )}
       {trailing}

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { contactName } from "@/lib/phone";
+import { tierLabel, tierOf } from "@/lib/characters";
 import { Icon } from "@/components/Icon";
 import { ContactAvatar } from "./PhoneFrame";
 
@@ -14,13 +15,19 @@ import { ContactAvatar } from "./PhoneFrame";
 export function ContactList({
   owner,
   onPick,
+  onMessage,
   onEdit,
+  onHideTiers,
 }: {
   owner: Character;
-  onPick?: (c: Character) => void;
+  onPick?: (c: Character) => void; // anrufen
+  onMessage?: (c: Character) => void; // Nachricht schreiben
   onEdit?: (c: Character) => void;
+  // SCs/Statisten aus- und einblenden (gespeichert am Handy); ohne: nur anzeigen
+  onHideTiers?: (tiers: ("extra" | "supporting")[]) => void;
 }) {
   const { characters, npcs, scenes, posts, chats, chatMessages, currentPlayer } = useStore();
+  const hidden = owner.phone?.hide_tiers ?? [];
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
 
@@ -42,7 +49,10 @@ export function ContactList({
     return count;
   }, [owner.id, scenes, posts, chats, chatMessages]);
 
-  const everyone = [...characters, ...npcs].filter((c) => c.id !== owner.id);
+  const everyone = [...characters, ...npcs].filter((c) => {
+    const tier = tierOf(c);
+    return c.id !== owner.id && (tier === "main" || !hidden.includes(tier));
+  });
   const name = (c: Character) => contactName(owner, c);
   const byName = (a: Character, b: Character) => name(a).localeCompare(name(b), "de");
   const top = everyone
@@ -66,7 +76,9 @@ export function ContactList({
           <span className="block truncate text-[0.9375rem] text-text-primary">
             {name(c)}
             {c.is_npc && (
-              <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">NPC</span>
+              <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
+                {tierLabel(c)}
+              </span>
             )}
           </span>
           <span className="block truncate text-[0.75rem] text-text-tertiary">
@@ -85,6 +97,7 @@ export function ContactList({
         {onPick ? (
           <button
             onClick={() => onPick(c)}
+            title="Anrufen"
             className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left active:bg-white/[0.06]"
           >
             {body}
@@ -92,6 +105,16 @@ export function ContactList({
           </button>
         ) : (
           <div className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2">{body}</div>
+        )}
+        {onMessage && (
+          <button
+            onClick={() => onMessage(c)}
+            aria-label={`Nachricht an ${name(c)}`}
+            title="Nachricht schreiben"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-accent hover:bg-white/[0.06]"
+          >
+            <Icon name="message" size={17} />
+          </button>
         )}
         {onEdit && (
           <button
@@ -120,10 +143,40 @@ export function ContactList({
             className="min-w-0 flex-1 bg-transparent text-[16px] text-text-primary outline-none placeholder:text-text-tertiary sm:text-[0.875rem]"
           />
         </label>
+        {/* Supporting Characters und Statisten lassen sich ausblenden */}
+        {(onHideTiers || hidden.length > 0) && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {(
+              [
+                ["supporting", "SCs"],
+                ["extra", "Statisten"],
+              ] as const
+            ).map(([tier, label]) => {
+              const shown = !hidden.includes(tier);
+              return (
+                <button
+                  key={tier}
+                  disabled={!onHideTiers}
+                  aria-pressed={shown}
+                  onClick={() =>
+                    onHideTiers?.(shown ? [...hidden, tier] : hidden.filter((t) => t !== tier))
+                  }
+                  className={`rounded-full px-2.5 py-1 text-[0.75rem] transition-colors ${
+                    shown
+                      ? "bg-white/[0.1] text-text-primary"
+                      : "bg-white/[0.03] text-text-tertiary line-through"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
       {!query && top.length > 0 && (
         <>
-          <div className={heading}>Häufig</div>
+          <div className={heading}>Favoriten</div>
           <div className="mx-3 overflow-hidden rounded-xl border border-accent/40 bg-accent-soft">
             {top.map((c) => row(c, true))}
           </div>

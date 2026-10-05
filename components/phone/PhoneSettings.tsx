@@ -102,7 +102,7 @@ export function PhoneSettings({ character }: { character: Character }) {
           <span className="text-text-tertiary">(so sehen andere den Charakter auf dem Handy)</span>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <PhoneAvatar character={character} size={56} className="ring-1 ring-border-subtle" />
+          <PhoneAvatar character={character} size={56} className="ring-1 ring-border-subtle" link={false} />
           <button disabled={uploadingAvatar} onClick={() => avatarFile.current?.click()} className={uploadBtn}>
             <Icon name="upload" size={13} /> {uploadingAvatar ? "Lädt…" : "Bild hochladen"}
           </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
@@ -420,7 +421,7 @@ function CharacterGroup({
       <div className="flex items-center gap-2.5 mb-2.5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={char.faceclaim_image_url ?? ""}
+          src={characterImage(char)}
           alt={char.name}
           className="w-7 h-7 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle"
         />

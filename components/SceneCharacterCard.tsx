@@ -1,5 +1,6 @@
 "use client";
 
+import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
 import type { Character, Player } from "@/lib/types";
 import { Icon } from "./Icon";
@@ -22,7 +23,7 @@ export function SceneCharacterCard({
         <Link href={`/charaktere/${character.id}`} className="block h-full w-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={character.faceclaim_image_url ?? ""}
+            src={characterImage(character)}
             alt={character.name}
             className="absolute inset-0 h-full w-full object-cover"
           />

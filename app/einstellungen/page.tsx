@@ -1,5 +1,6 @@
 "use client";
 
+import { characterImage } from "@/lib/avatar";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
@@ -7,6 +8,7 @@ import { AREA_ORDER, AREAS, type AreaKey } from "@/lib/world";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { pageHeader } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
+import { TIER_NAMES, tierLabel, tierOf } from "@/lib/characters";
 import { PhoneSettings } from "@/components/phone/PhoneSettings";
 import { NewCharacterButton } from "@/components/NewCharacterButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -21,7 +23,7 @@ export default function SettingsPage() {
   // „#charakter-<id>" (z.B. aus der Einstellungen-App auf dem Handy) öffnet gleich
   // den Reiter „Meine Charaktere" mit diesem Charakter
   const [tab, setTab] = useState<SettingsTab>(() =>
-    typeof window !== "undefined" && window.location.hash.startsWith("#charakter") ? "characters" : "profile",
+    typeof window !== "undefined" && /^#(charakter|handy)-/.test(window.location.hash) ? "characters" : "profile",
   );
   if (!currentPlayer) return null;
 
@@ -306,10 +308,19 @@ function CharactersTab() {
       ))}
       <NewCharacterButton kind="character" />
 
-      <h2 className={`${heading} mt-6`}>npcs.</h2>
-      {myNpcs.map((c) => (
-        <CharacterEditor key={c.id} character={c} />
-      ))}
+      <h2 className={`${heading} mt-6`}>supporting characters.</h2>
+      {myNpcs
+        .filter((c) => tierOf(c) === "supporting")
+        .map((c) => (
+          <CharacterEditor key={c.id} character={c} />
+        ))}
+
+      <h2 className={`${heading} mt-6`}>statisten.</h2>
+      {myNpcs
+        .filter((c) => tierOf(c) === "extra")
+        .map((c) => (
+          <CharacterEditor key={c.id} character={c} />
+        ))}
       <NewCharacterButton kind="npc" />
     </div>
   );
@@ -320,13 +331,20 @@ function CharacterEditor({ character }: { character: Character }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const postCount = posts.filter((p) => p.character_id === character.id).length;
   const anchor = `charakter-${character.id}`;
+  // „#handy-<id>" (Einstellungen-App auf dem Handy) springt direkt zum Handy-Block
+  const phoneAnchor = `handy-${character.id}`;
   const [open, setOpen] = useState(
-    () => typeof window !== "undefined" && window.location.hash === `#${anchor}`,
+    () =>
+      typeof window !== "undefined" &&
+      [`#${anchor}`, `#${phoneAnchor}`].includes(window.location.hash),
   );
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (window.location.hash === `#${anchor}`) box.current?.scrollIntoView({ block: "start" });
-  }, [anchor]);
+    if (window.location.hash === `#${phoneAnchor}`) {
+      document.getElementById(phoneAnchor)?.scrollIntoView({ block: "start" });
+    }
+  }, [anchor, phoneAnchor]);
   const [draft, setDraft] = useState(character);
   const [saved, setSaved] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -343,14 +361,19 @@ function CharacterEditor({ character }: { character: Character }) {
     updateCharacter(character.id, { faceclaim_image_url: url });
   }
 
+  const kindName = TIER_NAMES[tierOf(character)];
   // Ohne Namen wird nicht gespeichert
   const nameMissing = !draft.name.trim();
   function save() {
     if (nameMissing) return;
     // Handy-Einstellungen speichern sich selbst (PhoneSettings) – nicht mit dem
     // Stand vom Öffnen des Formulars überschreiben.
+    // Dasselbe gilt für Zuordnung und Stufe (eigene Knöpfe, speichern sofort) –
+    // sonst würfe „Speichern" sie auf den Stand vom Öffnen zurück.
     const rest = { ...draft };
     delete rest.phone;
+    delete rest.co_owner_ids;
+    delete rest.npc_tier;
     updateCharacter(character.id, rest);
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
@@ -368,7 +391,7 @@ function CharacterEditor({ character }: { character: Character }) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={draft.faceclaim_image_url ?? ""}
+          src={characterImage(draft)}
           alt={draft.name}
           className="w-10 h-10 rounded-full object-cover bg-bg-primary"
         />
@@ -377,7 +400,7 @@ function CharacterEditor({ character }: { character: Character }) {
             {draft.name}
             {character.is_npc && (
               <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
-                NPC
+                {tierLabel(character)}
               </span>
             )}
           </div>
@@ -434,7 +457,7 @@ function CharacterEditor({ character }: { character: Character }) {
                 />
                 {nameMissing && (
                   <span className="mt-1 block text-[0.8125rem] text-red-300">
-                    Ohne Namen lässt sich der {character.is_npc ? "NPC" : "Charakter"} nicht speichern.
+                    Ohne Namen lässt sich {kindName} nicht speichern.
                   </span>
                 )}
               </Labeled>
@@ -508,8 +531,26 @@ function CharacterEditor({ character }: { character: Character }) {
             />
           </Labeled>
 
-          {!character.is_npc && <PhoneSettings character={character} />}
-          {character.is_npc && <NpcOwners character={character} />}
+          {!character.is_npc && (
+            <div id={phoneAnchor} className="scroll-mt-4">
+              <PhoneSettings character={character} />
+            </div>
+          )}
+          {tierOf(character) === "supporting" && <NpcOwners character={character} />}
+          {tierOf(character) === "extra" && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-subtle p-3 sm:p-4">
+              <p className="min-w-0 flex-1 text-[0.8125rem] text-text-tertiary">
+                Statisten werden noch nicht bespielt und liegen im Statisten-Pool. Wer einen
+                bespielt, macht ihn zum Supporting Character.
+              </p>
+              <button
+                onClick={() => updateCharacter(character.id, { npc_tier: "supporting" })}
+                className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08]"
+              >
+                Selbst bespielen
+              </button>
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             <button
@@ -537,16 +578,16 @@ function CharacterEditor({ character }: { character: Character }) {
               onClick={() => setConfirmDelete(true)}
               className="flex items-center gap-1.5 rounded-md border border-red-400/40 px-3 py-1.5 text-[0.8125rem] text-red-300 hover:bg-red-500/10"
             >
-              <Icon name="trash" size={14} /> {character.is_npc ? "NPC" : "Charakter"} löschen
+              <Icon name="trash" size={14} /> {kindName} löschen
             </button>
           </div>
           {confirmDelete && (
             <ConfirmDialog
               title={`${character.name} löschen?`}
-              text={`${character.is_npc ? "Der NPC" : "Der Charakter"} wird endgültig gelöscht – samt ${postCount} ${
+              text={`${kindName} wird endgültig gelöscht – samt ${postCount} ${
                 postCount === 1 ? "Post" : "Posts"
               }, Zitaten, Chats und Anrufen. Aus allen Szenen wird er ausgetragen. Das lässt sich nicht rückgängig machen.`}
-              confirmLabel={`${character.is_npc ? "NPC" : "Charakter"} löschen`}
+              confirmLabel={`${kindName} löschen`}
               onCancel={() => setConfirmDelete(false)}
               onConfirm={() => {
                 setConfirmDelete(false);
@@ -571,7 +612,7 @@ function NpcOwners({ character }: { character: Character }) {
     <div className="rounded-lg border border-border-subtle p-3 sm:p-4">
       <div className="text-[0.875rem] font-semibold text-text-primary">Zugeordnet</div>
       <p className="mt-0.5 text-[0.8125rem] text-text-tertiary">
-        Angelegt von {creator?.username ?? "?"}. Alle Zugeordneten dürfen den NPC bearbeiten und
+        Angelegt von {creator?.username ?? "?"}. Alle Zugeordneten dürfen den Supporting Character bearbeiten und
         für ihn schreiben.
       </p>
       <div className="mt-2 flex flex-wrap items-center gap-2">

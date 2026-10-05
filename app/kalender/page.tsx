@@ -1,5 +1,6 @@
 "use client";
 
+import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
@@ -421,7 +422,7 @@ function FactsLine({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={c.id}
-                src={c.faceclaim_image_url ?? ""}
+                src={characterImage(c)}
                 alt={c.name}
                 title={c.name}
                 className="h-5 w-5 rounded-full object-cover ring-1 ring-bg-surface"

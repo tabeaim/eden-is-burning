@@ -80,7 +80,7 @@ export function PhoneHome({
           <span>☺ Kontakte</span>
           <span>›</span>
         </Go>
-        <Go readOnly={readOnly} href={`/einstellungen#charakter-${character.id}`} className={item}>
+        <Go readOnly={readOnly} href={`/einstellungen#handy-${character.id}`} className={item}>
           <span>⚙ Einstellungen</span>
           <span>›</span>
         </Go>
@@ -101,7 +101,7 @@ export function PhoneHome({
             </AppIcon>
           );
           return a.href && !readOnly ? (
-            <Link key={a.key} href={`${a.href}#charakter-${character.id}`}>
+            <Link key={a.key} href={`${a.href}#handy-${character.id}`}>
               {icon}
             </Link>
           ) : (
