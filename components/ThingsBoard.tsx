@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Character, ThingItem } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { loadImageFile, removeBackground, toCanvas, uploadCanvas } from "@/lib/cutout";
@@ -23,13 +23,21 @@ export function ThingsBoard({ character, canEdit }: { character: Character; canE
   const [items, setItems] = useState<ThingItem[]>(saved);
   const [selected, setSelected] = useState<string | null>(null);
   const board = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ id: string; dx: number; dy: number } | null>(null);
+  // Laufende Geste: verschieben, Größe ändern (Ecke) oder drehen (Griff oben)
+  const drag = useRef<{
+    id: string;
+    mode: "move" | "resize" | "rotate";
+    dx: number;
+    dy: number;
+    start: number; // Abstand zur Mitte beim Greifen (resize)
+    w: number; // Breite beim Greifen (resize)
+  } | null>(null);
 
   // --- Bild hinzufügen (mit Vorschau fürs Freistellen) ---
   const file = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<HTMLImageElement | null>(null);
   const [cut, setCut] = useState(true);
-  const [tolerance, setTolerance] = useState(30);
+  const [tolerance, setTolerance] = useState(35);
   const [busy, setBusy] = useState(false);
 
   // kleine Vorschau – das eigentliche Bild wird erst beim Hinzufügen gerechnet
@@ -38,6 +46,20 @@ export function ThingsBoard({ character, canEdit }: { character: Character; canE
     const small = toCanvas(pending, 360);
     return (cut ? removeBackground(small, tolerance) : small).toDataURL("image/png");
   }, [pending, cut, tolerance]);
+
+  // Bilder per Kopieren & Einfügen (Strg/Cmd+V) – solange das Whiteboard offen ist
+  useEffect(() => {
+    if (!editing) return;
+    const onPaste = (e: ClipboardEvent) => {
+      const item = Array.from(e.clipboardData?.items ?? []).find((i) => i.type.startsWith("image/"));
+      const f = item?.getAsFile();
+      if (!f) return;
+      e.preventDefault();
+      void loadImageFile(f).then(setPending).catch(() => setPending(null));
+    };
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, [editing]);
 
   async function addPending() {
     if (!pending) return;
@@ -64,6 +86,45 @@ export function ThingsBoard({ character, canEdit }: { character: Character; canE
       y: ((e.clientY - rect.top) / rect.height) * 100,
     };
   }
+
+  // Zeigerposition relativ zur Mitte eines Gegenstands, in Pixeln
+  function fromCenter(e: React.PointerEvent, t: ThingItem) {
+    const rect = board.current!.getBoundingClientRect();
+    return {
+      x: e.clientX - (rect.left + (t.x / 100) * rect.width),
+      y: e.clientY - (rect.top + (t.y / 100) * rect.height),
+    };
+  }
+  // Zeiger-Handler für einen Griff am gewählten Gegenstand
+  const handle = (t: ThingItem, mode: "resize" | "rotate") => ({
+    onPointerDown: (e: React.PointerEvent<HTMLSpanElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const c = fromCenter(e, t);
+      drag.current = { id: t.id, mode, dx: 0, dy: 0, start: Math.hypot(c.x, c.y) || 1, w: t.w };
+      e.currentTarget.setPointerCapture(e.pointerId);
+    },
+    onPointerMove: (e: React.PointerEvent<HTMLSpanElement>) => {
+      const d = drag.current;
+      if (!d || d.id !== t.id || d.mode !== mode) return;
+      e.stopPropagation();
+      const c = fromCenter(e, t);
+      if (mode === "resize") {
+        patch(t.id, { w: clamp(Math.round(d.w * (Math.hypot(c.x, c.y) / d.start)), 5, 150) });
+      } else {
+        // Griff sitzt oben: 0° = Zeiger genau über der Mitte
+        const deg = Math.round((Math.atan2(c.y, c.x) * 180) / Math.PI + 90);
+        patch(t.id, { r: ((((deg + 180) % 360) + 360) % 360) - 180 }); // auf -180…180 bringen
+      }
+    },
+    onPointerUp: (e: React.PointerEvent<HTMLSpanElement>) => {
+      e.stopPropagation();
+      drag.current = null;
+    },
+    onPointerCancel: () => {
+      drag.current = null;
+    },
+  });
 
   function start() {
     setItems(saved);
@@ -96,47 +157,81 @@ export function ThingsBoard({ character, canEdit }: { character: Character; canE
             : ""
         }`}
       >
-        {shown.length === 0 && (
+        {editing && shown.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-[0.8125rem] text-text-tertiary">
-            {editing
-              ? "Füge unten ein Bild hinzu und schieb es an seinen Platz."
-              : "Noch keine Gegenstände – was hat der Charakter immer dabei?"}
+            Füge unten ein Bild hinzu (oder per Einfügen aus der Zwischenablage) und schieb es an
+            seinen Platz.
           </div>
         )}
-        {shown.map((t) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={t.id}
-            src={t.src}
-            alt=""
-            draggable={false}
-            onPointerDown={(e) => {
-              if (!editing) return;
-              e.preventDefault();
-              e.stopPropagation();
-              const p = pointerPos(e);
-              drag.current = { id: t.id, dx: p.x - t.x, dy: p.y - t.y };
-              setSelected(t.id);
-              e.currentTarget.setPointerCapture(e.pointerId);
-            }}
-            onPointerMove={(e) => {
-              if (drag.current?.id !== t.id) return;
-              const p = pointerPos(e);
-              patch(t.id, { x: clamp(p.x - drag.current.dx, 0, 100), y: clamp(p.y - drag.current.dy, 0, 100) });
-            }}
-            onPointerUp={() => (drag.current = null)}
-            onPointerCancel={() => (drag.current = null)}
-            style={{
-              left: `${t.x}%`,
-              top: `${t.y}%`,
-              width: `${t.w}%`,
-              transform: `translate(-50%, -50%) rotate(${t.r}deg)`,
-            }}
-            className={`absolute select-none drop-shadow-[0_6px_10px_rgba(0,0,0,0.55)] ${
-              editing ? "cursor-grab touch-none active:cursor-grabbing" : ""
-            } ${editing && selected === t.id ? "outline outline-2 outline-offset-2 outline-accent" : ""}`}
-          />
-        ))}
+        {shown.map((t) => {
+          const isActive = editing && selected === t.id;
+          return (
+            <div
+              key={t.id}
+              onPointerDown={(e) => {
+                if (!editing) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const p = pointerPos(e);
+                drag.current = { id: t.id, mode: "move", dx: p.x - t.x, dy: p.y - t.y, start: 0, w: t.w };
+                setSelected(t.id);
+                e.currentTarget.setPointerCapture(e.pointerId);
+              }}
+              onPointerMove={(e) => {
+                const d = drag.current;
+                if (!d || d.id !== t.id || d.mode !== "move") return;
+                const p = pointerPos(e);
+                patch(t.id, { x: clamp(p.x - d.dx, 0, 100), y: clamp(p.y - d.dy, 0, 100) });
+              }}
+              onPointerUp={() => (drag.current = null)}
+              onPointerCancel={() => (drag.current = null)}
+              style={{
+                left: `${t.x}%`,
+                top: `${t.y}%`,
+                width: `${t.w}%`,
+                transform: `translate(-50%, -50%) rotate(${t.r}deg)`,
+              }}
+              className={`absolute select-none ${editing ? "cursor-grab touch-none active:cursor-grabbing" : ""} ${
+                isActive ? "outline outline-1 outline-accent" : ""
+              }`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={t.src}
+                alt=""
+                draggable={false}
+                className="block w-full drop-shadow-[0_6px_10px_rgba(0,0,0,0.55)]"
+              />
+              {/* Griffe wie im Bildbearbeitungsprogramm: Ecke = Größe, oben = Drehung */}
+              {isActive && (
+                <>
+                  <span className="pointer-events-none absolute left-1/2 top-0 h-5 w-px -translate-x-1/2 -translate-y-full bg-accent" />
+                  <span
+                    {...handle(t, "rotate")}
+                    title="Drehen"
+                    className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-[calc(100%+1.25rem)] cursor-grab touch-none rounded-full border-2 border-accent bg-bg-surface"
+                  />
+                  {(
+                    [
+                      ["left-0 top-0 -translate-x-1/2 -translate-y-1/2", "nwse-resize"],
+                      ["right-0 top-0 translate-x-1/2 -translate-y-1/2", "nesw-resize"],
+                      ["left-0 bottom-0 -translate-x-1/2 translate-y-1/2", "nesw-resize"],
+                      ["right-0 bottom-0 translate-x-1/2 translate-y-1/2", "nwse-resize"],
+                    ] as const
+                  ).map(([pos, cursor]) => (
+                    <span
+                      key={pos}
+                      {...handle(t, "resize")}
+                      title="Größe ändern"
+                      style={{ cursor }}
+                      className={`absolute h-3.5 w-3.5 touch-none rounded-sm border-2 border-accent bg-bg-surface ${pos}`}
+                    />
+                  ))}
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {!editing && canEdit && (
@@ -155,7 +250,7 @@ export function ThingsBoard({ character, canEdit }: { character: Character; canE
                 <input
                   type="range"
                   min={8}
-                  max={95}
+                  max={150}
                   value={active.w}
                   onChange={(e) => patch(active.id, { w: parseInt(e.target.value, 10) })}
                   className={range}
@@ -199,7 +294,8 @@ export function ThingsBoard({ character, canEdit }: { character: Character; canE
           ) : (
             items.length > 0 && (
               <p className="text-[0.8125rem] text-text-tertiary">
-                Tippe einen Gegenstand an, um ihn zu verschieben, zu drehen oder die Größe zu ändern.
+                Tippe einen Gegenstand an: Dann lässt er sich verschieben, an den Ecken in der Größe
+                ändern und am Griff oben drehen.
               </p>
             )
           )}
@@ -221,10 +317,11 @@ export function ThingsBoard({ character, canEdit }: { character: Character; canE
                       Wie viel wegnehmen
                       <input
                         type="range"
-                        min={2}
-                        max={90}
+                        min={0}
+                        max={100}
+                        step={0.5}
                         value={tolerance}
-                        onChange={(e) => setTolerance(parseInt(e.target.value, 10))}
+                        onChange={(e) => setTolerance(parseFloat(e.target.value))}
                         className={`mt-1 block ${range}`}
                       />
                     </label>

@@ -49,7 +49,9 @@ export function removeBackground(source: HTMLCanvasElement, tolerance: number): 
   const corners = [0, w - 1, (h - 1) * w, h * w - 1];
   const bg = [0, 0, 0];
   for (const i of corners) for (let c = 0; c < 3; c++) bg[c] += px[i * 4 + c] / corners.length;
-  const limit = (tolerance / 100) * 200; // Abstand im RGB-Raum (max. ~441)
+  // Abstand im RGB-Raum (max. ~441). Quadratisch, damit der Regler im unteren
+  // Bereich fein arbeitet: kleine Schritte nehmen nur wenig mehr weg.
+  const limit = 2 + (tolerance / 100) ** 2 * 260;
   const dist = (i: number) =>
     Math.hypot(px[i * 4] - bg[0], px[i * 4 + 1] - bg[1], px[i * 4 + 2] - bg[2]);
 
