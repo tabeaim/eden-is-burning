@@ -19,10 +19,21 @@ export interface Player {
   last_seen: string; // ISO timestamp – "zuletzt online"
   current_location?: PlayerLocation | null;
   dashboard_header_url?: string | null; // eigener Banner fürs Dashboard
+  // Spieler*innen-Profil: eigenes Header-Bild und dieselben frei gestaltbaren
+  // Abschnitte wie bei Charakteren (Skills, Slider, Likes/Dislikes)
+  profile?: PlayerProfile | null;
   // --- Backend/Login (Supabase) ---
   auth_user_id?: string | null; // verknüpfter Supabase-Auth-User
   approved?: boolean; // von Admin freigeschaltet
   is_admin?: boolean; // darf andere freischalten
+}
+
+export interface PlayerProfile {
+  header_url?: string | null;
+  skills?: { name: string; value: number }[];
+  sliders?: { left: string; right: string; value: number }[];
+  likes?: string[];
+  dislikes?: string[];
 }
 
 export interface Character {

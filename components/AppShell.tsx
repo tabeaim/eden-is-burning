@@ -247,6 +247,14 @@ function BannerHeader({
         <h1 className={`page-title inline-block ${
           noBanner ? (navHidden ? "mt-7 md:mt-14" : "mt-7") : "-mt-8"
         } max-w-full break-words font-display lowercase text-[2.125rem] sm:text-[3.375rem] leading-none text-text-primary`}>
+          {onThisPage && meta.avatar && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={meta.avatar}
+              alt=""
+              className="mr-3 inline-block h-[1.15em] w-[1.15em] rounded-full object-cover align-[-0.2em] ring-2 ring-bg-primary"
+            />
+          )}
           {title}
           <span className="text-accent">.</span>
         </h1>

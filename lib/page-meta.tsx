@@ -14,6 +14,7 @@ export type PageMeta = {
   path?: string;
   bannerImage?: string; // überschreibt den Seed-Banner (z.B. Szenen-Header)
   width?: string; // Tailwind max-w-Klasse der Seite – Banner-Titel nutzt dieselbe
+  avatar?: string; // rundes Bild vor dem Titel (Spieler*innen-Profil)
 };
 
 type Ctx = { meta: PageMeta; setMeta: (m: PageMeta) => void };
@@ -34,10 +35,11 @@ export function useSetPageMeta(
   bannerImage?: string,
   width?: string,
   statusBadge?: "active" | "closed",
+  avatar?: string,
 ) {
   const setMeta = useContext(PageMetaCtx)?.setMeta;
   const pathname = usePathname();
   useEffect(() => {
-    setMeta?.({ title, subtitle, statusBadge, path: pathname, bannerImage, width });
-  }, [setMeta, title, subtitle, statusBadge, bannerImage, width, pathname]);
+    setMeta?.({ title, subtitle, statusBadge, path: pathname, bannerImage, width, avatar });
+  }, [setMeta, title, subtitle, statusBadge, bannerImage, width, pathname, avatar]);
 }

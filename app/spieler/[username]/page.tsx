@@ -1,19 +1,53 @@
 "use client";
 
-import { characterImage } from "@/lib/avatar";
-import { use } from "react";
+import { use, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
+import type { Player, PlayerProfile } from "@/lib/types";
 import { areaName } from "@/lib/world";
+import { characterImage } from "@/lib/avatar";
+import { formatDateTime, formatInplayDate } from "@/lib/format";
+import { playsAs, tierLabel } from "@/lib/characters";
+import { useSetPageMeta } from "@/lib/page-meta";
+import { uploadImage, IMAGE_SIZES } from "@/lib/images";
+import { Facts, FactRow } from "@/components/Facts";
+import { Icon } from "@/components/Icon";
+import { SceneCard } from "@/components/SceneCard";
+import {
+  ProfileLikes,
+  ProfileSkills,
+  ProfileSliders,
+  SectionHeading,
+} from "@/components/ProfileSections";
 
-export default function PlayerPage({
-  params,
-}: {
-  params: Promise<{ username: string }>;
-}) {
+type Tab = "characters" | "about" | "scenes";
+
+// „seit 3 Jahren", „seit 5 Monaten", „seit 12 Tagen"
+function since(iso: string): string {
+  const days = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));
+  if (days >= 365) return `${Math.floor(days / 365)} ${days >= 730 ? "Jahren" : "Jahr"}`;
+  if (days >= 60) return `${Math.floor(days / 30)} Monaten`;
+  return `${days} ${days === 1 ? "Tag" : "Tagen"}`;
+}
+
+// Spieler*innen-Profil: Name (mit Avatar) im Seitentitel, eigener Header, Facts,
+// dazu Reiter für Charaktere, „About" (Skills, Slider, Likes – wie bei den
+// Charakteren) und Szenen.
+export default function PlayerPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params);
-  const { playerByUsername, charactersOf } = useStore();
+  const { playerByUsername, charactersOf, npcs, scenes, posts, currentPlayer, isAdmin } = useStore();
   const p = playerByUsername(decodeURIComponent(username));
+  const [tab, setTab] = useState<Tab>("characters");
+  const [editing, setEditing] = useState(false);
+
+  useSetPageMeta(
+    p?.username ?? "Spieler*in",
+    undefined,
+    p?.profile?.header_url ?? undefined,
+    "max-w-6xl",
+    undefined,
+    p?.avatar_url ?? undefined,
+  );
 
   if (!p) {
     return (
@@ -24,63 +58,316 @@ export default function PlayerPage({
   }
 
   const chars = charactersOf(p.id);
+  const side = npcs.filter((c) => playsAs(c, p.id));
+  const all = [...chars, ...side];
+  const ids = new Set(all.map((c) => c.id));
+  const postCount = posts.filter((x) => ids.has(x.character_id)).length;
+  const lastPostAt = (sceneId: string) =>
+    posts.reduce((max, x) => (x.scene_id === sceneId && x.created_at > max ? x.created_at : max), "");
+  const myScenes = scenes
+    .filter((s) => s.participant_ids.some((id) => ids.has(id)))
+    .sort((a, b) => (lastPostAt(b.id) || b.created_at).localeCompare(lastPostAt(a.id) || a.created_at));
+  const canEdit = !!currentPlayer && (currentPlayer.id === p.id || isAdmin);
+  const prof = p.profile ?? {};
+  const hasAbout =
+    !!prof.skills?.length || !!prof.sliders?.length || !!prof.likes?.length || !!prof.dislikes?.length;
+
+  const tabs: [Tab, string][] = [
+    ["characters", "Characters"],
+    ["about", "About"],
+    ["scenes", "Scenes"],
+  ];
+  const btn =
+    "inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
-      {/* Inhalt linksbündig in Lesebreite – Container-Breite bleibt einheitlich */}
-      <div className="max-w-3xl">
-      <div className="flex items-center gap-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={p.avatar_url ?? ""}
-          alt={p.username}
-          className="w-16 h-16 rounded-full object-cover bg-bg-surface border border-border-subtle"
-        />
-        <div>
-          <h1 className="font-serif text-2xl text-text-primary">
-            {p.username}
-          </h1>
-          {p.bio && (
-            <p className="text-[0.875rem] text-text-secondary mt-0.5 max-w-md">
-              {p.bio}
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-8">
+      {canEdit && !editing && (
+        <div className="mb-3 flex justify-end">
+          <button onClick={() => setEditing(true)} className={btn}>
+            <Icon name="edit" size={14} /> Bearbeiten
+          </button>
+        </div>
+      )}
+      {editing && <PlayerEditPanel player={p} onClose={() => setEditing(false)} />}
+
+      <div className="grid items-start gap-x-10 gap-y-6 md:grid-cols-[1fr_auto]">
+        {p.bio ? (
+          <p className="max-w-2xl whitespace-pre-wrap text-[0.875rem] leading-relaxed text-text-secondary">{p.bio}</p>
+        ) : (
+          <p className="text-[0.875rem] text-text-tertiary">Noch keine Beschreibung.</p>
+        )}
+        <section>
+          <SectionHeading>facts.</SectionHeading>
+          <Facts>
+            <FactRow label="Member since" value={`${formatInplayDate(p.created_at.slice(0, 10))} · seit ${since(p.created_at)}`} />
+            <FactRow label="Characters" value={`${chars.length}`} />
+            <FactRow label="Supporting" value={side.length ? `${side.length}` : null} />
+            <FactRow label="Scenes" value={`${myScenes.length}`} />
+            <FactRow label="Posts" value={`${postCount}`} />
+            <FactRow label="Last seen" value={formatDateTime(p.last_seen)} />
+          </Facts>
+        </section>
+      </div>
+
+      <div className="mt-6 mb-6 border-b border-border-subtle" />
+
+      {/* Reiter wie im Charakterprofil */}
+      <div className="mb-6 flex flex-wrap gap-1.5">
+        {tabs.map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
+              tab === key
+                ? "bg-accent text-black font-medium"
+                : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "characters" && (
+        <section>
+          <SectionHeading>characters.</SectionHeading>
+          {all.length === 0 && <p className="text-[0.875rem] text-text-tertiary">Noch keine Charaktere.</p>}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {all.map((c) => (
+              <Link
+                key={c.id}
+                href={`/charaktere/${c.id}`}
+                className="flex gap-3 rounded-xl border border-border-subtle bg-bg-surface p-3 transition-colors hover:bg-white/[0.03]"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={characterImage(c)} alt={c.name} className="h-24 w-16 shrink-0 rounded-lg object-cover" />
+                <div className="min-w-0">
+                  <div className="font-serif text-[0.875rem] text-text-primary">
+                    {c.name}
+                    {c.is_npc && (
+                      <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
+                        {tierLabel(c)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[0.875rem] text-text-tertiary">{c.role}</div>
+                  {c.area && <div className="mt-0.5 text-[0.875rem] text-text-tertiary">{areaName(c.area)}</div>}
+                  {c.tagline && (
+                    <div className="mt-1.5 inline-block rounded-full bg-white/[0.05] px-2 py-0.5 text-[0.6875rem] uppercase tracking-wider text-text-secondary">
+                      {c.tagline}
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {tab === "about" && (
+        <div className="flex max-w-4xl flex-col gap-9">
+          <ProfileSkills c={p} />
+          <ProfileSliders c={p} />
+          <ProfileLikes c={p} />
+          {!hasAbout && (
+            <p className="text-[0.875rem] text-text-tertiary">
+              {canEdit
+                ? "Noch nichts hinterlegt – über „Bearbeiten“ kannst du Skills, Slider und Likes eintragen."
+                : "Noch nichts hinterlegt."}
             </p>
           )}
         </div>
+      )}
+
+      {tab === "scenes" && (
+        <section>
+          <SectionHeading>scenes.</SectionHeading>
+          {myScenes.length === 0 ? (
+            <p className="text-[0.875rem] text-text-tertiary">Noch in keiner Szene.</p>
+          ) : (
+            <div className="flex max-w-4xl flex-col gap-2">
+              {myScenes.map((s) => (
+                <SceneCard key={s.id} scene={s} compact />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
+
+const field =
+  "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
+const toList = (text: string) =>
+  text
+    .split(/[,\n]/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+// Eigenes Profil bearbeiten: Header-Bild, Skills, Slider, Likes/Dislikes. Avatar,
+// Name und Beschreibung stehen unter Einstellungen → Mein Profil.
+function PlayerEditPanel({ player, onClose }: { player: Player; onClose: () => void }) {
+  const { updatePlayer } = useStore();
+  const prof = player.profile ?? {};
+  const [header, setHeader] = useState(prof.header_url ?? "");
+  const [skills, setSkills] = useState(prof.skills ?? []);
+  const [sliders, setSliders] = useState(prof.sliders ?? []);
+  const [likes, setLikes] = useState((prof.likes ?? []).join(", "));
+  const [dislikes, setDislikes] = useState((prof.dislikes ?? []).join(", "));
+  const [uploading, setUploading] = useState(false);
+  const file = useRef<HTMLInputElement>(null);
+
+  async function onHeader(f: File | undefined) {
+    if (!f) return;
+    setUploading(true);
+    try {
+      setHeader(await uploadImage(f, "players", IMAGE_SIZES.banner));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function save() {
+    const profile: PlayerProfile = {
+      ...prof,
+      header_url: header || null,
+      skills: skills.filter((s) => s.name.trim()).map((s) => ({ name: s.name.trim(), value: s.value })),
+      sliders: sliders.filter((s) => s.left.trim() || s.right.trim()),
+      likes: toList(likes),
+      dislikes: toList(dislikes),
+    };
+    updatePlayer(player.id, { profile });
+    onClose();
+  }
+
+  const label = "block text-[0.875rem] text-text-secondary";
+  const group = "mt-2 text-[0.8125rem] uppercase tracking-wider font-semibold text-text-tertiary";
+  const uploadBtn =
+    "inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-primary disabled:opacity-50";
+  const addBtn =
+    "flex items-center gap-1 self-start rounded-full border border-dashed border-border-strong px-3 py-1.5 text-[0.8125rem] text-text-tertiary hover:border-accent/50 hover:text-accent";
+  const removeBtn =
+    "flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-tertiary hover:bg-white/[0.06] hover:text-red-300";
+
+  return (
+    <div className="mb-6 flex flex-col gap-4 rounded-xl border border-border-subtle bg-bg-surface p-4 sm:p-5">
+      <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">Profil bearbeiten</div>
+      <p className="-mt-2 text-[0.8125rem] text-text-tertiary">
+        Avatar, Name und Beschreibung änderst du unter{" "}
+        <Link href="/einstellungen" className="text-accent hover:underline">
+          Einstellungen → Mein Profil
+        </Link>
+        .
+      </p>
+
+      <div className={group}>Header</div>
+      <div className="flex flex-wrap items-center gap-3">
+        {header && (
+          <span
+            style={{ backgroundImage: `url("${header}")` }}
+            className="h-12 w-40 rounded-md border border-border-subtle bg-cover bg-center"
+          />
+        )}
+        <button disabled={uploading} onClick={() => file.current?.click()} className={uploadBtn}>
+          <Icon name="upload" size={13} /> {uploading ? "Lädt…" : header ? "Header ersetzen" : "Header hochladen"}
+        </button>
+        {header && (
+          <button onClick={() => setHeader("")} className="text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+            Standard-Header verwenden
+          </button>
+        )}
+        <input ref={file} type="file" accept="image/*" hidden onChange={(e) => void onHeader(e.target.files?.[0])} />
       </div>
 
-      <h2 className="text-[0.875rem] uppercase tracking-[0.16em] text-text-secondary mt-8 mb-3">
-        Charaktere ({chars.length})
-      </h2>
-      <div className="grid sm:grid-cols-2 gap-4">
-        {chars.map((c) => (
-          <Link
-            key={c.id}
-            href={`/charaktere/${c.id}`}
-            className="flex gap-3 rounded-xl border border-border-subtle bg-bg-surface p-3 hover:bg-white/[0.03] transition-colors"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={characterImage(c)}
-              alt={c.name}
-              className="w-16 h-24 rounded-lg object-cover shrink-0"
-            />
-            <div className="min-w-0">
-              <div className="font-serif text-[0.875rem] text-text-primary">
-                {c.name}
-              </div>
-              <div className="text-[0.875rem] text-text-tertiary">{c.role}</div>
-              <div className="text-[0.875rem] text-text-tertiary mt-0.5">
-                {areaName(c.area)}
-              </div>
-              {c.tagline && (
-                <div className="mt-1.5 inline-block rounded-full bg-white/[0.05] px-2 py-0.5 text-[0.6875rem] uppercase tracking-wider text-text-secondary">
-                  {c.tagline}
-                </div>
-              )}
-            </div>
-          </Link>
-        ))}
+      <div className={group}>Skills</div>
+      {skills.map((s, i) => (
+        <div key={i} className="flex flex-wrap items-center gap-2">
+          <input
+            value={s.name}
+            onChange={(e) => setSkills(skills.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
+            placeholder="Skill, z. B. Posts pünktlich beantworten"
+            className={`${field} min-w-40 flex-1`}
+          />
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={s.value}
+            onChange={(e) => setSkills(skills.map((x, j) => (j === i ? { ...x, value: parseInt(e.target.value, 10) } : x)))}
+            aria-label={`${s.name || "Skill"} in Prozent`}
+            className="w-32 accent-[var(--accent)]"
+          />
+          <span className="w-10 text-right text-[0.8125rem] tabular-nums text-text-secondary">{s.value}%</span>
+          <button onClick={() => setSkills(skills.filter((_, j) => j !== i))} aria-label="Skill entfernen" className={removeBtn}>
+            ✕
+          </button>
+        </div>
+      ))}
+      <button onClick={() => setSkills([...skills, { name: "", value: 50 }])} className={addBtn}>
+        <Icon name="plus" size={12} /> Skill
+      </button>
+
+      <div className={group}>Slider</div>
+      {sliders.map((s, i) => (
+        <div key={i} className="flex flex-wrap items-center gap-2">
+          <input
+            value={s.left}
+            onChange={(e) => setSliders(sliders.map((x, j) => (j === i ? { ...x, left: e.target.value } : x)))}
+            placeholder="links"
+            className={`${field} min-w-36 flex-1`}
+          />
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={s.value}
+            onChange={(e) => setSliders(sliders.map((x, j) => (j === i ? { ...x, value: parseInt(e.target.value, 10) } : x)))}
+            aria-label="Position zwischen den Polen"
+            className="w-28 accent-[var(--accent)]"
+          />
+          <input
+            value={s.right}
+            onChange={(e) => setSliders(sliders.map((x, j) => (j === i ? { ...x, right: e.target.value } : x)))}
+            placeholder="rechts"
+            className={`${field} min-w-36 flex-1`}
+          />
+          <button onClick={() => setSliders(sliders.filter((_, j) => j !== i))} aria-label="Slider entfernen" className={removeBtn}>
+            ✕
+          </button>
+        </div>
+      ))}
+      <button onClick={() => setSliders([...sliders, { left: "", right: "", value: 50 }])} className={addBtn}>
+        <Icon name="plus" size={12} /> Slider
+      </button>
+
+      <div className={group}>Likes / Dislikes</div>
+      <p className="-mt-2 text-[0.8125rem] text-text-tertiary">Mit Komma getrennt.</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className={label}>
+          Likes
+          <textarea value={likes} onChange={(e) => setLikes(e.target.value)} rows={3} className={`mt-1 resize-y ${field}`} />
+        </label>
+        <label className={label}>
+          Dislikes
+          <textarea value={dislikes} onChange={(e) => setDislikes(e.target.value)} rows={3} className={`mt-1 resize-y ${field}`} />
+        </label>
       </div>
+
+      <div className="flex items-center justify-end gap-3">
+        <button onClick={onClose} className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+          Abbrechen
+        </button>
+        <button
+          onClick={save}
+          disabled={uploading}
+          className="rounded-md bg-accent/90 hover:bg-accent px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
+        >
+          Speichern
+        </button>
       </div>
     </div>
   );
