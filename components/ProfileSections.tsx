@@ -301,7 +301,6 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
   const card = "flex w-28 flex-col items-center gap-1 rounded-lg border px-2 py-2 text-center";
   return (
     <section>
-      <SectionHeading>family tree.</SectionHeading>
       <div className="flex flex-col items-center">
         {used.map((row, i) => (
           <div key={row.gen} className="flex flex-col items-center">

@@ -10,6 +10,7 @@ export const IMAGE_SIZES = {
   portrait: 900, // Charakterfoto
   banner: 1800, // Szenen-/Orts-/Dashboard-Header
   gallery: 1400, // Vibes-Fotos
+  signature: 1000, // Signatur unter den Posts
 } as const;
 
 function loadImage(file: File): Promise<HTMLImageElement> {

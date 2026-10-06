@@ -676,6 +676,17 @@ function PostRow({
         className="prose-serif text-text-primary"
         dangerouslySetInnerHTML={html}
       />
+      {/* Signatur des Charakters (Einstellungen → Meine Charaktere) */}
+      {character.profile?.signature_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={character.profile.signature_url}
+          alt=""
+          loading="lazy"
+          draggable={false}
+          className="mt-6 block max-h-40 max-w-full select-none"
+        />
+      )}
       {quoteBtn && (
         <div
           style={{ left: quoteBtn.x, top: quoteBtn.y }}

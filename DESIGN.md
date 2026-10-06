@@ -126,9 +126,12 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
 - **Alter und Studienjahr** werden berechnet (`ageAt`, `studyYearAt`): im Profil
   zum 1.1.2022 bzw. für den Herbst 2021, in einer Szene zum Datum der Szene.
 - **Profil-Aufbau** (wie das Spieler*innen-Profil, zwei Bereiche untereinander):
-  oben Banner, Kurzbeschreibung und Facts, darunter die Reiter.
+  oben Avatar (statt des früheren Profil-Banners), Kurzbeschreibung und Facts,
+  darunter die Reiter.
 - **Profil-Reiter:** Character
-  (Beschreibung, Eigenschaften, Skills, Slider, Likes, Stammbaum, Timeline, Vibes) ·
+  (Beschreibung, Eigenschaften, Skills, Slider, Likes, Vibes) · Look (Angaben
+  zum Aussehen, daneben das Outfit-Whiteboard `profile.outfit`) · Biography
+  (Timeline) · Family Tree · Moodboard (falls hinterlegt) ·
   Pockets (Handy und Gegenstände, nur Main Characters) · Scenes · Relations (nach
   Kategorie: love life, family, acquainted). Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
@@ -157,13 +160,17 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   „Moodboard" es direkt ein (`PinterestBoard`, Pinterests Einbett-Skript, erst
   beim Öffnen des Reiters geladen; ohne Kopf mit Nutzer*in und mit durchsichtigem
   Hintergrund – `.pinterest-board` in globals.css).
-- **Stammbaum** (`ProfileFamilyTree`, Reiter Character): Verwandte nach
+- **Bildlastige Reiter** (Pockets, Moodboard) stehen mittig, alle anderen
+  linksbündig in `max-w-4xl`.
+- **Signatur** (`profile.signature_url`, Einstellungen → Meine Charaktere):
+  ein Bild am Ende jedes Posts des Charakters, sonst nirgends.
+- **Stammbaum** (`ProfileFamilyTree`, Reiter Family Tree): Verwandte nach
   Generation in Reihen, der Charakter selbst hervorgehoben; verknüpfte Einträge
   führen aufs Profil. Neben der direkten Linie die Seitenlinien (`side`):
   Geschwister der Großeltern, Onkel & Tanten, Cousinen & Cousins (`FAMILY_SLOTS`).
 - **Relations** bearbeitet nur, wer den Charakter selbst spielt (`playsAs`). Der
-  erklärende Hinweis steht nur beim eigenen Charakter und nur, bis bei den
-  eigenen Charakteren drei Beziehungen eingetragen sind.
+  erklärende Hinweis steht nur beim eigenen Charakter und verschwindet nach drei
+  Eintragungen/Leerungen (Zähler `relation_uses` im Spieler*innen-Profil).
 - **Namen aufzählen:** zwei mit „&", mehr mit Kommas (`joinNames`).
 - **Formular-Abschnitte** in den Charakter-Einstellungen sind aufklappbar
   (`Collapsible`); Abschnitte mit fehlender Pflichtangabe bleiben offen. Kleine
@@ -355,6 +362,5 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Relations im Charakterprofil:** gleiche Karte, aber statt der Bubble links ein
   eckiger Avatar (`h-20 w-20 rounded-md object-cover`), daneben Name, Faktenzeile,
   Buttons und Erläuterung.
-- **Charakterprofil:** Kein Avatar am Profil-Banner; darunter mittig der Usertag
-  als `Bubble`. Das Pinterest-Board steht nur im Reiter „General", als normaler
-  Button.
+- **Charakterprofil:** Oben links der Avatar, darunter mittig der Usertag
+  als `Bubble`. Das Pinterest-Board steht im Reiter „Moodboard".

@@ -24,9 +24,9 @@ const toList = (text: string) =>
     .map((t) => t.trim())
     .filter(Boolean);
 
-// Profil direkt im Profil bearbeiten: alles Beschreibende – Zitat, Banner,
+// Profil direkt im Profil bearbeiten: alles Beschreibende – Zitat,
 // ausführliche Beschreibung, Eigenschaften, Skills, Slider, Likes/Dislikes,
-// Stammbaum, Timeline und die Gegenstände („Pockets"); bei Supporting Characters und Statist*innen dazu „Vibes"
+// Stammbaum, Timeline, das Outfit („Look") und die Gegenstände („Pockets"); bei Supporting Characters und Statist*innen dazu „Vibes"
 // (Inspo-Bilder). Die Grunddaten stehen unter Einstellungen → Meine Charaktere –
 // außer bei Statist*innen: Die darf jede*r bearbeiten, deshalb stehen ihre
 // Grunddaten gleich hier mit.
@@ -40,14 +40,14 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   const [timeline, setTimeline] = useState(prof.timeline ?? []);
   const [family, setFamily] = useState<FamilyMember[]>(prof.family ?? []);
   const [things, setThings] = useState<ThingItem[]>(prof.things ?? []);
+  const [outfit, setOutfit] = useState<ThingItem[]>(prof.outfit ?? []);
   const { characters, npcs } = useStore();
   const everyone = [...characters, ...npcs].filter((c) => c.id !== character.id);
   const [plus, setPlus] = useState((prof.traits_plus ?? []).join(", "));
   const [minus, setMinus] = useState((prof.traits_minus ?? []).join(", "));
   const [likes, setLikes] = useState((prof.likes ?? []).join(", "));
   const [dislikes, setDislikes] = useState((prof.dislikes ?? []).join(", "));
-  const [uploading, setUploading] = useState<null | "banner" | "photo" | "vibes">(null);
-  const bannerFile = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState<null | "photo" | "vibes">(null);
   const photoFile = useRef<HTMLInputElement>(null);
   const vibesFile = useRef<HTMLInputElement>(null);
   const vibes = d.vibes ?? [];
@@ -61,12 +61,11 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   });
   const nameMissing = !d.name.trim();
 
-  async function upload(kind: "banner" | "photo", f: File | undefined) {
+  async function upload(kind: "photo", f: File | undefined) {
     if (!f) return;
     setUploading(kind);
     try {
-      if (kind === "banner") set("banner_url", await uploadImage(f, "characters", IMAGE_SIZES.banner));
-      else set("faceclaim_image_url", await uploadImage(f, "characters", IMAGE_SIZES.portrait));
+      set("faceclaim_image_url", await uploadImage(f, "characters", IMAGE_SIZES.portrait));
     } finally {
       setUploading(null);
     }
@@ -97,6 +96,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         .sort((a, b) => a.year.localeCompare(b.year, "de", { numeric: true })),
       family: family.filter((m) => m.name.trim()).map((m) => ({ ...m, name: m.name.trim() })),
       things,
+      outfit,
       traits_plus: toList(plus),
       traits_minus: toList(minus),
       likes: toList(likes),
@@ -105,7 +105,6 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
     const patch: Partial<Character> = {
       quote: d.quote,
       personality: d.personality,
-      banner_url: d.banner_url,
       profile,
     };
     if (tier === "main") patch.pinterest_url = d.pinterest_url;
@@ -227,19 +226,6 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         Zitat
         <input {...text("quote")} className={`mt-1 ${field}`} />
       </label>
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-[0.875rem] text-text-secondary">Profil-Banner</span>
-        <button disabled={uploading !== null} onClick={() => bannerFile.current?.click()} className={uploadBtn}>
-          <Icon name="upload" size={13} />{" "}
-          {uploading === "banner" ? "Lädt…" : d.banner_url ? "Banner ersetzen" : "Banner hochladen"}
-        </button>
-        {d.banner_url && (
-          <button onClick={() => set("banner_url", null)} className="text-[0.8125rem] text-text-tertiary hover:text-text-primary">
-            Banner entfernen
-          </button>
-        )}
-        <input ref={bannerFile} type="file" accept="image/*" hidden onChange={(e) => void upload("banner", e.target.files?.[0])} />
-      </div>
 
       <div className={group}>Ausführliche Beschreibung</div>
       <textarea {...text("personality")} rows={6} className={`resize-y ${field}`} placeholder="Wer ist dieser Charakter?" />
@@ -404,7 +390,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         <Icon name="plus" size={12} /> Familienmitglied
       </button>
 
-      <div className={group}>Timeline (steht im Reiter „Character“)</div>
+      <div className={group}>Timeline (steht im Reiter „Biography“)</div>
       <p className={`-mt-2 ${hint}`}>Wird beim Speichern nach Jahr sortiert.</p>
       {timeline.map((t, i) => (
         <div key={i} className="flex items-start gap-2 rounded-lg border border-border-subtle p-2">
@@ -437,6 +423,13 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       <button onClick={() => setTimeline([...timeline, { year: "", title: "", text: "" }])} className={addBtn}>
         <Icon name="plus" size={12} /> Timeline-Eintrag
       </button>
+
+      <div className={group}>Look – Outfit</div>
+      <p className={`-mt-2 ${hint}`}>
+        Was trägt dein Charakter? Stell aus hochgeladenen Bildern ein Outfit zusammen – es
+        erscheint im Reiter „Look“ neben den Angaben zum Aussehen.
+      </p>
+      <ThingsBoard items={outfit} onChange={setOutfit} />
 
       {tier === "main" && (
         <>

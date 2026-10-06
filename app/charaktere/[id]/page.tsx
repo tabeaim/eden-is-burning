@@ -10,13 +10,11 @@ import { Icon } from "@/components/Icon";
 import { Bubble, LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
 import { SceneCard } from "@/components/SceneCard";
-import { Facts, FactRow } from "@/components/Facts";
 import {
   RELATION_CATEGORIES,
   TIER_NAMES,
   ageAt,
   isHidden,
-  normalizeHeight,
   playsAs,
   tierLabel,
   tierOf,
@@ -40,7 +38,7 @@ import {
 } from "@/components/ProfileSections";
 import type { Character, RelationCategory, Scene } from "@/lib/types";
 
-type Tab = "character" | "personal" | "moodboard" | "inplay" | "relations";
+type Tab = "character" | "look" | "biography" | "family" | "personal" | "moodboard" | "inplay" | "relations";
 
 // Bausteine aus DESIGN.md: Buttons, Primär-Aktion, Formularfelder
 const btn =
@@ -119,6 +117,9 @@ export default function CharacterPage({
 
   const tabs: [Tab, string][] = [
     ["character", "Character"],
+    ["look", "Look"],
+    ["biography", "Biography"],
+    ["family", "Family Tree"],
     // „Pockets": das Handy und die Gegenstände (nur Main Characters)
     ...(c.is_npc ? [] : ([["personal", "Pockets"]] as [Tab, string][])),
     // eingebundenes Pinterest-Board, falls eines hinterlegt ist
@@ -151,11 +152,16 @@ export default function CharacterPage({
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mt-4 mb-6" />
 
-      {/* OBEN (wie im Spieler*innen-Profil): Banner, Kurzbeschreibung, Facts */}
+      {/* OBEN (wie im Spieler*innen-Profil): Avatar, Kurzbeschreibung, Facts */}
       <div className="grid items-start gap-x-8 gap-y-6 md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_minmax(19rem,24rem)]">
-        {/* Profil-Banner + Usertag */}
+        {/* Avatar + Usertag */}
         <div>
-          <ProfileBanner c={c} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={characterImage(c)}
+            alt={`Avatar von ${c.name}`}
+            className="aspect-[600/502] w-full rounded-xl bg-bg-surface object-cover"
+          />
           {c.tagline && (
             <div className="mt-3 flex justify-center">
               <Bubble className="uppercase tracking-wider">{c.tagline}</Bubble>
@@ -163,16 +169,16 @@ export default function CharacterPage({
           )}
         </div>
 
-        {/* Kurzbeschreibung – scrollt in sich, statt länger zu laufen als der Banner hoch ist */}
+        {/* Kurzbeschreibung – scrollt in sich, statt die Facts daneben weit zu überragen */}
         {c.bio ? (
-          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary md:max-h-[580px] md:overflow-y-auto md:pr-3">
+          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary md:max-h-[420px] md:overflow-y-auto md:pr-3">
             {c.bio}
           </p>
         ) : (
           <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
         )}
 
-        {/* Facts, Studium/Arbeit (Looks stehen nur im Hover über dem Profil-Banner) */}
+        {/* Facts, Studium/Arbeit (Looks stehen im Reiter „Look") */}
         <div className="flex flex-col gap-7 md:col-start-2 lg:col-start-auto">
           <ProfileFacts c={c} />
         </div>
@@ -197,32 +203,44 @@ export default function CharacterPage({
         ))}
       </div>
 
-      <div className="max-w-4xl">
-        {tab === "moodboard" && c.pinterest_url && (
-          <section>
-            <PinterestBoard url={c.pinterest_url} />
-          </section>
-        )}
-        {tab === "character" && <CharacterTab c={c} />}
-        {/* „Pockets": was der Charakter bei sich hat – das Handy, nur zum Ansehen
-            (Look, Startbildschirm, Kontaktliste) */}
-        {tab === "personal" && !c.is_npc && (
-          <section>
-            {/* links das Handy, daneben die Collage der Gegenstände; mobil untereinander */}
-            <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-              {/* ohne Handy (Einstellungen) nur die Gegenstände */}
-              {hasPhone(c) && (
-                <div className="max-w-full shrink-0">
-                  <PhonePreview character={c} />
-                </div>
-              )}
-              <ThingsBoard items={c.profile?.things ?? []} />
-              {!hasPhone(c) && !(c.profile?.things ?? []).length && (
-                <p className="self-start text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>
-              )}
+      {/* Bildlastige Reiter (Pockets, Moodboard) stehen mittig, der Rest linksbündig */}
+      {tab === "moodboard" && c.pinterest_url && (
+        <section className="flex justify-center">
+          <PinterestBoard url={c.pinterest_url} />
+        </section>
+      )}
+      {/* „Pockets": was der Charakter bei sich hat – das Handy, nur zum Ansehen
+          (Look, Startbildschirm, Kontaktliste), daneben die Collage der
+          Gegenstände; mobil untereinander */}
+      {tab === "personal" && !c.is_npc && (
+        <section className="flex flex-col items-center justify-center gap-6 sm:flex-row sm:items-start">
+          {/* ohne Handy (Einstellungen) nur die Gegenstände */}
+          {hasPhone(c) && (
+            <div className="max-w-full shrink-0">
+              <PhonePreview character={c} />
             </div>
-          </section>
-        )}
+          )}
+          <ThingsBoard items={c.profile?.things ?? []} />
+          {!hasPhone(c) && !(c.profile?.things ?? []).length && (
+            <p className="text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>
+          )}
+        </section>
+      )}
+      <div className="max-w-4xl">
+        {tab === "character" && <CharacterTab c={c} />}
+        {tab === "look" && <LookTab c={c} />}
+        {tab === "biography" &&
+          (c.profile?.timeline?.length ? (
+            <ProfileTimeline c={c} />
+          ) : (
+            <p className="text-[0.875rem] text-text-tertiary">Noch keine Timeline hinterlegt.</p>
+          ))}
+        {tab === "family" &&
+          (c.profile?.family?.length ? (
+            <ProfileFamilyTree c={c} />
+          ) : (
+            <p className="text-[0.875rem] text-text-tertiary">Noch kein Stammbaum hinterlegt.</p>
+          ))}
         {tab === "inplay" && <InplayTab inScenes={inScenes} />}
         {tab === "relations" && (
           <RelationsTab c={c} coChars={coChars} canEdit={playsAs(c, store.currentPlayerId)} />
@@ -312,52 +330,6 @@ function NpcFacts({ c }: { c: Character }) {
   );
 }
 
-// Profil-Banner (Seitenbild, NICHT der Avatar; Upload folgt in den Einstellungen).
-// Looks erscheinen beim Hover – Hintergrund dunkelt leicht ab, Schrift tritt hervor.
-function ProfileBanner({ c }: { c: Character }) {
-  return (
-    <div
-      className="group relative h-[580px] w-full overflow-hidden rounded-xl bg-bg-surface"
-      style={{
-        backgroundImage: c.banner_url
-          ? undefined
-          : "linear-gradient(180deg, rgba(163,163,128,0.16), rgba(10,10,11,0.7))",
-      }}
-    >
-      {c.banner_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={c.banner_url}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      )}
-      {!c.banner_url && (
-        <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-[0.875rem] text-text-tertiary">
-          Profil-Banner
-        </div>
-      )}
-
-      {/* Looks-Overlay bei Hover */}
-      <div className="absolute inset-0 flex flex-col bg-black/80 px-4 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-        <h2 className="font-display lowercase text-[2rem] text-accent leading-none">looks.</h2>
-        {c.profile?.looks_note && (
-          <p className="mt-3 whitespace-pre-wrap text-[0.875rem] leading-relaxed text-text-secondary">
-            {c.profile.looks_note}
-          </p>
-        )}
-        <Facts className="mt-3">
-          <FactRow label="Height" value={isHidden(c, "height") ? null : normalizeHeight(c.height)} />
-          <FactRow label="Figure" value={isHidden(c, "figure") ? null : c.figure} />
-          <FactRow label="Hair" value={isHidden(c, "hair") ? null : c.hair} />
-          <FactRow label="Eyes" value={isHidden(c, "eyes") ? null : c.eyes} />
-          <FactRow label="Faceclaim" value={c.faceclaim} />
-        </Facts>
-      </div>
-    </div>
-  );
-}
-
 // Zitat anzeigen/hinzufügen – volle Breite über "facts".
 // Zitat des Charakters (bearbeitet wird es über „Bearbeiten" im Profil)
 function QuoteBlock({ c }: { c: Character }) {
@@ -409,7 +381,7 @@ function CharacterTab({ c }: { c: Character }) {
   const empty =
     !c.personality &&
     !(p.traits_plus?.length || p.traits_minus?.length || p.skills?.length || p.sliders?.length) &&
-    !(p.likes?.length || p.dislikes?.length || p.timeline?.length || p.family?.length) &&
+    !(p.likes?.length || p.dislikes?.length) &&
     !c.vibes?.length;
   return (
     <div className="flex flex-col gap-9">
@@ -425,11 +397,33 @@ function CharacterTab({ c }: { c: Character }) {
       <ProfileSkills c={c} />
       <ProfileSliders c={c} />
       <ProfileLikes c={c} />
-      <ProfileFamilyTree c={c} />
-      <ProfileTimeline c={c} />
       <Vibes c={c} />
       {empty && (
         <p className="text-[0.875rem] text-text-tertiary">Noch keine Charakterbeschreibung hinterlegt.</p>
+      )}
+    </div>
+  );
+}
+
+// Aussehen: links die Angaben, daneben das Outfit-Whiteboard (Collage wie bei
+// den Pockets, gepflegt über „Bearbeiten")
+function LookTab({ c }: { c: Character }) {
+  const outfit = c.profile?.outfit ?? [];
+  const hasLooks =
+    !!c.profile?.looks_note ||
+    !!c.faceclaim ||
+    (["height", "figure", "hair", "eyes"] as const).some((k) => c[k] && !isHidden(c, k));
+  if (!hasLooks && outfit.length === 0) {
+    return <p className="text-[0.875rem] text-text-tertiary">Noch nichts zum Aussehen hinterlegt.</p>;
+  }
+  return (
+    <div className="grid items-start gap-x-8 gap-y-7 md:grid-cols-2">
+      <ProfileLooks c={c} />
+      {outfit.length > 0 && (
+        <section className="flex flex-col items-center md:items-start">
+          <Heading>outfit.</Heading>
+          <ThingsBoard items={outfit} />
+        </section>
       )}
     </div>
   );
@@ -462,15 +456,10 @@ function RelationsTab({
   coChars: Character[];
   canEdit: boolean;
 }) {
-  const { characters, npcs, currentPlayerId } = useStore();
-  // Der Hinweis erklärt die Funktion nur, bis sie sitzt: Sind bei den eigenen
-  // Charakteren drei Beziehungen eingetragen, verschwindet er.
-  const mine = new Map([...characters, ...npcs].filter((x) => playsAs(x, currentPlayerId)).map((x) => [x.id, x]));
-  const filled = [...mine.values()].reduce(
-    (n, x) => n + Object.values(x.relationships ?? {}).filter((r) => r && (r.label || r.note || r.category)).length,
-    0,
-  );
-  const showHint = canEdit && filled < RELATION_HINT_USES;
+  const { currentPlayer } = useStore();
+  // Der Hinweis erklärt die Funktion nur, bis sie sitzt: Nach ein paar
+  // Eintragungen (gezählt im eigenen Profil, siehe RelationRow) verschwindet er.
+  const showHint = canEdit && (currentPlayer?.profile?.relation_uses ?? 0) < RELATION_HINT_USES;
   return (
     <section>
       {coChars.length === 0 ? (
@@ -521,7 +510,14 @@ function RelationRow({
   rc: Character;
   canEdit: boolean;
 }) {
-  const { updateCharacter } = useStore();
+  const { updateCharacter, updatePlayer, currentPlayer } = useStore();
+  // Jede Eintragung/Leerung zählt als Nutzung der Funktion (für den Hinweis oben)
+  const countUse = () => {
+    const uses = currentPlayer?.profile?.relation_uses ?? 0;
+    if (currentPlayer && uses < RELATION_HINT_USES) {
+      updatePlayer(currentPlayer.id, { profile: { ...(currentPlayer.profile ?? {}), relation_uses: uses + 1 } });
+    }
+  };
   const rel = c.relationships?.[rc.id] ?? {};
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(rel.label ?? "");
@@ -536,6 +532,7 @@ function RelationRow({
         [rc.id]: { label: label.trim() || null, note: note.trim() || null, category: category || null },
       },
     });
+    countUse();
     setEditing(false);
   }
 
@@ -582,6 +579,7 @@ function RelationRow({
             const next = { ...c.relationships };
             delete next[rc.id];
             updateCharacter(c.id, { relationships: next });
+            countUse();
             setConfirmClear(false);
           }}
         />

@@ -35,6 +35,9 @@ export interface PlayerProfile {
   sliders?: { left: string; right: string; value: number }[];
   likes?: string[];
   dislikes?: string[];
+  // Wie oft Beziehungen im Relations-Reiter schon eingetragen/geleert wurden –
+  // danach verschwindet dort der erklärende Hinweis
+  relation_uses?: number;
 }
 
 export interface Character {
@@ -140,6 +143,10 @@ export interface CharacterProfile {
   // x/y = Mitte in % der Fläche, w = Breite in % der Flächenbreite, r = Drehung
   // in Grad; die Reihenfolge ist die Stapelfolge (letztes liegt oben).
   things?: ThingItem[];
+  // Outfit-Whiteboard im Reiter „Look" (gleiche Collage wie die Gegenstände)
+  outfit?: ThingItem[];
+  // Signatur: Bild, das am Ende jedes Posts des Charakters steht (sonst nirgends)
+  signature_url?: string | null;
   // Stammbaum: Verwandte nach Generation (-2 Großeltern, -1 Eltern, 0 gleiche
   // Generation, 1 Kinder, 2 Enkel); optional mit einem Charakter verknüpft
   family?: FamilyMember[];

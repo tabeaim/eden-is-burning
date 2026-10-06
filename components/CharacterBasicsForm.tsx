@@ -43,6 +43,9 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
   const file = useRef<HTMLInputElement>(null);
+  const [signature, setSignature] = useState(character.profile?.signature_url ?? null);
+  const [uploadingSig, setUploadingSig] = useState(false);
+  const sigFile = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof Character>(key: K, value: Character[K]) =>
     setD((x) => ({ ...x, [key]: value }));
@@ -80,12 +83,28 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
     }
   }
 
+  // Signatur wird (wie der Avatar) sofort gespeichert
+  function saveSignature(url: string | null) {
+    setSignature(url);
+    updateCharacter(character.id, { profile: { ...(character.profile ?? {}), signature_url: url } });
+  }
+  async function onSignature(f: File | undefined) {
+    if (!f) return;
+    setUploadingSig(true);
+    try {
+      saveSignature(await uploadImage(f, "characters", IMAGE_SIZES.signature));
+    } finally {
+      setUploadingSig(false);
+    }
+  }
+
   function save() {
     if (invalid) return;
     // Die beschreibenden Teile des Profils (Skills, Timeline …) pflegt das Profil
     // selbst – hier nur die Grunddaten-Schlüssel überschreiben.
     const profile: CharacterProfile = {
       ...(character.profile ?? {}),
+      signature_url: signature,
       birthdate: p.birthdate ?? null,
       gender: p.gender ?? null,
       hidden,
@@ -478,6 +497,46 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         {F({ label: "Augen", hideKey: "eyes", children: <input {...text("eyes")} /> })}
       </div>
 
+      </Collapsible>
+
+      {/* --- Signatur --- */}
+      <Collapsible title="Signatur">
+        <p className="text-[0.8125rem] text-text-tertiary">
+          Ein Bild, das am Ende jedes Posts dieses Charakters steht – sonst nirgendwo.
+        </p>
+        {signature && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={signature} alt="Signatur" className="max-h-40 max-w-full rounded-md" />
+        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            disabled={uploadingSig}
+            onClick={() => sigFile.current?.click()}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08] disabled:opacity-50"
+          >
+            <Icon name="upload" size={13} />{" "}
+            {uploadingSig ? "Lädt…" : signature ? "Signatur ersetzen" : "Signatur hochladen"}
+          </button>
+          {signature && (
+            <button
+              onClick={() => saveSignature(null)}
+              className="text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+            >
+              Signatur entfernen
+            </button>
+          )}
+          <input
+            ref={sigFile}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              void onSignature(f);
+            }}
+          />
+        </div>
       </Collapsible>
 
       <p className="text-[0.8125rem] text-text-tertiary">

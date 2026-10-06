@@ -7,6 +7,9 @@ import { Icon } from "./Icon";
 import { Toggle } from "./Toggle";
 
 const MAX_THINGS = 12;
+// Eingefügte Bilder (Strg/Cmd+V) gehen an das Whiteboard, das zuletzt berührt
+// wurde – im Bearbeiten-Formular stehen zwei (Outfit und Pockets).
+let pasteTarget: symbol | null = null;
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
 // „Pockets": Gegenstände, die der Charakter bei sich hat, als Collage.
@@ -30,6 +33,7 @@ export function ThingsBoard({
     onChange?.(typeof next === "function" ? next(items) : next);
   const [selected, setSelected] = useState<string | null>(null);
   const board = useRef<HTMLDivElement>(null);
+  const [me] = useState(() => Symbol("board"));
   // Laufende Geste: verschieben, Größe ändern (Ecke) oder drehen (Griff oben)
   const drag = useRef<{
     id: string;
@@ -57,7 +61,9 @@ export function ThingsBoard({
   // Bilder per Kopieren & Einfügen (Strg/Cmd+V) – solange das Whiteboard offen ist
   useEffect(() => {
     if (!editing) return;
+    pasteTarget ??= me;
     const onPaste = (e: ClipboardEvent) => {
+      if (pasteTarget !== me) return;
       const item = Array.from(e.clipboardData?.items ?? []).find((i) => i.type.startsWith("image/"));
       const f = item?.getAsFile();
       if (!f) return;
@@ -65,8 +71,11 @@ export function ThingsBoard({
       void loadImageFile(f).then(setPending).catch(() => setPending(null));
     };
     document.addEventListener("paste", onPaste);
-    return () => document.removeEventListener("paste", onPaste);
-  }, [editing]);
+    return () => {
+      document.removeEventListener("paste", onPaste);
+      if (pasteTarget === me) pasteTarget = null;
+    };
+  }, [editing, me]);
 
   async function addPending() {
     if (!pending) return;
@@ -143,12 +152,14 @@ export function ThingsBoard({
 
   return (
     // Bearbeiten: Fläche links, Werkzeuge daneben (mobil darunter). Ansicht: nur
-    // die Fläche, mobil in voller Breite unter dem Handy.
+    // die Fläche, höchstens 26rem breit.
     <div
+      onPointerEnter={() => editing && (pasteTarget = me)}
+      onPointerDownCapture={() => editing && (pasteTarget = me)}
       className={
         editing
           ? "grid items-start gap-4 md:grid-cols-[minmax(0,26rem)_minmax(15rem,24rem)]"
-          : "flex w-full min-w-0 justify-center sm:flex-1 sm:justify-start"
+          : "w-full min-w-0 max-w-[26rem]"
       }
     >
       {/* Die Fläche: fester Rahmen 3:4; in der Ansicht durchsichtig */}
