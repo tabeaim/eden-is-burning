@@ -303,6 +303,13 @@ ihr AU im Filter gewählt ist – ohne Auswahl zeigt die Timeline nur Canon.
 Alle Seiten nutzen denselben Container `max-w-6xl mx-auto px-8` (auch als `width`
 für den Banner-Titel), damit Titel und Inhalt beim Seitenwechsel nicht springen.
 
+## Mauszeiger
+
+Alles Anklickbare zeigt die Hand – das regelt `app/globals.css` für Knöpfe und
+anklickbare Rollen (`role="button"`, `link`, `option` …). Anklickbare `<div>`/
+`<span>` deshalb immer mit passender Rolle (oder `cursor-pointer`) versehen.
+Zähler für Neues sind überall orange (`bg-accent text-black`), auch an den Apps.
+
 ## Responsive
 
 Alles muss auch auf dem Handy (~375px) benutzbar sein: Seiten-Gutter `px-4 sm:px-8`,
@@ -420,10 +427,23 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   fiktives Foto-Netzwerk, immer aus Sicht des Charakters, dessen Handy man in der
   Hand hat. Leiste unten: Feed · Entdecken · Neuer Beitrag · Mein Profil; die
   Ansichten liegen als Stapel übereinander (Pfeil oben links = eine zurück).
-  - **Feed:** Beiträge der anderen, Pills „Gefolgt" / „Alle" (wie im Messenger).
+  - **Feed:** oben die Story-Zeile (eigene Story mit Plus, dann gefolgte Profile
+    mit Story), darunter eigene Beiträge und die der gefolgten Profile – sonst
+    niemand.
+  - **Stories** (`CapticStories.tsx`): bunter Ring ums Profilbild, sobald es eine
+    Story gibt; Klick (Story-Zeile oder Profil) zeigt sie bildschirmfüllend im
+    Display (links antippen = zurück, sonst weiter, läuft von selbst). Anlegen
+    über das Plus in der Story-Zeile oder „+ Story" im eigenen Profil.
+  - **Aktivitäten** (Glocke oben rechts): neue Likes, Kommentare, Follower
+    (`captic_events`). Neues zeigt sich als oranger Zähler an Glocke, Captic-App,
+    Handy-Wechsel und „Handy" im Menü sowie im Dashboard als „Neue Aktivität auf
+    Captic" je Charakter. Das Öffnen der Aktivitäten gilt als gesehen
+    (`read_marks`, Schlüssel `captic:<Charakter>`). Eigene Aktionen zählen nie.
+  - **Doppelklick** bzw. doppeltes Antippen auf das Bild liket (Herz ploppt auf).
   - **Profil:** Beiträge im Dreier-Raster (quadratisch; Videos/GIFs als Standbild
     mit Zeichen). Eigenes Profil: „Profil bearbeiten" (Nutzername, Bio, Follower-
-    und Gefolgt-Zahl frei wählbar – leer zählt, wer in der App wirklich folgt).
+    und Gefolgt-Zahl frei wählbar – leer zählt, wer in der App wirklich folgt),
+    „+ Beitrag", „+ Story".
     Fremdes Profil: „Folgen" (Captic-Pink) / „Gefolgt" (grau).
   - **Beitrag** (`CapticPostCard`): Bild, GIF oder kurzes Video (läuft stumm los,
     Antippen schaltet den Ton), Bildunterschrift, Like-Zahl (frei gesetzt + Herzen

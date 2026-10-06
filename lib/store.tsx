@@ -16,7 +16,9 @@ import type {
   ChatMessage,
   ChatMessageKind,
   CapticComment,
+  CapticEvent,
   CapticPost,
+  CapticStory,
   Location,
   PhoneCall,
   Player,
@@ -43,6 +45,8 @@ interface PersistedState {
   calls: PhoneCall[];
   capticPosts: CapticPost[];
   capticComments: CapticComment[];
+  capticStories: CapticStory[];
+  capticEvents: CapticEvent[];
 }
 
 // `characters` enthält nach außen nur spielbare Charaktere; NPCs (Charaktere mit
@@ -186,6 +190,17 @@ interface StoreValue extends PersistedState {
   toggleCapticLike: (postId: string, characterId: string) => void;
   addCapticComment: (postId: string, characterId: string, content: string) => void;
   deleteCapticComment: (id: string) => void;
+  addCapticStory: (story: Omit<CapticStory, "id" | "created_at">) => string;
+  deleteCapticStory: (id: string) => void;
+  // `characterId` folgt `otherId` (oder nicht mehr)
+  toggleCapticFollow: (characterId: string, otherId: string) => void;
+  // Neue Aktivität (Likes, Kommentare, Follower) für diesen Charakter seit dem
+  // letzten Blick in die Aktivitäten – ohne das, was ich selbst ausgelöst habe
+  capticNews: (characterId: string) => CapticEvent[];
+  // Eigene Charaktere mit neuer Aktivität (für Dashboard und Menü-Zähler)
+  capticAlerts: { characterId: string; count: number }[];
+  capticSeenAt: (characterId: string) => string | null;
+  markCapticSeen: (characterId: string) => void;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -203,6 +218,8 @@ const EMPTY: PersistedState = {
   calls: [],
   capticPosts: [],
   capticComments: [],
+  capticStories: [],
+  capticEvents: [],
 };
 
 // Supabase liefert höchstens 1000 Zeilen pro Abfrage – Nachrichten werden schnell
@@ -235,6 +252,7 @@ function afterScene<T>(sceneId: string | null | undefined, run: () => PromiseLik
 }
 
 let lastMessageAt = 0;
+const NO_EVENTS: CapticEvent[] = [];
 
 function uid(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
@@ -304,7 +322,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Lädt alle Welt-Daten (nur für freigeschaltete Nutzer*innen sichtbar; RLS).
   const loadWorld = useCallback(async () => {
-    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, calls, capticPosts, capticComments, as] = await Promise.all([
+    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, calls, capticPosts, capticComments, capticStories, capticEvents, as] = await Promise.all([
       supabase.from("players").select("*"),
       supabase.from("characters").select("*"),
       supabase.from("scenes").select("*"),
@@ -317,6 +335,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       fetchAll<PhoneCall>("calls"),
       fetchAll<CapticPost>("captic_posts"),
       fetchAll<CapticComment>("captic_comments"),
+      fetchAll<CapticStory>("captic_stories"),
+      fetchAll<CapticEvent>("captic_events"),
       // Tabelle evtl. noch nicht angelegt (schema-app-settings.sql) – dann Standard
       supabase.from("app_settings").select("*"),
     ]);
@@ -335,6 +355,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       calls,
       capticPosts,
       capticComments,
+      capticStories,
+      capticEvents,
     });
   }, []);
 
@@ -452,6 +474,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "captic_comments" }, (p) =>
         setState((s) => ({ ...s, capticComments: applyChange(s.capticComments, p) })),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "captic_stories" }, (p) =>
+        setState((s) => ({ ...s, capticStories: applyChange(s.capticStories, p) })),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "captic_events" }, (p) =>
+        setState((s) => ({ ...s, capticEvents: applyChange(s.capticEvents, p) })),
       )
       .subscribe();
 
@@ -1112,6 +1140,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         calls: s.calls.filter((c) => c.caller_id !== id && c.callee_id !== id),
         capticPosts: s.capticPosts.filter((p) => p.character_id !== id),
         capticComments: s.capticComments.filter((c) => c.character_id !== id),
+        capticStories: s.capticStories.filter((c) => c.character_id !== id),
+        capticEvents: s.capticEvents.filter((e) => e.actor_id !== id && e.target_id !== id),
       };
     });
   }, []);
@@ -1576,6 +1606,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ...s,
       capticPosts: s.capticPosts.filter((p) => p.id !== id),
       capticComments: s.capticComments.filter((c) => c.post_id !== id),
+      capticEvents: s.capticEvents.filter((e) => e.post_id !== id),
     }));
   }, []);
 
@@ -1584,16 +1615,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const post = s.capticPosts.find((p) => p.id === postId);
       if (!post) return s;
       const before = post.liked_by ?? [];
-      const liked_by = before.includes(characterId)
-        ? before.filter((x) => x !== characterId)
-        : [...before, characterId];
+      const had = before.includes(characterId);
+      const liked_by = had ? before.filter((x) => x !== characterId) : [...before, characterId];
       persist(
         "toggleCapticLike",
         supabase.from("captic_posts").update({ liked_by }).eq("id", postId),
       );
+      // Aktivität für die Person, der der Beitrag gehört (nicht fürs eigene Herz)
+      const event: CapticEvent = {
+        id: `cape_like_${postId}_${characterId}`,
+        kind: "like",
+        actor_id: characterId,
+        target_id: post.character_id,
+        post_id: postId,
+        created_at: new Date().toISOString(),
+      };
+      const notify = post.character_id !== characterId;
+      if (notify) {
+        persist(
+          "capticEvent",
+          had
+            ? supabase.from("captic_events").delete().eq("id", event.id)
+            : supabase.from("captic_events").upsert(event),
+        );
+      }
+      const rest = s.capticEvents.filter((e) => e.id !== event.id);
       return {
         ...s,
         capticPosts: s.capticPosts.map((p) => (p.id === postId ? { ...p, liked_by } : p)),
+        capticEvents: notify && !had ? [...rest, event] : rest,
       };
     });
   }, []);
@@ -1609,14 +1659,129 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       created_at: new Date().toISOString(),
     };
     rememberPhone(characterId);
-    persist("addCapticComment", supabase.from("captic_comments").insert(row));
-    setState((s) => ({ ...s, capticComments: [...s.capticComments, row] }));
+    const saved = Promise.resolve(supabase.from("captic_comments").insert(row));
+    persist("addCapticComment", saved);
+    setState((s) => {
+      const target = s.capticPosts.find((p) => p.id === postId)?.character_id;
+      if (!target || target === characterId) return { ...s, capticComments: [...s.capticComments, row] };
+      const event: CapticEvent = {
+        id: `cape_c_${row.id}`,
+        kind: "comment",
+        actor_id: characterId,
+        target_id: target,
+        post_id: postId,
+        comment_id: row.id,
+        created_at: row.created_at,
+      };
+      // erst nach dem Kommentar – die Aktivität verweist auf ihn
+      persist("capticEvent", saved.then(() => supabase.from("captic_events").upsert(event)));
+      return {
+        ...s,
+        capticComments: [...s.capticComments, row],
+        capticEvents: [...s.capticEvents.filter((e) => e.id !== event.id), event],
+      };
+    });
   }, []);
 
   const deleteCapticComment = useCallback((id: string) => {
     persist("deleteCapticComment", supabase.from("captic_comments").delete().eq("id", id));
-    setState((s) => ({ ...s, capticComments: s.capticComments.filter((c) => c.id !== id) }));
+    setState((s) => ({
+      ...s,
+      capticComments: s.capticComments.filter((c) => c.id !== id),
+      capticEvents: s.capticEvents.filter((e) => e.comment_id !== id),
+    }));
   }, []);
+
+  const addCapticStory = useCallback((story: Omit<CapticStory, "id" | "created_at">) => {
+    const row: CapticStory = { ...story, id: uid("caps"), created_at: new Date().toISOString() };
+    rememberPhone(story.character_id);
+    persist("addCapticStory", supabase.from("captic_stories").insert(row));
+    setState((s) => ({ ...s, capticStories: [...s.capticStories, row] }));
+    return row.id;
+  }, []);
+
+  const deleteCapticStory = useCallback((id: string) => {
+    persist("deleteCapticStory", supabase.from("captic_stories").delete().eq("id", id));
+    setState((s) => ({ ...s, capticStories: s.capticStories.filter((x) => x.id !== id) }));
+  }, []);
+
+  const toggleCapticFollow = useCallback((characterId: string, otherId: string) => {
+    setState((s) => {
+      const me = s.characters.find((c) => c.id === characterId);
+      if (!me || characterId === otherId) return s;
+      const before = me.phone?.captic?.follows ?? [];
+      const had = before.includes(otherId);
+      const phone = {
+        ...me.phone,
+        captic: {
+          ...me.phone?.captic,
+          follows: had ? before.filter((x) => x !== otherId) : [...before, otherId],
+        },
+      };
+      persist("toggleCapticFollow", supabase.from("characters").update({ phone }).eq("id", characterId));
+      const event: CapticEvent = {
+        id: `cape_follow_${otherId}_${characterId}`,
+        kind: "follow",
+        actor_id: characterId,
+        target_id: otherId,
+        created_at: new Date().toISOString(),
+      };
+      persist(
+        "capticEvent",
+        had
+          ? supabase.from("captic_events").delete().eq("id", event.id)
+          : supabase.from("captic_events").upsert(event),
+      );
+      const rest = s.capticEvents.filter((e) => e.id !== event.id);
+      return {
+        ...s,
+        characters: s.characters.map((c) => (c.id === characterId ? { ...c, phone } : c)),
+        capticEvents: had ? rest : [...rest, event],
+      };
+    });
+  }, []);
+
+  // Neue Aktivität je eigenem Charakter. Was ich selbst (mit einem anderen meiner
+  // Charaktere) ausgelöst habe, zählt nicht.
+  const capticNewsByChar = useMemo(() => {
+    const out = new Map<string, CapticEvent[]>();
+    if (!currentPlayer) return out;
+    const mine = new Set(
+      state.characters.filter((c) => !c.deleted_at && playsAs(c, currentPlayer.id)).map((c) => c.id),
+    );
+    for (const e of state.capticEvents) {
+      if (!mine.has(e.target_id) || mine.has(e.actor_id)) continue;
+      const seen = reads[`captic:${e.target_id}`];
+      if (seen && new Date(e.created_at).getTime() <= new Date(seen).getTime()) continue;
+      out.set(e.target_id, [...(out.get(e.target_id) ?? []), e]);
+    }
+    return out;
+  }, [state.capticEvents, state.characters, reads, currentPlayer]);
+  const capticNews = useCallback(
+    (characterId: string) => capticNewsByChar.get(characterId) ?? NO_EVENTS,
+    [capticNewsByChar],
+  );
+  // Nur Charaktere, bei denen Captic auch auf dem Handy liegt
+  const capticAlerts = useMemo(
+    () =>
+      [...capticNewsByChar.entries()]
+        .filter(([id]) => {
+          const p = state.characters.find((c) => c.id === id)?.phone;
+          return !p?.disabled && p?.model !== "burner" && !!p?.captic?.enabled;
+        })
+        .map(([characterId, events]) => ({ characterId, count: events.length })),
+    [capticNewsByChar, state.characters],
+  );
+  const capticSeenAt = useCallback(
+    (characterId: string) => reads[`captic:${characterId}`] ?? null,
+    [reads],
+  );
+  const markCapticSeen = useCallback(
+    (characterId: string) => {
+      if (myPlayerId) applyReads(myPlayerId, { [`captic:${characterId}`]: new Date().toISOString() });
+    },
+    [myPlayerId, applyReads],
+  );
 
   const unreadChatCount = unreadChatIds.size;
 
@@ -1721,6 +1886,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       toggleCapticLike,
       addCapticComment,
       deleteCapticComment,
+      addCapticStory,
+      deleteCapticStory,
+      toggleCapticFollow,
+      capticNews,
+      capticAlerts,
+      capticSeenAt,
+      markCapticSeen,
     }),
     [
       state,
@@ -1817,6 +1989,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       toggleCapticLike,
       addCapticComment,
       deleteCapticComment,
+      addCapticStory,
+      deleteCapticStory,
+      toggleCapticFollow,
+      capticNews,
+      capticAlerts,
+      capticSeenAt,
+      markCapticSeen,
     ],
   );
 

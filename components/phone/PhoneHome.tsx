@@ -52,7 +52,7 @@ export function PhoneHome({
   readOnly?: boolean;
   onOpenContacts?: () => void;
 }) {
-  const { chats, calls, isChatNew } = useStore();
+  const { chats, calls, isChatNew, capticNews } = useStore();
   const phone = resolvePhone(character);
   const unread = readOnly
     ? 0
@@ -133,7 +133,7 @@ export function PhoneHome({
         </Go>
         {phone.captic && (
           <Go readOnly={readOnly} href="/handy/captic">
-            <AppIcon label="Captic" bg={CAPTIC_BG}>
+            <AppIcon label="Captic" bg={CAPTIC_BG} badge={readOnly ? 0 : capticNews(character.id).length}>
               <CapticGlyph />
             </AppIcon>
           </Go>

@@ -1,5 +1,5 @@
--- Testdaten für Captic (für Stage gedacht): Profile, Beiträge und Kommentare
--- zwischen Irina, Reece, Elliot, Liam, Alexander, Nila und Riley.
+-- Testdaten für Captic (für Stage gedacht): Profile, Beiträge, Kommentare,
+-- Stories und Aktivitäten zwischen Irina, Reece, Elliot, Liam, Alexander, Nila und Riley.
 -- Vorher supabase/schema-captic.sql ausführen. Wiederholbar (idempotent).
 -- Die Bilder sind Platzhalter-Fotos von picsum.photos (zufällige Motive, belegen
 -- keinen eigenen Speicher) – die Bildunterschriften passen deshalb nur ungefähr.
@@ -124,4 +124,46 @@ from (values
 ) as v(id, post_id, character_id, content, created_at)
 where exists (select 1 from captic_posts p where p.id = v.post_id)
   and exists (select 1 from characters c where c.id = v.character_id)
+on conflict (id) do nothing;
+
+-- Stories (Hochformat) – nur von Charakteren, die es gibt
+insert into captic_stories (id, character_id, kind, url, ar, caption, created_at)
+select v.*
+from (values
+  ('caps_seed_riley_1', 'c_riley', 'image', 'https://picsum.photos/seed/eden-story-riley-1/1080/1920', 0.5625::real, 'first customer of the day asked for "just a coffee". sir this is a menu', '2026-10-06T11:00:00+00'::timestamptz),
+  ('caps_seed_riley_2', 'c_riley', 'image', 'https://picsum.photos/seed/eden-story-riley-2/1080/1920', 0.5625::real, 'break. 4 minutes. do not talk to me', '2026-10-06T11:01:00+00'::timestamptz),
+  ('caps_seed_reece_1', 'c_reece', 'image', 'https://picsum.photos/seed/eden-story-reece-1/1080/1920', 0.5625::real, 'saturday. be there.', '2026-10-06T11:02:00+00'::timestamptz),
+  ('caps_seed_liam_1', 'c_liam', 'image', 'https://picsum.photos/seed/eden-story-liam-1/1080/1920', 0.5625::real, '', '2026-10-06T11:03:00+00'::timestamptz),
+  ('caps_seed_liam_2', 'c_liam', 'image', 'https://picsum.photos/seed/eden-story-liam-2/1080/1920', 0.5625::real, 'golden hour, washington', '2026-10-06T11:04:00+00'::timestamptz),
+  ('caps_seed_nila_1', 'c_nila', 'image', 'https://picsum.photos/seed/eden-story-nila-1/1080/1920', 0.5625::real, 'studio day 🎨', '2026-10-06T11:05:00+00'::timestamptz),
+  ('caps_seed_irina_1', 'c_irina', 'image', 'https://picsum.photos/seed/eden-story-irina-1/1080/1920', 0.5625::real, 'closing shift 🖤', '2026-10-06T11:06:00+00'::timestamptz),
+  ('caps_seed_elliot_1', 'c_elliot', 'image', 'https://picsum.photos/seed/eden-story-elliot-1/1080/1920', 0.5625::real, 'library. day three.', '2026-10-06T11:07:00+00'::timestamptz)
+) as v(id, character_id, kind, url, ar, caption, created_at)
+where exists (select 1 from characters c where c.id = v.character_id)
+on conflict (id) do nothing;
+
+-- Aktivitäten zu den Testdaten (Glocke in der App, Hinweis im Dashboard):
+-- je ein Eintrag pro Kommentar, Herz und Follower – nie für eigene Beiträge.
+insert into captic_events (id, kind, actor_id, target_id, post_id, comment_id, created_at)
+select 'cape_c_' || k.id, 'comment', k.character_id, p.character_id, p.id, k.id, k.created_at
+from captic_comments k
+join captic_posts p on p.id = k.post_id
+where k.id like 'capc_seed_%' and k.character_id <> p.character_id
+on conflict (id) do nothing;
+
+insert into captic_events (id, kind, actor_id, target_id, post_id, created_at)
+select 'cape_like_' || p.id || '_' || l.actor, 'like', l.actor, p.character_id, p.id, p.created_at + interval '30 minutes'
+from captic_posts p
+cross join lateral jsonb_array_elements_text(p.liked_by) as l(actor)
+where p.id like 'cap_seed_%' and l.actor <> p.character_id
+  and exists (select 1 from characters c where c.id = l.actor)
+on conflict (id) do nothing;
+
+insert into captic_events (id, kind, actor_id, target_id, created_at)
+select 'cape_follow_' || f.target || '_' || c.id, 'follow', c.id, f.target, '2026-10-06T08:00:00+00'::timestamptz
+from characters c
+cross join lateral jsonb_array_elements_text(coalesce(c.phone -> 'captic' -> 'follows', '[]'::jsonb)) as f(target)
+where c.id in ('c_irina', 'c_reece', 'c_elliot', 'c_liam', 'c_alexander', 'c_nila', 'c_riley')
+  and f.target <> c.id
+  and exists (select 1 from characters t where t.id = f.target)
 on conflict (id) do nothing;

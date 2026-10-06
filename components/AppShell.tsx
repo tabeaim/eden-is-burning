@@ -378,6 +378,7 @@ function Sidebar({
     logout,
     unreadChatCount,
     incomingCalls,
+    capticAlerts,
     scenes,
     isSceneNew,
     myNpcs,
@@ -386,7 +387,8 @@ function Sidebar({
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
   // Alter Egos: eigene Main Characters und zugeordnete Supporting Characters (mit SC-Tag)
   const egos = [...myChars, ...myNpcs.filter((c) => tierOf(c) === "supporting")];
-  const phoneBadge = unreadChatCount + incomingCalls.length;
+  const phoneBadge =
+    unreadChatCount + incomingCalls.length + capticAlerts.reduce((n, a) => n + a.count, 0);
   // Orange Zähler im Menü: Szenen = alle ungelesenen; Dashboard = Bewegung bei
   // den eigenen Charakteren (eigene Szenen, Chats, Anrufe)
   const myIds = new Set(myChars.map((c) => c.id));

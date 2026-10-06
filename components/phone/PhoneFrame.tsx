@@ -201,13 +201,15 @@ function OwnerBar({
   options: string[];
   onOwner?: (id: string) => void;
 }) {
-  const { character, chats, calls, isChatNew } = useStore();
+  const { character, chats, calls, isChatNew, capticAlerts } = useStore();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  // Neues auf einem Handy: ungelesene Chats und klingelnde Anrufe dieses Charakters
+  // Neues auf einem Handy: ungelesene Chats, klingelnde Anrufe und neue
+  // Captic-Aktivität dieses Charakters
   const news = (id: string) =>
     chats.filter((c) => c.participant_ids.includes(id) && isChatNew(c.id)).length +
-    calls.filter((c) => c.status === "ringing" && c.callee_id === id).length;
+    calls.filter((c) => c.status === "ringing" && c.callee_id === id).length +
+    (capticAlerts.find((a) => a.characterId === id)?.count ?? 0);
   const newsElsewhere = options.some((id) => id !== owner && news(id) > 0);
   useEffect(() => {
     if (!open) return;

@@ -388,6 +388,28 @@ export interface CapticPost {
   created_at: string; // echte Zeit – bestimmt nur die Reihenfolge
 }
 
+// Story: liegt bildschirmfüllend hinter dem Profilbild (ohne Likes/Kommentare)
+export interface CapticStory {
+  id: string;
+  character_id: string;
+  kind: CapticKind;
+  url: string;
+  ar?: number | null;
+  caption: string;
+  created_at: string;
+}
+
+// Aktivität für `target_id`: jemand hat geliket, kommentiert oder folgt jetzt.
+export interface CapticEvent {
+  id: string;
+  kind: "like" | "comment" | "follow";
+  actor_id: string;
+  target_id: string;
+  post_id?: string | null;
+  comment_id?: string | null;
+  created_at: string;
+}
+
 export interface CapticComment {
   id: string;
   post_id: string;

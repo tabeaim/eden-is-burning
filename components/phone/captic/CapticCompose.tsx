@@ -33,6 +33,11 @@ const CROP_RATIOS = [
   { label: "Quer", value: 1.91 },
 ];
 
+const STORY_RATIOS = [
+  { label: "Story 9:16", value: 9 / 16 },
+  ...CROP_RATIOS.slice(0, 2),
+];
+
 export const capticField =
   "w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/25 sm:text-[0.875rem]";
 
@@ -41,15 +46,17 @@ export const capticField =
 export function CapticCompose({
   me,
   post,
+  story = false,
   onDone,
   onCancel,
 }: {
   me: Character;
   post?: CapticPost; // vorhanden: bearbeiten
+  story?: boolean; // Story statt Beitrag: nur Medium und Text
   onDone: (postId: string) => void;
   onCancel: () => void;
 }) {
-  const { addCapticPost, updateCapticPost } = useStore();
+  const { addCapticPost, updateCapticPost, addCapticStory } = useStore();
   const [media, setMedia] = useState<Media | null>(post ?? null);
   const [caption, setCaption] = useState(post?.caption ?? "");
   const [likes, setLikes] = useState(post ? String(post.likes) : "");
@@ -57,7 +64,9 @@ export function CapticCompose({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [panel, setPanel] = useState<null | "gif" | "emoji">(null);
-  const [cropping, setCropping] = useState<{ file: File; src: string } | null>(null);
+  const [cropping, setCropping] = useState<{ file: File; src: string } | null>(
+    null,
+  );
   const file = useRef<HTMLInputElement>(null);
   const area = useRef<HTMLTextAreaElement>(null);
 
@@ -88,7 +97,12 @@ export function CapticCompose({
       void run("GIF wird hochgeladen …", async () => {
         const url = await uploadAnimation(f, "captic");
         const poster = await uploadImage(f, "captic", IMAGE_SIZES.capticPoster);
-        return { kind: "gif", url, poster_url: poster, ar: await imageRatio(url) };
+        return {
+          kind: "gif",
+          url,
+          poster_url: poster,
+          ar: await imageRatio(url),
+        };
       });
     } else if (f.type.startsWith("image/")) {
       setCropping({ file: f, src: URL.createObjectURL(f) });
@@ -103,8 +117,18 @@ export function CapticCompose({
     setCropping(null);
     void run("Bild wird hochgeladen …", async () => {
       try {
-        const url = await uploadImage(c.file, "captic", IMAGE_SIZES.captic, crop);
-        return { kind: "image", url, poster_url: null, ar: await imageRatio(url) };
+        const url = await uploadImage(
+          c.file,
+          "captic",
+          IMAGE_SIZES.captic,
+          crop,
+        );
+        return {
+          kind: "image",
+          url,
+          poster_url: null,
+          ar: await imageRatio(url),
+        };
       } finally {
         URL.revokeObjectURL(c.src);
       }
@@ -125,11 +149,25 @@ export function CapticCompose({
     const at = el ? el.selectionStart : caption.length;
     const end = el ? el.selectionEnd : caption.length;
     setCaption(caption.slice(0, at) + emoji + caption.slice(end));
-    requestAnimationFrame(() => el?.setSelectionRange(at + emoji.length, at + emoji.length));
+    requestAnimationFrame(() =>
+      el?.setSelectionRange(at + emoji.length, at + emoji.length),
+    );
   }
 
   function share() {
     if (!media) return;
+    if (story) {
+      onDone(
+        addCapticStory({
+          character_id: me.id,
+          kind: media.kind,
+          url: media.url,
+          ar: media.ar,
+          caption: caption.trim(),
+        }),
+      );
+      return;
+    }
     const fields = {
       caption: caption.trim(),
       likes: parseCount(likes) ?? 0,
@@ -151,7 +189,16 @@ export function CapticCompose({
     <div className="min-h-0 flex-1 overflow-y-auto">
       {media ? (
         <div>
-          <CapticMedia post={{ ...media, id: "preview", character_id: me.id, caption: "", likes: 0, created_at: "" }} />
+          <CapticMedia
+            post={{
+              ...media,
+              id: "preview",
+              character_id: me.id,
+              caption: "",
+              likes: 0,
+              created_at: "",
+            }}
+          />
           {!post && (
             <button
               onClick={() => setMedia(null)}
@@ -164,7 +211,11 @@ export function CapticCompose({
       ) : (
         <div className="px-3 pt-3">
           <div className="flex gap-2">
-            <button onClick={() => file.current?.click()} disabled={!!busy} className={source}>
+            <button
+              onClick={() => file.current?.click()}
+              disabled={!!busy}
+              className={source}
+            >
               <Icon name="photo" size={24} />
               {VIDEO_UPLOAD ? "Foto oder Video" : "Foto oder GIF"}
             </button>
@@ -180,7 +231,11 @@ export function CapticCompose({
           <input
             ref={file}
             type="file"
-            accept={VIDEO_UPLOAD ? "image/*,video/mp4,video/webm,video/quicktime" : "image/*"}
+            accept={
+              VIDEO_UPLOAD
+                ? "image/*,video/mp4,video/webm,video/quicktime"
+                : "image/*"
+            }
             hidden
             onChange={(e) => {
               pick(e.target.files?.[0]);
@@ -192,18 +247,23 @@ export function CapticCompose({
             Fotos lassen sich zuschneiden.{" "}
             {VIDEO_UPLOAD &&
               `Videos (mit Ton) bis ${MAX_VIDEO_SECONDS} Sekunden und ${MAX_VIDEO_BYTES / 1024 / 1024} MB. `}
-            GIFs aus der Suche brauchen keinen Speicher, eigene GIF-Dateien bis 8 MB.
+            GIFs aus der Suche brauchen keinen Speicher, eigene GIF-Dateien bis
+            8 MB.
           </p>
         </div>
       )}
 
-      {busy && <p className="px-3 pt-3 text-[0.8125rem] text-text-secondary">{busy}</p>}
-      {error && <p className="px-3 pt-3 text-[0.8125rem] text-red-300">{error}</p>}
+      {busy && (
+        <p className="px-3 pt-3 text-[0.8125rem] text-text-secondary">{busy}</p>
+      )}
+      {error && (
+        <p className="px-3 pt-3 text-[0.8125rem] text-red-300">{error}</p>
+      )}
 
       <div className="flex flex-col gap-3 px-3 py-3">
         <label className={label}>
           <span className="flex items-center justify-between">
-            Bildunterschrift
+            {story ? "Text (optional)" : "Bildunterschrift"}
             <button
               type="button"
               onClick={() => setPanel((p) => (p === "emoji" ? null : "emoji"))}
@@ -217,26 +277,30 @@ export function CapticCompose({
             ref={area}
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            maxLength={2200}
-            rows={3}
+            maxLength={story ? 200 : 2200}
+            rows={story ? 2 : 3}
             className={`mt-1 resize-none ${capticField}`}
           />
         </label>
         {panel === "emoji" && <EmojiPicker onPick={insertEmoji} />}
-        <label className={label}>
-          Likes
-          <input
-            value={likes}
-            onChange={(e) => setLikes(e.target.value)}
-            inputMode="numeric"
-            placeholder="0"
-            className={`mt-1 ${capticField}`}
-          />
-        </label>
-        <div className={label}>
-          Inplay-Datum (optional)
-          <DatePicker value={date} onChange={setDate} className="mt-1" />
-        </div>
+        {!story && (
+          <>
+            <label className={label}>
+              Likes
+              <input
+                value={likes}
+                onChange={(e) => setLikes(e.target.value)}
+                inputMode="numeric"
+                placeholder="0"
+                className={`mt-1 ${capticField}`}
+              />
+            </label>
+            <div className={label}>
+              Inplay-Datum (optional)
+              <DatePicker value={date} onChange={setDate} className="mt-1" />
+            </div>
+          </>
+        )}
         <div className="flex justify-end gap-2 pt-1">
           <button
             onClick={onCancel}
@@ -249,7 +313,7 @@ export function CapticCompose({
             disabled={!media || !!busy}
             className="rounded-md bg-accent/90 px-3 py-1.5 text-[0.8125rem] font-medium text-black hover:bg-accent disabled:opacity-40"
           >
-            {post ? "Speichern" : "Teilen"}
+            {post ? "Speichern" : story ? "Zur Story hinzufügen" : "Teilen"}
           </button>
         </div>
       </div>
@@ -257,7 +321,7 @@ export function CapticCompose({
       {cropping && (
         <CropDialog
           src={cropping.src}
-          ratios={CROP_RATIOS}
+          ratios={story ? STORY_RATIOS : CROP_RATIOS}
           hint="Hochgeladen wird nur der Ausschnitt."
           onDone={cropped}
           onCancel={() => {

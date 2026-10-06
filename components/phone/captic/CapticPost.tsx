@@ -13,8 +13,30 @@ import { Sheet, SheetButton, SheetList } from "../Sheet";
 
 // Bild, GIF oder Video eines Beitrags. Videos laufen stumm los, sobald sie im
 // Bild sind, und halten an, wenn man weiterscrollt; Antippen schaltet den Ton.
-export function CapticMedia({ post }: { post: CapticPost }) {
+// Doppelklick bzw. doppeltes Antippen meldet `onDoubleTap` (liken) und lässt ein
+// Herz aufploppen.
+export function CapticMedia({ post, onDoubleTap }: { post: CapticPost; onDoubleTap?: () => void }) {
   const ratio = feedRatio(post.ar);
+  const lastTap = useRef(0);
+  const [pop, setPop] = useState(false);
+  // selbst gezählt statt `dblclick` – das kommt auf Touch-Geräten nicht verlässlich an
+  function tap() {
+    if (!onDoubleTap) return;
+    const now = Date.now();
+    if (now - lastTap.current > 320) {
+      lastTap.current = now;
+      return;
+    }
+    lastTap.current = 0;
+    onDoubleTap();
+    setPop(true);
+    setTimeout(() => setPop(false), 700);
+  }
+  const heart = pop && (
+    <span className="captic-pop pointer-events-none absolute inset-0 flex items-center justify-center text-white">
+      <Icon name="heart" size={92} fill="currentColor" />
+    </span>
+  );
   const ref = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
 
@@ -34,18 +56,22 @@ export function CapticMedia({ post }: { post: CapticPost }) {
 
   if (post.kind !== "video") {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={post.url}
-        alt=""
-        loading="lazy"
-        style={{ aspectRatio: ratio }}
-        className="block w-full bg-black object-cover"
-      />
+      <div onClick={tap} className="relative touch-manipulation select-none">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={post.url}
+          alt=""
+          loading="lazy"
+          draggable={false}
+          style={{ aspectRatio: ratio }}
+          className="block w-full bg-black object-cover"
+        />
+        {heart}
+      </div>
     );
   }
   return (
-    <div className="relative">
+    <div onClick={tap} className="relative touch-manipulation select-none">
       <video
         ref={ref}
         src={post.url}
@@ -64,6 +90,7 @@ export function CapticMedia({ post }: { post: CapticPost }) {
       >
         <Icon name={muted ? "mute" : "volume"} size={15} />
       </span>
+      {heart}
     </div>
   );
 }
@@ -145,7 +172,7 @@ export function CapticPostCard({
         )}
       </div>
 
-      <CapticMedia post={post} />
+      <CapticMedia post={post} onDoubleTap={() => !liked && toggleCapticLike(post.id, me.id)} />
 
       <div className="flex items-center gap-4 px-3 pt-2.5">
         <button

@@ -1,4 +1,5 @@
--- Captic (Foto-Netzwerk auf dem Handy): Beiträge der Charaktere und Kommentare.
+-- Captic (Foto-Netzwerk auf dem Handy): Beiträge, Kommentare, Stories und
+-- Aktivitäten der Charaktere.
 -- Im Supabase SQL-Editor ausführen (Run). Wiederholbar (idempotent).
 -- Profilangaben (Nutzername, Bio, Follower-Zahlen, wem man folgt) liegen in
 -- characters.phone – dafür ist keine Änderung nötig.
@@ -25,6 +26,31 @@ create table if not exists captic_comments (
   created_at   timestamptz not null default now()
 );
 
+-- Stories: Bilder/GIFs, die bildschirmfüllend hinter dem Profilbild liegen
+create table if not exists captic_stories (
+  id           text primary key,
+  character_id text not null references characters(id) on delete cascade,
+  kind         text not null default 'image',          -- image | gif | video
+  url          text not null,
+  ar           real,
+  caption      text not null default '',
+  created_at   timestamptz not null default now()
+);
+
+-- Aktivitäten („X gefällt dein Beitrag", „X folgt dir", „X hat kommentiert"):
+-- speisen die Glocke in der App und den Hinweis im Dashboard.
+create table if not exists captic_events (
+  id         text primary key,
+  kind       text not null,                             -- like | comment | follow
+  actor_id   text not null references characters(id) on delete cascade,
+  target_id  text not null references characters(id) on delete cascade,  -- wen es betrifft
+  post_id    text references captic_posts(id) on delete cascade,
+  comment_id text references captic_comments(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_captic_stories_character on captic_stories(character_id, created_at);
+create index if not exists idx_captic_events_target on captic_events(target_id, created_at);
 create index if not exists idx_captic_posts_character on captic_posts(character_id, created_at);
 create index if not exists idx_captic_comments_post on captic_comments(post_id, created_at);
 
@@ -32,11 +58,13 @@ create index if not exists idx_captic_comments_post on captic_comments(post_id, 
 -- (ein Like ändert die Zeile eines fremden Beitrags).
 alter table captic_posts    enable row level security;
 alter table captic_comments enable row level security;
+alter table captic_stories  enable row level security;
+alter table captic_events   enable row level security;
 
 do $$
 declare t text;
 begin
-  foreach t in array array['captic_posts', 'captic_comments']
+  foreach t in array array['captic_posts', 'captic_comments', 'captic_stories', 'captic_events']
   loop
     execute format('drop policy if exists "%s approved all" on %I', t, t);
     execute format(
@@ -52,5 +80,5 @@ begin
   end loop;
 end $$;
 
-grant select, insert, update, delete on captic_posts, captic_comments to authenticated;
-grant all on captic_posts, captic_comments to service_role;
+grant select, insert, update, delete on captic_posts, captic_comments, captic_stories, captic_events to authenticated;
+grant all on captic_posts, captic_comments, captic_stories, captic_events to service_role;

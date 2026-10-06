@@ -1,5 +1,6 @@
 "use client";
 
+import { CAPTIC_OPEN_KEY } from "@/components/phone/captic/CapticApp";
 import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -29,6 +30,7 @@ export default function DashboardPage() {
     chats,
     chatMessages,
     incomingCalls,
+    capticAlerts,
     character,
     myNpcs,
     isSubscribed,
@@ -215,6 +217,42 @@ export default function DashboardPage() {
                     </span>
                   </span>
                   <span className="shrink-0 text-[0.8125rem] font-medium text-accent">Reagieren ›</span>
+                </Link>
+              ))}
+            </section>
+          )}
+          {/* Neue Likes, Kommentare, Follower auf Captic – führt in die Aktivitäten
+              des Charakters; dort gilt es als gesehen und der Hinweis verschwindet */}
+          {capticAlerts.length > 0 && (
+            <section className="flex flex-col gap-2">
+              {capticAlerts.map((a) => (
+                <Link
+                  key={a.characterId}
+                  href="/handy/captic"
+                  onClick={() => {
+                    rememberPhone(a.characterId);
+                    try {
+                      sessionStorage.setItem(CAPTIC_OPEN_KEY, "activity");
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                  className="flex items-center gap-3 rounded-lg border border-accent/60 bg-accent-soft px-3.5 py-2.5 hover:bg-accent/20"
+                >
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center text-accent">
+                    <Icon name="heart" size={20} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-serif text-[0.875rem] leading-snug text-text-primary">
+                      Neue Aktivität auf Captic
+                    </span>
+                    <span className="block text-[0.875rem] text-text-tertiary">
+                      bei {character(a.characterId)?.name ?? "deinem Charakter"}
+                    </span>
+                  </span>
+                  <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-accent px-1 text-[0.6875rem] font-semibold text-black">
+                    {a.count}
+                  </span>
                 </Link>
               ))}
             </section>

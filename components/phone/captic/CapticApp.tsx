@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import type { CapticPost, Character } from "@/lib/types";
+import { useEffect, useMemo, useState } from "react";
+import type { CapticEvent, CapticPost, Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { resolvePhone } from "@/lib/phone";
 import {
@@ -18,26 +18,46 @@ import { Icon } from "@/components/Icon";
 import { PhoneAvatar } from "../PhoneFrame";
 import { CapticPostCard } from "./CapticPost";
 import { CapticCompose, capticField } from "./CapticCompose";
+import { StoryAvatar, StoryRow, StoryViewer } from "./CapticStories";
+
+// Übergabe vom Dashboard („Neue Aktivität auf Captic"): gleich die Aktivitäten öffnen
+export const CAPTIC_OPEN_KEY = "eden:captic-open";
 
 type View =
   | { t: "feed" }
   | { t: "search" }
   | { t: "new" }
+  | { t: "story" }
+  | { t: "activity" }
   | { t: "profile"; id: string }
   | { t: "post"; id: string }
   | { t: "edit"; id: string };
 
-const pill = (active: boolean) =>
-  `flex-1 rounded-full px-3 py-1.5 text-[0.8125rem] font-medium transition-colors ${
-    active ? "bg-accent text-black" : "bg-white/[0.06] text-text-secondary hover:text-text-primary"
-  }`;
-
-// Captic aus Sicht des Charakters, dessen Handy man in der Hand hat: Feed,
-// Suche, neuer Beitrag, Profile. Die Ansichten liegen als Stapel übereinander –
+// Captic aus Sicht des Charakters, dessen Handy man in der Hand hat: Feed mit
+// Story-Zeile, Suche, neuer Beitrag, Profile, Aktivitäten (Glocke). Die Ansichten liegen als Stapel übereinander –
 // der Pfeil oben links geht eine zurück, die Leiste unten beginnt neu.
 export function CapticApp({ me }: { me: Character }) {
-  const { capticPosts, character } = useStore();
-  const [stack, setStack] = useState<View[]>([{ t: "feed" }]);
+  const { capticPosts, character, capticNews } = useStore();
+  const [stack, setStack] = useState<View[]>(() => {
+    try {
+      if (sessionStorage.getItem(CAPTIC_OPEN_KEY) === "activity") {
+        return [{ t: "feed" }, { t: "activity" }];
+      }
+    } catch {
+      /* ignore */
+    }
+    return [{ t: "feed" }];
+  });
+  // erst nach dem Aufbau löschen – der Startwert oben wird beim Entwickeln doppelt berechnet
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem(CAPTIC_OPEN_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const [story, setStory] = useState<{ ids: string[]; start: string } | null>(null);
+  const news = capticNews(me.id).length;
   const view = stack[stack.length - 1];
   const push = (v: View) => setStack((s) => [...s, v]);
   const back = () => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
@@ -55,6 +75,10 @@ export function CapticApp({ me }: { me: Character }) {
   const title =
     view.t === "new"
       ? "Neuer Beitrag"
+      : view.t === "story"
+        ? "Neue Story"
+        : view.t === "activity"
+          ? "Aktivitäten"
       : view.t === "edit"
         ? "Beitrag bearbeiten"
         : view.t === "post"
@@ -89,9 +113,35 @@ export function CapticApp({ me }: { me: Character }) {
             captic<span style={{ color: CAPTIC_PINK }}>.</span>
           </div>
         )}
+        {view.t !== "activity" && (
+          <button
+            onClick={() => push({ t: "activity" })}
+            aria-label={news ? `Aktivitäten (${news} neu)` : "Aktivitäten"}
+            title="Aktivitäten"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-primary hover:bg-white/[0.06]"
+          >
+            <Icon name="bell" size={21} />
+            {news > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[0.6875rem] font-semibold text-black">
+                {news}
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
-      {view.t === "feed" && <Feed me={me} {...nav} />}
+      {view.t === "feed" && (
+        <Feed
+          me={me}
+          {...nav}
+          onStory={(ids, start) => setStory({ ids, start })}
+          onAddStory={() => push({ t: "story" })}
+        />
+      )}
+      {view.t === "activity" && <Activity me={me} onProfile={nav.onProfile} onOpen={nav.onOpen} />}
+      {view.t === "story" && (
+        <CapticCompose me={me} story onCancel={back} onDone={() => root({ t: "feed" })} />
+      )}
       {view.t === "search" && <Search me={me} onProfile={nav.onProfile} />}
       {view.t === "new" && (
         <CapticCompose me={me} onCancel={() => root({ t: "feed" })} onDone={() => root({ t: "profile", id: me.id })} />
@@ -108,7 +158,15 @@ export function CapticApp({ me }: { me: Character }) {
         ))}
       {view.t === "profile" &&
         (profileOf ? (
-          <Profile key={profileOf.id} who={profileOf} me={me} onOpen={nav.onOpen} onNew={() => root({ t: "new" })} />
+          <Profile
+            key={profileOf.id}
+            who={profileOf}
+            me={me}
+            onOpen={nav.onOpen}
+            onNew={() => root({ t: "new" })}
+            onAddStory={() => push({ t: "story" })}
+            onStory={() => setStory({ ids: [profileOf.id], start: profileOf.id })}
+          />
         ) : (
           <Gone />
         ))}
@@ -147,6 +205,16 @@ export function CapticApp({ me }: { me: Character }) {
           />
         </button>
       </nav>
+
+      {story && (
+        <StoryViewer
+          characterIds={story.ids}
+          start={story.start}
+          me={me}
+          onProfile={nav.onProfile}
+          onClose={() => setStory(null)}
+        />
+      )}
     </>
   );
 }
@@ -155,52 +223,118 @@ function Gone() {
   return <p className="flex-1 p-8 text-center text-[0.875rem] text-text-tertiary">Das gibt es nicht mehr.</p>;
 }
 
-// Feed: Beiträge der anderen – „Gefolgt" (nur wem man folgt) oder „Alle".
+// Feed: oben die Stories, darunter die eigenen Beiträge und die der Profile,
+// denen man folgt.
 function Feed({
   me,
   onProfile,
   onOpen,
   onEdit,
+  onStory,
+  onAddStory,
 }: {
   me: Character;
   onProfile: (id: string) => void;
   onOpen: (id: string) => void;
   onEdit: (id: string) => void;
+  onStory: (characterIds: string[], start: string) => void;
+  onAddStory: () => void;
 }) {
   const { capticPosts } = useStore();
   const following = follows(me);
-  const [tab, setTab] = useState<"following" | "all">(following.length ? "following" : "all");
   const posts = sortPosts(
-    capticPosts.filter(
-      (p) => p.character_id !== me.id && (tab === "all" || following.includes(p.character_id)),
-    ),
+    capticPosts.filter((p) => p.character_id === me.id || following.includes(p.character_id)),
   );
 
   return (
-    <>
-      <div className="flex shrink-0 gap-1.5 border-b border-border-subtle px-3 py-2">
-        <button onClick={() => setTab("following")} className={pill(tab === "following")}>
-          Gefolgt
-        </button>
-        <button onClick={() => setTab("all")} className={pill(tab === "all")}>
-          Alle
-        </button>
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        {posts.map((p) => (
-          <CapticPostCard key={p.id} post={p} me={me} onProfile={onProfile} onOpen={onOpen} onEdit={onEdit} />
-        ))}
-        {posts.length === 0 && (
-          <p className="px-8 py-10 text-center text-[0.875rem] text-text-tertiary">
-            {tab === "following"
-              ? following.length
-                ? "Die Profile, denen du folgst, haben noch nichts gepostet."
-                : `${me.name.split(" ")[0]} folgt noch niemandem. Unter „Entdecken" (Lupe) findest du die anderen Profile.`
-              : "Noch hat niemand sonst etwas gepostet."}
-          </p>
-        )}
-      </div>
-    </>
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <StoryRow me={me} onOpen={onStory} onAdd={onAddStory} />
+      {posts.map((p) => (
+        <CapticPostCard key={p.id} post={p} me={me} onProfile={onProfile} onOpen={onOpen} onEdit={onEdit} />
+      ))}
+      {posts.length === 0 && (
+        <p className="px-8 py-10 text-center text-[0.875rem] text-text-tertiary">
+          {following.length
+            ? "Die Profile, denen du folgst, haben noch nichts gepostet."
+            : `${me.name.split(" ")[0]} folgt noch niemandem. Unter „Entdecken" (Lupe) findest du die anderen Profile.`}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Aktivitäten (Glocke): wer geliket, kommentiert hat oder neu folgt. Das Öffnen
+// gilt als gesehen – Zähler und Dashboard-Hinweis verschwinden.
+function Activity({
+  me,
+  onProfile,
+  onOpen,
+}: {
+  me: Character;
+  onProfile: (id: string) => void;
+  onOpen: (postId: string) => void;
+}) {
+  const { capticEvents, capticPosts, capticComments, character, capticSeenAt, markCapticSeen } = useStore();
+  // Stand beim Öffnen: was danach kam, bleibt als „neu" markiert, solange man hier ist
+  const [seenBefore] = useState(() => capticSeenAt(me.id));
+  const events = capticEvents
+    .filter((e) => e.target_id === me.id && e.actor_id !== me.id)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .slice(0, 60);
+  const newest = events[0]?.created_at;
+  useEffect(() => {
+    markCapticSeen(me.id);
+    // bei jeder neu eintreffenden Aktivität wieder – man sieht sie ja gerade
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me.id, newest]);
+
+  const isNew = (e: CapticEvent) =>
+    !seenBefore || new Date(e.created_at).getTime() > new Date(seenBefore).getTime();
+
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      {events.map((e) => {
+        const actor = character(e.actor_id);
+        const post = e.post_id ? capticPosts.find((p) => p.id === e.post_id) : undefined;
+        const comment = e.comment_id ? capticComments.find((c) => c.id === e.comment_id) : undefined;
+        if (!actor) return null;
+        const thumb = post && (post.poster_url || (post.kind === "video" ? null : post.url));
+        return (
+          <div key={e.id} className="flex items-center gap-3 px-3 py-2.5">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${isNew(e) ? "bg-accent" : ""}`} />
+            <PhoneAvatar character={actor} size={40} link={false} />
+            <button
+              onClick={() => (post ? onOpen(post.id) : onProfile(actor.id))}
+              className="min-w-0 flex-1 text-left text-[0.8125rem] leading-snug text-text-secondary"
+            >
+              <span className="font-semibold text-text-primary">{capticHandle(actor)}</span>{" "}
+              {e.kind === "like" && "gefällt dein Beitrag."}
+              {e.kind === "follow" && "folgt dir jetzt."}
+              {e.kind === "comment" && (
+                <>
+                  hat kommentiert{comment ? ": " : "."}
+                  {comment && <span className="text-text-primary">{comment.content}</span>}
+                </>
+              )}
+            </button>
+            {thumb ? (
+              <button onClick={() => onOpen(post!.id)} aria-label="Beitrag öffnen" className="shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={thumb} alt="" loading="lazy" className="h-11 w-11 rounded object-cover" />
+              </button>
+            ) : (
+              e.kind === "follow" && <FollowButton me={me} other={actor} />
+            )}
+          </div>
+        );
+      })}
+      {events.length === 0 && (
+        <p className="px-8 py-10 text-center text-[0.875rem] text-text-tertiary">
+          Noch keine Aktivität. Hier steht, wer {me.name.split(" ")[0]} folgt, Beiträge liket oder
+          kommentiert.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -256,20 +390,9 @@ function Search({ me, onProfile }: { me: Character; onProfile: (id: string) => v
 }
 
 function FollowButton({ me, other, wide = false }: { me: Character; other: Character; wide?: boolean }) {
-  const { updateCharacter } = useStore();
-  const list = follows(me);
-  const on = list.includes(other.id);
-  function toggle() {
-    updateCharacter(me.id, {
-      phone: {
-        ...me.phone,
-        captic: {
-          ...me.phone?.captic,
-          follows: on ? list.filter((id) => id !== other.id) : [...list, other.id],
-        },
-      },
-    });
-  }
+  const { toggleCapticFollow } = useStore();
+  const on = follows(me).includes(other.id);
+  const toggle = () => toggleCapticFollow(me.id, other.id);
   return (
     <button
       onClick={toggle}
@@ -290,13 +413,18 @@ function Profile({
   me,
   onOpen,
   onNew,
+  onAddStory,
+  onStory,
 }: {
   who: Character;
   me: Character;
   onOpen: (postId: string) => void;
   onNew: () => void;
+  onAddStory: () => void;
+  onStory: () => void;
 }) {
-  const { capticPosts, characters, npcs, updateCharacter } = useStore();
+  const { capticPosts, capticStories, characters, npcs, updateCharacter } = useStore();
+  const hasStory = capticStories.some((s) => s.character_id === who.id);
   const own = who.id === me.id;
   const profile = who.phone?.captic ?? {};
   const handle = capticHandle(who);
@@ -346,9 +474,7 @@ function Profile({
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="flex items-center gap-5 px-4 pt-4">
-        <span className="rounded-full bg-[linear-gradient(135deg,#ff9d5c,#e8457a,#7b3fd6)] p-[3px]">
-          <PhoneAvatar character={who} size={76} className="ring-[3px] ring-[var(--phone-screen,#0c0c0e)]" />
-        </span>
+        <StoryAvatar character={who} size={76} active={hasStory} onOpen={onStory} />
         <div className="flex flex-1 justify-around text-center">
           {[
             [formatCount(posts.length), "Beiträge"],
@@ -406,9 +532,6 @@ function Profile({
               />
             </label>
           </div>
-          <p className="text-[0.75rem] leading-snug text-text-tertiary">
-            Frei wählbare Zahlen. Leer gelassen zählt, wer hier in der App wirklich folgt.
-          </p>
           <div className="flex gap-2">
             <button onClick={() => setEditing(false)} className={button}>
               Abbrechen
@@ -432,7 +555,10 @@ function Profile({
                   Profil bearbeiten
                 </button>
                 <button onClick={onNew} className={button}>
-                  Neuer Beitrag
+                  + Beitrag
+                </button>
+                <button onClick={onAddStory} className={button}>
+                  + Story
                 </button>
               </>
             ) : (

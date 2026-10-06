@@ -329,3 +329,34 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
   background: transparent !important;
   border: 0 !important;
 }
+
+/* Alles Anklickbare zeigt die Hand (Tailwind setzt das bei Knöpfen nicht mehr) */
+button:not(:disabled),
+[role="button"],
+[role="link"],
+[role="option"],
+[role="tab"],
+[role="menuitem"],
+summary,
+select,
+label:has(input[type="file"]) {
+  cursor: pointer;
+}
+
+/* Captic: Herz, das beim Doppelklick auf ein Bild aufploppt */
+@keyframes captic-pop {
+  0% { opacity: 0; transform: scale(0.4); }
+  25% { opacity: 0.95; transform: scale(1.15); }
+  45% { transform: scale(1); }
+  75% { opacity: 0.95; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.captic-pop {
+  animation: captic-pop 0.7s ease-out both;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.45));
+}
+/* Captic: Fortschrittsbalken der laufenden Story */
+@keyframes captic-story {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
