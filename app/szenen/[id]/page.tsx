@@ -465,26 +465,27 @@ function SceneHeader({
 
         {(isParticipant || canReply) && (
           <div className="flex flex-wrap items-center gap-2">
+            {/* Antworten, Weitergeben, Beenden: auf dem Handy nur unter den Posts */}
             {canReply && (
               <button
                 onClick={onReply}
                 title={myTurn ? "Du bist am Zug" : undefined}
-                className={
+                className={`max-md:hidden ${
                   myTurn
                     ? "flex items-center gap-1.5 rounded-md border border-accent/70 bg-accent-soft px-3 py-1.5 text-[0.8125rem] text-text-primary"
                     : btn
-                }
+                }`}
               >
                 <Icon name="message" size={14} /> Antworten
               </button>
             )}
             {scene.status === "active" && myTurn && (
-              <button onClick={onPassTurn} className={btn} title="Zug weitergeben">
+              <button onClick={onPassTurn} className={`max-md:hidden ${btn}`} title="Zug weitergeben">
                 <Icon name="arrow-right" size={14} /> Weitergeben
               </button>
             )}
             {scene.status === "active" && isParticipant && (
-              <button onClick={() => setClosing(true)} className={btn}>
+              <button onClick={() => setClosing(true)} className={`max-md:hidden ${btn}`}>
                 <Icon name="check" size={14} /> Beenden
               </button>
             )}

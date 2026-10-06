@@ -12,9 +12,6 @@ import { GONE_CLASS, GONE_PLAYER_CLASS, useCharacterGone } from "@/lib/gone";
 // benannte Gruppe `ava`, nicht schon beim Hovern über dem ganzen Post). Auf dem
 // Handy eine schmale Kopfzeile über dem Post: kleiner Avatar, daneben Name,
 // Tagline und Spieler*in.
-// Mittlere Zeichenbreite des Namens (fett, Großbuchstaben, gesperrt) in em
-const NAME_CHAR_EM = 0.75;
-
 export function SceneCharacterCard({
   character,
   player,
@@ -80,7 +77,7 @@ export function SceneCharacterCard({
       </div>
 
       {/* ab md: große Karte neben dem Post */}
-      <div className="hidden w-[260px] shrink-0 [container-type:inline-size] md:block">
+      <div className="hidden w-[280px] shrink-0 [container-type:inline-size] md:block">
         <div className="group/ava relative aspect-[600/502] w-full overflow-hidden rounded-lg border border-border-subtle bg-bg-surface">
           <Link href={href} className="block h-full w-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -114,13 +111,12 @@ export function SceneCharacterCard({
           />
         )}
 
-        {/* Name – führt wie das Bild aufs Profil. Immer in einer Zeile: lange Namen
-            werden kleiner gesetzt (Breite der Karte / Zeichenzahl). */}
+        {/* Name – führt wie das Bild aufs Profil. Überall gleich groß; die Karte ist
+            so breit, dass ein langer Name wie „Reece Logan Henderson“ in eine Zeile passt. */}
         <Link
           href={href}
           title={gone ? "Charakter gelöscht" : undefined}
-          style={{ fontSize: `min(1.125rem, ${(100 / (character.name.length * NAME_CHAR_EM)).toFixed(2)}cqw)` }}
-          className={`mt-3 block whitespace-nowrap text-center font-serif font-bold uppercase tracking-wide text-text-primary hover:text-accent ${
+          className={`mt-3 block text-center font-serif text-[1.125rem] font-bold uppercase tracking-wide text-text-primary hover:text-accent ${
             gone ? GONE_CLASS : ""
           }`}
         >

@@ -577,7 +577,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         </p>
         {gif && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={gif} alt="GIF" className="max-h-[109px] max-w-[260px] rounded-md" />
+          <img src={gif} alt="GIF" className="max-h-[117px] max-w-[280px] rounded-md" />
         )}
         <div className="flex flex-wrap items-center gap-3">
           <button

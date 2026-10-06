@@ -93,6 +93,7 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   der Charakter lässt sich im Feld immer wechseln, und wer mit einem neuen
   Charakter schreibt, wird als Teilnehmer*in eingetragen. „Antworten",
   „Weitergeben" und „Beenden" stehen im Szenenkopf und noch einmal unter den Posts.
+  Auf dem Handy stehen sie nur unter den Posts.
 - **Rechtsklick auf eine Szenenbox** (`SceneCard`, `SceneRow`): kleines Menü an
   der Maus (`components/ContextMenu.tsx`) – „Als ungelesen/gelesen markieren".
 - **Charakter wählen:** `components/CharacterSelect.tsx` (Aufklappliste mit
@@ -104,7 +105,8 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   (`group/post`) – verschachtelte Hover immer als benannte Gruppen. „Kopieren"
   gibt es bei jedem Post; es legt ihn samt Formatierung in die Zwischenablage.
 - **Charakterkarte in der Szene** (`SceneCharacterCard`): ab `md` groß neben dem
-  Post, der Name immer in einer Zeile (lange Namen werden kleiner gesetzt), keine
+  Post (280px breit – so passt auch ein langer Name in eine Zeile; alle Namen
+  gleich groß), keine
   Social-Icons. Auf dem Handy eine Kopfzeile über dem Post: kleiner Avatar,
   daneben Name, Tagline, Spieler*in. Dort ist die Prosa linksbündig statt im
   Blocksatz, und die Post-Aktionen sind ohne Hover sichtbar.
