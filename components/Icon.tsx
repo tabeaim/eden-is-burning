@@ -42,7 +42,8 @@ type IconName =
   | "mute"
   | "more"
   | "bell"
-  | "send";
+  | "send"
+  | "grid";
 
 const paths: Record<IconName, React.ReactNode> = {
   dashboard: (
@@ -255,6 +256,14 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <path d="M4 9v6h4l5 4V5L8 9H4z" />
       <path d="M16.5 9.5l5 5M21.5 9.5l-5 5" />
+    </>
+  ),
+  grid: (
+    <>
+      <rect x="4" y="4" width="6.5" height="6.5" rx="1.2" />
+      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.2" />
+      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.2" />
+      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.2" />
     </>
   ),
   send: (

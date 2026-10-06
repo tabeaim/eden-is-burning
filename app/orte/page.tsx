@@ -55,7 +55,7 @@ export default function PlacesPage() {
         <div className="flex gap-1.5 mb-4 sm:mb-0 sm:absolute sm:right-0 sm:-top-[4.5rem] sm:z-10">
           {(
             [
-              ["list", "Liste", "book"],
+              ["list", "Liste", "grid"],
               ["map", "Karte", "map"],
             ] as const
           ).map(([key, label, icon]) => (
