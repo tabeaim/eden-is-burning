@@ -77,7 +77,7 @@ export function PhoneFrame({
       ref={ref}
       className={
         preview
-          ? "flex h-[780px] w-[390px] flex-col overflow-hidden rounded-[2rem] border border-border-subtle [zoom:0.78] sm:h-auto sm:w-auto sm:items-start sm:overflow-visible sm:rounded-none sm:border-0"
+          ? "flex h-[780px] w-[390px] flex-col overflow-hidden rounded-[2rem] border border-border-subtle [zoom:0.72] sm:h-auto sm:w-auto sm:items-start sm:overflow-visible sm:rounded-none sm:border-0"
           : "flex h-[var(--phone-h,100dvh)] flex-col sm:h-auto sm:items-center sm:py-4"
       }
     >

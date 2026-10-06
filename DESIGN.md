@@ -139,9 +139,21 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
 - **Facts:** drei kleine Boxen – identity (Name, Age, Zodiac, Gender, bei
   Supporting Characters und Statist*innen „Status"), life (Residence, Origin,
-  Relationship, Sexuality), occupation. Arbeitsplatz und Uni stehen hinter der
-  Beschäftigung („Rolle at Ort") als Pilltag, wenn es den Ort oder die Gegend
-  gibt (Gegend → `/orte?area=…`); Studiengang, Abschluss und Jahr in „Studies".
+  Relationship, Sexuality), occupation (Occupation, Workplace, University,
+  Studies – je eine Zeile). Arbeitsplatz und Uni als Pilltag, wenn es den Ort
+  oder die Gegend gibt (Gegend → `/orte?area=…`).
+- **Profil-Raster** (Konstanten oben in `app/charaktere/[id]/page.tsx`; neue
+  Reiter nutzen eines davon, statt eigene Spalten und Abstände zu erfinden):
+  `SPLIT` – schmale Textspalte + breitere Inhaltsspalte im Verhältnis 2:3,
+  `gap-x-10 gap-y-6` (General: Beschreibung | Facts, Looks: Angaben | Style);
+  `CARDS` – Karten-Listen zweispaltig, `gap-3` (Scenes, Relations);
+  `BOXES` – kleine Boxen nebeneinander, `gap-x-5 gap-y-6` (Facts-Gruppen).
+  Bereiche trennt eine Linie mit `mt-6 mb-6`, der Footer beginnt mit `mt-6`.
+- **Whiteboards** (`ThingsBoard`: Pockets, Style) sind überall höchstens 28rem
+  breit – beim Bearbeiten genauso wie im Profil.
+- **Profil-Footer:** „brought to you by" + Spieler*in als `Bubble` (Avatar,
+  Link aufs Spieler*innen-Profil); die Infozeile darunter mit großen
+  Anfangsbuchstaben.
 - **Supporting Characters** können dasselbe ausfüllen wie Main Characters;
   Pflichtangaben gelten nur für Mains.
 - **Lösen** von einer Statist*in oder einem Supporting Character fragt immer

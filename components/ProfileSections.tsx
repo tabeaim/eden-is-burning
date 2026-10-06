@@ -55,7 +55,7 @@ export function ProfileFacts({ c }: { c: Character }) {
   const year = studyYearAt(c);
   const full = tierOf(c) !== "extra";
 
-  // Arbeitsplatz und Uni stehen direkt hinter der Beschäftigung: „Rolle at Ort".
+  // Arbeitsplatz und Uni stehen in eigenen Zeilen unter der Beschäftigung.
   // Gibt es den Ort im Verzeichnis, steht er als Pilltag (Link aufs Ortsprofil);
   // ebenso eine Gegend (Byron University ist Gegend und Arbeitsplatz zugleich).
   const place = (name: string | null | undefined, id?: string | null) => {
@@ -65,7 +65,7 @@ export function ProfileFacts({ c }: { c: Character }) {
       (id ? locations.find((l) => l.id === id) : undefined) ?? locations.find((l) => l.name.toLowerCase() === q);
     if (loc) {
       const played = scenes.some((s) => s.location_area === loc.area && s.location_name === loc.name);
-      return <LocationBubble key={loc.id} id={loc.id} name={loc.name} played={played} className="align-middle" />;
+      return <LocationBubble key={loc.id} id={loc.id} name={loc.name} played={played} />;
     }
     const area = AREA_ORDER.find((k) => AREAS[k].name.toLowerCase() === q);
     if (area) {
@@ -73,7 +73,6 @@ export function ProfileFacts({ c }: { c: Character }) {
         <Bubble
           key={area}
           href={`/orte?area=${area}`}
-          className="align-middle"
           leading={
             <span className="flex h-5 w-5 items-center justify-center text-accent">
               <Icon name="map" size={13} />
@@ -87,24 +86,14 @@ export function ProfileFacts({ c }: { c: Character }) {
     return <span key={name}>{name}</span>;
   };
   const role = shown(c, "role", c.role) ?? (c.job || null);
-  const places = [
-    full && isWorking(c) ? place(shown(c, "employer", p.employer), p.employer_location_id) : null,
-    full && isStudent(c) ? place(shown(c, "university", p.university)) : null,
-    // Altbestand: Company aus dem früheren Profil
-    !isStudent(c) && !isWorking(c) ? place(c.company) : null,
-  ].filter(Boolean);
-  const occupation =
-    role || places.length ? (
-      <>
-        {role && role.charAt(0).toUpperCase() + role.slice(1)}
-        {places.map((x, i) => (
-          <span key={i}>
-            {i > 0 ? " & " : role ? " at " : ""}
-            {x}
-          </span>
-        ))}
-      </>
-    ) : null;
+  const workplace =
+    full && isWorking(c)
+      ? place(shown(c, "employer", p.employer), p.employer_location_id)
+      : // Altbestand: Company aus dem früheren Profil
+        !isStudent(c) && !isWorking(c)
+        ? place(c.company)
+        : null;
+  const university = full && isStudent(c) ? place(shown(c, "university", p.university)) : null;
   const studies =
     full && isStudent(c)
       ? [
@@ -140,7 +129,9 @@ export function ProfileFacts({ c }: { c: Character }) {
     [
       "occupation.",
       [
-        ["Occupation", occupation],
+        ["Occupation", role],
+        ["Workplace", workplace],
+        ["University", university],
         ["Studies", studies],
       ],
     ],

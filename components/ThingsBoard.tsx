@@ -22,10 +22,8 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
 export function ThingsBoard({
   items,
   onChange,
-  wide = false,
 }: {
   items: ThingItem[];
-  wide?: boolean; // Ansicht: größere Fläche (Pockets)
   // Mit onChange ist die Fläche ein Whiteboard zum Bearbeiten (steckt im
   // „Bearbeiten"-Formular des Profils, das auch speichert); ohne nur Ansicht.
   onChange?: (items: ThingItem[]) => void;
@@ -154,21 +152,22 @@ export function ThingsBoard({
 
   return (
     // Bearbeiten: Fläche links, Werkzeuge daneben (mobil darunter). Ansicht: nur
-    // die Fläche, höchstens 26rem breit.
+    // die Fläche. Überall gleich breit (höchstens 28rem), damit das Whiteboard
+    // beim Bearbeiten so aussieht wie im Profil.
     <div
       onPointerEnter={() => editing && (pasteTarget = me)}
       onPointerDownCapture={() => editing && (pasteTarget = me)}
       className={
         editing
-          ? "grid items-start gap-4 md:grid-cols-[minmax(0,26rem)_minmax(15rem,24rem)]"
-          : `w-full min-w-0 ${wide ? "max-w-[32rem]" : "max-w-[26rem]"}`
+          ? "grid items-start gap-4 md:grid-cols-[minmax(0,28rem)_minmax(15rem,24rem)]"
+          : "w-full min-w-0 max-w-[28rem]"
       }
     >
       {/* Die Fläche: fester Rahmen 3:4; in der Ansicht durchsichtig */}
       <div
         ref={board}
         onPointerDown={() => editing && setSelected(null)}
-        className={`relative aspect-[3/4] w-full ${wide && !editing ? "max-w-[32rem]" : "max-w-[26rem]"} overflow-hidden ${
+        className={`relative aspect-[3/4] w-full max-w-[28rem] overflow-hidden ${
           editing
             ? "touch-none rounded-xl border border-dashed border-border-strong bg-white/[0.04] [background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:10%_7.5%]"
             : ""
@@ -252,7 +251,7 @@ export function ThingsBoard({
       </div>
 
       {editing && (
-        <div className="flex min-w-0 max-w-[26rem] flex-col gap-3">
+        <div className="flex min-w-0 max-w-[28rem] flex-col gap-3">
           {/* Gewählter Gegenstand: Größe, Drehung, Stapel, entfernen */}
           {active ? (
             <div className="flex flex-col gap-2 rounded-lg border border-border-subtle p-3 text-[0.8125rem] text-text-secondary">

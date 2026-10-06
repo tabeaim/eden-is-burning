@@ -225,10 +225,6 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       )}
 
       <div className={group}>Auf einen Blick</div>
-      <label className={label}>
-        Zitat
-        <input {...text("quote")} className={`mt-1 ${field}`} />
-      </label>
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-[0.875rem] text-text-secondary">Header-Bild (oben über dem Namen)</span>
         <button disabled={uploading !== null} onClick={() => bannerFile.current?.click()} className={uploadBtn}>
@@ -252,6 +248,10 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
           }}
         />
       </div>
+      <label className={label}>
+        Zitat
+        <input {...text("quote")} className={`mt-1 ${field}`} />
+      </label>
 
       <div className={group}>Ausführliche Beschreibung</div>
       <textarea {...text("personality")} rows={6} className={`resize-y ${field}`} placeholder="Wer ist dieser Charakter?" />

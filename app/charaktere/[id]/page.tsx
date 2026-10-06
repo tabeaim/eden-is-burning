@@ -7,7 +7,7 @@ import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
 import { formatInplayDate, timeAgo } from "@/lib/format";
 import { Icon } from "@/components/Icon";
-import { LocationBubble } from "@/components/Bubble";
+import { Bubble, LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
 import { SceneCard } from "@/components/SceneCard";
 import {
@@ -49,6 +49,14 @@ const btn =
 const btnPrimary =
   "rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-3 py-1.5";
 const btnQuiet = "text-[0.8125rem] text-text-tertiary hover:text-text-primary px-2";
+// Raster des Profils (siehe DESIGN.md → Profil-Raster) – überall dieselben, damit
+// die Reiter gleich aufgebaut sind:
+// schmale Textspalte + breitere Inhaltsspalte (General: Beschreibung | Facts, Looks: Angaben | Style)
+const SPLIT = "grid items-start gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]";
+// Karten-Listen in zwei Spalten (Scenes, Relations)
+const CARDS = "grid items-start gap-3 lg:grid-cols-2";
+// kleine Boxen nebeneinander (Facts-Gruppen)
+const BOXES = "grid items-start gap-x-5 gap-y-6 sm:grid-cols-2";
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
@@ -173,14 +181,14 @@ export default function CharacterPage({
         ))}
       </div>
       {topTab === "general" && (
-        <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-2">
+        <div className={SPLIT}>
           {c.bio ? (
             <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary">{c.bio}</p>
           ) : (
             <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
           )}
           {/* Facts (Looks stehen im Reiter „Looks") */}
-          <div className="grid items-start gap-x-5 gap-y-6 sm:grid-cols-2">
+          <div className={BOXES}>
             <ProfileFacts c={c} />
           </div>
         </div>
@@ -222,7 +230,7 @@ export default function CharacterPage({
               <PhonePreview character={c} />
             </div>
           )}
-          <ThingsBoard items={c.profile?.things ?? []} wide />
+          <ThingsBoard items={c.profile?.things ?? []} />
           {!hasPhone(c) && !(c.profile?.things ?? []).length && (
             <p className="text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>
           )}
@@ -244,22 +252,29 @@ export default function CharacterPage({
         ))}
 
       {/* Footer */}
-      <div className="mt-8 border-t border-border-subtle pt-4">
-        <div className="font-display lowercase text-[1.625rem] leading-none text-accent">
-          brought to you by{" "}
+      <div className="mt-6 border-t border-border-subtle pt-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="font-display lowercase text-[1.625rem] leading-none text-accent">brought to you by</span>
           {p ? (
-            <Link href={`/spieler/${p.username}`} className="hover:underline">
+            <Bubble
+              href={`/spieler/${p.username}`}
+              leading={
+                p.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.avatar_url} alt="" className="h-5 w-5 rounded-full object-cover" />
+                ) : undefined
+              }
+            >
               {p.username}
-            </Link>
+            </Bubble>
           ) : (
-            "–"
+            <span className="text-text-tertiary">–</span>
           )}
-          .
         </div>
         <div className="mt-2 text-[0.8125rem] text-text-tertiary">
-          {postCount} {postCount === 1 ? "Post" : "Posts"} · registriert am{" "}
+          {postCount} {postCount === 1 ? "Post" : "Posts"} · Registriert am{" "}
           {formatInplayDate(c.created_at.slice(0, 10))}
-          {p && <> · zuletzt online {timeAgo(p.last_seen)}</>}
+          {p && <> · Zuletzt online {timeAgo(p.last_seen)}</>}
         </div>
       </div>
     </div>
@@ -413,10 +428,10 @@ function LookTab({ c }: { c: Character }) {
     return <p className="text-[0.875rem] text-text-tertiary">Noch nichts zum Aussehen hinterlegt.</p>;
   }
   return (
-    <div className="grid items-start gap-x-8 gap-y-7 md:grid-cols-2">
+    <div className={SPLIT}>
       <ProfileLooks c={c} />
       {outfit.length > 0 && (
-        <section className="flex flex-col items-center md:items-start">
+        <section className="flex flex-col items-center lg:items-start">
           <Heading>style.</Heading>
           <ThingsBoard items={outfit} />
         </section>
@@ -431,7 +446,7 @@ function InplayTab({ inScenes }: { inScenes: Scene[] }) {
       {inScenes.length === 0 ? (
         <p className="text-[0.875rem] text-text-tertiary">Noch in keiner Szene.</p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className={CARDS}>
           {inScenes.map((s) => (
             <SceneCard key={s.id} scene={s} compact />
           ))}
@@ -480,7 +495,7 @@ function RelationsTab({
                 <h3 className="mb-2 font-display lowercase text-[1.5rem] leading-none text-text-primary">
                   {title}
                 </h3>
-                <div className="flex flex-col gap-4">
+                <div className={CARDS}>
                   {rows.map((rc) => (
                     <RelationRow key={rc.id} c={c} rc={rc} canEdit={canEdit} />
                   ))}
