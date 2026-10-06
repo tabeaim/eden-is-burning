@@ -288,8 +288,11 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
 
 ## Orte – `app/orte/page.tsx`
 
-Ein Menüpunkt „Orte", zwei Ansichten (Umschalter oben, die zuletzt genutzte merkt
-sich das Gerät; ein Link `/orte?area=…` öffnet immer die Karte):
+Ein Menüpunkt „Orte", zwei Ansichten. Es startet immer die Karte, außer in
+dieser Sitzung war zuletzt die Liste offen; ein Link `/orte?area=…` öffnet immer
+die Karte. Der Umschalter steht ab `sm` ausnahmsweise oben rechts auf Höhe des
+Seitentitels (er soll die Karte nicht nach unten schieben), auf dem Handy über
+dem Inhalt:
 
 - **Liste** (`components/LocationList.tsx`): alle Orte als Karten, aufgebaut wie
   die Szenen-Übersicht – Reiter (Alle, Bespielt, Noch nicht bespielt),

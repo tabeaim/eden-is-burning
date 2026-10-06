@@ -18,26 +18,26 @@ import type { Location } from "@/lib/types";
 type View = "map" | "list";
 const VIEW_KEY = "eden.orte.view";
 
-// Orte: eine Seite, zwei Ansichten – die Karte und die Liste aller Orte. Die
-// zuletzt genutzte Ansicht merkt sich das Gerät; ohne Merker startet die Liste.
+// Orte: eine Seite, zwei Ansichten – die Karte und die Liste aller Orte. Es
+// startet immer die Karte, außer in dieser Sitzung war zuletzt die Liste offen.
 export default function PlacesPage() {
-  // null bis nach der Hydration (localStorage und Adresse gibt es erst im Browser)
+  // null bis nach der Hydration (sessionStorage und Adresse gibt es erst im Browser)
   const [view, setView] = useState<View | null>(null);
   useEffect(() => {
     // Link auf eine Gegend (/orte?area=byron) meint immer die Karte
     const area = new URLSearchParams(window.location.search).get("area");
     let stored: string | null = null;
     try {
-      stored = localStorage.getItem(VIEW_KEY);
+      stored = sessionStorage.getItem(VIEW_KEY);
     } catch {}
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setView(area || stored === "map" ? "map" : "list");
+    setView(!area && stored === "list" ? "list" : "map");
   }, []);
 
   function choose(v: View) {
     setView(v);
     try {
-      localStorage.setItem(VIEW_KEY, v);
+      sessionStorage.setItem(VIEW_KEY, v);
     } catch {}
   }
 
@@ -47,8 +47,12 @@ export default function PlacesPage() {
         title="Eden, Virginia"
         subtitle="Eden, Virginia – fünf Gegenden, ein Fluss, und alles dahinter." width="max-w-6xl" />
 
+      {/* Umschalter: ab `sm` ausnahmsweise oben rechts auf Höhe des Seitentitels
+          (über der Trennlinie), damit er die Karte nicht nach unten schiebt; auf
+          dem Handy ist dort kein Platz, da steht er über dem Inhalt. */}
       {view && (
-        <div className="flex gap-1.5 mb-4">
+        <div className="sm:relative sm:h-0">
+        <div className="flex gap-1.5 mb-4 sm:mb-0 sm:absolute sm:right-0 sm:-top-[4.5rem] sm:z-10">
           {(
             [
               ["list", "Liste", "book"],
@@ -68,6 +72,7 @@ export default function PlacesPage() {
               <Icon name={icon} size={14} /> {label}
             </button>
           ))}
+        </div>
         </div>
       )}
 
