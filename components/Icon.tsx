@@ -36,7 +36,11 @@ type IconName =
   | "pause"
   | "play"
   | "chevron-right"
-  | "phone";
+  | "phone"
+  | "home"
+  | "volume"
+  | "mute"
+  | "more";
 
 const paths: Record<IconName, React.ReactNode> = {
   dashboard: (
@@ -233,6 +237,31 @@ const paths: Record<IconName, React.ReactNode> = {
     </>
   ),
   play: <path d="M6 4l14 8-14 8V4z" />,
+  home: (
+    <>
+      <path d="M4 11l8-7 8 7" />
+      <path d="M6 10v10h12V10" />
+    </>
+  ),
+  volume: (
+    <>
+      <path d="M4 9v6h4l5 4V5L8 9H4z" />
+      <path d="M16.5 8.5a5 5 0 0 1 0 7" />
+    </>
+  ),
+  mute: (
+    <>
+      <path d="M4 9v6h4l5 4V5L8 9H4z" />
+      <path d="M16.5 9.5l5 5M21.5 9.5l-5 5" />
+    </>
+  ),
+  more: (
+    <>
+      <circle cx="5" cy="12" r="1.2" />
+      <circle cx="12" cy="12" r="1.2" />
+      <circle cx="19" cy="12" r="1.2" />
+    </>
+  ),
 };
 
 export function Icon({

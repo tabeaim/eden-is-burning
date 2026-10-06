@@ -14,11 +14,16 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
 export function CropDialog({
   src,
   crop,
+  ratios,
+  hint = "Das Original bleibt erhalten – du kannst den Ausschnitt später wieder ändern.",
   onDone,
   onCancel,
 }: {
   src: string;
   crop?: ThingCrop | null;
+  // Feste Formate zum Anklicken (Breite/Höhe), z.B. Quadrat – danach frei änderbar
+  ratios?: { label: string; value: number }[];
+  hint?: string;
   onDone: (crop: ThingCrop | null) => void;
   onCancel: () => void;
 }) {
@@ -72,6 +77,14 @@ export function CropDialog({
     ["se", "nwse-resize", "-bottom-2 -right-2"],
   ];
 
+  // Größter mittiger Ausschnitt im gewünschten Format
+  function fit(ratio: number) {
+    if (!ar) return;
+    const w = ar > ratio ? ratio / ar : 1;
+    const h = ar > ratio ? 1 : ar / ratio;
+    setRect({ x: (1 - w) / 2, y: (1 - h) / 2, w, h });
+  }
+
   const full = rect.w > 0.995 && rect.h > 0.995;
   const handle = "absolute h-4 w-4 touch-none rounded-sm border-2 border-accent bg-bg-surface";
 
@@ -124,17 +137,26 @@ export function CropDialog({
           </div>
         </div>
         <p className="text-[0.8125rem] text-text-tertiary">
-          Rahmen verschieben oder an den Ecken ziehen. Das Original bleibt erhalten – du kannst den
-          Ausschnitt später wieder ändern.
+          Rahmen verschieben oder an den Ecken ziehen. {hint}
         </p>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <button
             onClick={() => setRect(FULL)}
             disabled={full}
-            className="mr-auto px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary disabled:opacity-40"
+            className={`${ratios?.length ? "" : "mr-auto "}px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary disabled:opacity-40`}
           >
             Ganzes Bild
           </button>
+          {ratios?.map((r) => (
+            <button
+              key={r.label}
+              onClick={() => fit(r.value)}
+              className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+            >
+              {r.label}
+            </button>
+          ))}
+          {!!ratios?.length && <span className="mr-auto" />}
           <button onClick={onCancel} className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
             Abbrechen
           </button>

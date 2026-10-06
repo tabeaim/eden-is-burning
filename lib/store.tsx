@@ -15,6 +15,8 @@ import type {
   Chat,
   ChatMessage,
   ChatMessageKind,
+  CapticComment,
+  CapticPost,
   Location,
   PhoneCall,
   Player,
@@ -39,6 +41,8 @@ interface PersistedState {
   chats: Chat[];
   chatMessages: ChatMessage[];
   calls: PhoneCall[];
+  capticPosts: CapticPost[];
+  capticComments: CapticComment[];
 }
 
 // `characters` enthält nach außen nur spielbare Charaktere; NPCs (Charaktere mit
@@ -174,6 +178,14 @@ interface StoreValue extends PersistedState {
   updateCall: (id: string, patch: Partial<PhoneCall>) => void;
   // Klingelnde Anrufe an eigene Charaktere
   incomingCalls: PhoneCall[];
+  // --- Captic ---
+  addCapticPost: (post: Omit<CapticPost, "id" | "created_at" | "liked_by">) => string;
+  updateCapticPost: (id: string, patch: Partial<CapticPost>) => void;
+  // Löscht den Beitrag samt Kommentaren
+  deleteCapticPost: (id: string) => void;
+  toggleCapticLike: (postId: string, characterId: string) => void;
+  addCapticComment: (postId: string, characterId: string, content: string) => void;
+  deleteCapticComment: (id: string) => void;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -189,6 +201,8 @@ const EMPTY: PersistedState = {
   chats: [],
   chatMessages: [],
   calls: [],
+  capticPosts: [],
+  capticComments: [],
 };
 
 // Supabase liefert höchstens 1000 Zeilen pro Abfrage – Nachrichten werden schnell
@@ -290,7 +304,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Lädt alle Welt-Daten (nur für freigeschaltete Nutzer*innen sichtbar; RLS).
   const loadWorld = useCallback(async () => {
-    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, calls, as] = await Promise.all([
+    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, calls, capticPosts, capticComments, as] = await Promise.all([
       supabase.from("players").select("*"),
       supabase.from("characters").select("*"),
       supabase.from("scenes").select("*"),
@@ -301,6 +315,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       fetchAll<Chat>("chats"),
       fetchAll<ChatMessage>("chat_messages"),
       fetchAll<PhoneCall>("calls"),
+      fetchAll<CapticPost>("captic_posts"),
+      fetchAll<CapticComment>("captic_comments"),
       // Tabelle evtl. noch nicht angelegt (schema-app-settings.sql) – dann Standard
       supabase.from("app_settings").select("*"),
     ]);
@@ -317,6 +333,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       chats,
       chatMessages,
       calls,
+      capticPosts,
+      capticComments,
     });
   }, []);
 
@@ -426,6 +444,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       )
       .subscribe();
 
+    // Eigener Kanal: fehlen die Captic-Tabellen (noch), bleibt der Rest live.
+    const captic = supabase
+      .channel("eden-captic")
+      .on("postgres_changes", { event: "*", schema: "public", table: "captic_posts" }, (p) =>
+        setState((s) => ({ ...s, capticPosts: applyChange(s.capticPosts, p) })),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "captic_comments" }, (p) =>
+        setState((s) => ({ ...s, capticComments: applyChange(s.capticComments, p) })),
+      )
+      .subscribe();
+
     const presence = supabase.channel("eden-online", {
       config: { presence: { key: approvedId } },
     });
@@ -499,6 +528,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       void supabase.removeChannel(world);
       void supabase.removeChannel(phone);
       void supabase.removeChannel(phoneCalls);
+      void supabase.removeChannel(captic);
       void supabase.removeChannel(presence);
     };
   }, [approvedId, loadWorld]);
@@ -1080,6 +1110,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           (m) => m.character_id !== id && !gone.includes(m.chat_id),
         ),
         calls: s.calls.filter((c) => c.caller_id !== id && c.callee_id !== id),
+        capticPosts: s.capticPosts.filter((p) => p.character_id !== id),
+        capticComments: s.capticComments.filter((c) => c.character_id !== id),
       };
     });
   }, []);
@@ -1516,6 +1548,76 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     );
     return state.calls.filter((c) => c.status === "ringing" && mine.has(c.callee_id));
   }, [state.calls, state.characters, currentPlayer]);
+  // --- Captic ----------------------------------------------------------------
+  const addCapticPost = useCallback((post: Omit<CapticPost, "id" | "created_at" | "liked_by">) => {
+    const row: CapticPost = {
+      ...post,
+      id: uid("cap"),
+      liked_by: [],
+      created_at: new Date().toISOString(),
+    };
+    rememberPhone(post.character_id);
+    persist("addCapticPost", supabase.from("captic_posts").insert(row));
+    setState((s) => ({ ...s, capticPosts: [...s.capticPosts, row] }));
+    return row.id;
+  }, []);
+
+  const updateCapticPost = useCallback((id: string, patch: Partial<CapticPost>) => {
+    persist("updateCapticPost", supabase.from("captic_posts").update(patch).eq("id", id));
+    setState((s) => ({
+      ...s,
+      capticPosts: s.capticPosts.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+    }));
+  }, []);
+
+  const deleteCapticPost = useCallback((id: string) => {
+    persist("deleteCapticPost", supabase.from("captic_posts").delete().eq("id", id));
+    setState((s) => ({
+      ...s,
+      capticPosts: s.capticPosts.filter((p) => p.id !== id),
+      capticComments: s.capticComments.filter((c) => c.post_id !== id),
+    }));
+  }, []);
+
+  const toggleCapticLike = useCallback((postId: string, characterId: string) => {
+    setState((s) => {
+      const post = s.capticPosts.find((p) => p.id === postId);
+      if (!post) return s;
+      const before = post.liked_by ?? [];
+      const liked_by = before.includes(characterId)
+        ? before.filter((x) => x !== characterId)
+        : [...before, characterId];
+      persist(
+        "toggleCapticLike",
+        supabase.from("captic_posts").update({ liked_by }).eq("id", postId),
+      );
+      return {
+        ...s,
+        capticPosts: s.capticPosts.map((p) => (p.id === postId ? { ...p, liked_by } : p)),
+      };
+    });
+  }, []);
+
+  const addCapticComment = useCallback((postId: string, characterId: string, content: string) => {
+    const text = content.trim();
+    if (!text) return;
+    const row: CapticComment = {
+      id: uid("capc"),
+      post_id: postId,
+      character_id: characterId,
+      content: text,
+      created_at: new Date().toISOString(),
+    };
+    rememberPhone(characterId);
+    persist("addCapticComment", supabase.from("captic_comments").insert(row));
+    setState((s) => ({ ...s, capticComments: [...s.capticComments, row] }));
+  }, []);
+
+  const deleteCapticComment = useCallback((id: string) => {
+    persist("deleteCapticComment", supabase.from("captic_comments").delete().eq("id", id));
+    setState((s) => ({ ...s, capticComments: s.capticComments.filter((c) => c.id !== id) }));
+  }, []);
+
   const unreadChatCount = unreadChatIds.size;
 
   const activePlayers = useMemo(() => state.players.filter((p) => !p.deleted_at), [state.players]);
@@ -1613,6 +1715,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addCall,
       updateCall,
       incomingCalls,
+      addCapticPost,
+      updateCapticPost,
+      deleteCapticPost,
+      toggleCapticLike,
+      addCapticComment,
+      deleteCapticComment,
     }),
     [
       state,
@@ -1703,6 +1811,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addCall,
       updateCall,
       incomingCalls,
+      addCapticPost,
+      updateCapticPost,
+      deleteCapticPost,
+      toggleCapticLike,
+      addCapticComment,
+      deleteCapticComment,
     ],
   );
 

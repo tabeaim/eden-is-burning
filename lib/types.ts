@@ -203,7 +203,19 @@ export interface PhoneSettings {
   relevant?: string[] | null;
   // Captic ist optional: erst nach dem Aktivieren liegt die App auf dem Handy.
   // Profilangaben werden in der App selbst bearbeitet.
-  captic?: { enabled?: boolean; handle?: string; bio?: string } | null;
+  captic?: CapticProfile | null;
+}
+
+// Captic-Profil eines Charakters. Follower-Zahlen sind frei gesetzt (wie viele
+// dem Charakter „in der Welt" folgen); `follows` sind die Charaktere, denen er
+// in der App wirklich folgt (Reiter „Gefolgt" im Feed).
+export interface CapticProfile {
+  enabled?: boolean;
+  handle?: string;
+  bio?: string;
+  followers?: number | null;
+  following?: number | null;
+  follows?: string[] | null; // Charakter-IDs
 }
 
 export interface CustomPhoneApp {
@@ -356,6 +368,32 @@ export interface ChatMessage {
   reactions?: Record<string, string[]> | null; // Emoji -> Charakter-IDs
   inplay_time?: string | null; // Inplay-Uhrzeit „23:41" (nie die echte)
   created_at: string; // echte Zeit – bestimmt nur die Reihenfolge
+}
+
+// --- Captic -------------------------------------------------------------------
+// Beitrag auf Captic: ein Bild, GIF oder kurzes Video mit Bildunterschrift.
+export type CapticKind = "image" | "gif" | "video";
+
+export interface CapticPost {
+  id: string;
+  character_id: string;
+  kind: CapticKind;
+  url: string;
+  poster_url?: string | null; // Standbild fürs Raster (Video, hochgeladenes GIF)
+  ar?: number | null; // Seitenverhältnis Breite/Höhe
+  caption: string;
+  likes: number; // von Hand gesetzte Like-Zahl
+  liked_by?: string[] | null; // Charaktere, die zusätzlich geliket haben
+  inplay_date?: string | null; // ISO-Datum (optional)
+  created_at: string; // echte Zeit – bestimmt nur die Reihenfolge
+}
+
+export interface CapticComment {
+  id: string;
+  post_id: string;
+  character_id: string;
+  content: string;
+  created_at: string;
 }
 
 // Farbmodus der App: dunkel (Standard) oder hell (Creme, angelehnt an klassische Foren)

@@ -416,7 +416,24 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Charakter-Einstellungen führt; echte Apps (Telefon, Nachrichten, Captic)
   stehen im Dock. Die Home-Leiste unten (bzw. der
   Home-Button des alten Modells) führt immer dorthin zurück.
-- **Captic** (`/handy/captic`): fiktives Foto-Netzwerk, bisher nur angedeutet.
+- **Captic** (`/handy/captic`, `components/phone/captic/`, `lib/captic.ts`):
+  fiktives Foto-Netzwerk, immer aus Sicht des Charakters, dessen Handy man in der
+  Hand hat. Leiste unten: Feed · Entdecken · Neuer Beitrag · Mein Profil; die
+  Ansichten liegen als Stapel übereinander (Pfeil oben links = eine zurück).
+  - **Feed:** Beiträge der anderen, Pills „Gefolgt" / „Alle" (wie im Messenger).
+  - **Profil:** Beiträge im Dreier-Raster (quadratisch; Videos/GIFs als Standbild
+    mit Zeichen). Eigenes Profil: „Profil bearbeiten" (Nutzername, Bio, Follower-
+    und Gefolgt-Zahl frei wählbar – leer zählt, wer in der App wirklich folgt).
+    Fremdes Profil: „Folgen" (Captic-Pink) / „Gefolgt" (grau).
+  - **Beitrag** (`CapticPostCard`): Bild, GIF oder kurzes Video (läuft stumm los,
+    Antippen schaltet den Ton), Bildunterschrift, Like-Zahl (frei gesetzt + Herzen
+    anderer Charaktere), optionales Inplay-Datum, Kommentare mit Emojis. Im Feed
+    die letzten zwei Kommentare, alle in der Einzelansicht. Bearbeiten/Löschen
+    über ⋯ als Blatt von unten (eigene Beiträge; Admins: alle).
+  - **Neuer Beitrag** (`CapticCompose`): Fotos werden mit `CropDialog`
+    zugeschnitten (Formate Quadrat/4:5/Quer) und nur der Ausschnitt hochgeladen;
+    GIFs per Datei oder GIF-Suche; Videos mit Ton bis 60 s / 25 MB (`uploadVideo`).
+  - Captic-Pink (`CAPTIC_PINK`) nur für Herz, „Folgen" und „Posten".
 - **Sprechblasen:** eigene rechts in `bg-accent text-black`, fremde links in
   `bg-bg-surface-2`; nur die letzte Blase einer Folge hat die spitze Ecke. Bis zu
   drei Emojis ohne Text stehen groß ohne Blase. Reaktionen hängen als kleine Pills
