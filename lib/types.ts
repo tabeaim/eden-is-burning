@@ -104,6 +104,10 @@ export interface FamilyMember {
   // Angeheiratet / Partner*in: id eines anderen Eintrags oder "self" (der
   // Charakter selbst). Steht im Stammbaum dann direkt neben dieser Person.
   partner_of?: string | null;
+  // Nur bei Partner*innen: ist die Beziehung beendet? (leer = zusammen/verheiratet)
+  partner_status?: "separated" | "divorced" | null;
+  // Nur bei Cousinen/Cousins: ids der Onkel/Tanten, deren Kinder sie sind
+  parent_ids?: string[];
   character_id?: string | null;
 }
 

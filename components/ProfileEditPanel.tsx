@@ -13,6 +13,7 @@ import { AREA_ORDER, AREAS } from "@/lib/world";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { characterImage } from "@/lib/avatar";
 import { Icon } from "./Icon";
+import { Collapsible } from "./Collapsible";
 
 const MAX_VIBES = 12;
 
@@ -150,8 +151,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">Profil bearbeiten</div>
 
       {tier === "extra" && (
-        <>
-          <div className={group}>Grunddaten</div>
+        <Collapsible title="Grunddaten" defaultOpen forceOpen={nameMissing}>
           <div className="flex flex-wrap items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={characterImage(d)} alt="" className="h-14 w-14 rounded-full object-cover bg-bg-primary" />
@@ -223,10 +223,10 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
               </label>
             ))}
           </div>
-        </>
+        </Collapsible>
       )}
 
-      <div className={group}>Auf einen Blick</div>
+      <Collapsible title="Auf einen Blick" defaultOpen>
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-[0.875rem] text-text-secondary">Header-Bild (oben über dem Namen)</span>
         <button disabled={uploading !== null} onClick={() => bannerFile.current?.click()} className={uploadBtn}>
@@ -267,8 +267,11 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       <div className={group}>Ausführliche Beschreibung</div>
       <textarea {...text("personality")} rows={6} className={`resize-y ${field}`} placeholder="Wer ist dieser Charakter?" />
 
+      </Collapsible>
+
+      <Collapsible title="Eigenschaften">
       <div className={group}>Charaktereigenschaften</div>
-      <p className={`-mt-2 ${hint}`}>Mit Komma getrennt, z. B. ehrlich, loyal, ehrgeizig.</p>
+      <p className={hint}>Mit Komma getrennt, z. B. ehrlich, loyal, ehrgeizig.</p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className={label}>
           Stärken (+)
@@ -280,6 +283,21 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         </label>
       </div>
 
+      <div className={group}>Likes / Dislikes</div>
+      <p className={hint}>Mit Komma getrennt.</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className={label}>
+          Likes
+          <textarea value={likes} onChange={(e) => setLikes(e.target.value)} rows={3} className={`mt-1 resize-y ${field}`} />
+        </label>
+        <label className={label}>
+          Dislikes
+          <textarea value={dislikes} onChange={(e) => setDislikes(e.target.value)} rows={3} className={`mt-1 resize-y ${field}`} />
+        </label>
+      </div>
+      </Collapsible>
+
+      <Collapsible title="Skills & Slider">
       <div className={group}>Skills</div>
       {skills.map((s, i) => (
         <div key={i} className="flex flex-wrap items-center gap-2">
@@ -343,30 +361,20 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       <button onClick={() => setSliders([...sliders, { left: "", right: "", value: 50 }])} className={addBtn}>
         <Icon name="plus" size={12} /> Slider
       </button>
+      </Collapsible>
 
-      <div className={group}>Likes / Dislikes</div>
-      <p className={`-mt-2 ${hint}`}>Mit Komma getrennt.</p>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className={label}>
-          Likes
-          <textarea value={likes} onChange={(e) => setLikes(e.target.value)} rows={3} className={`mt-1 resize-y ${field}`} />
-        </label>
-        <label className={label}>
-          Dislikes
-          <textarea value={dislikes} onChange={(e) => setDislikes(e.target.value)} rows={3} className={`mt-1 resize-y ${field}`} />
-        </label>
-      </div>
-
-      <div className={group}>Stammbaum</div>
-      <p className={`-mt-2 ${hint}`}>
+      <Collapsible title="Stammbaum">
+      <p className={hint}>
         Verwandte nach Generation und Seitenlinie. Wählst du beim Namen einen vorhandenen Charakter
         aus, führt der Eintrag im Stammbaum auf dessen Profil. Partner*innen und Angeheiratete legst
         du unter ihrer Person an – im Stammbaum stehen sie dann direkt daneben.
       </p>
       <FamilyEditor family={family} onChange={setFamily} character={character} everyone={everyone} />
 
-      <div className={group}>Timeline (steht im Reiter „Biography“)</div>
-      <p className={`-mt-2 ${hint}`}>Wird beim Speichern nach Jahr sortiert.</p>
+      </Collapsible>
+
+      <Collapsible title="Timeline">
+      <p className={hint}>Steht im Reiter „Biography“. Wird beim Speichern nach Jahr sortiert.</p>
       {timeline.map((t, i) => (
         <div key={i} className="flex items-start gap-2 rounded-lg border border-border-subtle p-2">
           <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[7rem_1fr]">
@@ -399,41 +407,37 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         <Icon name="plus" size={12} /> Timeline-Eintrag
       </button>
 
-      <div className={group}>Looks – Style</div>
-      <p className={`-mt-2 ${hint}`}>
+      </Collapsible>
+
+      <Collapsible title="Looks – Style">
+      <p className={hint}>
         Was trägt dein Charakter? Die hochgeladenen Bilder erscheinen als Collage unter „Looks“.
       </p>
       <ThingsBoard items={outfit} onChange={setOutfit} />
 
+      </Collapsible>
+
       {tier !== "extra" && (
-        <>
-          <div className={group}>Pockets – Gegenstände</div>
-          <p className={`-mt-2 ${hint}`}>
+        <Collapsible title="Pockets – Gegenstände">
+          <p className={hint}>
             Was hat dein Charakter immer dabei? Die hochgeladenen Bilder erscheinen im Profil als
             Collage neben dem Handy.
           </p>
           <ThingsBoard items={things} onChange={setThings} />
-        </>
+        </Collapsible>
       )}
 
       {tier !== "extra" && (
-        <>
-          <div className={group}>Links</div>
+        <Collapsible title="Moodboard (Pinterest)">
           <label className={label}>
             Pinterest-URL
             <input {...text("pinterest_url")} className={`mt-1 ${field}`} />
           </label>
-        </>
+        </Collapsible>
       )}
 
       {tier === "extra" && (
-        <>
-          <div className={group}>
-            Vibes{" "}
-            <span className="font-normal normal-case tracking-normal">
-              ({vibes.length}/{MAX_VIBES} Inspo-Bilder)
-            </span>
-          </div>
+        <Collapsible title={`Vibes (${vibes.length}/${MAX_VIBES} Inspo-Bilder)`}>
           {vibes.length > 0 && (
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {vibes.map((src, i) => (
@@ -472,7 +476,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
               }}
             />
           </div>
-        </>
+        </Collapsible>
       )}
 
       <div className="flex items-center justify-end gap-3">

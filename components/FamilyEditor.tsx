@@ -56,8 +56,19 @@ export function FamilyEditor({
       }),
     );
   // Wer entfernt wird, hinterlässt seine Partner*innen als gewöhnliche Einträge
+  // und verschwindet aus den „Kind von"-Angaben
   const remove = (id: string) =>
-    onChange(family.filter((m) => m.id !== id).map((m) => (m.partner_of === id ? { ...m, partner_of: null } : m)));
+    onChange(
+      family
+        .filter((m) => m.id !== id)
+        .map((m) => ({
+          ...m,
+          partner_of: m.partner_of === id ? null : m.partner_of,
+          parent_ids: m.parent_ids?.filter((p) => p !== id),
+        })),
+    );
+  // Onkel/Tanten (samt angeheirateten) – die Eltern der Cousinen und Cousins
+  const aunts = family.filter((m) => m.generation === -1 && m.side && m.name.trim());
   const add = (patch: Partial<FamilyMember>) =>
     onChange([...family, { id: newId(), name: "", relation: "", generation: -1, character_id: null, partner_of: null, ...patch }]);
 
@@ -113,6 +124,7 @@ export function FamilyEditor({
             <div className="flex min-w-0 flex-col gap-1">
               {row(x, "z. B. Ehefrau")}
               {/* umhängen: bei wem steht sie/er im Stammbaum? */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <label className="flex flex-wrap items-center gap-2 text-[0.75rem] text-text-tertiary">
                 Partner*in von
                 <select
@@ -135,6 +147,25 @@ export function FamilyEditor({
                   </option>
                 </select>
               </label>
+              <label className="flex flex-wrap items-center gap-2 text-[0.75rem] text-text-tertiary">
+                Status
+                <select
+                  value={x.partner_status ?? ""}
+                  onChange={(e) => update(x.id, { partner_status: (e.target.value || null) as FamilyMember["partner_status"] })}
+                  className="max-w-full rounded-md border border-border-subtle bg-bg-primary px-2 py-1 text-[0.75rem] text-text-primary outline-none focus:border-white/20"
+                >
+                  <option value="" className="bg-bg-surface">
+                    zusammen / verheiratet
+                  </option>
+                  <option value="separated" className="bg-bg-surface">
+                    getrennt
+                  </option>
+                  <option value="divorced" className="bg-bg-surface">
+                    geschieden
+                  </option>
+                </select>
+              </label>
+              </div>
             </div>
           </div>
         ))}
@@ -202,6 +233,37 @@ export function FamilyEditor({
                 {members.map((m) => (
                   <div key={m.id} className="flex flex-col gap-2">
                     {row(m, PLACEHOLDER[slot.key])}
+                    {/* Cousinen und Cousins: mit ihren Eltern (Onkel/Tanten) verbinden */}
+                    {slot.key === "0s" && (
+                      <div className="ml-3 flex flex-wrap items-center gap-1.5 pl-3 text-[0.75rem] text-text-tertiary">
+                        Kind von
+                        {aunts.length === 0 && <span>– lege zuerst Onkel oder Tanten an</span>}
+                        {aunts.map((a) => {
+                          const on = (m.parent_ids ?? []).includes(a.id);
+                          return (
+                            <button
+                              key={a.id}
+                              type="button"
+                              aria-pressed={on}
+                              onClick={() =>
+                                update(m.id, {
+                                  parent_ids: on
+                                    ? (m.parent_ids ?? []).filter((id) => id !== a.id)
+                                    : [...(m.parent_ids ?? []), a.id],
+                                })
+                              }
+                              className={`rounded-full border px-2 py-0.5 transition-colors ${
+                                on
+                                  ? "border-accent/70 bg-accent-soft text-text-primary"
+                                  : "border-border-subtle hover:text-text-primary"
+                              }`}
+                            >
+                              {a.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                     {partnersBlock(m.id, { generation: m.generation, side: m.side })}
                   </div>
                 ))}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
 import type { Character, CharacterProfile, FamilyMember } from "@/lib/types";
 import {
   DEGREES,
@@ -363,12 +364,74 @@ export function familyPartners(family: FamilyMember[]): Map<string, string> {
 // Kreise, verwaiste Verweise), werden zu gewöhnlichen Einträgen.
 export function normalizeFamily(family: FamilyMember[]): FamilyMember[] {
   const valid = familyPartners(family);
-  return family.map((m) => (m.partner_of && valid.get(m.id) !== m.partner_of ? { ...m, partner_of: null } : m));
+  const ids = new Set(family.map((m) => m.id));
+  return family.map((m) => {
+    const next = { ...m };
+    if (m.partner_of && valid.get(m.id) !== m.partner_of) next.partner_of = null;
+    if (!next.partner_of) delete next.partner_status;
+    if (m.parent_ids) {
+      const parents = m.parent_ids.filter((id) => ids.has(id) && id !== m.id);
+      if (parents.length) next.parent_ids = parents;
+      else delete next.parent_ids;
+    }
+    return next;
+  });
+}
+
+// Linien von Onkeln/Tanten zu ihren Kindern (Cousinen/Cousins) im Stammbaum.
+// Gezeichnet wird per DOM (ohne State), nachdem die Karten ihren Platz haben, und
+// neu, sobald sich die Größe ändert.
+function useFamilyLines(
+  wrap: React.RefObject<HTMLDivElement | null>,
+  svg: React.RefObject<SVGSVGElement | null>,
+  pairs: [string, string][],
+) {
+  const key = pairs.map((p) => p.join(">")).join("|");
+  useLayoutEffect(() => {
+    const el = wrap.current;
+    const out = svg.current;
+    if (!el || !out) return;
+    const draw = () => {
+      const box = el.getBoundingClientRect();
+      out.replaceChildren();
+      for (const pair of key ? key.split("|") : []) {
+        const [from, to] = pair.split(">");
+        const a = el.querySelector<HTMLElement>(`[data-fam="${from}"]`)?.getBoundingClientRect();
+        const b = el.querySelector<HTMLElement>(`[data-fam="${to}"]`)?.getBoundingClientRect();
+        if (!a || !b || b.top <= a.bottom) continue;
+        const x1 = a.left + a.width / 2 - box.left;
+        const x2 = b.left + b.width / 2 - box.left;
+        const y1 = a.bottom - box.top;
+        const y2 = b.top - box.top;
+        const ym = y1 + (y2 - y1) / 2;
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", `M${x1} ${y1} V${ym} H${x2} V${y2}`);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", "var(--accent)");
+        path.setAttribute("stroke-opacity", "0.6");
+        path.setAttribute("stroke-width", "1.5");
+        path.setAttribute("stroke-linejoin", "round");
+        out.appendChild(path);
+      }
+    };
+    draw();
+    const ro = new ResizeObserver(draw);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [wrap, svg, key]);
 }
 
 export function ProfileFamilyTree({ c }: { c: Character }) {
   const { character } = useStore();
+  const wrap = useRef<HTMLDivElement>(null);
+  const lines = useRef<SVGSVGElement>(null);
   const family = c.profile?.family ?? [];
+  // Onkel/Tante → Cousin*e
+  const ids = new Set(family.map((m) => m.id));
+  const pairs = family.flatMap((m) =>
+    (m.parent_ids ?? []).filter((p) => ids.has(p) && p !== m.id).map((p) => [p, m.id] as [string, string]),
+  );
+  useFamilyLines(wrap, lines, pairs);
   if (family.length === 0) return null;
   // Angeheiratete/Partner*innen stehen direkt neben ihrer Person (verbunden
   // durch ein Herz) statt als eigener Eintrag in der Reihe – so sind sie von
@@ -389,47 +452,69 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
     }))
     .filter((r) => r.groups.length > 0);
 
-  // Eine Generation bleibt immer in EINER Zeile: Die Karten schrumpfen, wenn der
-  // Platz knapp wird (Handy), und sind am Desktop auf eine Höchstbreite begrenzt.
-  const CARD = 10.5; // rem je Karte inkl. Abstand, bestimmt die Höchstbreite
+  // Alle Karten sind gleich groß. Eine Generation bleibt immer in EINER Zeile: Die
+  // Karten schrumpfen in der Breite, wenn der Platz knapp wird (Handy), und sind
+  // am Desktop auf eine Höchstbreite begrenzt.
   const card =
-    "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg border px-1 py-2 text-center sm:gap-1.5 sm:rounded-xl sm:px-3 sm:py-3";
-  const face = "aspect-square w-3/5 max-w-16 rounded-full object-cover sm:w-16";
-  const name = "w-full break-words text-[0.6875rem] leading-tight text-text-primary sm:text-[0.875rem]";
-  const tag = "w-full break-words text-[0.5625rem] uppercase tracking-wider text-text-tertiary sm:text-[0.6875rem]";
+    "flex h-36 w-[var(--cw)] flex-none flex-col items-center justify-center gap-1 rounded-lg border px-1 text-center sm:h-40 sm:w-[var(--cw-sm)] sm:gap-1.5 sm:rounded-xl sm:px-3";
+  const face = "aspect-square w-3/5 max-w-16 shrink-0 rounded-full object-cover sm:w-16";
+  const name = "line-clamp-3 w-full break-words text-[0.6875rem] leading-tight text-text-primary transition-colors sm:line-clamp-2 sm:text-[0.875rem]";
+  const tag =
+    "line-clamp-2 w-full break-all text-center text-[0.5625rem] uppercase tracking-wider text-text-tertiary sm:line-clamp-1 sm:break-normal sm:text-[0.6875rem]";
 
+  // Verlinkte Karten (Charaktere im Verzeichnis) lassen sich anklicken: sie heben sich
+  // beim Darüberfahren an, der Rahmen und der Name werden orange
   const memberCard = (m: FamilyMember) => {
     const linked = m.character_id ? character(m.character_id) : undefined;
     const body = (
       <>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={linked ? characterImage(linked) : DEFAULT_AVATAR} alt="" className={face} />
-        <span className={name}>{m.name}</span>
+        <span title={m.name} className={`${name} ${linked ? "group-hover:text-accent" : ""}`}>
+          {m.name}
+        </span>
         {m.relation && <span className={tag}>{m.relation}</span>}
-        {/* angelegte Supporting Characters und Statist*innen als solche kennzeichnen */}
-        {linked?.is_npc && (
-          <span className="rounded-full border border-border-subtle px-1.5 py-px text-[0.5rem] uppercase tracking-wider text-text-secondary sm:text-[0.625rem]">
-            {TIER_NAMES[tierOf(linked)]}
-          </span>
-        )}
       </>
     );
     return linked ? (
       <Link
         key={m.id}
+        data-fam={m.id}
         href={`/charaktere/${linked.id}`}
         title={`Zum Profil von ${linked.name}`}
-        className={`${card} border-border-subtle bg-bg-surface hover:border-accent/50`}
+        className={`${card} group border-border-subtle bg-bg-surface transition duration-150 hover:-translate-y-0.5 hover:border-accent/70 hover:bg-white/[0.05] hover:shadow-lg hover:shadow-black/40`}
       >
         {body}
       </Link>
     ) : (
-      <div key={m.id} className={`${card} border-border-subtle bg-bg-surface`}>
+      <div key={m.id} data-fam={m.id} className={`${card} border-border-subtle bg-bg-surface`}>
         {body}
       </div>
     );
   };
-  // eine Person samt Partner*innen: Karte – ♥ – Karte; zählt als so viele Karten
+  // Verbindung zwischen Partner*innen: Herz; getrennt = gestrichelt mit leerem Herz,
+  // geschieden = zusätzlich durchgestrichen
+  const connector = (status?: "separated" | "divorced" | null) => {
+    const ended = !!status;
+    const label = status === "divorced" ? "geschieden" : status === "separated" ? "getrennt" : "verpartnert mit";
+    const line = `w-1 sm:w-2.5 ${ended ? "h-0 border-t border-dashed border-current" : "h-px bg-accent/60"}`;
+    return (
+      <span
+        className={`flex shrink-0 items-center ${ended ? "text-text-tertiary" : "text-accent"}`}
+        role="img"
+        aria-label={label}
+        title={label}
+      >
+        <span className={line} />
+        <span className="relative px-0.5 text-[0.625rem] leading-none sm:px-1 sm:text-[0.75rem]">
+          {ended ? "♡" : "♥"}
+          {status === "divorced" && <span className="absolute inset-x-0 top-1/2 h-px -rotate-45 bg-current" />}
+        </span>
+        <span className={line} />
+      </span>
+    );
+  };
+  // eine Person samt Partner*innen: Karte – ♥ – Karte
   const unit = (m: FamilyMember | null) => {
     const partners = partnersOf(m ? m.id : "self");
     const own =
@@ -437,24 +522,21 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
         <div key="self" className={`${card} border-accent/70 bg-accent-soft`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={characterImage(c)} alt="" className={face} />
-          <span className={name}>{c.full_name || c.name}</span>
+          <span title={c.full_name || c.name} className={name}>
+            {c.full_name || c.name}
+          </span>
         </div>
       ) : (
         memberCard(m)
       );
-    const n = 1 + partners.length;
     return {
-      n,
+      n: 1 + partners.length,
       node: (
-        <div key={m ? m.id : "self"} style={{ flex: `${n} 1 0` }} className="flex min-w-0 items-center">
+        <div key={m ? m.id : "self"} className="flex items-center">
           {own}
           {partners.map((x) => (
-            <div key={x.id} className="flex min-w-0 flex-1 items-center">
-              <span className="flex shrink-0 items-center text-accent" aria-label="verpartnert mit" role="img">
-                <span className="h-px w-1 bg-accent/60 sm:w-2.5" />
-                <span className="px-0.5 text-[0.625rem] leading-none sm:px-1 sm:text-[0.75rem]">♥</span>
-                <span className="h-px w-1 bg-accent/60 sm:w-2.5" />
-              </span>
+            <div key={x.id} className="flex items-center">
+              {connector(x.partner_status)}
               {memberCard(x)}
             </div>
           ))}
@@ -462,9 +544,26 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
       ),
     };
   };
+  // Gemeinsame Kartenbreite: höchstens 10rem, sonst so schmal, dass auch die
+  // vollste Generation in eine Zeile passt (Rest = Abstände, Herzen, Rand; mobil und
+  // ab sm getrennt gerechnet). 100cqw = Breite des Baums.
+  const rows = used.map((row) => {
+    const units = row.groups.map(({ members }) => members.map((m) => partnersOf(m ? m.id : "self").length));
+    const cards = units.flat().reduce((n, p) => n + 1 + p, 0);
+    const partners = units.flat().reduce((n, p) => n + p, 0);
+    const inner = units.reduce((n, g) => n + g.length - 1, 0);
+    return { cards, groups: units.length, partners, inner };
+  });
+  const width = (fixed: (r: (typeof rows)[number]) => number) =>
+    `min(10rem, ${rows.map((r) => `calc((100cqw - ${fixed(r) + 4}px) / ${r.cards})`).join(", ")})`;
+  const sizes = {
+    containerType: "inline-size",
+    ["--cw" as string]: width((r) => (r.groups - 1) * 12 + r.inner * 6 + r.partners * 22),
+    ["--cw-sm" as string]: width((r) => 80 + (r.groups - 1) * 48 + r.inner * 16 + r.partners * 40),
+  } as React.CSSProperties;
   return (
     <section>
-      <div className="flex flex-col items-center">
+      <div ref={wrap} style={sizes} className="relative flex flex-col items-center">
         {used.map((row, i) => (
           <div key={row.gen} className="flex w-full flex-col items-center">
             {i > 0 && <span className="h-6 w-px bg-white/25 sm:h-8" />}
@@ -475,16 +574,14 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
             >
               {row.groups.map(({ slot, members }) => {
                 const units = members.map(unit);
-                const n = units.reduce((sum, u) => sum + u.n, 0);
                 return (
-                  <div
-                    key={slot.key}
-                    style={{ flex: `${n} 1 0`, maxWidth: `${n * CARD}rem` }}
-                    className="flex min-w-0 flex-col items-center gap-2"
-                  >
+                  <div key={slot.key} className="flex flex-col items-center gap-2">
                     {/* Beschriftung nur, wenn in der Reihe auch die Seitenlinie steht */}
-                    {row.groups.some((g) => g.slot.side) && <span className={`${tag} text-center`}>{slot.label}</span>}
-                    <div className="flex w-full flex-nowrap items-center justify-center gap-1.5 sm:gap-4">
+                    {row.groups.some((g) => g.slot.side) && (
+                      // trägt nicht zur Breite der Gruppe bei: lange Namen werden gekürzt
+                      <span className={`${tag} w-0 min-w-full text-center`}>{slot.label}</span>
+                    )}
+                    <div className="flex flex-nowrap items-center justify-center gap-1.5 sm:gap-4">
                       {units.map((u) => u.node)}
                     </div>
                   </div>
@@ -493,6 +590,7 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
             </div>
           </div>
         ))}
+        <svg ref={lines} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" />
       </div>
     </section>
   );

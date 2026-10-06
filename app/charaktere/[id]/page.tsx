@@ -142,17 +142,17 @@ export default function CharacterPage({
     .filter(Boolean) as Character[];
 
   const topTabs: [TopTab, string][] = [
-    ["general", "Allgemein"],
-    ["inplay", "Szenen"],
-    ["relations", "Beziehungen"],
+    ["general", "General"],
+    ["inplay", "Scenes"],
+    ["relations", "Relations"],
   ];
   const tabs: [Tab, string][] = [
-    ["character", "Charakter"],
+    ["character", "Character"],
     ["look", "Looks"],
-    ["biography", "Biografie"],
-    ["family", "Stammbaum"],
-    // „Taschen": das Handy und die Gegenstände (nicht bei Statist*innen)
-    ...(tierOf(c) === "extra" ? [] : ([["personal", "Taschen"]] as [Tab, string][])),
+    ["biography", "Biography"],
+    ["family", "Family Tree"],
+    // „Pockets": das Handy und die Gegenstände (nicht bei Statist*innen)
+    ...(tierOf(c) === "extra" ? [] : ([["personal", "Pockets"]] as [Tab, string][])),
     // eingebundenes Pinterest-Board, falls eines hinterlegt ist
     ...(c.pinterest_url ? ([["moodboard", "Moodboard"]] as [Tab, string][]) : []),
   ];
