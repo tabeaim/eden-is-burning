@@ -15,7 +15,9 @@ import {
   sortPosts,
 } from "@/lib/captic";
 import { Icon } from "@/components/Icon";
-import { PhoneAvatar } from "../PhoneFrame";
+import { IMAGE_SIZES, uploadImage } from "@/lib/images";
+import { CropDialog } from "@/components/CropDialog";
+import { CapticAvatar } from "./CapticAvatar";
 import { CapticPostCard } from "./CapticPost";
 import { CapticCompose, capticField } from "./CapticCompose";
 import { StoryAvatar, StoryRow, StoryViewer } from "./CapticStories";
@@ -197,12 +199,7 @@ export function CapticApp({ me }: { me: Character }) {
           title="Mein Profil"
           className="flex h-10 w-12 items-center justify-center"
         >
-          <PhoneAvatar
-            character={me}
-            size={26}
-            link={false}
-            className={onMine ? "ring-2 ring-text-primary" : "opacity-80"}
-          />
+          <CapticAvatar character={me} size={26} ring={false} className={onMine ? "ring-2 ring-text-primary" : "opacity-80"} />
         </button>
       </nav>
 
@@ -264,7 +261,8 @@ function Feed({
 }
 
 // Aktivitäten (Glocke): wer geliket, kommentiert hat oder neu folgt. Das Öffnen
-// gilt als gesehen – Zähler und Dashboard-Hinweis verschwinden.
+// nimmt nur den Dashboard-Hinweis weg; ungelesen (oranger Punkt, Zähler) bleibt
+// ein Eintrag, bis er angeklickt wurde – oder „Alle gelesen".
 function Activity({
   me,
   onProfile,
@@ -274,25 +272,40 @@ function Activity({
   onProfile: (id: string) => void;
   onOpen: (postId: string) => void;
 }) {
-  const { capticEvents, capticPosts, capticComments, character, capticSeenAt, markCapticSeen } = useStore();
-  // Stand beim Öffnen: was danach kam, bleibt als „neu" markiert, solange man hier ist
-  const [seenBefore] = useState(() => capticSeenAt(me.id));
+  const {
+    capticEvents,
+    capticPosts,
+    capticComments,
+    character,
+    capticNews,
+    markCapticEventRead,
+    markCapticAllRead,
+    markCapticNoticed,
+  } = useStore();
+  const unread = new Set(capticNews(me.id).map((e) => e.id));
   const events = capticEvents
     .filter((e) => e.target_id === me.id && e.actor_id !== me.id)
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, 60);
   const newest = events[0]?.created_at;
   useEffect(() => {
-    markCapticSeen(me.id);
+    markCapticNoticed(me.id);
     // bei jeder neu eintreffenden Aktivität wieder – man sieht sie ja gerade
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me.id, newest]);
 
-  const isNew = (e: CapticEvent) =>
-    !seenBefore || new Date(e.created_at).getTime() > new Date(seenBefore).getTime();
+  const isNew = (e: CapticEvent) => unread.has(e.id);
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
+      {unread.size > 0 && (
+        <div className="flex items-center justify-between border-b border-border-subtle px-3 py-2 text-[0.8125rem]">
+          <span className="text-text-tertiary">{unread.size} ungelesen</span>
+          <button onClick={() => markCapticAllRead(me.id)} className="font-medium text-accent hover:underline">
+            Alle gelesen
+          </button>
+        </div>
+      )}
       {events.map((e) => {
         const actor = character(e.actor_id);
         const post = e.post_id ? capticPosts.find((p) => p.id === e.post_id) : undefined;
@@ -302,9 +315,13 @@ function Activity({
         return (
           <div key={e.id} className="flex items-center gap-3 px-3 py-2.5">
             <span className={`h-2 w-2 shrink-0 rounded-full ${isNew(e) ? "bg-accent" : ""}`} />
-            <PhoneAvatar character={actor} size={40} link={false} />
+            <CapticAvatar character={actor} size={40} />
             <button
-              onClick={() => (post ? onOpen(post.id) : onProfile(actor.id))}
+              onClick={() => {
+                markCapticEventRead(e);
+                if (post) onOpen(post.id);
+                else onProfile(actor.id);
+              }}
               className="min-w-0 flex-1 text-left text-[0.8125rem] leading-snug text-text-secondary"
             >
               <span className="font-semibold text-text-primary">{capticHandle(actor)}</span>{" "}
@@ -318,7 +335,14 @@ function Activity({
               )}
             </button>
             {thumb ? (
-              <button onClick={() => onOpen(post!.id)} aria-label="Beitrag öffnen" className="shrink-0">
+              <button
+                onClick={() => {
+                  markCapticEventRead(e);
+                  onOpen(post!.id);
+                }}
+                aria-label="Beitrag öffnen"
+                className="shrink-0"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={thumb} alt="" loading="lazy" className="h-11 w-11 rounded object-cover" />
               </button>
@@ -369,7 +393,7 @@ function Search({ me, onProfile }: { me: Character; onProfile: (id: string) => v
       <div className="min-h-0 flex-1 overflow-y-auto">
         {list.map((c) => (
           <div key={c.id} className="flex items-center gap-3 px-3 py-2">
-            <PhoneAvatar character={c} size={44} link={false} />
+            <CapticAvatar character={c} size={44} />
             <button onClick={() => onProfile(c.id)} className="min-w-0 flex-1 text-left">
               <div className="truncate text-[0.875rem] font-semibold text-text-primary">{capticHandle(c)}</div>
               <div className="truncate text-[0.8125rem] text-text-tertiary">
@@ -440,6 +464,27 @@ function Profile({
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ handle: "", bio: "", followers: "", following: "" });
+  // Captic-Profilbild im Bearbeiten-Formular: null = entfernen (zurück zum Handy-/Charakterbild)
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [cropping, setCropping] = useState<{ file: File; src: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function cropped(crop: { x: number; y: number; w: number; h: number } | null) {
+    const c = cropping;
+    if (!c) return;
+    setCropping(null);
+    setUploading(true);
+    setUploadError(null);
+    try {
+      setAvatar(await uploadImage(c.file, "captic", IMAGE_SIZES.avatar, crop));
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Das hat nicht geklappt.");
+    } finally {
+      URL.revokeObjectURL(c.src);
+      setUploading(false);
+    }
+  }
 
   function startEdit() {
     setDraft({
@@ -448,6 +493,7 @@ function Profile({
       followers: profile.followers != null ? String(profile.followers) : "",
       following: profile.following != null ? String(profile.following) : "",
     });
+    setAvatar(profile.avatar ?? null);
     setEditing(true);
   }
   function save() {
@@ -459,6 +505,7 @@ function Profile({
           enabled: true,
           handle: cleanHandle(draft.handle) || undefined,
           bio: draft.bio.trim(),
+          avatar,
           followers: parseCount(draft.followers),
           following: parseCount(draft.following),
         },
@@ -491,6 +538,35 @@ function Profile({
 
       {editing ? (
         <div className="flex flex-col gap-2 px-4 pt-3">
+          <div className="flex items-center gap-3">
+            <CapticAvatar
+              character={{ ...who, phone: { ...who.phone, captic: { ...profile, avatar } } }}
+              size={52}
+              ring={false}
+            />
+            <div className="flex min-w-0 flex-col items-start gap-0.5 text-[0.8125rem]">
+              <label className="font-medium text-accent hover:underline">
+                {uploading ? "Lädt hoch …" : "Profilbild ändern"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  disabled={uploading}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (f) setCropping({ file: f, src: URL.createObjectURL(f) });
+                  }}
+                />
+              </label>
+              {avatar && (
+                <button onClick={() => setAvatar(null)} className="text-text-tertiary hover:text-text-primary">
+                  Eigenes Bild entfernen
+                </button>
+              )}
+              {uploadError && <span className="text-red-300">{uploadError}</span>}
+            </div>
+          </div>
           <label className={label}>
             Nutzername
             <input
@@ -536,7 +612,7 @@ function Profile({
             <button onClick={() => setEditing(false)} className={button}>
               Abbrechen
             </button>
-            <button onClick={save} className={`${button} !bg-accent/90 !text-black`}>
+            <button onClick={save} disabled={uploading} className={`${button} !bg-accent/90 !text-black disabled:opacity-50`}>
               Speichern
             </button>
           </div>
@@ -587,6 +663,18 @@ function Profile({
             </p>
           )}
         </div>
+      )}
+      {cropping && (
+        <CropDialog
+          src={cropping.src}
+          ratios={[{ label: "Quadrat", value: 1 }]}
+          hint="Hochgeladen wird nur der Ausschnitt; angezeigt wird er rund."
+          onDone={cropped}
+          onCancel={() => {
+            URL.revokeObjectURL(cropping.src);
+            setCropping(null);
+          }}
+        />
       )}
     </div>
   );

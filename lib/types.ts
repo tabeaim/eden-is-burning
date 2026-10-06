@@ -213,6 +213,7 @@ export interface CapticProfile {
   enabled?: boolean;
   handle?: string;
   bio?: string;
+  avatar?: string | null; // eigenes Profilbild nur für Captic
   followers?: number | null;
   following?: number | null;
   follows?: string[] | null; // Charakter-IDs

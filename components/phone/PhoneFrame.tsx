@@ -201,7 +201,7 @@ function OwnerBar({
   options: string[];
   onOwner?: (id: string) => void;
 }) {
-  const { character, chats, calls, isChatNew, capticAlerts } = useStore();
+  const { character, chats, calls, isChatNew, capticUnread } = useStore();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   // Neues auf einem Handy: ungelesene Chats, klingelnde Anrufe und neue
@@ -209,7 +209,7 @@ function OwnerBar({
   const news = (id: string) =>
     chats.filter((c) => c.participant_ids.includes(id) && isChatNew(c.id)).length +
     calls.filter((c) => c.status === "ringing" && c.callee_id === id).length +
-    (capticAlerts.find((a) => a.characterId === id)?.count ?? 0);
+    (capticUnread.find((a) => a.characterId === id)?.count ?? 0);
   const newsElsewhere = options.some((id) => id !== owner && news(id) > 0);
   useEffect(() => {
     if (!open) return;

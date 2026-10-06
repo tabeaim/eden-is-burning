@@ -194,13 +194,21 @@ interface StoreValue extends PersistedState {
   deleteCapticStory: (id: string) => void;
   // `characterId` folgt `otherId` (oder nicht mehr)
   toggleCapticFollow: (characterId: string, otherId: string) => void;
-  // Neue Aktivität (Likes, Kommentare, Follower) für diesen Charakter seit dem
-  // letzten Blick in die Aktivitäten – ohne das, was ich selbst ausgelöst habe
+  // Ungelesene Aktivität (Likes, Kommentare, Follower) für diesen Charakter –
+  // ohne das, was ich selbst ausgelöst habe. Ungelesen bleibt sie, bis sie
+  // angeklickt wurde (`markCapticEventRead`) oder „Alle gelesen" gedrückt ist.
   capticNews: (characterId: string) => CapticEvent[];
-  // Eigene Charaktere mit neuer Aktivität (für Dashboard und Menü-Zähler)
+  // Eigene Charaktere mit ungelesener Aktivität (Zähler an Menü und Handy)
+  capticUnread: { characterId: string; count: number }[];
+  // … und davon jene, deren Aktivitäten man seither noch nicht geöffnet hat
+  // (Hinweis im Dashboard – verschwindet beim ersten Öffnen)
   capticAlerts: { characterId: string; count: number }[];
-  capticSeenAt: (characterId: string) => string | null;
-  markCapticSeen: (characterId: string) => void;
+  markCapticEventRead: (event: CapticEvent) => void;
+  markCapticAllRead: (characterId: string) => void;
+  markCapticNoticed: (characterId: string) => void;
+  // Story-Ring: keine Story, noch nicht (ganz) angesehen, angesehen
+  capticStoryState: (characterId: string) => "none" | "new" | "seen";
+  markCapticStorySeen: (story: CapticStory) => void;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -1749,10 +1757,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const mine = new Set(
       state.characters.filter((c) => !c.deleted_at && playsAs(c, currentPlayer.id)).map((c) => c.id),
     );
+    const after = (iso: string, mark: string | undefined) =>
+      !mark || new Date(iso).getTime() > new Date(mark).getTime();
     for (const e of state.capticEvents) {
       if (!mine.has(e.target_id) || mine.has(e.actor_id)) continue;
-      const seen = reads[`captic:${e.target_id}`];
-      if (seen && new Date(e.created_at).getTime() <= new Date(seen).getTime()) continue;
+      // gelesen: einzeln angeklickt oder vor dem letzten „Alle gelesen"
+      if (!after(e.created_at, reads[`captic:${e.target_id}`]) || !after(e.created_at, reads[e.id])) continue;
       out.set(e.target_id, [...(out.get(e.target_id) ?? []), e]);
     }
     return out;
@@ -1762,7 +1772,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [capticNewsByChar],
   );
   // Nur Charaktere, bei denen Captic auch auf dem Handy liegt
-  const capticAlerts = useMemo(
+  const capticUnread = useMemo(
     () =>
       [...capticNewsByChar.entries()]
         .filter(([id]) => {
@@ -1772,15 +1782,61 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         .map(([characterId, events]) => ({ characterId, count: events.length })),
     [capticNewsByChar, state.characters],
   );
-  const capticSeenAt = useCallback(
-    (characterId: string) => reads[`captic:${characterId}`] ?? null,
-    [reads],
+  const capticAlerts = useMemo(
+    () =>
+      capticUnread.flatMap(({ characterId }) => {
+        const opened = reads[`captic-open:${characterId}`];
+        const count = (capticNewsByChar.get(characterId) ?? []).filter(
+          (e) => !opened || new Date(e.created_at).getTime() > new Date(opened).getTime(),
+        ).length;
+        return count ? [{ characterId, count }] : [];
+      }),
+    [capticUnread, capticNewsByChar, reads],
   );
-  const markCapticSeen = useCallback(
+  const markCapticEventRead = useCallback(
+    (event: CapticEvent) => {
+      if (myPlayerId) applyReads(myPlayerId, { [event.id]: new Date().toISOString() });
+    },
+    [myPlayerId, applyReads],
+  );
+  const markCapticAllRead = useCallback(
     (characterId: string) => {
       if (myPlayerId) applyReads(myPlayerId, { [`captic:${characterId}`]: new Date().toISOString() });
     },
     [myPlayerId, applyReads],
+  );
+  const markCapticNoticed = useCallback(
+    (characterId: string) => {
+      if (myPlayerId) applyReads(myPlayerId, { [`captic-open:${characterId}`]: new Date().toISOString() });
+    },
+    [myPlayerId, applyReads],
+  );
+
+  // Story-Ring: angesehen ist eine Story-Reihe, sobald ihr neuestes Bild gezeigt wurde
+  const newestStory = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const st of state.capticStories) {
+      if ((m.get(st.character_id) ?? "") < st.created_at) m.set(st.character_id, st.created_at);
+    }
+    return m;
+  }, [state.capticStories]);
+  const capticStoryState = useCallback(
+    (characterId: string) => {
+      const newest = newestStory.get(characterId);
+      if (!newest) return "none" as const;
+      const seen = reads[`caps:${characterId}`];
+      return seen && new Date(seen).getTime() >= new Date(newest).getTime() ? ("seen" as const) : ("new" as const);
+    },
+    [newestStory, reads],
+  );
+  const markCapticStorySeen = useCallback(
+    (story: CapticStory) => {
+      const key = `caps:${story.character_id}`;
+      const seen = reads[key];
+      if (!myPlayerId || (seen && new Date(seen).getTime() >= new Date(story.created_at).getTime())) return;
+      applyReads(myPlayerId, { [key]: story.created_at });
+    },
+    [myPlayerId, applyReads, reads],
   );
 
   const unreadChatCount = unreadChatIds.size;
@@ -1890,9 +1946,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       deleteCapticStory,
       toggleCapticFollow,
       capticNews,
+      capticUnread,
       capticAlerts,
-      capticSeenAt,
-      markCapticSeen,
+      markCapticEventRead,
+      markCapticAllRead,
+      markCapticNoticed,
+      capticStoryState,
+      markCapticStorySeen,
     }),
     [
       state,
@@ -1993,9 +2053,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       deleteCapticStory,
       toggleCapticFollow,
       capticNews,
+      capticUnread,
       capticAlerts,
-      capticSeenAt,
-      markCapticSeen,
+      markCapticEventRead,
+      markCapticAllRead,
+      markCapticNoticed,
+      capticStoryState,
+      markCapticStorySeen,
     ],
   );
 

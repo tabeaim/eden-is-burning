@@ -360,3 +360,21 @@ label:has(input[type="file"]) {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
+
+/* Captic: Ring ums Profilbild, solange es eine noch nicht angesehene Story gibt */
+@keyframes captic-ring {
+  0%, 100% { box-shadow: 0 0 0 2px var(--accent); }
+  50% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
+}
+.captic-ring {
+  animation: captic-ring 2.8s ease-in-out infinite;
+}
+.captic-ring-seen {
+  box-shadow: 0 0 0 2px var(--border-strong);
+}
+@media (prefers-reduced-motion: reduce) {
+  .captic-ring {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+}

@@ -7,7 +7,7 @@ import { CAPTIC_PINK, capticHandle, feedRatio, formatCount, likeCount } from "@/
 import { formatInplayDate } from "@/lib/format";
 import { Icon } from "@/components/Icon";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { PhoneAvatar } from "../PhoneFrame";
+import { CapticAvatar } from "./CapticAvatar";
 import { EmojiPicker } from "../EmojiPicker";
 import { Sheet, SheetButton, SheetList } from "../Sheet";
 import { MentionSuggest, MentionText, normalizeMentions, useCapticProfiles } from "./CapticMentions";
@@ -156,7 +156,7 @@ export function CapticPostCard({
   return (
     <article className="border-b border-border-subtle pb-3">
       <div className="flex items-center gap-2.5 px-3 py-2">
-        {author && <PhoneAvatar character={author} size={32} link={false} />}
+        {author && <CapticAvatar character={author} size={32} />}
         <button
           onClick={() => author && onProfile(author.id)}
           className="min-w-0 flex-1 truncate text-left text-[0.8125rem] font-semibold text-text-primary"
@@ -219,7 +219,7 @@ export function CapticPostCard({
               const canDelete = canManage || canWriteAs(c.character_id);
               return (
                 <li key={c.id} className="flex items-start gap-2">
-                  {full && by && <PhoneAvatar character={by} size={26} link={false} className="mt-0.5" />}
+                  {full && by && <CapticAvatar character={by} size={26} className="mt-0.5" />}
                   <p className="min-w-0 flex-1 whitespace-pre-wrap break-words">
                     <button onClick={() => by && onProfile(by.id)} className={name}>
                       {by ? capticHandle(by) : "unbekannt"}
@@ -269,7 +269,7 @@ export function CapticPostCard({
             }}
             className="flex items-center gap-2"
           >
-            <PhoneAvatar character={me} size={30} link={false} />
+            <CapticAvatar character={me} size={30} />
             <input
               ref={input}
               value={text}

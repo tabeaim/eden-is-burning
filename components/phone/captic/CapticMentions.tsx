@@ -5,7 +5,7 @@ import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { resolvePhone } from "@/lib/phone";
 import { capticHandle } from "@/lib/captic";
-import { PhoneAvatar } from "../PhoneFrame";
+import { CapticAvatar } from "./CapticAvatar";
 
 // Alle Profile, die sich verlinken lassen (Charaktere mit Captic)
 export function useCapticProfiles() {
@@ -107,7 +107,7 @@ export function MentionSuggest({
           }}
           className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left hover:bg-white/[0.06]"
         >
-          <PhoneAvatar character={c} size={28} link={false} />
+          <CapticAvatar character={c} size={28} />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[0.8125rem] font-semibold text-text-primary">
               {capticHandle(c)}

@@ -6,13 +6,11 @@ import { useStore } from "@/lib/store";
 import { capticHandle, follows } from "@/lib/captic";
 import { Icon } from "@/components/Icon";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { PhoneAvatar } from "../PhoneFrame";
+import { CapticAvatar } from "./CapticAvatar";
 
-const RING = "bg-[linear-gradient(135deg,#ff9d5c,#e8457a,#7b3fd6)]";
 const STORY_SECONDS = 6;
 
-// Profilbild mit Story-Ring: bunt umrandet, sobald es eine Story gibt – dann
-// öffnet ein Klick die Story (`onOpen`).
+// Profilbild, das seine Story öffnet, sobald es eine gibt (Ring siehe `CapticAvatar`).
 export function StoryAvatar({
   character,
   size,
@@ -24,23 +22,13 @@ export function StoryAvatar({
   active: boolean;
   onOpen?: () => void;
 }) {
-  const avatar = (
-    <PhoneAvatar
+  return (
+    <CapticAvatar
       character={character}
       size={size}
-      link={!active}
-      className="ring-[3px] ring-[var(--phone-screen,#0c0c0e)]"
+      onOpen={active ? onOpen : undefined}
+      label={active ? `Story von ${capticHandle(character)} ansehen` : undefined}
     />
-  );
-  if (!active) return <span className="rounded-full p-[3px]">{avatar}</span>;
-  return (
-    <button
-      onClick={onOpen}
-      aria-label={`Story von ${capticHandle(character)} ansehen`}
-      className={`rounded-full p-[3px] ${RING}`}
-    >
-      {avatar}
-    </button>
   );
 }
 
@@ -70,15 +58,13 @@ export function StoryRow({
         {mine ? (
           <StoryAvatar character={me} size={58} active onOpen={() => onOpen(order, me.id)} />
         ) : (
-          <button onClick={onAdd} aria-label="Story hinzufügen" className="rounded-full p-[3px]">
-            <PhoneAvatar character={me} size={58} link={false} />
-          </button>
+          <CapticAvatar character={me} size={58} onOpen={onAdd} label="Story hinzufügen" />
         )}
         <button
           onClick={onAdd}
           aria-label="Story hinzufügen"
           title="Story hinzufügen"
-          className="absolute right-0 top-[42px] flex h-[22px] w-[22px] items-center justify-center rounded-full bg-accent text-black ring-2 ring-[var(--phone-screen,#0c0c0e)]"
+          className="absolute right-0 top-[46px] flex h-[22px] w-[22px] items-center justify-center rounded-full bg-accent text-black ring-2 ring-[var(--phone-screen,#0c0c0e)]"
         >
           <Icon name="plus" size={14} strokeWidth={2.4} />
         </button>
@@ -110,7 +96,7 @@ export function StoryViewer({
   onProfile: (characterId: string) => void;
   onClose: () => void;
 }) {
-  const { capticStories, character, canWriteAs, isAdmin, deleteCapticStory } = useStore();
+  const { capticStories, character, canWriteAs, isAdmin, deleteCapticStory, markCapticStorySeen } = useStore();
   const [who, setWho] = useState(start);
   const [index, setIndex] = useState(0);
   const [confirm, setConfirm] = useState(false);
@@ -135,6 +121,12 @@ export function StoryViewer({
     setWho(before);
     setIndex(0);
   }
+
+  // gezeigt = angesehen (der Ring wird grau, sobald das neueste Bild dran war)
+  useEffect(() => {
+    if (story) markCapticStorySeen(story);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [story?.id]);
 
   // läuft von selbst weiter (nicht, während die Lösch-Nachfrage offen ist)
   const storyId = story?.id;
@@ -191,7 +183,7 @@ export function StoryViewer({
           ))}
         </div>
         <div className="mt-2.5 flex items-center gap-2 text-white">
-          <PhoneAvatar character={author} size={32} link={false} />
+          <CapticAvatar character={author} size={32} ring={false} />
           <button
             onClick={() => {
               onClose();
@@ -223,11 +215,12 @@ export function StoryViewer({
       </div>
 
       {story.caption && (
-        <p
-          className={`pointer-events-none relative mt-auto whitespace-pre-wrap break-words bg-gradient-to-t from-black/70 to-transparent px-5 pb-8 pt-10 text-center text-[0.9375rem] font-medium text-white ${shadow}`}
-        >
-          {story.caption}
-        </p>
+        // Text als Blase über dem Bild (wie ein Text-Sticker), im dunklen Glas der App
+        <div className="pointer-events-none relative mt-auto flex justify-center px-5 pb-10">
+          <p className="max-w-full whitespace-pre-wrap break-words rounded-2xl border border-white/20 bg-black/60 px-4 py-2.5 text-center text-[0.9375rem] font-medium leading-snug text-white shadow-lg shadow-black/50 backdrop-blur-md">
+            {story.caption}
+          </p>
+        </div>
       )}
 
       {confirm && (

@@ -430,15 +430,21 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   - **Feed:** oben die Story-Zeile (eigene Story mit Plus, dann gefolgte Profile
     mit Story), darunter eigene Beiträge und die der gefolgten Profile – sonst
     niemand.
-  - **Stories** (`CapticStories.tsx`): bunter Ring ums Profilbild, sobald es eine
-    Story gibt; Klick (Story-Zeile oder Profil) zeigt sie bildschirmfüllend im
-    Display (links antippen = zurück, sonst weiter, läuft von selbst). Anlegen
-    über das Plus in der Story-Zeile oder „+ Story" im eigenen Profil.
+  - **Avatare in Captic** immer `CapticAvatar` (eigenes Captic-Profilbild, sonst
+    Handy-, sonst Charakterbild; änderbar unter „Profil bearbeiten"). Hat der
+    Charakter eine Story, liegt überall ein Ring darum: orange und langsam
+    pulsierend, bis man sie angesehen hat, danach grau.
+  - **Stories** (`CapticStories.tsx`): Klick aufs Profilbild (Story-Zeile oder
+    Profil) zeigt sie bildschirmfüllend im Display (links antippen = zurück,
+    sonst weiter, läuft von selbst); der Text steht als dunkle Glas-Blase über
+    dem Bild. Anlegen über das Plus in der Story-Zeile oder „+ Story" im Profil.
   - **Aktivitäten** (Glocke oben rechts): neue Likes, Kommentare, Follower
     (`captic_events`). Neues zeigt sich als oranger Zähler an Glocke, Captic-App,
     Handy-Wechsel und „Handy" im Menü sowie im Dashboard als „Neue Aktivität auf
-    Captic" je Charakter. Das Öffnen der Aktivitäten gilt als gesehen
-    (`read_marks`, Schlüssel `captic:<Charakter>`). Eigene Aktionen zählen nie.
+    Captic" je Charakter. Der Dashboard-Hinweis verschwindet beim Öffnen der
+    Aktivitäten; ungelesen (Punkt, Zähler) bleibt ein Eintrag, bis er angeklickt
+    wurde oder „Alle gelesen" gedrückt ist (`read_marks`). Eigene Aktionen
+    zählen nie.
   - **Verlinkungen** (`CapticMentions.tsx`): „@nutzername" in Bildunterschrift und
     Kommentar führt aufs Profil. Beim Tippen von „@" kommen Vorschläge (Nutzer-
     oder Charaktername); ein getippter Charaktername wird beim Abschicken in den
