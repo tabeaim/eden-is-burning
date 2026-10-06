@@ -3,6 +3,7 @@ import type { Character } from "@/lib/types";
 import { Icon, type IconName } from "./Icon";
 import { characterImage } from "@/lib/avatar";
 import { tierLabel } from "@/lib/characters";
+import { GONE_CLASS, useCharacterGone } from "@/lib/gone";
 
 // Bubbles – die EINE runde Pill-Form der App (siehe DESIGN.md). Charaktere, NPCs
 // und Orte sehen überall gleich aus; nur der Inhalt (Avatar bzw. Icon) wechselt.
@@ -67,11 +68,12 @@ export function CharacterBubble({
   className?: string;
 }) {
   const c = character;
+  const gone = useCharacterGone(c);
   return (
     <Bubble
       href={linked ? `/charaktere/${c.id}` : undefined}
       tone={tone}
-      title={c.name}
+      title={gone ? `${c.name} (Konto gelöscht)` : c.name}
       className={className}
       leading={
         c.faceclaim_image_url || c.is_npc ? (
@@ -90,7 +92,7 @@ export function CharacterBubble({
         )
       }
     >
-      {firstNameOnly ? c.name.split(" ")[0] : c.name}
+      <span className={gone ? GONE_CLASS : ""}>{firstNameOnly ? c.name.split(" ")[0] : c.name}</span>
       {c.is_npc && (
         <span className="text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
           {tierLabel(c)}

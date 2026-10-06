@@ -1,5 +1,6 @@
 "use client";
 
+import { GONE_CLASS, GONE_PLAYER_CLASS, useCharacterGone } from "@/lib/gone";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { NewCharacterButton } from "@/components/NewCharacterButton";
@@ -201,10 +202,15 @@ function CharacterCard({
   postCount: number;
 }) {
   const tier = tierOf(c);
+  const gone = useCharacterGone(c);
   return (
     <div className="group relative flex flex-col rounded-xl border border-border-subtle bg-bg-surface p-4 text-center transition-colors hover:bg-white/[0.03]">
       <div className="font-display lowercase text-[1.625rem] leading-none text-text-primary">
-        <Link href={`/charaktere/${c.id}`} className="after:absolute after:inset-0 after:content-['']">
+        <Link
+          href={`/charaktere/${c.id}`}
+          title={gone ? "Konto der Spieler*in gelöscht" : undefined}
+          className={`after:absolute after:inset-0 after:content-[''] ${gone ? GONE_CLASS : ""}`}
+        >
           {c.name}
         </Link>
       </div>
@@ -255,6 +261,11 @@ function CharacterCard({
             <span>· {tier === "extra" ? "angelegt von" : "played by"}</span>
             {players.map((pl) => (
               <span key={pl.id} className="relative z-10 normal-case tracking-normal">
+                {pl.deleted_at ? (
+                  <span className={GONE_PLAYER_CLASS} title="Konto gelöscht">
+                    {pl.username}
+                  </span>
+                ) : (
                 <Bubble
                   href={`/spieler/${pl.username}`}
                   leading={
@@ -266,6 +277,7 @@ function CharacterCard({
                 >
                   {pl.username}
                 </Bubble>
+                )}
               </span>
             ))}
           </>

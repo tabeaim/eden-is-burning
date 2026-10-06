@@ -79,7 +79,7 @@ const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
 function ProfileTab() {
-  const { currentPlayer, players, updatePlayer, changeEmail, changePassword, deletePlayer, signOut } = useStore();
+  const { currentPlayer, players, updatePlayer, changeEmail, changePassword, deletePlayer, signIn, signOut } = useStore();
   const [username, setUsername] = useState(currentPlayer?.username ?? "");
   const [saved, setSaved] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -89,14 +89,21 @@ function ProfileTab() {
   const [pw2, setPw2] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
-  // Konto löschen: erst aufklappen, dann den Usernamen zur Bestätigung eintippen
+  // Konto löschen: erst aufklappen, dann zur Bestätigung das Passwort eingeben
   const [deleting, setDeleting] = useState(false);
-  const [confirmName, setConfirmName] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
   if (!currentPlayer) return null;
 
   async function removeAccount() {
     if (!currentPlayer) return;
     setBusy(true);
+    // Passwort prüfen (meldet mit denselben Daten neu an)
+    const check = await signIn(currentPlayer.email, confirmPw);
+    if (check.error) {
+      setBusy(false);
+      setNotice({ ok: false, text: "Das Passwort stimmt nicht." });
+      return;
+    }
     const res = await deletePlayer(currentPlayer.id);
     if (res.error) {
       setBusy(false);
@@ -276,18 +283,19 @@ function ProfileTab() {
           <ul className="list-disc pl-5 text-[0.8125rem] leading-relaxed text-text-secondary">
             <li>Dein Login und dein Spieler*innen-Profil werden gelöscht.</li>
             <li>
-              Deine Main Characters kommen in den Papierkorb und gehen an die Admins – von dort lassen sie sich
-              wiederherstellen oder endgültig löschen.
+              Deine Charaktere, Szenen und Posts bleiben bestehen, werden aber als „gelöscht“ gekennzeichnet: Dein
+              Name erscheint ausgegraut, die Charakternamen durchgestrichen.
             </li>
-            <li>Deine Supporting Characters bleiben erhalten und gehen ebenfalls an die Admins.</li>
-            <li>Posts bleiben in den Szenen stehen.</li>
+            <li>Hast du nichts erstellt, verschwindest du ohne Spur.</li>
+            <li>Admins können später alle Spuren von dir und deinen Charakteren endgültig entfernen.</li>
           </ul>
           <label className="text-[0.8125rem] text-text-secondary">
-            Tippe zur Bestätigung deinen Usernamen ein: <span className="text-text-primary">{currentPlayer.username}</span>
+            Zur Bestätigung dein Passwort:
             <input
-              value={confirmName}
-              onChange={(e) => setConfirmName(e.target.value)}
-              autoComplete="off"
+              type="password"
+              value={confirmPw}
+              onChange={(e) => setConfirmPw(e.target.value)}
+              autoComplete="current-password"
               className={`mt-1 ${field} max-w-xs`}
             />
           </label>
@@ -295,7 +303,7 @@ function ProfileTab() {
             <button
               onClick={() => {
                 setDeleting(false);
-                setConfirmName("");
+                setConfirmPw("");
               }}
               className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
             >
@@ -303,7 +311,7 @@ function ProfileTab() {
             </button>
             <button
               onClick={() => void removeAccount()}
-              disabled={busy || confirmName.trim() !== currentPlayer.username}
+              disabled={busy || !confirmPw}
               className="rounded-md border border-red-400/60 bg-red-500/10 px-3 py-1.5 text-[0.8125rem] text-red-200 hover:bg-red-500/20 disabled:opacity-40"
             >
               {busy ? "Löscht …" : "Konto endgültig löschen"}

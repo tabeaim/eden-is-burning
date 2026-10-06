@@ -11,7 +11,7 @@ import { btn, btnDanger, btnPrimary, hint, row } from "./ui";
 // Spieler*innen: freischalten/sperren, Admin-Rechte vergeben, Konto löschen,
 // Überblick über ihre Charaktere. Die eigene Löschung steht in „Mein Profil".
 export function AdminPlayers() {
-  const { players, characters, npcs, updatePlayer, deletePlayer, currentPlayer, onlineIds, refresh } = useStore();
+  const { players, deletedPlayers, characters, npcs, trashedCharacters, posts, updatePlayer, deletePlayer, purgePlayer, currentPlayer, onlineIds, refresh } = useStore();
   const [note, setNote] = useState<string | null>(null);
   const [ask, setAsk] = useState<{ title: string; text: string; label: string; run: () => void } | null>(null);
   const sorted = [...players].sort(
@@ -86,7 +86,10 @@ export function AdminPlayers() {
                   onClick={() =>
                     setAsk({
                       title: `${p.username} löschen?`,
-                      text: `Das Konto und der Login von ${p.username} werden endgültig gelöscht. Die Main Characters (${characters.filter((c) => c.player_id === p.id && !c.deleted_at).length}) kommen in den Papierkorb und gehen an dich, Supporting Characters und Statist*innen bleiben bei dir, Posts bleiben in den Szenen stehen. Das lässt sich nicht rückgängig machen.`,
+                      text:
+                        count(p) === 0
+                          ? `Das Konto und der Login von ${p.username} werden gelöscht. Es hat nichts erstellt und verschwindet ohne Spur.`
+                          : `Der Login von ${p.username} wird gelöscht. Charaktere, Szenen und Posts bleiben als „gelöscht“ gekennzeichnet bestehen (Name ausgegraut, Charakternamen durchgestrichen); nur der Username bleibt als Hülle. Alle Spuren lassen sich danach unten unter „Gelöschte Konten“ endgültig entfernen.`,
                       label: "Konto löschen",
                       run: () =>
                         void deletePlayer(p.id).then((res) =>
@@ -95,7 +98,9 @@ export function AdminPlayers() {
                               ? `Löschen fehlgeschlagen: ${res.error}`
                               : res.authKept
                                 ? `${p.username} ist gelöscht. Das Login-Konto ließ sich nicht entfernen – bitte im Supabase-Dashboard unter Authentication löschen.`
-                                : `${p.username} ist gelöscht.`,
+                                : res.removed
+                                  ? `${p.username} ist gelöscht und restlos verschwunden.`
+                                  : `${p.username} ist gelöscht. Charaktere und Szenen bleiben als Hülle bestehen.`,
                           ),
                         ),
                     })
@@ -131,6 +136,50 @@ export function AdminPlayers() {
           </div>
         );
       })}
+      {deletedPlayers.length > 0 && (
+        <>
+          <div className="mt-3 text-[0.8125rem] font-semibold uppercase tracking-wider text-text-tertiary">
+            Gelöschte Konten ({deletedPlayers.length})
+          </div>
+          <p className={hint}>
+            Nur noch eine Hülle: Der Login ist weg, Charaktere, Szenen und Posts bleiben als gelöscht gekennzeichnet
+            stehen. „Alle Spuren löschen“ entfernt auch sie.
+          </p>
+          {deletedPlayers.map((p) => {
+            const chars = [...characters, ...npcs, ...trashedCharacters].filter((c) => c.player_id === p.id);
+            const postCount = posts.filter((x) => chars.some((c) => c.id === x.character_id)).length;
+            return (
+              <div key={p.id} className={`${row} flex flex-wrap items-center gap-3 px-3 py-2.5`}>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[0.875rem] text-text-tertiary line-through">{p.username}</div>
+                  <div className="text-[0.8125rem] text-text-tertiary">
+                    {chars.length} {chars.length === 1 ? "Charakter" : "Charaktere"} · {postCount}{" "}
+                    {postCount === 1 ? "Post" : "Posts"}
+                  </div>
+                </div>
+                <button
+                  onClick={() =>
+                    setAsk({
+                      title: `Alle Spuren von ${p.username} löschen?`,
+                      text: `Gelöscht werden ${chars.length} ${chars.length === 1 ? "Charakter" : "Charaktere"} (${chars
+                        .map((c) => c.name)
+                        .join(", ") || "–"}) mit ${postCount} Posts, allen Zitaten, Chats und Anrufen – auch in Szenen anderer Spieler*innen – und die Hülle selbst. Das lässt sich NICHT rückgängig machen.`,
+                      label: "Alle Spuren löschen",
+                      run: () =>
+                        void purgePlayer(p.id).then((res) =>
+                          setNote(res.error ? `Löschen fehlgeschlagen: ${res.error}` : `Alle Spuren von ${p.username} sind gelöscht.`),
+                        ),
+                    })
+                  }
+                  className={btnDanger}
+                >
+                  Alle Spuren löschen
+                </button>
+              </div>
+            );
+          })}
+        </>
+      )}
       {ask && (
         <ConfirmDialog
           title={ask.title}

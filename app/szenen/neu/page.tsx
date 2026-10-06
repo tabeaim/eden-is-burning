@@ -1,5 +1,6 @@
 "use client";
 
+import { useTheme } from "@/lib/theme";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
@@ -31,6 +32,7 @@ export default function NewScenePage() {
     currentPlayer,
     charactersOf,
   } = useStore();
+  const { theme } = useTheme();
   // Telefonat statt Ort: keine Gegend/kein Ort nötig – die Szene spielt „am Telefon"
   const [phone, setPhone] = useState(false);
 
@@ -108,7 +110,7 @@ export default function NewScenePage() {
           </div>
           <div
             className="relative h-24 w-full rounded-md overflow-hidden border border-border-subtle bg-center bg-cover opacity-90"
-            style={{ backgroundImage: `url("${sceneHeader(title.trim() || "neue-szene")}")` }}
+            style={{ backgroundImage: `url("${sceneHeader(title.trim() || "neue-szene", theme)}")` }}
           >
             <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           </div>

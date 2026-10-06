@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { useSetPageMeta } from "@/lib/page-meta";
+import { GONE_PLAYER_CLASS } from "@/lib/gone";
 import { areaName } from "@/lib/world";
 import { formatInplayDate, timeAgo } from "@/lib/format";
 import { Icon } from "@/components/Icon";
@@ -15,6 +16,7 @@ import {
   TIER_NAMES,
   ageAt,
   isHidden,
+  ownerGone,
   playsAs,
   tierLabel,
   tierOf,
@@ -89,6 +91,10 @@ export default function CharacterPage({
     // eigenes Header-Bild des Charakters (sonst das der Seite)
     c?.banner_url ?? undefined,
     "max-w-6xl",
+    undefined,
+    undefined,
+    // Konto der Spieler*in gelöscht: Name im Titel durchgestrichen
+    c ? ownerGone(c, player) : false,
   );
 
   if (!c) {
@@ -270,6 +276,14 @@ export default function CharacterPage({
           <span className="font-display lowercase text-[1.625rem] leading-none text-accent">brought to you by</span>
           {owners.length > 0 ? (
             owners.map((o) => {
+              // gelöschtes Konto: nur der ausgegraute Name, kein Pilltag, kein Link
+              if (o.deleted_at) {
+                return (
+                  <span key={o.id} title="Konto gelöscht" className={`text-[0.875rem] ${GONE_PLAYER_CLASS}`}>
+                    {o.username}
+                  </span>
+                );
+              }
               const presence = presenceOf(o.id);
               return (
                 <Bubble
@@ -300,7 +314,7 @@ export default function CharacterPage({
         <div className="mt-2 text-[0.8125rem] text-text-tertiary">
           {postCount} {postCount === 1 ? "Post" : "Posts"} · Registriert am{" "}
           {formatInplayDate(c.created_at.slice(0, 10))}
-          {owners.length === 1 && <> · Zuletzt online {timeAgo(owners[0].last_seen)}</>}
+          {owners.length === 1 && !owners[0].deleted_at && <> · Zuletzt online {timeAgo(owners[0].last_seen)}</>}
         </div>
       </div>
     </div>

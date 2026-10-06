@@ -15,6 +15,7 @@ export type PageMeta = {
   bannerImage?: string; // überschreibt den Seed-Banner (z.B. Szenen-Header)
   width?: string; // Tailwind max-w-Klasse der Seite – Banner-Titel nutzt dieselbe
   avatar?: string; // rundes Bild vor dem Titel (Spieler*innen-Profil)
+  deleted?: boolean; // Titel durchgestrichen (Charakter eines gelöschten Kontos)
 };
 
 type Ctx = { meta: PageMeta; setMeta: (m: PageMeta) => void };
@@ -36,10 +37,11 @@ export function useSetPageMeta(
   width?: string,
   statusBadge?: "active" | "closed",
   avatar?: string,
+  deleted?: boolean,
 ) {
   const setMeta = useContext(PageMetaCtx)?.setMeta;
   const pathname = usePathname();
   useEffect(() => {
-    setMeta?.({ title, subtitle, statusBadge, path: pathname, bannerImage, width, avatar });
-  }, [setMeta, title, subtitle, statusBadge, bannerImage, width, pathname, avatar]);
+    setMeta?.({ title, subtitle, statusBadge, path: pathname, bannerImage, width, avatar, deleted });
+  }, [setMeta, title, subtitle, statusBadge, bannerImage, width, pathname, avatar, deleted]);
 }

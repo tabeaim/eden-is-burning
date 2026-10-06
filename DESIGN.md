@@ -442,13 +442,24 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   (dunkel/hell) ein Header-Bild pro Seite, inkl. Ausschnitt-Regler. Eigene Header
   von Szenen, Orten, Charakteren und Spieler*innen haben Vorrang. Keine
   Farbauswahl: Die Akzentfarbe gehört zum jeweiligen Stil.
-- **Konto löschen:** eigenes Konto unter Mein Profil (Username zur Bestätigung
-  eintippen), das anderer Admins unter Admin → Spieler*innen. Beides ruft die
-  SQL-Funktion `delete_player` auf (`supabase/schema-delete-player.sql`):
-  Main Characters kommen in den Papierkorb und gehen an den Admin (sonst würden
-  sie samt Posts per Cascade gelöscht), Supporting Characters und Statist*innen
-  bleiben, danach werden Spieler*in und Login entfernt. Der letzte Admin ist
+- **Konto löschen** (SQL: `supabase/schema-delete-player.sql`): eigenes Konto unter
+  Mein Profil (Passwort zur Bestätigung), das anderer unter Admin → Spieler*innen.
+  Hat die Person **nichts erstellt** (keine Charaktere, Orte, Plots, Chats),
+  verschwindet sie ohne Spur. Sonst bleibt eine **Hülle** (`players.deleted_at`): Login
+  und Profil sind weg, nur der Username bleibt; Charaktere, Szenen und Posts bleiben
+  bestehen. Admins entfernen unter „Gelöschte Konten" **alle Spuren** (Charaktere mit
+  Posts, Zitaten, Chats, Anrufen und die Hülle) mit `purge_player`. Der letzte Admin ist
   geschützt.
+- **Gelöschte Konten in der Oberfläche:** `players` (Store) enthält nur aktive
+  Spieler*innen, `deletedPlayers` die Hüllen, `player(id)` findet beide. Name der
+  Spieler*in ausgegraut ohne Pilltag und Link (`GONE_PLAYER_CLASS`, überall wo ein
+  `Bubble` mit Username stünde: Profil-Footer, Charakterkarten, Szenenkarten);
+  Charaktername durchgestrichen und abgeschwächt (`GONE_CLASS`, `useCharacterGone`):
+  im Seitentitel (`deleted` in `PageMeta`), in `CharacterBubble`, in der
+  Szenen-Charakterkarte und in der Charakterübersicht. Es gibt kein Spieler*innen-Profil
+  mehr, nur die Charakterprofile. Main Characters gelten als gelöscht, wenn ihre
+  Besitzer*in weg ist, Supporting Characters erst, wenn alle Zugeordneten weg sind,
+  Statist*innen nie (`ownerGone`).
 - Gefährliche Aktionen (sperren, Admin entziehen, löschen, Stufe ändern)
   fragen immer per `ConfirmDialog` nach.
 - **Alter Egos** (Seitenleiste) zeigen auch zugeordnete Supporting Characters, mit

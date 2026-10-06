@@ -119,7 +119,13 @@ interface StoreValue extends PersistedState {
   deleteScene: (id: string) => void;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
   // Konto löschen (eigenes, oder als Admin das anderer). Siehe supabase/schema-delete-player.sql
-  deletePlayer: (id: string) => Promise<{ error: string | null; authKept: boolean }>;
+  // Ohne eigene Spuren verschwindet die Person ganz, sonst bleibt eine Hülle (`removed` = false).
+  deletePlayer: (id: string) => Promise<{ error: string | null; removed: boolean; authKept: boolean }>;
+  // Admin: alle Spuren einer gelöschten Hülle samt ihrer Charaktere entfernen
+  purgePlayer: (id: string) => Promise<{ error: string | null }>;
+  // Gelöschte Konten (Hüllen). `players` enthält nur aktive Spieler*innen; `player(id)`
+  // findet auch Hüllen, damit sich ihre Charaktere und Szenen weiter beschriften lassen.
+  deletedPlayers: Player[];
   addScene: (scene: Omit<Scene, "id" | "created_at">) => string;
   updateScene: (id: string, patch: Partial<Scene>) => void;
   resetData: () => void;
@@ -654,7 +660,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const playerByUsername = useCallback(
     (username: string) =>
       state.players.find(
-        (p) => p.username.toLowerCase() === username.toLowerCase(),
+        (p) => !p.deleted_at && p.username.toLowerCase() === username.toLowerCase(),
       ),
     [state.players],
   );
@@ -862,11 +868,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const deletePlayer = useCallback(
     async (id: string) => {
       const { data, error } = await supabase.rpc("delete_player", { p_id: id });
-      if (error) return { error: error.message, authKept: false };
-      setState((s) => ({ ...s, players: s.players.filter((p) => p.id !== id) }));
-      // Charaktere wechseln den Besitz (Papierkorb) – neu laden
-      void loadWorld();
-      return { error: null, authKept: data === "auth_kept" };
+      if (error) return { error: error.message, removed: false, authKept: false };
+      const res = (data ?? {}) as { result?: string; auth_kept?: boolean };
+      // Hülle oder weg – am einfachsten neu laden
+      await loadWorld();
+      return { error: null, removed: res.result === "removed", authKept: !!res.auth_kept };
+    },
+    [loadWorld],
+  );
+
+  const purgePlayer = useCallback(
+    async (id: string) => {
+      const { error } = await supabase.rpc("purge_player", { p_id: id });
+      if (error) return { error: error.message };
+      await loadWorld();
+      return { error: null };
     },
     [loadWorld],
   );
@@ -1453,9 +1469,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [state.calls, state.characters, currentPlayer]);
   const unreadChatCount = unreadChatIds.size;
 
+  const activePlayers = useMemo(() => state.players.filter((p) => !p.deleted_at), [state.players]);
+  const deletedPlayers = useMemo(() => state.players.filter((p) => p.deleted_at), [state.players]);
   const value = useMemo<StoreValue>(
     () => ({
       ...state,
+      players: activePlayers,
+      deletedPlayers,
       characters: playable,
       npcs,
       saveError,
@@ -1479,6 +1499,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       refresh,
       appSettings,
       deletePlayer,
+      purgePlayer,
       updateAppSettings,
       deleteLocation,
       charactersOf,
@@ -1543,6 +1564,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       state,
+      activePlayers,
+      deletedPlayers,
       ready,
       currentPlayer,
       isApproved,
@@ -1555,6 +1578,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       refresh,
       appSettings,
       deletePlayer,
+      purgePlayer,
       updateAppSettings,
       deleteLocation,
       charactersOf,

@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Character, Player } from "@/lib/types";
 import { Icon } from "./Icon";
 import { ageAt } from "@/lib/characters";
+import { GONE_CLASS, GONE_PLAYER_CLASS, useCharacterGone } from "@/lib/gone";
 
 // Große Charakterkarte für die Szenenansicht. Bildformat 600×502; die
 // Beschreibung (Bio) erscheint als Overlay, solange die Maus über dem Bild ist
@@ -19,6 +20,7 @@ export function SceneCharacterCard({
   at?: string; // Inplay-Datum der Szene: Alter zu diesem Zeitpunkt
 }) {
   const age = ageAt(character, at);
+  const gone = useCharacterGone(character);
   return (
     <div className="w-[260px] max-w-full shrink-0">
       <div
@@ -53,7 +55,10 @@ export function SceneCharacterCard({
       {/* Name – führt wie das Bild aufs Profil */}
       <Link
         href={`/charaktere/${character.id}`}
-        className="mt-3 block text-center font-serif font-bold text-[1.125rem] uppercase tracking-wide text-text-primary hover:text-accent"
+        title={gone ? "Konto der Spieler*in gelöscht" : undefined}
+        className={`mt-3 block text-center font-serif font-bold text-[1.125rem] uppercase tracking-wide text-text-primary hover:text-accent ${
+          gone ? GONE_CLASS : ""
+        }`}
       >
         {character.name}
       </Link>
@@ -92,12 +97,16 @@ export function SceneCharacterCard({
       {player && (
         <div className="mt-1.5 text-center font-display text-[1rem] text-text-tertiary">
           by{" "}
-          <Link
-            href={`/spieler/${player.username}`}
-            className="hover:text-text-secondary"
-          >
-            {player.username}
-          </Link>
+          {player.deleted_at ? (
+            // gelöschtes Konto: nur noch der ausgegraute Name, kein Link
+            <span className={GONE_PLAYER_CLASS} title="Konto gelöscht">
+              {player.username}
+            </span>
+          ) : (
+            <Link href={`/spieler/${player.username}`} className="hover:text-text-secondary">
+              {player.username}
+            </Link>
+          )}
         </div>
       )}
     </div>

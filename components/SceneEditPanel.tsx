@@ -1,5 +1,6 @@
 "use client";
 
+import { useTheme } from "@/lib/theme";
 import { BannerPosition } from "./BannerPosition";
 import { bannerStyle } from "@/lib/headers";
 import { useRef, useState } from "react";
@@ -43,6 +44,7 @@ export function SceneEditPanel({
     currentPlayer,
     charactersOf,
   } = useStore();
+  const { theme } = useTheme();
   const router = useRouter();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const postCount = posts.filter((p) => p.scene_id === scene.id).length;
@@ -121,7 +123,7 @@ export function SceneEditPanel({
         </div>
         <div
           className="relative h-28 w-full rounded-md overflow-hidden border border-border-subtle bg-cover"
-          style={bannerStyle(headerUrl || sceneHeader(title.trim() || scene.id))}
+          style={bannerStyle(headerUrl || sceneHeader(title.trim() || scene.id, theme))}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           <button

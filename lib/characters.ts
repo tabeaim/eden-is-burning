@@ -35,6 +35,20 @@ export function playsAs(
   return tierOf(c) === "extra" ? co : c.player_id === playerId || co;
 }
 
+// Hat/haben die Spieler*in(nen) hinter dem Charakter ihr Konto gelöscht? Dann bleibt der
+// Charakter bestehen, wird aber überall als „gelöscht" gekennzeichnet. Main Characters:
+// ihr*e Besitzer*in; Supporting Characters: erst wenn alle Zugeordneten weg sind;
+// Statist*innen gehören allen und sind nie betroffen.
+export function ownerGone(
+  c: Pick<Character, "is_npc" | "npc_tier" | "player_id" | "co_owner_ids">,
+  player: (id: string) => { deleted_at?: string | null } | undefined,
+): boolean {
+  const tier = tierOf(c);
+  if (tier === "extra") return false;
+  const owners = tier === "supporting" ? [c.player_id, ...(c.co_owner_ids ?? [])] : [c.player_id];
+  return owners.length > 0 && owners.every((id) => !!player(id)?.deleted_at);
+}
+
 // --- Alter und Studienjahr ----------------------------------------------------
 // Stichtage, wenn nichts anderes vorgegeben ist (z.B. das Datum einer Szene)
 export const DEFAULT_AGE_DATE = "2022-01-01";

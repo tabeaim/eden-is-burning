@@ -13,6 +13,7 @@ import { LoginScreen } from "./LoginScreen";
 import { PendingScreen } from "./PendingScreen";
 import { headersFor, pageHeader, sceneHeader } from "@/lib/headers";
 import { useTheme } from "@/lib/theme";
+import { GONE_CLASS } from "@/lib/gone";
 import type { Theme } from "@/lib/types";
 
 // `title` weicht nur ab, wenn der Seitentitel anders heißt als der Menüpunkt.
@@ -267,7 +268,9 @@ function BannerHeader({
               className="mr-3 inline-block h-[1.15em] w-[1.15em] rounded-full object-cover align-[-0.2em] ring-2 ring-bg-primary"
             />
           )}
-          {title}
+          <span className={onThisPage && meta.deleted ? GONE_CLASS : ""} title={onThisPage && meta.deleted ? "Konto der Spieler*in gelöscht" : undefined}>
+            {title}
+          </span>
           <span className="text-accent">.</span>
         </h1>
 

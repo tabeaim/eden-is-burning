@@ -19,6 +19,8 @@ export interface Player {
   last_seen: string; // ISO timestamp – "zuletzt online"
   current_location?: PlayerLocation | null;
   dashboard_header_url?: string | null; // eigener Banner fürs Dashboard
+  // Gelöschtes Konto: nur noch eine Hülle (Username), Charaktere und Szenen bleiben
+  deleted_at?: string | null;
   // Spieler*innen-Profil: eigenes Header-Bild und dieselben frei gestaltbaren
   // Abschnitte wie bei Charakteren (Skills, Slider, Likes/Dislikes)
   profile?: PlayerProfile | null;
