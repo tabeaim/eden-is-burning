@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CapticEvent, CapticPost, Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { resolvePhone } from "@/lib/phone";
@@ -17,10 +17,10 @@ import {
 import { Icon } from "@/components/Icon";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { CropDialog } from "@/components/CropDialog";
-import { CapticAvatar } from "./CapticAvatar";
+import { CapticAvatar, CapticStoryContext } from "./CapticAvatar";
 import { CapticPostCard } from "./CapticPost";
 import { CapticCompose, capticField } from "./CapticCompose";
-import { StoryAvatar, StoryRow, StoryViewer } from "./CapticStories";
+import { OwnStoryAvatar, StoryAvatar, StoryRow, StoryViewer } from "./CapticStories";
 
 // Übergabe vom Dashboard („Neue Aktivität auf Captic"): gleich die Aktivitäten öffnen
 export const CAPTIC_OPEN_KEY = "eden:captic-open";
@@ -59,6 +59,7 @@ export function CapticApp({ me }: { me: Character }) {
     }
   }, []);
   const [story, setStory] = useState<{ ids: string[]; start: string } | null>(null);
+  const openStory = useCallback((id: string) => setStory({ ids: [id], start: id }), []);
   const news = capticNews(me.id).length;
   const view = stack[stack.length - 1];
   const push = (v: View) => setStack((s) => [...s, v]);
@@ -97,7 +98,7 @@ export function CapticApp({ me }: { me: Character }) {
   const onMine = view.t === "profile" && view.id === me.id;
 
   return (
-    <>
+    <CapticStoryContext.Provider value={openStory}>
       <div className="flex min-h-[52px] shrink-0 items-center gap-1 border-b border-border-subtle bg-bg-surface px-2">
         {stack.length > 1 ? (
           <button onClick={back} aria-label="Zurück" className={arrow}>
@@ -165,7 +166,6 @@ export function CapticApp({ me }: { me: Character }) {
             who={profileOf}
             me={me}
             onOpen={nav.onOpen}
-            onNew={() => root({ t: "new" })}
             onAddStory={() => push({ t: "story" })}
             onStory={() => setStory({ ids: [profileOf.id], start: profileOf.id })}
           />
@@ -212,7 +212,7 @@ export function CapticApp({ me }: { me: Character }) {
           onClose={() => setStory(null)}
         />
       )}
-    </>
+    </CapticStoryContext.Provider>
   );
 }
 
@@ -436,14 +436,12 @@ function Profile({
   who,
   me,
   onOpen,
-  onNew,
   onAddStory,
   onStory,
 }: {
   who: Character;
   me: Character;
   onOpen: (postId: string) => void;
-  onNew: () => void;
   onAddStory: () => void;
   onStory: () => void;
 }) {
@@ -521,7 +519,11 @@ function Profile({
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="flex items-center gap-5 px-4 pt-4">
-        <StoryAvatar character={who} size={76} active={hasStory} onOpen={onStory} />
+        {own ? (
+          <OwnStoryAvatar me={who} size={76} onOpen={onStory} onAdd={onAddStory} />
+        ) : (
+          <StoryAvatar character={who} size={76} active={hasStory} onOpen={onStory} />
+        )}
         <div className="flex flex-1 justify-around text-center">
           {[
             [formatCount(posts.length), "Beiträge"],
@@ -626,17 +628,9 @@ function Profile({
           )}
           <div className="mt-3 flex gap-2">
             {own ? (
-              <>
-                <button onClick={startEdit} className={button}>
-                  Profil bearbeiten
-                </button>
-                <button onClick={onNew} className={button}>
-                  + Beitrag
-                </button>
-                <button onClick={onAddStory} className={button}>
-                  + Story
-                </button>
-              </>
+              <button onClick={startEdit} className={button}>
+                Profil bearbeiten
+              </button>
             ) : (
               <>
                 <FollowButton me={me} other={who} wide />

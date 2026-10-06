@@ -433,11 +433,14 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   - **Avatare in Captic** immer `CapticAvatar` (eigenes Captic-Profilbild, sonst
     Handy-, sonst Charakterbild; änderbar unter „Profil bearbeiten"). Hat der
     Charakter eine Story, liegt überall ein Ring darum: orange und langsam
-    pulsierend, bis man sie angesehen hat, danach grau.
+    pulsierend, bis man sie angesehen hat, danach grau. Ein Klick auf einen
+    Avatar mit Ring öffnet die Story (auch das kleine Bild am Kommentar); der
+    Name daneben führt aufs Captic-Profil.
   - **Stories** (`CapticStories.tsx`): Klick aufs Profilbild (Story-Zeile oder
     Profil) zeigt sie bildschirmfüllend im Display (links antippen = zurück,
     sonst weiter, läuft von selbst); der Text steht als dunkle Glas-Blase über
-    dem Bild. Anlegen über das Plus in der Story-Zeile oder „+ Story" im Profil.
+    dem Bild. Anlegen über das eigene Profilbild mit kleinem Plus
+    (`OwnStoryAvatar`) – in der Story-Zeile und im eigenen Profil.
   - **Aktivitäten** (Glocke oben rechts): neue Likes, Kommentare, Follower
     (`captic_events`). Neues zeigt sich als oranger Zähler an Glocke, Captic-App,
     Handy-Wechsel und „Handy" im Menü sowie im Dashboard als „Neue Aktivität auf
@@ -452,8 +455,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   - **Doppelklick** bzw. doppeltes Antippen auf das Bild liket (Herz ploppt auf).
   - **Profil:** Beiträge im Dreier-Raster (quadratisch; Videos/GIFs als Standbild
     mit Zeichen). Eigenes Profil: „Profil bearbeiten" (Nutzername, Bio, Follower-
-    und Gefolgt-Zahl frei wählbar – leer zählt, wer in der App wirklich folgt),
-    „+ Beitrag", „+ Story".
+    und Gefolgt-Zahl frei wählbar – leer zählt, wer in der App wirklich folgt).
+    Neue Beiträge nur über das Plus in der Leiste unten.
     Fremdes Profil: „Folgen" (Captic-Pink) / „Gefolgt" (grau).
   - **Beitrag** (`CapticPostCard`): Bild, GIF oder kurzes Video (läuft stumm los,
     Antippen schaltet den Ton), Bildunterschrift, Like-Zahl (frei gesetzt + Herzen

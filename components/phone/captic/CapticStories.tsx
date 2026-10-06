@@ -32,6 +32,41 @@ export function StoryAvatar({
   );
 }
 
+// Das eigene Profilbild mit kleinem Plus: Klick öffnet die eigene Story oder – wenn
+// es noch keine gibt – das Hinzufügen; das Plus fügt immer hinzu.
+export function OwnStoryAvatar({
+  me,
+  size,
+  onOpen,
+  onAdd,
+}: {
+  me: Character;
+  size: number;
+  onOpen: () => void;
+  onAdd: () => void;
+}) {
+  const { capticStoryState } = useStore();
+  const has = capticStoryState(me.id) !== "none";
+  return (
+    <span className="relative inline-block shrink-0">
+      <CapticAvatar
+        character={me}
+        size={size}
+        onOpen={has ? onOpen : onAdd}
+        label={has ? "Deine Story ansehen" : "Story hinzufügen"}
+      />
+      <button
+        onClick={onAdd}
+        aria-label="Story hinzufügen"
+        title="Story hinzufügen"
+        className="absolute bottom-0.5 right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-accent text-black ring-2 ring-[var(--phone-screen,#0c0c0e)]"
+      >
+        <Icon name="plus" size={14} strokeWidth={2.4} />
+      </button>
+    </span>
+  );
+}
+
 // Story-Zeile über dem Feed: zuerst die eigene (mit Plus zum Hinzufügen), dann
 // alle, denen man folgt und die eine Story haben.
 export function StoryRow({
@@ -54,20 +89,8 @@ export function StoryRow({
 
   return (
     <div className="flex shrink-0 gap-2.5 overflow-x-auto border-b border-border-subtle px-3 py-2.5">
-      <div className="relative flex shrink-0 flex-col items-center gap-1">
-        {mine ? (
-          <StoryAvatar character={me} size={58} active onOpen={() => onOpen(order, me.id)} />
-        ) : (
-          <CapticAvatar character={me} size={58} onOpen={onAdd} label="Story hinzufügen" />
-        )}
-        <button
-          onClick={onAdd}
-          aria-label="Story hinzufügen"
-          title="Story hinzufügen"
-          className="absolute right-0 top-[46px] flex h-[22px] w-[22px] items-center justify-center rounded-full bg-accent text-black ring-2 ring-[var(--phone-screen,#0c0c0e)]"
-        >
-          <Icon name="plus" size={14} strokeWidth={2.4} />
-        </button>
+      <div className="flex shrink-0 flex-col items-center gap-1">
+        <OwnStoryAvatar me={me} size={58} onOpen={() => onOpen(order, me.id)} onAdd={onAdd} />
         <span className={name}>Deine Story</span>
       </div>
       {others.map((c) => (
@@ -217,7 +240,7 @@ export function StoryViewer({
       {story.caption && (
         // Text als Blase über dem Bild (wie ein Text-Sticker), im dunklen Glas der App
         <div className="pointer-events-none relative mt-auto flex justify-center px-5 pb-10">
-          <p className="max-w-full whitespace-pre-wrap break-words rounded-2xl border border-white/20 bg-black/60 px-4 py-2.5 text-center text-[0.9375rem] font-medium leading-snug text-white shadow-lg shadow-black/50 backdrop-blur-md">
+          <p className="max-w-full whitespace-pre-wrap break-words rounded-2xl border border-white/20 bg-black/60 px-3.5 py-2 text-center text-[0.8125rem] font-medium leading-snug text-white shadow-lg shadow-black/50 backdrop-blur-md">
             {story.caption}
           </p>
         </div>

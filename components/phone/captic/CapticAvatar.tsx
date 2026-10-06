@@ -1,5 +1,6 @@
 "use client";
 
+import { createContext, useContext } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
@@ -10,9 +11,14 @@ export function capticAvatarUrl(c: Pick<Character, "faceclaim_image_url" | "phon
   return c.phone?.captic?.avatar || c.phone?.avatar || characterImage(c);
 }
 
+// Öffnet die Story eines Charakters (stellt `CapticApp` bereit) – damit führt
+// jedes Profilbild mit Ring auf die Story, egal wo es steht.
+export const CapticStoryContext = createContext<((characterId: string) => void) | null>(null);
+
 // Avatar überall in Captic. Hat der Charakter eine Story, liegt ein Ring darum:
 // orange und langsam pulsierend, solange man sie nicht angesehen hat, danach grau.
-// Mit `onOpen` ist der Avatar ein Knopf (z.B. Story öffnen).
+// Ein Klick auf einen Avatar mit Ring öffnet die Story; `onOpen` legt stattdessen
+// eine eigene Aktion fest.
 export function CapticAvatar({
   character,
   size = 40,
@@ -29,7 +35,11 @@ export function CapticAvatar({
   label?: string;
 }) {
   const { capticStoryState } = useStore();
+  const openStory = useContext(CapticStoryContext);
   const state = ring ? capticStoryState(character.id) : "none";
+  const story = state !== "none" && openStory ? () => openStory(character.id) : undefined;
+  const action = onOpen ?? story;
+  const hint = label ?? (action ? "Story ansehen" : undefined);
   const gap = size >= 56 ? 3 : 2; // Abstand zwischen Bild und Ring
   const img = (
     // eslint-disable-next-line @next/next/no-img-element
@@ -45,8 +55,8 @@ export function CapticAvatar({
   } ${className}`;
   // der Abstand bleibt auch ohne Ring, damit nichts springt, wenn eine Story dazukommt
   const style = { padding: gap, margin: 2 };
-  return onOpen ? (
-    <button type="button" onClick={onOpen} aria-label={label} title={label} style={style} className={shell}>
+  return action ? (
+    <button type="button" onClick={action} aria-label={hint} title={hint} style={style} className={shell}>
       {img}
     </button>
   ) : (
