@@ -26,7 +26,7 @@ const toList = (text: string) =>
 
 // Profil direkt im Profil bearbeiten: alles Beschreibende – Zitat,
 // ausführliche Beschreibung, Eigenschaften, Skills, Slider, Likes/Dislikes,
-// Stammbaum, Timeline, das Outfit („Look") und die Gegenstände („Pockets"); bei Supporting Characters und Statist*innen dazu „Vibes"
+// Stammbaum, Timeline, der Style („Looks") und die Gegenstände („Pockets"); bei Supporting Characters und Statist*innen dazu „Vibes"
 // (Inspo-Bilder). Die Grunddaten stehen unter Einstellungen → Meine Charaktere –
 // außer bei Statist*innen: Die darf jede*r bearbeiten, deshalb stehen ihre
 // Grunddaten gleich hier mit.
@@ -107,7 +107,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       personality: d.personality,
       profile,
     };
-    if (tier === "main") patch.pinterest_url = d.pinterest_url;
+    if (tier !== "extra") patch.pinterest_url = d.pinterest_url;
     // Vibes (Inspo-Bilder) nur Supporting Characters und Statist*innen
     if (tier !== "main") patch.vibes = vibes;
     if (tier === "extra") {
@@ -424,14 +424,13 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         <Icon name="plus" size={12} /> Timeline-Eintrag
       </button>
 
-      <div className={group}>Look – Outfit</div>
+      <div className={group}>Looks – Style</div>
       <p className={`-mt-2 ${hint}`}>
-        Was trägt dein Charakter? Stell aus hochgeladenen Bildern ein Outfit zusammen – es
-        erscheint im Reiter „Look“ neben den Angaben zum Aussehen.
+        Was trägt dein Charakter? Die hochgeladenen Bilder erscheinen als Collage unter „Looks“.
       </p>
       <ThingsBoard items={outfit} onChange={setOutfit} />
 
-      {tier === "main" && (
+      {tier !== "extra" && (
         <>
           <div className={group}>Pockets – Gegenstände</div>
           <p className={`-mt-2 ${hint}`}>
@@ -442,7 +441,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         </>
       )}
 
-      {tier === "main" && (
+      {tier !== "extra" && (
         <>
           <div className={group}>Links</div>
           <label className={label}>

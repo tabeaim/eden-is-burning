@@ -125,16 +125,25 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   (Name, Age, Gender, Residence, Origin, Status, Sexuality, Occupation …).
 - **Alter und Studienjahr** werden berechnet (`ageAt`, `studyYearAt`): im Profil
   zum 1.1.2022 bzw. für den Herbst 2021, in einer Szene zum Datum der Szene.
-- **Profil-Aufbau** (wie das Spieler*innen-Profil, zwei Bereiche untereinander):
-  oben Avatar (statt des früheren Profil-Banners), Kurzbeschreibung und Facts,
-  darunter die Reiter.
-- **Profil-Reiter:** Character
-  (Beschreibung, Eigenschaften, Skills, Slider, Likes, Vibes) · Look (Angaben
-  zum Aussehen, daneben das Outfit-Whiteboard `profile.outfit`) · Biography
-  (Timeline) · Family Tree · Moodboard (falls hinterlegt) ·
-  Pockets (Handy und Gegenstände, nur Main Characters) · Scenes · Relations (nach
-  Kategorie: love life, family, acquainted). Bausteine in
+- **Profil-Aufbau** (zwei Bereiche untereinander, beide mit eigenen Reitern):
+  oben links der Avatar (statt des früheren Profil-Banners), darunter Usertag
+  und bei Supporting Characters der Pilltag „Supporting Char"; daneben die
+  Reiter General (Kurzbeschreibung, Facts) · Scenes · Relations (nach
+  Kategorie: love life, family, acquainted).
+- **Profil-Reiter unten:** Character (Beschreibung, Eigenschaften, Skills,
+  Slider, Likes, Vibes) · Looks (Angaben zum Aussehen, daneben das
+  Style-Whiteboard `profile.outfit`) · Biography (Timeline) · Family Tree ·
+  Pockets (Handy und Gegenstände, nicht bei Statist*innen) · Moodboard (falls
+  hinterlegt). Alle linksbündig über die ganze Breite. Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
+- **Facts:** eine einzige Box. Arbeitsplatz und Uni stehen hinter der
+  Beschäftigung („Occupation: Rolle at Ort", Ort als `LocationBubble`, wenn es
+  ihn im Verzeichnis gibt); Studiengang, Abschluss und Jahr in der Zeile
+  „Studies". Keine eigenen Boxen „studies."/„work." mehr.
+- **Supporting Characters** können dasselbe ausfüllen wie Main Characters;
+  Pflichtangaben gelten nur für Mains.
+- **Lösen** von einer Statist*in oder einem Supporting Character fragt immer
+  per `ConfirmDialog` nach.
 - **Pockets** (`ThingsBoard`): neben dem Handy eine Collage der Gegenstände, die
   der Charakter bei sich hat (ohne Handy – abschaltbar in den
   Handy-Einstellungen – nur die Gegenstände). Bearbeitet wird im
@@ -160,8 +169,6 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   „Moodboard" es direkt ein (`PinterestBoard`, Pinterests Einbett-Skript, erst
   beim Öffnen des Reiters geladen; ohne Kopf mit Nutzer*in und mit durchsichtigem
   Hintergrund – `.pinterest-board` in globals.css).
-- **Bildlastige Reiter** (Pockets, Moodboard) stehen mittig, alle anderen
-  linksbündig in `max-w-4xl`.
 - **Signatur** (`profile.signature_url`, Einstellungen → Meine Charaktere):
   ein Bild am Ende jedes Posts des Charakters, sonst nirgends.
 - **Stammbaum** (`ProfileFamilyTree`, Reiter Family Tree): Verwandte nach

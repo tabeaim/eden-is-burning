@@ -38,7 +38,10 @@ import {
 } from "@/components/ProfileSections";
 import type { Character, RelationCategory, Scene } from "@/lib/types";
 
-type Tab = "character" | "look" | "biography" | "family" | "personal" | "moodboard" | "inplay" | "relations";
+// oben neben dem Avatar …
+type TopTab = "general" | "inplay" | "relations";
+// … und unten alles Beschreibende
+type Tab = "character" | "look" | "biography" | "family" | "personal" | "moodboard";
 
 // Bausteine aus DESIGN.md: Buttons, Primär-Aktion, Formularfelder
 const btn =
@@ -66,6 +69,7 @@ export default function CharacterPage({
     canEditCharacter,
   } = store;
   const c = character(id);
+  const [topTab, setTopTab] = useState<TopTab>("general");
   const [tab, setTab] = useState<Tab>("character");
 
   const [editing, setEditing] = useState(false);
@@ -115,18 +119,25 @@ export default function CharacterPage({
     .map((cid) => characters.find((x) => x.id === cid))
     .filter(Boolean) as Character[];
 
-  const tabs: [Tab, string][] = [
-    ["character", "Character"],
-    ["look", "Look"],
-    ["biography", "Biography"],
-    ["family", "Family Tree"],
-    // „Pockets": das Handy und die Gegenstände (nur Main Characters)
-    ...(c.is_npc ? [] : ([["personal", "Pockets"]] as [Tab, string][])),
-    // eingebundenes Pinterest-Board, falls eines hinterlegt ist
-    ...(c.pinterest_url ? ([["moodboard", "Moodboard"]] as [Tab, string][]) : []),
+  const topTabs: [TopTab, string][] = [
+    ["general", "General"],
     ["inplay", "Scenes"],
     ["relations", "Relations"],
   ];
+  const tabs: [Tab, string][] = [
+    ["character", "Character"],
+    ["look", "Looks"],
+    ["biography", "Biography"],
+    ["family", "Family Tree"],
+    // „Pockets": das Handy und die Gegenstände (nicht bei Statist*innen)
+    ...(tierOf(c) === "extra" ? [] : ([["personal", "Pockets"]] as [Tab, string][])),
+    // eingebundenes Pinterest-Board, falls eines hinterlegt ist
+    ...(c.pinterest_url ? ([["moodboard", "Moodboard"]] as [Tab, string][]) : []),
+  ];
+  const tabBtn = (active: boolean) =>
+    `rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
+      active ? "bg-accent text-black font-medium" : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
+    }`;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-1 pb-8">
@@ -152,9 +163,9 @@ export default function CharacterPage({
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mt-4 mb-6" />
 
-      {/* OBEN (wie im Spieler*innen-Profil): Avatar, Kurzbeschreibung, Facts */}
-      <div className="grid items-start gap-x-8 gap-y-6 md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_minmax(19rem,24rem)]">
-        {/* Avatar + Usertag */}
+      {/* OBEN: Avatar, daneben General (Kurzbeschreibung, Facts) · Scenes · Relations */}
+      <div className="grid items-start gap-x-8 gap-y-6 md:grid-cols-[250px_minmax(0,1fr)]">
+        {/* Avatar + Usertag, bei Supporting Characters darunter der Hinweis */}
         <div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -162,58 +173,68 @@ export default function CharacterPage({
             alt={`Avatar von ${c.name}`}
             className="aspect-[600/502] w-full rounded-xl bg-bg-surface object-cover"
           />
-          {c.tagline && (
-            <div className="mt-3 flex justify-center">
-              <Bubble className="uppercase tracking-wider">{c.tagline}</Bubble>
+          {(c.tagline || tierOf(c) === "supporting") && (
+            <div className="mt-3 flex flex-col items-center gap-1.5">
+              {c.tagline && <Bubble className="uppercase tracking-wider">{c.tagline}</Bubble>}
+              {tierOf(c) === "supporting" && (
+                <Bubble tone="accent" className="uppercase tracking-wider">
+                  Supporting Char
+                </Bubble>
+              )}
             </div>
           )}
         </div>
 
-        {/* Kurzbeschreibung – scrollt in sich, statt die Facts daneben weit zu überragen */}
-        {c.bio ? (
-          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary md:max-h-[420px] md:overflow-y-auto md:pr-3">
-            {c.bio}
-          </p>
-        ) : (
-          <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
-        )}
-
-        {/* Facts, Studium/Arbeit (Looks stehen im Reiter „Look") */}
-        <div className="flex flex-col gap-7 md:col-start-2 lg:col-start-auto">
-          <ProfileFacts c={c} />
+        <div className="min-w-0">
+          <div className="mb-6 flex flex-wrap gap-1.5">
+            {topTabs.map(([key, label]) => (
+              <button key={key} onClick={() => setTopTab(key)} className={tabBtn(topTab === key)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {topTab === "general" && (
+            <div className="grid items-start gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1fr)_minmax(19rem,24rem)]">
+              {/* Kurzbeschreibung – scrollt in sich, statt die Facts daneben weit zu überragen */}
+              {c.bio ? (
+                <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary lg:max-h-[420px] lg:overflow-y-auto lg:pr-3">
+                  {c.bio}
+                </p>
+              ) : (
+                <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
+              )}
+              {/* Facts (Looks stehen im Reiter „Looks") */}
+              <ProfileFacts c={c} />
+            </div>
+          )}
+          {topTab === "inplay" && <InplayTab inScenes={inScenes} />}
+          {topTab === "relations" && (
+            <RelationsTab c={c} coChars={coChars} canEdit={playsAs(c, store.currentPlayerId)} />
+          )}
         </div>
       </div>
 
       <div className="mt-6 mb-6 border-b border-border-subtle" />
 
-      {/* UNTEN: Reiter + Inhalt */}
-      <div className="flex flex-wrap gap-1.5 mb-6">
+      {/* UNTEN: Reiter + Inhalt, linksbündig über die ganze Breite */}
+      <div className="mb-6 flex flex-wrap gap-1.5">
         {tabs.map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
-              tab === key
-                ? "bg-accent text-black font-medium"
-                : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
-            }`}
-          >
+          <button key={key} onClick={() => setTab(key)} className={tabBtn(tab === key)}>
             {label}
           </button>
         ))}
       </div>
 
-      {/* Bildlastige Reiter (Pockets, Moodboard) stehen mittig, der Rest linksbündig */}
       {tab === "moodboard" && c.pinterest_url && (
-        <section className="flex justify-center">
+        <section>
           <PinterestBoard url={c.pinterest_url} />
         </section>
       )}
       {/* „Pockets": was der Charakter bei sich hat – das Handy, nur zum Ansehen
           (Look, Startbildschirm, Kontaktliste), daneben die Collage der
           Gegenstände; mobil untereinander */}
-      {tab === "personal" && !c.is_npc && (
-        <section className="flex flex-col items-center justify-center gap-6 sm:flex-row sm:items-start">
+      {tab === "personal" && tierOf(c) !== "extra" && (
+        <section className="flex flex-col items-center gap-8 sm:flex-row sm:items-start">
           {/* ohne Handy (Einstellungen) nur die Gegenstände */}
           {hasPhone(c) && (
             <div className="max-w-full shrink-0">
@@ -222,30 +243,24 @@ export default function CharacterPage({
           )}
           <ThingsBoard items={c.profile?.things ?? []} />
           {!hasPhone(c) && !(c.profile?.things ?? []).length && (
-            <p className="text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>
+            <p className="self-start text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>
           )}
         </section>
       )}
-      <div className="max-w-4xl">
-        {tab === "character" && <CharacterTab c={c} />}
-        {tab === "look" && <LookTab c={c} />}
-        {tab === "biography" &&
-          (c.profile?.timeline?.length ? (
-            <ProfileTimeline c={c} />
-          ) : (
-            <p className="text-[0.875rem] text-text-tertiary">Noch keine Timeline hinterlegt.</p>
-          ))}
-        {tab === "family" &&
-          (c.profile?.family?.length ? (
-            <ProfileFamilyTree c={c} />
-          ) : (
-            <p className="text-[0.875rem] text-text-tertiary">Noch kein Stammbaum hinterlegt.</p>
-          ))}
-        {tab === "inplay" && <InplayTab inScenes={inScenes} />}
-        {tab === "relations" && (
-          <RelationsTab c={c} coChars={coChars} canEdit={playsAs(c, store.currentPlayerId)} />
-        )}
-      </div>
+      {tab === "character" && <CharacterTab c={c} />}
+      {tab === "look" && <LookTab c={c} />}
+      {tab === "biography" &&
+        (c.profile?.timeline?.length ? (
+          <ProfileTimeline c={c} />
+        ) : (
+          <p className="text-[0.875rem] text-text-tertiary">Noch keine Timeline hinterlegt.</p>
+        ))}
+      {tab === "family" &&
+        (c.profile?.family?.length ? (
+          <ProfileFamilyTree c={c} />
+        ) : (
+          <p className="text-[0.875rem] text-text-tertiary">Noch kein Stammbaum hinterlegt.</p>
+        ))}
 
       {/* Footer */}
       <div className="mt-8 border-t border-border-subtle pt-4">
@@ -347,7 +362,7 @@ function Vibes({ c }: { c: Character }) {
   const vibes = c.vibes ?? [];
   if (vibes.length === 0) return null;
   return (
-    <section className="sm:col-span-2">
+    <section className="sm:col-span-2 lg:col-span-2">
       <Heading>vibes.</Heading>
       <div className="columns-2 gap-3 sm:columns-3">
         {vibes.map((src, i) => (
@@ -384,9 +399,9 @@ function CharacterTab({ c }: { c: Character }) {
     !(p.likes?.length || p.dislikes?.length) &&
     !c.vibes?.length;
   return (
-    <div className="flex flex-col gap-9">
+    <div className="grid items-start gap-x-10 gap-y-9 lg:grid-cols-2">
       {c.personality && (
-        <section>
+        <section className="lg:col-span-2">
           <Heading>about.</Heading>
           <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary">
             {c.personality}
@@ -399,13 +414,13 @@ function CharacterTab({ c }: { c: Character }) {
       <ProfileLikes c={c} />
       <Vibes c={c} />
       {empty && (
-        <p className="text-[0.875rem] text-text-tertiary">Noch keine Charakterbeschreibung hinterlegt.</p>
+        <p className="text-[0.875rem] text-text-tertiary lg:col-span-2">Noch keine Charakterbeschreibung hinterlegt.</p>
       )}
     </div>
   );
 }
 
-// Aussehen: links die Angaben, daneben das Outfit-Whiteboard (Collage wie bei
+// Aussehen: links die Angaben, daneben das Style-Whiteboard (Collage wie bei
 // den Pockets, gepflegt über „Bearbeiten")
 function LookTab({ c }: { c: Character }) {
   const outfit = c.profile?.outfit ?? [];
@@ -421,7 +436,7 @@ function LookTab({ c }: { c: Character }) {
       <ProfileLooks c={c} />
       {outfit.length > 0 && (
         <section className="flex flex-col items-center md:items-start">
-          <Heading>outfit.</Heading>
+          <Heading>style.</Heading>
           <ThingsBoard items={outfit} />
         </section>
       )}

@@ -38,6 +38,9 @@ const field =
 export function CharacterBasicsForm({ character }: { character: Character }) {
   const { updateCharacter, locations } = useStore();
   const main = tierOf(character) === "main";
+  // Supporting Characters können dasselbe ausfüllen wie Main Characters – nur
+  // die Pflichtangaben gelten allein für Mains.
+  const full = tierOf(character) !== "extra";
   const [d, setD] = useState(character);
   const [p, setP] = useState<CharacterProfile>(character.profile ?? {});
   const [saved, setSaved] = useState(false);
@@ -329,9 +332,9 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
             </select>
           ),
         })}
-        {main && F({ label: "Herkunft", hideKey: "origin", children: <input {...text("origin")} /> })}
-        {main && F({ label: "Beziehungsstatus", hideKey: "status", children: <input {...text("status")} /> })}
-        {main &&
+        {full && F({ label: "Herkunft", hideKey: "origin", children: <input {...text("origin")} /> })}
+        {full && F({ label: "Beziehungsstatus", hideKey: "status", children: <input {...text("status")} /> })}
+        {full &&
           F({ label: "Sexuelle Orientierung", hideKey: "sexuality", children: <input {...text("sexuality")} /> })}
       </div>
 
@@ -346,7 +349,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         error: missing.role,
         children: <input {...text("role")} placeholder="z. B. Journalist, Studentin & Barista" />,
       })}
-      {main && (
+      {full && (
         <>
           {/* beides zugleich möglich */}
           <div className="flex flex-wrap gap-x-6 gap-y-2">

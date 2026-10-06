@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { DEFAULT_AVATAR, characterImage } from "@/lib/avatar";
 import { Facts, FactRow } from "./Facts";
+import { LocationBubble } from "./Bubble";
 
 // Bausteine des Charakterprofils (siehe DESIGN.md): Facts mit englischen Labels,
 // dazu die frei gestaltbaren Abschnitte Skills, Eigenschaften, Slider,
@@ -46,53 +47,67 @@ function shown(c: Character, key: string, value: string | null | undefined): str
 }
 
 export function ProfileFacts({ c }: { c: Character }) {
+  const { locations, scenes } = useStore();
   const p = c.profile ?? {};
   const age = ageAt(c);
   const year = studyYearAt(c);
-  const main = tierOf(c) === "main";
-  return (
-    <>
-      <FactBox title="facts.">
-        <Facts>
-          <FactRow label="Name" value={shown(c, "full_name", c.full_name) ?? c.name} />
-          <FactRow label="Age" value={shown(c, "age", age != null ? `${age}` : null)} />
-          <FactRow label="Zodiac" value={shown(c, "age", zodiacOf(p.birthdate)?.en)} />
-          <FactRow label="Gender" value={shown(c, "gender", p.gender)} />
-          <FactRow label="Residence" value={shown(c, "area", c.area ? areaName(c.area) : null)} />
-          <FactRow label="Origin" value={shown(c, "origin", c.origin)} />
-          <FactRow label="Status" value={shown(c, "status", c.status)} />
-          <FactRow label="Sexuality" value={shown(c, "sexuality", c.sexuality)} />
-          <FactRow label="Occupation" value={shown(c, "role", c.role)} />
-        </Facts>
-      </FactBox>
+  const full = tierOf(c) !== "extra";
 
-      {main && isStudent(c) && (
-        <FactBox title="studies.">
-          <Facts>
-            <FactRow label="University" value={shown(c, "university", p.university)} />
-            <FactRow label="Major" value={shown(c, "major", p.major)} />
-            <FactRow label="Degree" value={shown(c, "degree", p.degree ? DEGREES[p.degree] : null)} />
-            <FactRow label="Year" value={shown(c, "study_year", year != null ? `${year}` : null)} />
-          </Facts>
-        </FactBox>
-      )}
-      {main && isWorking(c) && shown(c, "employer", p.employer) && (
-        <FactBox title="work.">
-          <Facts>
-            <FactRow label="Employer" value={p.employer} />
-          </Facts>
-        </FactBox>
-      )}
-      {/* Altbestand: Job/Company aus dem früheren Profil */}
-      {!isStudent(c) && !isWorking(c) && (c.job || c.company) && (
-        <FactBox title="occupation.">
-          <Facts>
-            <FactRow label="Job" value={c.job} />
-            <FactRow label="Company" value={c.company} />
-          </Facts>
-        </FactBox>
-      )}
-    </>
+  // Arbeitsplatz und Uni stehen direkt hinter der Beschäftigung: „Rolle at Ort".
+  // Gibt es den Ort im Verzeichnis, steht er als Pilltag (Link aufs Ortsprofil).
+  const place = (name: string | null | undefined, id?: string | null) => {
+    if (!name) return null;
+    const loc =
+      (id ? locations.find((l) => l.id === id) : undefined) ??
+      locations.find((l) => l.name.toLowerCase() === name.trim().toLowerCase());
+    if (!loc) return <span key={name}>{name}</span>;
+    const played = scenes.some((s) => s.location_area === loc.area && s.location_name === loc.name);
+    return <LocationBubble key={loc.id} id={loc.id} name={loc.name} played={played} className="align-middle" />;
+  };
+  const role = shown(c, "role", c.role) ?? (c.job || null);
+  const places = [
+    full && isWorking(c) ? place(shown(c, "employer", p.employer), p.employer_location_id) : null,
+    full && isStudent(c) ? place(shown(c, "university", p.university)) : null,
+    // Altbestand: Company aus dem früheren Profil
+    !isStudent(c) && !isWorking(c) ? place(c.company) : null,
+  ].filter(Boolean);
+  const occupation =
+    role || places.length ? (
+      <>
+        {role && role.charAt(0).toUpperCase() + role.slice(1)}
+        {places.map((x, i) => (
+          <span key={i}>
+            {i > 0 ? " & " : role ? " at " : ""}
+            {x}
+          </span>
+        ))}
+      </>
+    ) : null;
+  const studies =
+    full && isStudent(c)
+      ? [
+          shown(c, "major", p.major),
+          shown(c, "degree", p.degree ? DEGREES[p.degree] : null),
+          shown(c, "study_year", year != null ? `Year ${year}` : null),
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      : null;
+  return (
+    <FactBox title="facts.">
+      <Facts>
+        <FactRow label="Name" value={shown(c, "full_name", c.full_name) ?? c.name} />
+        <FactRow label="Age" value={shown(c, "age", age != null ? `${age}` : null)} />
+        <FactRow label="Zodiac" value={shown(c, "age", zodiacOf(p.birthdate)?.en)} />
+        <FactRow label="Gender" value={shown(c, "gender", p.gender)} />
+        <FactRow label="Residence" value={shown(c, "area", c.area ? areaName(c.area) : null)} />
+        <FactRow label="Origin" value={shown(c, "origin", c.origin)} />
+        <FactRow label="Status" value={shown(c, "status", c.status)} />
+        <FactRow label="Sexuality" value={shown(c, "sexuality", c.sexuality)} />
+        <FactRow label="Occupation" value={occupation} />
+        <FactRow label="Studies" value={studies} />
+      </Facts>
+    </FactBox>
   );
 }
 
@@ -301,7 +316,8 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
   const card = "flex w-28 flex-col items-center gap-1 rounded-lg border px-2 py-2 text-center";
   return (
     <section>
-      <div className="flex flex-col items-center">
+      {/* der Baum ist in sich mittig, steht als Ganzes aber links */}
+      <div className="flex w-fit max-w-full flex-col items-center">
         {used.map((row, i) => (
           <div key={row.gen} className="flex flex-col items-center">
             {i > 0 && <span className="h-5 w-px bg-white/25" />}

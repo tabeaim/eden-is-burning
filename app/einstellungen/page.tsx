@@ -507,6 +507,7 @@ function CharacterEditor({ character }: { character: Character }) {
   const { updateCharacter, trashCharacter, posts, currentPlayer } = useStore();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmMain, setConfirmMain] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const postCount = posts.filter((p) => p.character_id === character.id).length;
   const anchor = `charakter-${character.id}`;
   // „#handy-<id>" (Einstellungen-App auf dem Handy) springt direkt zum Handy-Block
@@ -601,6 +602,20 @@ function CharacterEditor({ character }: { character: Character }) {
             </div>
             </Collapsible>
           )}
+          {confirmLeave && currentPlayer && (
+            <ConfirmDialog
+              title={`${character.name} von dir lösen?`}
+              text={`Du kannst ${character.name} danach nicht mehr bearbeiten und nicht mehr für sie schreiben. Bisherige Posts bleiben stehen; bespielen kannst du sie jederzeit wieder.`}
+              confirmLabel="Von mir lösen"
+              onCancel={() => setConfirmLeave(false)}
+              onConfirm={() => {
+                setConfirmLeave(false);
+                updateCharacter(character.id, {
+                  co_owner_ids: (character.co_owner_ids ?? []).filter((id) => id !== currentPlayer.id),
+                });
+              }}
+            />
+          )}
           {confirmMain && (
             <ConfirmDialog
               title={`${character.name} zum Main Character machen?`}
@@ -624,11 +639,7 @@ function CharacterEditor({ character }: { character: Character }) {
             {/* zeitweise bespielte Statist*in: wieder von mir lösen */}
             {tierOf(character) === "extra" && currentPlayer && playsAs(character, currentPlayer.id) && (
               <button
-                onClick={() =>
-                  updateCharacter(character.id, {
-                    co_owner_ids: (character.co_owner_ids ?? []).filter((id) => id !== currentPlayer.id),
-                  })
-                }
+                onClick={() => setConfirmLeave(true)}
                 className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08]"
               >
                 Von mir lösen
@@ -664,13 +675,30 @@ function CharacterEditor({ character }: { character: Character }) {
 
 // Ein NPC kann mehreren Spieler*innen zugeordnet sein (speichert sofort).
 function NpcOwners({ character }: { character: Character }) {
-  const { players, player, updateCharacter } = useStore();
+  const { players, player, updateCharacter, currentPlayer } = useStore();
+  // Wer sich selbst abwählt, verliert den Zugriff – vorher nachfragen
+  const [leaving, setLeaving] = useState<string[] | null>(null);
+  const me = currentPlayer?.id;
   const owners = character.co_owner_ids ?? [];
   const creator = player(character.player_id);
   const others = players.filter((p) => p.id !== character.player_id);
-  const save = (ids: string[]) => updateCharacter(character.id, { co_owner_ids: ids });
+  const write = (ids: string[]) => updateCharacter(character.id, { co_owner_ids: ids });
+  const save = (ids: string[]) =>
+    me && owners.includes(me) && !ids.includes(me) ? setLeaving(ids) : write(ids);
   return (
     <div>
+      {leaving && (
+        <ConfirmDialog
+          title={`${character.name} von dir lösen?`}
+          text={`Du bist ${character.name} dann nicht mehr zugeordnet: Du kannst den Supporting Character nicht mehr bearbeiten und nicht mehr für ihn schreiben. Zurück kommst du nur, wenn dich jemand der Zugeordneten wieder einträgt.`}
+          confirmLabel="Von mir lösen"
+          onCancel={() => setLeaving(null)}
+          onConfirm={() => {
+            write(leaving);
+            setLeaving(null);
+          }}
+        />
+      )}
       <p className="mt-0.5 text-[0.8125rem] text-text-tertiary">
         Angelegt von {creator?.username ?? "?"}. Alle Zugeordneten dürfen den Supporting Character bearbeiten und
         für ihn schreiben.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -19,8 +19,18 @@ const SCRIPT_ID = "pinterest-pinit";
 // helle Schrift im Kopf) regelt `.pinterest-board` in globals.css.
 export function PinterestBoard({ url }: { url: string }) {
   const box = useRef<HTMLDivElement>(null);
+  const wrap = useRef<HTMLDivElement>(null);
+  // Breite der Pin-Wand = Breite des Platzes (Pinterest rechnet daraus die Spalten)
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const measure = () => setWidth(Math.max(280, Math.floor(wrap.current?.clientWidth ?? 0)));
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
 
   useEffect(() => {
+    if (!width) return;
     const build = () => window.PinUtils?.build(box.current ?? undefined);
     if (document.getElementById(SCRIPT_ID)) {
       build();
@@ -34,22 +44,24 @@ export function PinterestBoard({ url }: { url: string }) {
     script.setAttribute("data-pin-build", "doBuild");
     script.onload = build;
     document.body.appendChild(script);
-  }, [url]);
+  }, [url, width]);
 
   return (
-    <div>
-      {/* key: bei anderem Board den von Pinterest umgebauten Inhalt verwerfen */}
-      <div ref={box} key={url} className="pinterest-board overflow-hidden rounded-lg">
-        <a
-          data-pin-do="embedBoard"
-          data-pin-board-width="900"
-          data-pin-scale-height="620"
-          data-pin-scale-width="115"
-          href={url}
-        >
-          Pinterest-Board
-        </a>
-      </div>
+    <div ref={wrap} className="w-full">
+      {/* key: bei anderem Board oder anderer Breite den von Pinterest umgebauten Inhalt verwerfen */}
+      {width > 0 && (
+        <div ref={box} key={`${url}-${width}`} className="pinterest-board overflow-hidden rounded-lg">
+          <a
+            data-pin-do="embedBoard"
+            data-pin-board-width={width}
+            data-pin-scale-height="900"
+            data-pin-scale-width={width < 520 ? 110 : 190}
+            href={url}
+          >
+            Pinterest-Board
+          </a>
+        </div>
+      )}
     </div>
   );
 }

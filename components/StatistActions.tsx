@@ -24,6 +24,7 @@ export function StatistActions({
   const { currentPlayer, updateCharacter } = useStore();
   const [asking, setAsking] = useState(false);
   const [confirmSc, setConfirmSc] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   if (!currentPlayer) return null;
   const me = currentPlayer.id;
   const co = character.co_owner_ids ?? [];
@@ -38,7 +39,7 @@ export function StatistActions({
   return (
     <div className={`relative z-10 flex flex-wrap items-center justify-center gap-2 ${className}`}>
       {playing ? (
-        <button onClick={() => updateCharacter(character.id, { co_owner_ids: co.filter((id) => id !== me) })} className={secondary}>
+        <button onClick={() => setConfirmLeave(true)} className={secondary}>
           Von mir lösen
         </button>
       ) : (
@@ -51,6 +52,18 @@ export function StatistActions({
         <button onClick={() => setConfirmSc(true)} className={secondary}>
           Zum Supporting Character machen
         </button>
+      )}
+      {confirmLeave && (
+        <ConfirmDialog
+          title={`${character.name} von dir lösen?`}
+          text={`Du kannst ${character.name} danach nicht mehr bearbeiten und nicht mehr für sie schreiben. Bisherige Posts bleiben stehen; bespielen kannst du sie jederzeit wieder.`}
+          confirmLabel="Von mir lösen"
+          onCancel={() => setConfirmLeave(false)}
+          onConfirm={() => {
+            setConfirmLeave(false);
+            updateCharacter(character.id, { co_owner_ids: co.filter((id) => id !== me) });
+          }}
+        />
       )}
       {confirmSc && (
         <ConfirmDialog
