@@ -8,6 +8,11 @@ import { TIER_NAMES, tierOf } from "@/lib/characters";
 import { characterImage } from "@/lib/avatar";
 import { formatInplayDate } from "@/lib/format";
 import { ConfirmDialog } from "../ConfirmDialog";
+import { Collapsible } from "../Collapsible";
+import { MultiSelect } from "../MultiSelect";
+import { CharacterBubble } from "../Bubble";
+import { auNames } from "../AuNameField";
+import { AU_UNNAMED, areaFilterOptions } from "@/lib/plots";
 import type { Character, Location } from "@/lib/types";
 import { btn, btnDanger, btnPrimary, field, hint, row } from "./ui";
 
@@ -181,8 +186,23 @@ export function AdminLocations() {
 }
 
 // --- Szenen & Plots ----------------------------------------------------------
+// Beide Listen sind noch einmal eingeklappt – sie werden schnell lang.
 export function AdminScenes() {
-  const { scenes, posts, plots, deleteScene, deletePlot, player } = useStore();
+  const { scenes, plots } = useStore();
+  return (
+    <div className="flex flex-col gap-3">
+      <Collapsible title={`Szenen (${scenes.length})`}>
+        <SceneList />
+      </Collapsible>
+      <Collapsible title={`Plots (${plots.length})`}>
+        <PlotList />
+      </Collapsible>
+    </div>
+  );
+}
+
+function SceneList() {
+  const { scenes, posts, character, updateScene, deleteScene } = useStore();
   const [q, setQ] = useState("");
   const [limit, setLimit] = useState(20);
   const [ask, setAsk] = useState<Ask | null>(null);
@@ -192,68 +212,174 @@ export function AdminScenes() {
   const postCount = (id: string) => posts.filter((p) => p.scene_id === id).length;
 
   return (
-    <div className="flex flex-col gap-3">
+    <>
       <div className="flex flex-wrap items-center gap-2">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Szene suchen …" className={`${field} max-w-xs`} />
         <span className={hint}>{list.length} Szenen</span>
       </div>
-      {list.slice(0, limit).map((s) => (
-        <div key={s.id} className={`${row} flex flex-wrap items-center gap-3 px-3 py-2.5`}>
-          <div className="min-w-0 flex-1">
-            <Link href={`/szenen/${s.id}`} className="text-[0.875rem] text-text-primary hover:text-accent">
-              {s.title}
-            </Link>
-            <div className="truncate text-[0.8125rem] text-text-tertiary">
-              {s.location_name || areaName(s.location_area)} · {s.status === "active" ? "aktiv" : "beendet"} · {postCount(s.id)}{" "}
-              {postCount(s.id) === 1 ? "Post" : "Posts"}
+      {list.slice(0, limit).map((s) => {
+        const people = s.participant_ids.map((id) => character(id)).filter((c): c is Character => !!c);
+        const active = s.status === "active";
+        return (
+          <div key={s.id} className={`${row} flex flex-wrap items-center gap-3 px-3 py-2.5`}>
+            <div className="min-w-0 flex-1">
+              <Link href={`/szenen/${s.id}`} className="text-[0.875rem] text-text-primary hover:text-accent">
+                {s.title}
+              </Link>
+              <div className="truncate text-[0.8125rem] text-text-tertiary">
+                {s.location_name || areaName(s.location_area)} · {active ? "aktiv" : "beendet"} · {postCount(s.id)}{" "}
+                {postCount(s.id) === 1 ? "Post" : "Posts"}
+              </div>
+              {people.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {people.map((c) => (
+                    <CharacterBubble key={c.id} character={c} firstNameOnly />
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <button onClick={() => updateScene(s.id, { status: active ? "closed" : "active" })} className={btn}>
+                {active ? "Beenden" : "Wieder aktivieren"}
+              </button>
+              <button
+                onClick={() =>
+                  setAsk({
+                    title: `„${s.title}“ löschen?`,
+                    warning: `Das lässt sich NICHT rückgängig machen. Mit der Szene werden ${postCount(s.id)} Posts und alle Zitate gelöscht.`,
+                    label: "Szene löschen",
+                    run: () => deleteScene(s.id),
+                  })
+                }
+                className={btnDanger}
+              >
+                Löschen
+              </button>
             </div>
           </div>
-          <button
-            onClick={() =>
-              setAsk({
-                title: `„${s.title}“ löschen?`,
-                warning: `Das lässt sich NICHT rückgängig machen. Mit der Szene werden ${postCount(s.id)} Posts und alle Zitate gelöscht.`,
-                label: "Szene löschen",
-                run: () => deleteScene(s.id),
-              })
-            }
-            className={btnDanger}
-          >
-            Löschen
-          </button>
-        </div>
-      ))}
+        );
+      })}
       {list.length > limit && (
         <button onClick={() => setLimit(limit + 20)} className={`${btn} self-start`}>
           Mehr anzeigen
         </button>
       )}
-
-      <div className="mt-2 text-[0.8125rem] font-semibold uppercase tracking-wider text-text-tertiary">Plots</div>
-      {plots.length === 0 && <p className={hint}>Noch keine Plots.</p>}
-      {plots.map((p) => (
-        <div key={p.id} className={`${row} flex flex-wrap items-center gap-3 px-3 py-2.5`}>
-          <div className="min-w-0 flex-1">
-            <div className="text-[0.875rem] text-text-primary">{p.name}</div>
-            <div className="text-[0.8125rem] text-text-tertiary">angelegt von {player(p.created_by ?? "")?.username ?? "–"}</div>
-          </div>
-          <button
-            onClick={() =>
-              setAsk({
-                title: `Plot „${p.name}“ löschen?`,
-                text: "Die Szenen selbst bleiben erhalten, nur die Zusammenstellung verschwindet.",
-                label: "Plot löschen",
-                run: () => deletePlot(p.id),
-              })
-            }
-            className={btnDanger}
-          >
-            Löschen
-          </button>
-        </div>
-      ))}
       <Ask ask={ask} onClose={() => setAsk(null)} />
-    </div>
+    </>
+  );
+}
+
+// Plots: Name und Filter (Charaktere, Spieler*innen, Gegenden, AUs) ändern, löschen.
+// Jede Änderung wird sofort gespeichert.
+function PlotList() {
+  const { plots, scenes, characters, npcs, players, player, updatePlot, deletePlot } = useStore();
+  const [open, setOpen] = useState<string | null>(null);
+  const [ask, setAsk] = useState<Ask | null>(null);
+  const flip = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
+  const charOptions = [...characters, ...npcs]
+    .sort((a, b) => a.name.localeCompare(b.name, "de"))
+    .map((c) => ({ value: `char:${c.id}`, label: c.name }));
+  const playerOptions = players.map((p) => ({ value: `player:${p.id}`, label: p.username }));
+  const auOptions = [
+    ...auNames(scenes).map((n) => ({ value: n, label: n })),
+    ...(scenes.some((s) => s.au && !s.au_name) ? [{ value: AU_UNNAMED, label: "Ohne Namen" }] : []),
+  ];
+  const labelOf = (options: { value: string; label: string }[], values: string[]) =>
+    values.map((v) => options.find((o) => o.value === v)?.label ?? v).join(", ");
+
+  if (plots.length === 0) return <p className={hint}>Noch keine Plots.</p>;
+  return (
+    <>
+      {plots.map((p) => {
+        const chars = p.tokens.filter((t) => t.startsWith("char:"));
+        const owners = p.tokens.filter((t) => t.startsWith("player:"));
+        const areas = p.areas ?? [];
+        const summary = [
+          labelOf(charOptions, chars),
+          labelOf(playerOptions, owners),
+          labelOf(areaFilterOptions(), areas),
+          p.aus.length ? `AU: ${labelOf(auOptions, p.aus)}` : "",
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        return (
+          <div key={p.id} className={row}>
+            <div className="flex flex-wrap items-center gap-3 px-3 py-2.5">
+              <div className="min-w-0 flex-1">
+                <div className="text-[0.875rem] text-text-primary">{p.name}</div>
+                <div className="truncate text-[0.8125rem] text-text-tertiary">
+                  {summary || "ohne Filter"} · angelegt von {player(p.created_by ?? "")?.username ?? "–"}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <button onClick={() => setOpen(open === p.id ? null : p.id)} className={btn}>
+                  {open === p.id ? "Schließen" : "Bearbeiten"}
+                </button>
+                <button
+                  onClick={() =>
+                    setAsk({
+                      title: `Plot „${p.name}“ löschen?`,
+                      text: "Die Szenen selbst bleiben erhalten, nur die Zusammenstellung verschwindet.",
+                      label: "Plot löschen",
+                      run: () => deletePlot(p.id),
+                    })
+                  }
+                  className={btnDanger}
+                >
+                  Löschen
+                </button>
+              </div>
+            </div>
+            {open === p.id && (
+              <div className="flex flex-col gap-3 border-t border-border-subtle p-3">
+                <label className="flex flex-col gap-1 text-[0.8125rem] text-text-secondary">
+                  Name
+                  <CommitInput value={p.name} onCommit={(v) => updatePlot(p.id, { name: v })} className={`${field} max-w-sm`} />
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <MultiSelect
+                    label="Charaktere"
+                    icon="users"
+                    options={charOptions}
+                    selected={chars}
+                    onToggle={(v) => updatePlot(p.id, { tokens: [...flip(chars, v), ...owners] })}
+                    onClear={() => updatePlot(p.id, { tokens: owners })}
+                  />
+                  <MultiSelect
+                    label="Spieler*innen"
+                    icon="star"
+                    options={playerOptions}
+                    selected={owners}
+                    onToggle={(v) => updatePlot(p.id, { tokens: [...chars, ...flip(owners, v)] })}
+                    onClear={() => updatePlot(p.id, { tokens: chars })}
+                  />
+                  <MultiSelect
+                    label="Gegend"
+                    icon="map"
+                    options={areaFilterOptions()}
+                    selected={areas}
+                    onToggle={(v) => updatePlot(p.id, { areas: flip(areas, v) })}
+                    onClear={() => updatePlot(p.id, { areas: [] })}
+                  />
+                  <MultiSelect
+                    label="AU"
+                    options={[...auOptions, ...p.aus.filter((a) => !auOptions.some((o) => o.value === a)).map((a) => ({ value: a, label: a }))]}
+                    selected={p.aus}
+                    onToggle={(v) => updatePlot(p.id, { aus: flip(p.aus, v) })}
+                    onClear={() => updatePlot(p.id, { aus: [] })}
+                  />
+                </div>
+                <p className={hint}>
+                  Eine Szene gehört zum Plot, wenn sie zu allen gewählten Charakteren und Spieler*innen passt und in
+                  einer der Gegenden spielt. Ohne AU-Auswahl zählen nur Canon-Szenen. Änderungen speichern sofort.
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <Ask ask={ask} onClose={() => setAsk(null)} />
+    </>
   );
 }
 

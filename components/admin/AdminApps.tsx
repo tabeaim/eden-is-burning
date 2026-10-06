@@ -4,14 +4,13 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
-import { OPTIONAL_APPS } from "@/lib/phone";
 import { ConfirmDialog } from "../ConfirmDialog";
 import { Icon } from "../Icon";
 import type { Character, CustomPhoneApp } from "@/lib/types";
 import { btn, btnDanger, field, hint, row } from "./ui";
 
 // Benutzerdefinierte Handy-Apps aller Charaktere: umbenennen, Icon ersetzen,
-// entfernen. (Die Standard-Apps sind fest.)
+// löschen. (Die Standard-Apps sind fest.)
 export function AdminApps() {
   const { characters, npcs, updateCharacter } = useStore();
   const [busy, setBusy] = useState<string | null>(null);
@@ -45,8 +44,7 @@ export function AdminApps() {
   return (
     <div className="flex flex-col gap-3">
       <p className={hint}>
-        Von Spieler*innen erstellte Apps ({entries.length}). Namen ändern sich beim Verlassen des Felds. Standard-Apps
-        zum Auswählen: {OPTIONAL_APPS.map((a) => a.label).join(", ")}.
+        Von Spieler*innen erstellte Apps ({entries.length}). Namen ändern sich beim Verlassen des Felds.
       </p>
       {entries.length === 0 && <p className={hint}>Noch keine eigenen Apps.</p>}
       {entries.map(({ c, a }) => (
@@ -73,8 +71,8 @@ export function AdminApps() {
           >
             <Icon name="upload" size={13} /> {busy === a.id ? "Lädt…" : "Icon ersetzen"}
           </button>
-          <button onClick={() => setAsk({ c, a })} aria-label="App entfernen" className={btnDanger}>
-            ✕
+          <button onClick={() => setAsk({ c, a })} className={btnDanger}>
+            Löschen
           </button>
         </div>
       ))}
@@ -91,9 +89,9 @@ export function AdminApps() {
       />
       {ask && (
         <ConfirmDialog
-          title={`„${ask.a.name}“ entfernen?`}
+          title={`„${ask.a.name}“ löschen?`}
           text={`Die App verschwindet vom Handy von ${ask.c.name}. Andere Handys mit derselben App sind nicht betroffen.`}
-          confirmLabel="App entfernen"
+          confirmLabel="App löschen"
           onCancel={() => setAsk(null)}
           onConfirm={() => {
             removeApp(ask.c, ask.a.id);

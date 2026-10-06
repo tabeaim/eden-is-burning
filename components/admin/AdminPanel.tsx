@@ -27,8 +27,7 @@ export function AdminPanel() {
   return (
     <div className="flex flex-col gap-3">
       <p className={hint}>
-        Hier verwaltest du Spieler*innen, Charaktere, Orte und das Design der App. Fremde Profile bearbeitest du nur an
-        dieser Stelle – im Profil selbst nur deine eigenen Charaktere.
+        Hier verwaltest du Spieler*innen, Charaktere, Orte und das Design der App.
       </p>
       <div className="flex flex-wrap gap-2">
         {stats.map(([n, name]) => (

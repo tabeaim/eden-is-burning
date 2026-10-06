@@ -28,7 +28,7 @@ export default function SettingsPage() {
   const { currentPlayer, isAdmin } = useStore();
   // „#charakter-<id>" (z.B. aus der Einstellungen-App auf dem Handy) öffnet gleich
   // den Reiter „Meine Charaktere" mit diesem Charakter
-  const [tab, setTab] = useState<SettingsTab>("profile");
+  const [tab, setTab] = useState<SettingsTab>("characters");
   // Die Adresse steht erst nach dem ersten Rendern fest (Seitenwechsel innerhalb
   // der App) – deshalb hier und nicht schon beim Anlegen des Zustands lesen.
   useEffect(() => {
@@ -37,9 +37,9 @@ export default function SettingsPage() {
   if (!currentPlayer) return null;
 
   const tabs: [SettingsTab, string][] = [
-    ["profile", "Mein Profil"],
     ["characters", "Meine Charaktere"],
     ["appearance", "Darstellung"],
+    ["profile", "Meine Daten"],
   ];
   if (isAdmin) tabs.push(["admin", "Admin"]);
 
@@ -204,13 +204,14 @@ function ProfileTab() {
         </span>
       </div>
 
-      <p className="text-[0.8125rem] text-text-tertiary">
-        Beschreibung, Header, Skills, Slider und Likes bearbeitest du direkt in deinem{" "}
-        <Link href={`/spieler/${encodeURIComponent(currentPlayer.username)}`} className="text-accent hover:underline">
-          Profil
+      <div>
+        <Link
+          href={`/spieler/${encodeURIComponent(currentPlayer.username)}`}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08]"
+        >
+          <Icon name="star" size={14} /> Zum Profil
         </Link>
-        .
-      </p>
+      </div>
 
       {/* Konto: Anmelde-Adresse und Passwort */}
       <h2 className={`${heading} mt-4`}>konto.</h2>

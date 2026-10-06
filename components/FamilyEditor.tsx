@@ -27,14 +27,14 @@ const removeBtn =
 const addBtn =
   "inline-flex shrink-0 items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-1 text-[0.75rem] text-text-tertiary hover:border-accent/50 hover:text-accent";
 
-// Wo steht jemand im Baum? `side` = Seitenlinie (Onkel/Tanten, Cousins …)
+// Wo steht jemand im Baum? `side` = Seitenlinie (Tanten/Onkel, Cousins …)
 type Ref = { id: string; generation: number; side: boolean };
 
 // Stammbaum bearbeiten (Profil → Bearbeiten). Zwei Beziehungsarten genügen, alles
 // andere ergibt sich daraus:
 //   · „Kind von" – bei jeder Person (auch beim Charakter selbst) die Eltern
 //   · „Partner*in von" – unter der Person, mit Status (zusammen/getrennt/geschieden)
-// Geschwister sind, wer dieselben Eltern hat; Großeltern, Onkel/Tanten und Cousins
+// Geschwister sind, wer dieselben Eltern hat; Großeltern, Tanten/Onkel und Cousins
 // folgen aus der Kette. Neue Leute legt man am schnellsten über „+ Verwandte*r"
 // an der Person an: Elternteil, Kind, Geschwister oder Partner*in – Platz im Baum
 // und Verknüpfung ergeben sich dabei von selbst. Wählt man beim Namen einen
@@ -87,7 +87,7 @@ export function FamilyEditor({
   };
 
   // --- „Kind von" ------------------------------------------------------------
-  // Mögliche Eltern: die Generation darüber. Bei Cousins die Onkel/Tanten, sonst die
+  // Mögliche Eltern: die Generation darüber. Bei Cousins die Tanten/Onkel, sonst die
   // direkte Linie; Kinder (Generation 1) können auch den Charakter selbst als Elternteil haben.
   const parentPool = (generation: number, side: boolean) => {
     const wantSide = generation === 0 ? side : false;
@@ -137,7 +137,7 @@ export function FamilyEditor({
     const list: [string, string][] = [["partner", "Partner*in"]];
     if (g > -2) list.push(["parent", "Elternteil"]);
     if (g === -2 && !ref.side) {
-      list.push(["child_direct", "Kind (Elternteil von " + selfName.split(" ")[0] + ")"], ["child_side", "Kind (Onkel/Tante)"]);
+      list.push(["child_direct", "Kind (Elternteil von " + selfName.split(" ")[0] + ")"], ["child_side", "Kind (Tante/Onkel)"]);
     } else if (g === -2) {
       list.push(["child_side", "Kind"]);
     } else if (g < 2) {
@@ -167,7 +167,7 @@ export function FamilyEditor({
       if (ref.id === "self") onSelfParents([...selfParents, id]);
       else next = family.map((x) => (x.id === ref.id ? { ...x, parent_ids: [...(x.parent_ids ?? []), id] } : x));
     } else if (kind.startsWith("child")) {
-      // Kinder der Großeltern: Elternteil des Charakters (direkte Linie) oder Onkel/Tante
+      // Kinder der Großeltern: Elternteil des Charakters (direkte Linie) oder Tante/Onkel
       const ofGrandparent = kind === "child_direct" || kind === "child_side";
       entry.generation = ofGrandparent ? -1 : ref.generation + 1;
       entry.side = kind === "child_side" ? true : kind === "child_direct" ? false : ref.generation === -1 ? ref.side : false;
@@ -224,7 +224,7 @@ export function FamilyEditor({
   const row = (m: FamilyMember, placeholder: string) => {
     const q = m.name.trim().toLowerCase();
     return (
-      <div key={m.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+      <div key={m.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-start gap-1">
         <div className="grid min-w-0 gap-2 sm:grid-cols-2">
           <SuggestInput
             value={m.name}
@@ -252,6 +252,18 @@ export function FamilyEditor({
             className={field}
           />
         </div>
+        <button
+          type="button"
+          onClick={() => update(m.id, { deceased: !m.deceased })}
+          aria-pressed={!!m.deceased}
+          aria-label="verstorben"
+          title={m.deceased ? "Als verstorben markiert" : "Als verstorben markieren"}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[0.9375rem] transition-colors ${
+            m.deceased ? "bg-white/[0.1] text-text-primary" : "text-text-tertiary hover:bg-white/[0.06] hover:text-text-primary"
+          }`}
+        >
+          ✝
+        </button>
         <button onClick={() => remove(m.id)} aria-label="Eintrag entfernen" className={removeBtn}>
           ✕
         </button>
@@ -364,7 +376,7 @@ export function FamilyEditor({
                       parentPool(m.generation, !!m.side),
                       m.parent_ids ?? [],
                       (id) => update(m.id, { parent_ids: toggle(m.parent_ids ?? [], id) }),
-                      slot.key === "0s" ? "lege zuerst Onkel oder Tanten an" : undefined,
+                      slot.key === "0s" ? "lege zuerst Tanten oder Onkel an" : undefined,
                     )}
                     {partnersBlock({ id: m.id, generation: m.generation, side: !!m.side })}
                   </div>

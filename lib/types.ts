@@ -108,6 +108,7 @@ export interface FamilyMember {
   partner_of?: string | null;
   // Nur bei Partner*innen: ist die Beziehung beendet? (leer = zusammen/verheiratet)
   partner_status?: "separated" | "divorced" | null;
+  deceased?: boolean; // verstorben (kleines Kreuz an der Karte)
   // „Kind von": ids der Eltern (andere Einträge, oder „self" = der Charakter selbst)
   parent_ids?: string[];
   character_id?: string | null;

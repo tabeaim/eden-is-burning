@@ -324,13 +324,13 @@ export function ProfileTimeline({ c, bare = false }: { c: Character; bare?: bool
 // Stammbaum: Verwandte nach Generation in Reihen (oben die Ältesten), die Reihen
 // durch eine Linie verbunden; der Charakter selbst steht hervorgehoben in seiner
 // Generation. Neben der direkten Linie hat jede der oberen Generationen eine
-// Seitenlinie: Geschwister der Großeltern, Onkel/Tanten, Cousinen/Cousins.
+// Seitenlinie: Geschwister der Großeltern, Tanten/Onkel, Cousinen/Cousins.
 // Mit einem Charakter verknüpfte Einträge führen auf dessen Profil.
 export const FAMILY_SLOTS: { key: string; generation: number; side: boolean; label: string }[] = [
   { key: "-2", generation: -2, side: false, label: "Großeltern" },
   { key: "-2s", generation: -2, side: true, label: "Geschwister der Großeltern" },
   { key: "-1", generation: -1, side: false, label: "Eltern" },
-  { key: "-1s", generation: -1, side: true, label: "Onkel & Tanten" },
+  { key: "-1s", generation: -1, side: true, label: "Tanten & Onkel" },
   { key: "0", generation: 0, side: false, label: "Geschwister" },
   { key: "0s", generation: 0, side: true, label: "Cousinen & Cousins" },
   { key: "1", generation: 1, side: false, label: "Kinder" },
@@ -484,7 +484,7 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
   // Karten schrumpfen in der Breite, wenn der Platz knapp wird (Handy), und sind
   // am Desktop auf eine Höchstbreite begrenzt.
   const card =
-    "flex h-36 w-[var(--cw)] flex-none flex-col items-center justify-center gap-1 rounded-lg border px-1 text-center sm:h-40 sm:w-[var(--cw-sm)] sm:gap-1.5 sm:rounded-xl sm:px-3";
+    "relative flex h-36 w-[var(--cw)] flex-none flex-col items-center justify-center gap-1 rounded-lg border px-1 text-center sm:h-40 sm:w-[var(--cw-sm)] sm:gap-1.5 sm:rounded-xl sm:px-3";
   const face = "aspect-square w-3/5 max-w-16 shrink-0 rounded-full object-cover sm:w-16";
   const name = "line-clamp-3 w-full break-words text-[0.6875rem] leading-tight text-text-primary transition-colors sm:line-clamp-2 sm:text-[0.875rem]";
   const tag =
@@ -497,7 +497,17 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
     const body = (
       <>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={linked ? characterImage(linked) : DEFAULT_AVATAR} alt="" className={face} />
+        <img
+          src={linked ? characterImage(linked) : DEFAULT_AVATAR}
+          alt=""
+          className={`${face} ${m.deceased ? "opacity-60 grayscale" : ""}`}
+        />
+        {/* verstorben: kleines Kreuz oben rechts */}
+        {m.deceased && (
+          <span role="img" aria-label="verstorben" title="verstorben" className="absolute right-1.5 top-1 text-[0.75rem] leading-none text-text-tertiary sm:right-2 sm:top-1.5 sm:text-[0.875rem]">
+            ✝
+          </span>
+        )}
         <span title={m.name} className={`${name} ${linked ? "group-hover:text-accent" : ""}`}>
           {m.name}
         </span>

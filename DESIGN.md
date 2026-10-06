@@ -209,8 +209,9 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   Karten schrumpfen; alle Karten gleich groß, ohne Etikett). Verlinkte Karten
   (Charaktere im Verzeichnis) heben sich beim Hover an und werden orange – so
   ist klar, dass man sie anklicken kann. Neben der direkten Linie die
-  Seitenlinien (`side`): Geschwister der Großeltern, Onkel & Tanten, Cousinen &
-  Cousins (`FAMILY_SLOTS`).
+  Seitenlinien (`side`): Geschwister der Großeltern, Tanten & Onkel, Cousinen &
+  Cousins (`FAMILY_SLOTS`). Verstorbene (`deceased`) tragen ein kleines Kreuz oben
+  rechts an der Karte, ihr Bild ist entsättigt; im Editor per ✝-Taste je Zeile.
   **Modell:** zwei Beziehungsarten, alles andere ergibt sich daraus –
   „Kind von" (`parent_ids` bei jedem Eintrag, „self" = der Charakter selbst;
   die Eltern des Charakters stehen in `profile.family_parents`) und „Partner*in
@@ -442,7 +443,12 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Alles in aufklappbaren Abschnitten (`Collapsible`): Spieler*innen &
   Freischaltungen · Main Characters · Supporting Characters · Statist*innen ·
   Orte · Szenen & Plots · Handy-Apps · Design · Papierkorb; oben eine
-  Zahlenübersicht.
+  Zahlenübersicht. Lange Listen sind noch einmal eingeklappt (Szenen, Plots).
+  Szenen zeigen ihre Charaktere und lassen sich beenden, wieder aktivieren und
+  löschen; bei Plots sind Name und Filter (Charaktere, Spieler*innen, Gegend, AU)
+  änderbar. Löschen-Knöpfe heißen „Löschen", nicht „✕".
+- **Einstellungen**, Reiter in dieser Reihenfolge: Meine Charaktere · Darstellung ·
+  Meine Daten (Avatar, Username, Konto; Knopf „Zum Profil") · Admin.
 - **Fremde Charakterprofile bearbeiten Admins nur hier**, nicht im Profil:
   `canEditCharacter` kennt keine Admin-Ausnahme mehr. In der Verwaltung öffnet
   „Profil", „Grunddaten", „Handy" und „Besitz & Stufe" je Charakter dieselben
