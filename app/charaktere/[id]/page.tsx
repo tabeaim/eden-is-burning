@@ -112,16 +112,22 @@ export default function CharacterPage({
     !!prof.traits_minus?.length ||
     !!prof.likes?.length ||
     !!prof.dislikes?.length;
-  if (c.is_npc && !c.bio && !c.personality && !c.banner_url && !c.quote && !hasMore) {
+  // Nur Statist*innen ohne ausgefülltes Profil bekommen die Kompaktansicht; Supporting
+  // Characters haben dasselbe Profil wie Main Characters.
+  if (tierOf(c) === "extra" && !c.bio && !c.personality && !c.banner_url && !c.quote && !hasMore) {
     return <NpcFacts c={c} />;
   }
 
-  const p = player(c.player_id);
-  const presence: "online" | "idle" | null = !p
-    ? null
-    : p.id === store.currentPlayerId || (store.onlineIds.includes(p.id) && !store.idleIds.includes(p.id))
+  // Wer den Charakter spielt: Ersteller*in plus alle Zugeordneten (Supporting
+  // Characters und zeitweise bespielte Statist*innen können mehrere haben)
+  const owners = [c.player_id, ...(c.co_owner_ids ?? [])]
+    .filter((id, i, all) => all.indexOf(id) === i)
+    .map((id) => player(id))
+    .filter((x): x is NonNullable<typeof x> => !!x);
+  const presenceOf = (id: string): "online" | "idle" | null =>
+    id === store.currentPlayerId || (store.onlineIds.includes(id) && !store.idleIds.includes(id))
       ? "online"
-      : store.onlineIds.includes(p.id)
+      : store.onlineIds.includes(id)
         ? "idle"
         : null;
   const inScenes = scenes.filter((s) => s.participant_ids.includes(c.id));
@@ -136,17 +142,17 @@ export default function CharacterPage({
     .filter(Boolean) as Character[];
 
   const topTabs: [TopTab, string][] = [
-    ["general", "General"],
-    ["inplay", "Scenes"],
-    ["relations", "Relations"],
+    ["general", "Allgemein"],
+    ["inplay", "Szenen"],
+    ["relations", "Beziehungen"],
   ];
   const tabs: [Tab, string][] = [
-    ["character", "Character"],
+    ["character", "Charakter"],
     ["look", "Looks"],
-    ["biography", "Biography"],
-    ["family", "Family Tree"],
-    // „Pockets": das Handy und die Gegenstände (nicht bei Statist*innen)
-    ...(tierOf(c) === "extra" ? [] : ([["personal", "Pockets"]] as [Tab, string][])),
+    ["biography", "Biografie"],
+    ["family", "Stammbaum"],
+    // „Taschen": das Handy und die Gegenstände (nicht bei Statist*innen)
+    ...(tierOf(c) === "extra" ? [] : ([["personal", "Taschen"]] as [Tab, string][])),
     // eingebundenes Pinterest-Board, falls eines hinterlegt ist
     ...(c.pinterest_url ? ([["moodboard", "Moodboard"]] as [Tab, string][]) : []),
   ];
@@ -262,25 +268,31 @@ export default function CharacterPage({
       <div className="mt-6 border-t border-border-subtle pt-4">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className="font-display lowercase text-[1.625rem] leading-none text-accent">brought to you by</span>
-          {p ? (
-            <Bubble
-              href={`/spieler/${p.username}`}
-              leading={
-                p.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.avatar_url} alt="" className="h-5 w-5 rounded-full object-cover" />
-                ) : undefined
-              }
-            >
-              {p.username}
-              {/* Online-Status wie in der Spieler*innen-Übersicht: grün = online, gelb = anderswo */}
-              {presence && (
-                <span
-                  title={presence === "online" ? "online" : "online, gerade anderswo"}
-                  className={`h-2 w-2 shrink-0 rounded-full ${presence === "online" ? "bg-green-500" : "bg-yellow-400"}`}
-                />
-              )}
-            </Bubble>
+          {owners.length > 0 ? (
+            owners.map((o) => {
+              const presence = presenceOf(o.id);
+              return (
+                <Bubble
+                  key={o.id}
+                  href={`/spieler/${o.username}`}
+                  leading={
+                    o.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={o.avatar_url} alt="" className="h-5 w-5 rounded-full object-cover" />
+                    ) : undefined
+                  }
+                >
+                  {o.username}
+                  {/* Online-Status wie in der Spieler*innen-Übersicht: grün = online, gelb = anderswo */}
+                  {presence && (
+                    <span
+                      title={presence === "online" ? "online" : "online, gerade anderswo"}
+                      className={`h-2 w-2 shrink-0 rounded-full ${presence === "online" ? "bg-green-500" : "bg-yellow-400"}`}
+                    />
+                  )}
+                </Bubble>
+              );
+            })
           ) : (
             <span className="text-text-tertiary">–</span>
           )}
@@ -288,7 +300,7 @@ export default function CharacterPage({
         <div className="mt-2 text-[0.8125rem] text-text-tertiary">
           {postCount} {postCount === 1 ? "Post" : "Posts"} · Registriert am{" "}
           {formatInplayDate(c.created_at.slice(0, 10))}
-          {p && <> · Zuletzt online {timeAgo(p.last_seen)}</>}
+          {owners.length === 1 && <> · Zuletzt online {timeAgo(owners[0].last_seen)}</>}
         </div>
       </div>
     </div>

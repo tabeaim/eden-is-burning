@@ -341,18 +341,40 @@ export const familySlotOf = (m: FamilyMember) =>
   FAMILY_SLOTS.find((x) => x.generation === m.generation && !x.side) ??
   FAMILY_SLOTS[2];
 
+// Wer ist wessen Partner*in? (Eintrag-id -> id der Person bzw. „self"). Nur
+// Angaben, die auf den Charakter selbst oder auf eine Person zeigen, die selbst
+// kein*e Partner*in ist, gelten – alles andere (verwaiste Verweise, Ketten,
+// Kreise) wird zum gewöhnlichen Eintrag, damit nie jemand verschwindet.
+export function familyPartners(family: FamilyMember[]): Map<string, string> {
+  const ids = new Set(family.map((m) => m.id));
+  const plausible = (m: FamilyMember) =>
+    m.partner_of === "self" || (!!m.partner_of && m.partner_of !== m.id && ids.has(m.partner_of));
+  const roots = new Set(family.filter((m) => !plausible(m)).map((m) => m.id));
+  const out = new Map<string, string>();
+  for (const m of family) {
+    if (m.partner_of === "self" || (m.partner_of && m.partner_of !== m.id && roots.has(m.partner_of))) {
+      out.set(m.id, m.partner_of);
+    }
+  }
+  return out;
+}
+
+// Räumt Altlasten auf: Angaben, die laut `familyPartners` nicht gelten (Ketten,
+// Kreise, verwaiste Verweise), werden zu gewöhnlichen Einträgen.
+export function normalizeFamily(family: FamilyMember[]): FamilyMember[] {
+  const valid = familyPartners(family);
+  return family.map((m) => (m.partner_of && valid.get(m.id) !== m.partner_of ? { ...m, partner_of: null } : m));
+}
+
 export function ProfileFamilyTree({ c }: { c: Character }) {
   const { character } = useStore();
   const family = c.profile?.family ?? [];
   if (family.length === 0) return null;
   // Angeheiratete/Partner*innen stehen direkt neben ihrer Person (verbunden
   // durch ein Herz) statt als eigener Eintrag in der Reihe – so sind sie von
-  // Geschwistern zu unterscheiden. Zeigt die Angabe ins Leere, gilt der Eintrag
-  // als gewöhnliches Familienmitglied.
-  const ids = new Set(family.map((m) => m.id));
-  const partnerTarget = (m: FamilyMember) =>
-    m.partner_of === "self" || (m.partner_of && m.partner_of !== m.id && ids.has(m.partner_of)) ? m.partner_of : null;
-  const partnersOf = (id: string) => family.filter((m) => partnerTarget(m) === id);
+  // Geschwistern zu unterscheiden.
+  const partnerOf = familyPartners(family);
+  const partnersOf = (id: string) => family.filter((m) => partnerOf.get(m.id) === id);
   const generations = [...new Set(FAMILY_SLOTS.map((x) => x.generation))];
   const used = generations
     .map((gen) => ({
@@ -360,15 +382,21 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
       // je Generation erst die direkte Linie (in der eigenen mit dem Charakter selbst), dann die Seitenlinie
       groups: FAMILY_SLOTS.filter((x) => x.generation === gen)
         .map((slot) => {
-          const members: (FamilyMember | null)[] = family.filter((m) => !partnerTarget(m) && familySlotOf(m) === slot);
+          const members: (FamilyMember | null)[] = family.filter((m) => !partnerOf.has(m.id) && familySlotOf(m) === slot);
           return { slot, members: gen === 0 && !slot.side ? [null, ...members] : members };
         })
         .filter((g) => g.members.length > 0),
     }))
     .filter((r) => r.groups.length > 0);
-  const card = "flex w-32 flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-center sm:w-40";
-  const face = "h-14 w-14 rounded-full object-cover sm:h-16 sm:w-16";
-  const tag = "text-[0.6875rem] uppercase tracking-wider text-text-tertiary";
+
+  // Eine Generation bleibt immer in EINER Zeile: Die Karten schrumpfen, wenn der
+  // Platz knapp wird (Handy), und sind am Desktop auf eine Höchstbreite begrenzt.
+  const CARD = 10.5; // rem je Karte inkl. Abstand, bestimmt die Höchstbreite
+  const card =
+    "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg border px-1 py-2 text-center sm:gap-1.5 sm:rounded-xl sm:px-3 sm:py-3";
+  const face = "aspect-square w-3/5 max-w-16 rounded-full object-cover sm:w-16";
+  const name = "w-full break-words text-[0.6875rem] leading-tight text-text-primary sm:text-[0.875rem]";
+  const tag = "w-full break-words text-[0.5625rem] uppercase tracking-wider text-text-tertiary sm:text-[0.6875rem]";
 
   const memberCard = (m: FamilyMember) => {
     const linked = m.character_id ? character(m.character_id) : undefined;
@@ -376,11 +404,11 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
       <>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={linked ? characterImage(linked) : DEFAULT_AVATAR} alt="" className={face} />
-        <span className="text-[0.875rem] leading-tight text-text-primary">{m.name}</span>
+        <span className={name}>{m.name}</span>
         {m.relation && <span className={tag}>{m.relation}</span>}
         {/* angelegte Supporting Characters und Statist*innen als solche kennzeichnen */}
         {linked?.is_npc && (
-          <span className="rounded-full border border-border-subtle px-1.5 py-px text-[0.625rem] uppercase tracking-wider text-text-secondary">
+          <span className="rounded-full border border-border-subtle px-1.5 py-px text-[0.5rem] uppercase tracking-wider text-text-secondary sm:text-[0.625rem]">
             {TIER_NAMES[tierOf(linked)]}
           </span>
         )}
@@ -401,7 +429,7 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
       </div>
     );
   };
-  // eine Person samt Partner*innen: Karte – ♥ – Karte
+  // eine Person samt Partner*innen: Karte – ♥ – Karte; zählt als so viele Karten
   const unit = (m: FamilyMember | null) => {
     const partners = partnersOf(m ? m.id : "self");
     const own =
@@ -409,42 +437,59 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
         <div key="self" className={`${card} border-accent/70 bg-accent-soft`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={characterImage(c)} alt="" className={face} />
-          <span className="text-[0.875rem] leading-tight text-text-primary">{c.full_name || c.name}</span>
+          <span className={name}>{c.full_name || c.name}</span>
         </div>
       ) : (
         memberCard(m)
       );
-    if (partners.length === 0) return own;
-    return (
-      <div key={m ? m.id : "self"} className="flex flex-wrap items-center justify-center gap-y-3">
-        {own}
-        {partners.map((x) => (
-          <div key={x.id} className="flex items-center">
-            <span className="flex items-center text-accent" aria-label="verpartnert mit" role="img">
-              <span className="h-px w-2.5 bg-accent/60" />
-              <span className="px-1 text-[0.75rem] leading-none">♥</span>
-              <span className="h-px w-2.5 bg-accent/60" />
-            </span>
-            {memberCard(x)}
-          </div>
-        ))}
-      </div>
-    );
+    const n = 1 + partners.length;
+    return {
+      n,
+      node: (
+        <div key={m ? m.id : "self"} style={{ flex: `${n} 1 0` }} className="flex min-w-0 items-center">
+          {own}
+          {partners.map((x) => (
+            <div key={x.id} className="flex min-w-0 flex-1 items-center">
+              <span className="flex shrink-0 items-center text-accent" aria-label="verpartnert mit" role="img">
+                <span className="h-px w-1 bg-accent/60 sm:w-2.5" />
+                <span className="px-0.5 text-[0.625rem] leading-none sm:px-1 sm:text-[0.75rem]">♥</span>
+                <span className="h-px w-1 bg-accent/60 sm:w-2.5" />
+              </span>
+              {memberCard(x)}
+            </div>
+          ))}
+        </div>
+      ),
+    };
   };
   return (
     <section>
       <div className="flex flex-col items-center">
         {used.map((row, i) => (
-          <div key={row.gen} className="flex flex-col items-center">
-            {i > 0 && <span className="h-8 w-px bg-white/25" />}
-            <div className={`flex flex-wrap items-start justify-center gap-x-12 gap-y-6 px-4 pt-5 sm:px-10 ${i > 0 ? "border-t border-white/25" : ""}`}>
-              {row.groups.map(({ slot, members }) => (
-                <div key={slot.key} className="flex flex-col items-center gap-2">
-                  {/* Beschriftung nur, wenn in der Reihe auch die Seitenlinie steht */}
-                  {row.groups.some((g) => g.slot.side) && <span className={tag}>{slot.label}</span>}
-                  <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">{members.map(unit)}</div>
-                </div>
-              ))}
+          <div key={row.gen} className="flex w-full flex-col items-center">
+            {i > 0 && <span className="h-6 w-px bg-white/25 sm:h-8" />}
+            <div
+              className={`flex w-full flex-nowrap items-start justify-center gap-x-3 pt-4 sm:gap-x-12 sm:px-10 sm:pt-5 ${
+                i > 0 ? "border-t border-white/25" : ""
+              }`}
+            >
+              {row.groups.map(({ slot, members }) => {
+                const units = members.map(unit);
+                const n = units.reduce((sum, u) => sum + u.n, 0);
+                return (
+                  <div
+                    key={slot.key}
+                    style={{ flex: `${n} 1 0`, maxWidth: `${n * CARD}rem` }}
+                    className="flex min-w-0 flex-col items-center gap-2"
+                  >
+                    {/* Beschriftung nur, wenn in der Reihe auch die Seitenlinie steht */}
+                    {row.groups.some((g) => g.slot.side) && <span className={`${tag} text-center`}>{slot.label}</span>}
+                    <div className="flex w-full flex-nowrap items-center justify-center gap-1.5 sm:gap-4">
+                      {units.map((u) => u.node)}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}

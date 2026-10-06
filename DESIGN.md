@@ -126,15 +126,16 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
 - **Alter und Studienjahr** werden berechnet (`ageAt`, `studyYearAt`): im Profil
   zum 1.1.2022 bzw. für den Herbst 2021, in einer Szene zum Datum der Szene.
 - **Profil-Aufbau** (zwei Bereiche untereinander, beide mit eigenen Reitern):
-  oben General (Kurzbeschreibung, daneben die Facts in Gruppen) · Scenes ·
-  Relations (nach Kategorie: love life, family, acquainted). Kein Avatar und
+  oben Allgemein (Kurzbeschreibung, daneben die Facts in Gruppen) · Szenen ·
+  Beziehungen (nach Kategorie: love life, family, acquainted). Kein Avatar und
   kein Usertag im Profil; dafür hat jeder Charakter ein eigenes Header-Bild
   (`banner_url`, über „Bearbeiten"), das oben über dem Namen steht.
-- **Profil-Reiter unten:** Character (Beschreibung, Eigenschaften, Skills,
+- **Profil-Reiter unten** (deutsch; „Looks" und „Moodboard" sind Lehnwörter):
+  Charakter (Beschreibung, Eigenschaften, Skills,
   Slider, Likes, Vibes) · Looks (Angaben zum Aussehen, daneben das
-  Style-Whiteboard `profile.outfit`) · Biography (Timeline) · Family Tree ·
-  Pockets (Handy und Gegenstände, nicht bei Statist*innen) · Moodboard (falls
-  hinterlegt). Linksbündig über die ganze Breite; Stammbaum und Pockets mittig.
+  Style-Whiteboard `profile.outfit`) · Biografie (Timeline) · Stammbaum ·
+  Taschen (Handy und Gegenstände, nicht bei Statist*innen) · Moodboard (falls
+  hinterlegt). Linksbündig über die ganze Breite; der Stammbaum steht mittig.
   Das Pinterest-Board wird schon beim Öffnen des Profils unsichtbar aufgebaut. Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
 - **Facts:** drei kleine Boxen – identity (Name, Age, Zodiac, Gender, bei
@@ -149,8 +150,10 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   `CARDS` – Karten-Listen zweispaltig, `gap-3` (Scenes, Relations);
   `BOXES` – kleine Boxen nebeneinander, `gap-x-5 gap-y-6` (Facts-Gruppen).
   Bereiche trennt eine Linie mit `mt-6 mb-6`, der Footer beginnt mit `mt-6`.
-- **Whiteboards** (`ThingsBoard`: Pockets, Style) sind höchstens 28rem breit –
-  beim Bearbeiten genauso wie im Profil. Ausnahme: Style im Reiter Looks füllt
+- **Whiteboards** (`ThingsBoard`: Pockets, Style) sind Querformat (4:3) und
+  höchstens 28rem breit – beim Bearbeiten genauso wie im Profil. Ältere
+  Hochformat-Collagen werden beim Anzeigen verkleinert und mittig gesetzt
+  (`fitBoard`, Merker `l`). Ausnahme: Style im Reiter Looks füllt
   seine Spalte bis zum Rand (`fill`); Positionen sind Prozente, die Collage
   sieht also gleich aus, nur größer. Bilder lassen sich zuschneiden
   (`CropDialog`, gespeichert als Ausschnitt `crop`, das Original bleibt).
@@ -158,12 +161,16 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   sichtbare Ausschnitt lässt sich hoch/runter schieben (`BannerPosition`); er
   steht als Anhang `#y=…` an der Bildadresse. Header immer über `bannerStyle`
   (lib/headers.ts) zeichnen, nie mit `bg-center`.
-- **Profil-Footer:** „brought to you by" + Spieler*in als `Bubble` (Avatar,
+- **Profil-Footer:** „brought to you by" + alle, die den Charakter spielen
+  (Ersteller*in plus Zugeordnete), je als `Bubble` (Avatar,
   Link aufs Spieler*innen-Profil, Punkt für den Online-Status: grün = online,
   gelb = anderswo); die Infozeile darunter mit großen
   Anfangsbuchstaben.
-- **Supporting Characters** können dasselbe ausfüllen wie Main Characters;
-  Pflichtangaben gelten nur für Mains.
+- **Supporting Characters** haben dasselbe Profil und können dasselbe
+  ausfüllen wie Main Characters; Unterschiede nur: die Facts-Zeile „Role" und
+  mehrere Spieler*innen im Footer. Pflichtangaben gelten nur für Mains. Nur
+  Statist*innen ohne ausgefülltes Profil bekommen die Kompaktansicht, Vibes
+  gibt es nur noch bei Statist*innen.
 - **Lösen** von einer Statist*in oder einem Supporting Character fragt immer
   per `ConfirmDialog` nach.
 - **Pockets** (`ThingsBoard`): neben dem Handy eine Collage der Gegenstände, die
@@ -193,13 +200,18 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   Hintergrund – `.pinterest-board` in globals.css).
 - **Signatur** (`profile.signature_url`, Einstellungen → Meine Charaktere):
   ein Bild am Ende jedes Posts des Charakters, sonst nirgends.
-- **Stammbaum** (`ProfileFamilyTree`, Reiter Family Tree): Verwandte nach
-  Generation in Reihen, der Charakter selbst hervorgehoben; verknüpfte Einträge
+- **Stammbaum** (`ProfileFamilyTree`, Reiter Stammbaum): Verwandte nach
+  Generation in Reihen (jede Generation bleibt auch mobil in einer Zeile, die
+  Karten schrumpfen), der Charakter selbst hervorgehoben; verknüpfte Einträge
   führen aufs Profil und tragen bei Supporting Characters/Statist*innen deren
   Art. Neben der direkten Linie die Seitenlinien (`side`): Geschwister der
   Großeltern, Onkel & Tanten, Cousinen & Cousins (`FAMILY_SLOTS`).
   Angeheiratete/Partner*innen (`partner_of`) stehen direkt neben ihrer Person,
-  verbunden durch ein Herz – so unterscheiden sie sich von Geschwistern.
+  verbunden durch ein Herz – so unterscheiden sie sich von Geschwistern. Ketten
+  und Kreise gelten nicht (`familyPartners`, `normalizeFamily`).
+  Bearbeiten (`FamilyEditor`): ein Kasten je Generation/Seitenlinie mit „Hinzufügen",
+  Name und Verhältnis nebeneinander, ✕ immer rechts in derselben Zeile;
+  „+ Partner*in" legt eine neue Person an oder ordnet eine vorhandene zu.
 - **Relations** bearbeitet nur, wer den Charakter selbst spielt (`playsAs`). Der
   erklärende Hinweis steht nur beim eigenen Charakter und verschwindet nach drei
   Eintragungen/Leerungen (Zähler `relation_uses` im Spieler*innen-Profil).

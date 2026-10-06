@@ -20,8 +20,20 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
 // Größe und Drehung direkt am Objekt einstellen.
 // Positionen sind Prozente der Fläche, damit die Collage auf jedem Bildschirm
 // gleich aussieht.
+// Die Fläche ist 4:3 quer. Collagen, die noch auf der früheren Hochformat-Fläche
+// (3:4) angelegt wurden, werden dafür verkleinert und mittig gesetzt (gleiche
+// Anordnung, nur kleiner) – erkennbar am fehlenden Merker `l`. Danach gelten sie
+// als umgerechnet, ein erneutes Anwenden ändert nichts mehr.
+const LEGACY_SCALE = (3 / 4) / (4 / 3);
+const round1 = (n: number) => Math.round(n * 10) / 10;
+export function fitBoard(items: ThingItem[]): ThingItem[] {
+  return items.map((t) =>
+    t.l ? t : { ...t, x: round1(50 + (t.x - 50) * LEGACY_SCALE), w: round1(t.w * LEGACY_SCALE), l: true },
+  );
+}
+
 export function ThingsBoard({
-  items,
+  items: rawItems,
   onChange,
   fill = false,
 }: {
@@ -31,6 +43,7 @@ export function ThingsBoard({
   // „Bearbeiten"-Formular des Profils, das auch speichert); ohne nur Ansicht.
   onChange?: (items: ThingItem[]) => void;
 }) {
+  const items = useMemo(() => fitBoard(rawItems), [rawItems]);
   const editing = !!onChange;
   const setItems = (next: ThingItem[] | ((list: ThingItem[]) => ThingItem[])) =>
     onChange?.(typeof next === "function" ? next(items) : next);
@@ -88,7 +101,7 @@ export function ThingsBoard({
       const full = toCanvas(pending, 800);
       const src = await uploadCanvas(cut ? removeBackground(full, tolerance) : full, "things");
       const id = `thing_${Math.random().toString(36).slice(2, 9)}`;
-      setItems((list) => [...list, { id, src, x: 50, y: 50, w: 34, r: 0 }]);
+      setItems((list) => [...list, { id, src, x: 50, y: 50, w: 30, r: 0, l: true }]);
       setSelected(id);
       setPending(null);
     } finally {
@@ -171,7 +184,7 @@ export function ThingsBoard({
       <div
         ref={board}
         onPointerDown={() => editing && setSelected(null)}
-        className={`relative aspect-[3/4] w-full ${fill && !editing ? "" : "max-w-[28rem]"} overflow-hidden ${
+        className={`relative aspect-[4/3] w-full ${fill && !editing ? "" : "max-w-[28rem]"} overflow-hidden ${
           editing
             ? "touch-none rounded-xl border border-dashed border-border-strong bg-white/[0.04] [background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:10%_7.5%]"
             : ""

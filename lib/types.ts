@@ -125,6 +125,9 @@ export interface ThingItem {
   w: number;
   r: number;
   crop?: ThingCrop | null;
+  // Querformat-Fläche (4:3). Ältere Collagen entstanden auf einer Hochformat-Fläche
+  // und werden beim Anzeigen umgerechnet (siehe fitBoard in ThingsBoard).
+  l?: boolean;
 }
 
 // Erweitertes Charakterprofil (JSON-Spalte `profile`). Grunddaten pflegt man in
