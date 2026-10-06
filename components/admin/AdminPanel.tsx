@@ -39,7 +39,7 @@ export function AdminPanel() {
           </span>
         ))}
       </div>
-      <Collapsible title="Spieler*innen & Freischaltungen" defaultOpen>
+      <Collapsible title="Spieler*innen & Freischaltungen">
         <AdminPlayers />
       </Collapsible>
       <Collapsible title="Main Characters">

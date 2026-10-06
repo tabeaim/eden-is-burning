@@ -358,7 +358,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Look pro Charakter** (`lib/phone.ts`, Einstellungen → Meine Charaktere →
   `PhoneSettings`): Modell (iPhone neu/alt, Android, Burner Phone), Gehäusefarbe,
   Zustand (Kratzer/Sprünge liegen als Overlay über dem Display – auch mobil),
-  Hintergrundbild (drei Vorlagen oder eigenes Bild), Apps, eigenes Profilbild
+  Hintergrundbild (dunkle und helle Vorlagen oder eigenes Bild; auf hellen Vorlagen stehen Uhr und App-Namen dunkel), Apps, eigenes Profilbild
   fürs Handy (`PhoneAvatar` zeigt es überall im Handy statt des Charakterbilds). Standard-Apps sind
   immer da; wählbar sind nur optionale und selbst erstellte (Name + Icon),
   zusammen höchstens so viele, wie auf einen Startbildschirm passen.

@@ -118,6 +118,16 @@ html[data-theme="light"] {
 html[data-theme="light"] body {
   background-image: none;
 }
+/* `text-white` steht immer auf dunklem Grund (Foto, Overlay, App-Kachel) und
+   bleibt deshalb echtes Weiß – nur die weißen Flächen/Rahmen werden getönt. */
+html[data-theme="light"] .text-white {
+  color: #fff;
+}
+/* Handy-Display in den Apps: hell wie die Seite (das Burner Phone setzt sein
+   eigenes LCD-Grau). */
+html[data-theme="light"] {
+  --phone-screen: #fbf5ea;
+}
 html[data-theme="light"] .text-accent,
 html[data-theme="light"] .hover\:text-accent:hover,
 html[data-theme="light"] .prose-serif mark {
@@ -269,6 +279,21 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
 }
 @media (prefers-reduced-motion: reduce) {
   .phone-ring { animation: none; }
+}
+
+/* Startbildschirm des Handys: Uhr, App-Namen und Dock richten sich nach dem
+   Hintergrundbild, nicht nach dem Farbmodus – weiß auf dunklen Bildern, dunkel
+   auf den hellen Vorlagen (`phone-home-light`). */
+.phone-home {
+  --color-white: #fff;
+  --phone-ink: #fff;
+  --phone-ink-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  --phone-dock: rgba(255, 255, 255, 0.15);
+}
+.phone-home-light {
+  --phone-ink: #17140f;
+  --phone-ink-shadow: none;
+  --phone-dock: rgba(255, 255, 255, 0.5);
 }
 
 /* Burner Phone (Messenger): altes Tastenhandy. Die Farb-Tokens werden im Display

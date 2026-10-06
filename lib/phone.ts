@@ -23,12 +23,17 @@ export const PHONE_COLORS = [
 
 export const PHONE_WEAR = ["Wie neu", "Leichte Kratzer", "Zerkratzt", "Display gesprungen"];
 
-// Drei Vorlagen – alles andere per eigenem Bild
-export const PHONE_WALLPAPERS = [
+// Vorlagen – alles andere per eigenem Bild. `light`: heller Hintergrund, auf dem
+// Uhr und App-Namen dunkel stehen (sonst weiß mit Schatten).
+export const PHONE_WALLPAPERS: { key: string; label: string; css: string; light?: boolean }[] = [
   { key: "ember", label: "Glut", css: "radial-gradient(120% 90% at 20% 0%, #e89a3c 0%, #7a2e12 38%, #120b0a 80%)" },
   { key: "night", label: "Nacht", css: "linear-gradient(165deg, #1b2a49 0%, #0d1326 55%, #05060b 100%)" },
   { key: "dusk", label: "Dämmerung", css: "linear-gradient(175deg, #5b3b8c 0%, #c2557a 55%, #f0a35e 100%)" },
-] as const;
+  { key: "morning", label: "Morgen", light: true, css: "linear-gradient(170deg, #fdf3e1 0%, #f9d9b4 55%, #f3b98f 100%)" },
+  { key: "sky", label: "Himmel", light: true, css: "linear-gradient(175deg, #cfe6f7 0%, #e6f1f8 50%, #fbeedd 100%)" },
+  { key: "sage", label: "Salbei", light: true, css: "linear-gradient(165deg, #eef0dc 0%, #cfd8b8 55%, #a9b892 100%)" },
+  { key: "sand", label: "Sand", light: true, css: "radial-gradient(120% 90% at 80% 0%, #fffaf0 0%, #f1e6cf 45%, #e2cfa9 100%)" },
+];
 
 export interface PhoneApp {
   key: string;
@@ -76,6 +81,7 @@ export interface ResolvedPhone {
   frame: string; // Gehäusefarbe (hex)
   wear: number;
   wallpaper: string; // fertiger CSS-`background`-Wert
+  wallpaperLight: boolean; // helle Vorlage: Beschriftung dunkel statt weiß
   apps: PhoneApp[]; // Standard + gewählte + eigene, in Anzeige-Reihenfolge
   captic: boolean; // Captic aktiviert (nie auf dem Burner Phone)
 }
@@ -110,6 +116,9 @@ export function resolvePhone(c: Pick<Character, "phone"> | null | undefined): Re
     frame,
     wear,
     wallpaper: wallpaperCss(p.wallpaper),
+    wallpaperLight:
+      !!p.wallpaper?.startsWith("preset:") &&
+      !!PHONE_WALLPAPERS.find((w) => w.key === p.wallpaper!.slice("preset:".length))?.light,
     apps: [...STANDARD_APPS, ...[...chosen, ...custom].slice(0, MAX_EXTRA_APPS)],
     captic: model !== "burner" && !!p.captic?.enabled,
   };

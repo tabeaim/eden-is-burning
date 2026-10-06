@@ -31,7 +31,7 @@ export function AppIcon({
           </span>
         )}
       </span>
-      <span className="w-full truncate text-center text-[0.6875rem] font-medium text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]">
+      <span className="w-full truncate text-center text-[0.6875rem] font-medium text-[var(--phone-ink,#fff)] [text-shadow:var(--phone-ink-shadow,0_1px_3px_rgba(0,0,0,0.8))]">
         {label}
       </span>
     </span>

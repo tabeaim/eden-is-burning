@@ -91,7 +91,11 @@ export function PhoneHome({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-black/15 px-4 pb-2 pt-5">
+    <div
+      className={`flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-2 pt-5 ${
+        phone.wallpaperLight ? "" : "bg-black/15"
+      }`}
+    >
       {/* Angedeutete Apps – nicht anklickbar (außer „Einstellungen") */}
       <div className="grid grid-cols-4 justify-items-center gap-y-5">
         {phone.apps.map((a) => {
@@ -115,7 +119,7 @@ export function PhoneHome({
       <div className="min-h-6 flex-1" />
 
       {/* Dock: die echten Apps */}
-      <div className="flex justify-center rounded-[1.75rem] bg-white/15 px-1 pb-2 pt-3 backdrop-blur-md">
+      <div className="flex justify-center rounded-[1.75rem] bg-[var(--phone-dock)] px-1 pb-2 pt-3 backdrop-blur-md">
         <Go readOnly={readOnly} href="/handy/telefon">
           <AppIcon label="Telefon" bg="linear-gradient(#5fd66b, #2aa63a)" badge={ringing}>
             <span className={ringing > 0 ? "phone-ring" : ""}>📞</span>

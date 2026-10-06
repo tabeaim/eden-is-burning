@@ -257,7 +257,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
   return (
     <div className="flex flex-col gap-4 pt-4">
       {/* --- Wer --- */}
-      <Collapsible title="Identität" defaultOpen forceOpen={missing.name || missing.age || missing.faceclaim}>
+      <Collapsible title="Identität" forceOpen={missing.name || missing.age || missing.faceclaim}>
       <div className="flex items-start gap-4">
         <div className="w-[110px] shrink-0">
           <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-border-subtle bg-bg-primary">

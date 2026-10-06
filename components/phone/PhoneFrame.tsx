@@ -106,7 +106,7 @@ export function PhoneFrame({
           style={tone === "home" ? { background: phone.wallpaper } : undefined}
           className={`relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--phone-screen,#0c0c0e)] ${screenRadius} ${
             burner ? "phone-burner" : ""
-          }`}
+          } ${tone === "home" ? `phone-home ${phone.wallpaperLight ? "phone-home-light" : ""}` : ""}`}
         >
           <StatusBar model={phone.model} tone={tone} />
           {ringing && (
@@ -133,7 +133,11 @@ export function PhoneFrame({
               tone === "home" ? "" : "bg-bg-surface"
             } ${classic || burner ? "sm:hidden" : ""}`}
           >
-            <span className="h-1 w-28 rounded-full bg-text-primary/45" />
+            <span
+              className={`h-1 w-28 rounded-full ${
+                tone === "home" ? "bg-[var(--phone-ink)] opacity-45" : "bg-text-primary/45"
+              }`}
+            />
           </Link>
           {/* Burner: grünliches LCD über dem (entsättigten) Inhalt */}
           {burner && (
@@ -312,9 +316,9 @@ function StatusBar({ model, tone }: { model: PhoneModel; tone: "app" | "home" })
   const p = (n: number) => String(n).padStart(2, "0");
   return (
     <div
-      className={`relative flex shrink-0 items-center justify-between px-6 text-[0.75rem] font-semibold text-text-primary ${
+      className={`relative flex shrink-0 items-center justify-between px-6 text-[0.75rem] font-semibold ${
         model === "island" ? "h-9" : "h-7"
-      } ${tone === "home" ? "" : "bg-bg-surface"}`}
+      } ${tone === "home" ? "text-[var(--phone-ink)]" : "bg-bg-surface text-text-primary"}`}
     >
       <span>
         {p(now.getHours())}:{p(now.getMinutes())}
