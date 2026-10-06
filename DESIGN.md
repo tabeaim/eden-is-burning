@@ -388,6 +388,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Doppelpunkt, Wert daneben (`0.875rem`), lange Werte brechen um. Nie eigene
   `<dl>`-Klassen schreiben. Keine eckigen Tags.
 - **Tabs:** runde Pills wie in der Szenen-Übersicht (aktiv `bg-accent text-black`).
+  Reiter-Reihen: `flex flex-wrap gap-x-1.5 gap-y-2.5` – brechen sie (mobil) um,
+  stehen die Zeilen etwas weiter auseinander als die Pills nebeneinander.
 - **Personen-Karten** („characters & npcs." am Ort): `CharacterBubble` +
   Faktenzeile als reiner Text mit Punkten (Alter · Beruf · Beziehung), Buttons
   rechts oben, Erläuterung darunter.

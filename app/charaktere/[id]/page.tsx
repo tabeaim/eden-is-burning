@@ -180,7 +180,7 @@ export default function CharacterPage({
       <div className="border-b border-border-subtle mt-4 mb-6" />
 
       {/* OBEN: General (Kurzbeschreibung, daneben die Facts in Gruppen) · Scenes · Relations */}
-      <div className="mb-6 flex flex-wrap gap-1.5">
+      <div className="mb-6 flex flex-wrap gap-x-1.5 gap-y-2.5">
         {topTabs.map(([key, label]) => (
           <button key={key} onClick={() => setTopTab(key)} className={tabBtn(topTab === key)}>
             {label}
@@ -208,7 +208,7 @@ export default function CharacterPage({
       <div className="mt-6 mb-6 border-b border-border-subtle" />
 
       {/* UNTEN: Reiter + Inhalt, linksbündig über die ganze Breite */}
-      <div className="mb-6 flex flex-wrap gap-1.5">
+      <div className="mb-6 flex flex-wrap gap-x-1.5 gap-y-2.5">
         {tabs.map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)} className={tabBtn(tab === key)}>
             {label}

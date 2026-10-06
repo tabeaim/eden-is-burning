@@ -405,19 +405,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const presence = supabase.channel("eden-online", {
       config: { presence: { key: approvedId } },
     });
-    // Aktiv = Tab sichtbar und Fenster im Vordergrund; sonst „anderswo". Bei
+    // Aktiv = Tab sichtbar, Fenster im Vordergrund und in den letzten 15 Minuten
+    // etwas getan (Maus, Tastatur, Scrollen, Tippen); sonst „anderswo". Bei
     // mehreren offenen Tabs zählt eine Person als aktiv, sobald einer aktiv ist.
     // Handy = Mobil-Browser (Tablets zählen nicht). Bei mehreren Geräten gilt das
     // gerade aktive; ist keines aktiv, müssen alle offenen Handys sein.
     const mobile = /Android.*Mobile|iPhone|iPod|Windows Phone/i.test(navigator.userAgent);
     let subscribed = false;
+    const IDLE_AFTER = 15 * 60_000;
+    let lastActivity = Date.now();
+    let sentActive: boolean | null = null;
+    const isActive = () =>
+      document.visibilityState === "visible" && document.hasFocus() && Date.now() - lastActivity < IDLE_AFTER;
     const trackNow = () => {
       if (!subscribed) return;
-      void presence.track({
-        active: document.visibilityState === "visible" && document.hasFocus(),
-        mobile,
-      });
+      sentActive = isActive();
+      void presence.track({ active: sentActive, mobile });
     };
+    // Eingaben merken; gemeldet wird nur, wenn sich der Zustand dadurch ändert
+    const onActivity = () => {
+      lastActivity = Date.now();
+      if (sentActive === false && isActive()) trackNow();
+    };
+    const ACTIVITY = ["pointerdown", "pointermove", "keydown", "wheel", "touchstart", "scroll"] as const;
+    for (const ev of ACTIVITY) window.addEventListener(ev, onActivity, { passive: true, capture: true });
+    const idleTimer = window.setInterval(() => {
+      if (sentActive === true && !isActive()) trackNow();
+    }, 60_000);
     presence
       .on("presence", { event: "sync" }, () => {
         const st = presence.presenceState() as Record<
@@ -454,6 +468,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
+      for (const ev of ACTIVITY) window.removeEventListener(ev, onActivity, { capture: true });
+      window.clearInterval(idleTimer);
       window.removeEventListener("focus", trackNow);
       window.removeEventListener("blur", trackNow);
       void supabase.removeChannel(world);

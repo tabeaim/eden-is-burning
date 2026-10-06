@@ -131,7 +131,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
       <div className="mt-6 mb-6 border-b border-border-subtle" />
 
       {/* Reiter wie im Charakterprofil */}
-      <div className="mb-6 flex flex-wrap gap-1.5">
+      <div className="mb-6 flex flex-wrap gap-x-1.5 gap-y-2.5">
         {tabs.map(([key, label]) => (
           <button
             key={key}

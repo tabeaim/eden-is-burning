@@ -23,7 +23,7 @@ import { PhoneAvatar } from "./PhoneFrame";
 // `reduced` (Supporting Characters): nur Profilbild, Modell, Farbe und Zustand –
 // kein Hintergrundbild, keine Apps, kein Captic.
 export function PhoneSettings({ character, reduced = false }: { character: Character; reduced?: boolean }) {
-  const { updateCharacter } = useStore();
+  const { updateCharacter, characters, npcs } = useStore();
   const [uploading, setUploading] = useState(false);
   const file = useRef<HTMLInputElement>(null);
   const phone = resolvePhone(character);
@@ -33,6 +33,15 @@ export function PhoneSettings({ character, reduced = false }: { character: Chara
   const custom = raw.custom_apps ?? [];
   const extraCount = chosen.length + custom.length;
   const full = extraCount >= MAX_EXTRA_APPS;
+  // Eigene Apps der anderen Spieler*innen zum Übernehmen – jede nur einmal
+  // (gleicher Name + gleiches Icon) und ohne die, die dieses Handy schon hat
+  const sameApp = (a: { name: string; icon: string }, b: { name: string; icon: string }) =>
+    a.icon === b.icon && a.name.toLowerCase() === b.name.toLowerCase();
+  const shared = [...characters, ...npcs]
+    .filter((c) => c.player_id !== character.player_id && !c.deleted_at)
+    .flatMap((c) => c.phone?.custom_apps ?? [])
+    .filter((a, i, all) => all.findIndex((x) => sameApp(x, a)) === i && !custom.some((x) => sameApp(x, a)))
+    .sort((a, b) => a.name.localeCompare(b.name, "de"));
   const [appName, setAppName] = useState("");
   const [uploadingIcon, setUploadingIcon] = useState(false);
   const iconFile = useRef<HTMLInputElement>(null);
@@ -300,6 +309,37 @@ export function PhoneSettings({ character, reduced = false }: { character: Chara
                 }}
               />
             </div>
+
+            {/* Apps, die andere erstellt haben: antippen übernimmt sie auf dieses Handy */}
+            {shared.length > 0 && (
+              <div className="mt-4">
+                <div className={label}>
+                  Apps von anderen Spieler*innen{" "}
+                  <span className="text-text-tertiary">(antippen zum Hinzufügen)</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {shared.map((a) => (
+                    <button
+                      key={a.id}
+                      disabled={full}
+                      onClick={() =>
+                        save({
+                          custom_apps: [
+                            ...custom,
+                            { id: `app_${Math.random().toString(36).slice(2, 9)}`, name: a.name, icon: a.icon },
+                          ],
+                        })
+                      }
+                      className={`${pill(false)} inline-flex items-center gap-1.5 !py-1 !pl-1 disabled:opacity-40`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={a.icon} alt="" className="h-6 w-6 rounded-md object-cover" />
+                      {a.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
