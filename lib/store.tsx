@@ -681,6 +681,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const canEditCharacter = useCallback(
     (c: Character) =>
       !!currentPlayer &&
+      !c.deleted_at && // im Papierkorb: nur noch über Admin → Papierkorb wiederherstellen
       (tierOf(c) === "extra" || // Statist*innen dürfen alle bearbeiten
         c.player_id === currentPlayer.id ||
         (c.co_owner_ids ?? []).includes(currentPlayer.id)),

@@ -481,74 +481,7 @@ function CharactersTab() {
         <PlayExistingButton tier="extra" />
       </div>
 
-      <Trash />
     </div>
-  );
-}
-
-// Papierkorb: gelöschte Charaktere aller Stufen wiederherstellen oder endgültig
-// löschen. Sichtbar sind die eigenen, alle Statist*innen (die gehören allen) und
-// für Admins alles.
-function Trash() {
-  const { trashedCharacters, restoreCharacter, deleteCharacter, currentPlayer, isAdmin, posts } =
-    useStore();
-  const [purge, setPurge] = useState<Character | null>(null);
-  if (!currentPlayer) return null;
-  const mine = trashedCharacters.filter(
-    (c) =>
-      isAdmin ||
-      tierOf(c) === "extra" ||
-      c.player_id === currentPlayer.id ||
-      (c.co_owner_ids ?? []).includes(currentPlayer.id),
-  );
-  if (mine.length === 0) return null;
-  const postCount = (c: Character) => posts.filter((p) => p.character_id === c.id).length;
-  return (
-    <>
-      <h2 className="font-display lowercase text-[2rem] leading-none text-accent mt-6">papierkorb.</h2>
-      {mine.map((c) => (
-        <div
-          key={c.id}
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-border-subtle bg-bg-surface px-4 py-3"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={characterImage(c)} alt="" className="h-10 w-10 rounded-full object-cover bg-bg-primary opacity-60" />
-          <div className="min-w-0 flex-1">
-            <div className="text-[0.875rem] text-text-primary">{c.name}</div>
-            <div className="text-[0.8125rem] text-text-tertiary">
-              {TIER_NAMES[tierOf(c)]} · {postCount(c)} {postCount(c) === 1 ? "Post" : "Posts"}
-            </div>
-          </div>
-          <button
-            onClick={() => restoreCharacter(c.id)}
-            className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08]"
-          >
-            Wiederherstellen
-          </button>
-          <button
-            onClick={() => setPurge(c)}
-            className="rounded-md border border-red-400/40 px-3 py-1.5 text-[0.8125rem] text-red-300 hover:bg-red-500/10"
-          >
-            Endgültig löschen
-          </button>
-        </div>
-      ))}
-      {purge && (
-        <ConfirmDialog
-          title={`${purge.name} endgültig löschen?`}
-          warning={`Das lässt sich NICHT rückgängig machen. Mit ${purge.name} werden ${postCount(purge)} ${
-            postCount(purge) === 1 ? "Post" : "Posts"
-          }, alle Zitate, Chats und Anrufe gelöscht – auch in Szenen anderer Spieler*innen.`}
-          text="Wenn du unsicher bist, lass den Charakter einfach im Papierkorb liegen."
-          confirmLabel="Endgültig löschen"
-          onCancel={() => setPurge(null)}
-          onConfirm={() => {
-            deleteCharacter(purge.id);
-            setPurge(null);
-          }}
-        />
-      )}
-    </>
   );
 }
 
@@ -707,8 +640,8 @@ function CharacterEditor({ character }: { character: Character }) {
               warning={`Achtung: ${character.name} verschwindet für alle aus Listen, Szenen-Auswahl und Handy.`}
               text={`${kindName} mit ${postCount} ${
                 postCount === 1 ? "Post" : "Posts"
-              } kommt in den Papierkorb (unten bei „Meine Charaktere“) und lässt sich von dort wiederherstellen. Posts, Chats und Anrufe bleiben erhalten.`}
-              confirmLabel="In den Papierkorb"
+              } wird gelöscht: In Szenen und Posts bleibt der Name durchgestrichen stehen, Posts, Chats und Anrufe bleiben erhalten. Nur Admins können ${character.name} über ihren Papierkorb wiederherstellen oder endgültig löschen.`}
+              confirmLabel="Löschen"
               onCancel={() => setConfirmDelete(false)}
               onConfirm={() => {
                 setConfirmDelete(false);

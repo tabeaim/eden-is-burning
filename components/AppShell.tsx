@@ -268,7 +268,7 @@ function BannerHeader({
               className="mr-3 inline-block h-[1.15em] w-[1.15em] rounded-full object-cover align-[-0.2em] ring-2 ring-bg-primary"
             />
           )}
-          <span className={onThisPage && meta.deleted ? GONE_CLASS : ""} title={onThisPage && meta.deleted ? "Konto der Spieler*in gelöscht" : undefined}>
+          <span className={onThisPage && meta.deleted ? GONE_CLASS : ""} title={onThisPage && meta.deleted ? "Charakter gelöscht" : undefined}>
             {title}
           </span>
           <span className="text-accent">.</span>

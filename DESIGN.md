@@ -450,11 +450,18 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   bestehen. Admins entfernen unter „Gelöschte Konten" **alle Spuren** (Charaktere mit
   Posts, Zitaten, Chats, Anrufen und die Hülle) mit `purge_player`. Der letzte Admin ist
   geschützt.
+- **Gelöschte Charaktere** (Papierkorb): Wer einen Charakter löscht, legt ihn in den
+  Papierkorb. Er verschwindet aus Listen, Szenen-Auswahl und Handy, bleibt aber in
+  Szenen und Posts mit durchgestrichenem Namen stehen (gleiche Kennzeichnung wie bei
+  gelöschten Konten, siehe unten) und lässt sich nicht mehr bearbeiten. **Den
+  Papierkorb sehen nur Admins** (Einstellungen → Admin → Papierkorb): Sie stellen
+  wieder her oder löschen endgültig. Spieler*innen sehen ihn nicht.
 - **Gelöschte Konten in der Oberfläche:** `players` (Store) enthält nur aktive
   Spieler*innen, `deletedPlayers` die Hüllen, `player(id)` findet beide. Name der
   Spieler*in ausgegraut ohne Pilltag und Link (`GONE_PLAYER_CLASS`, überall wo ein
   `Bubble` mit Username stünde: Profil-Footer, Charakterkarten, Szenenkarten);
-  Charaktername durchgestrichen und abgeschwächt (`GONE_CLASS`, `useCharacterGone`):
+  Charaktername durchgestrichen und abgeschwächt (`GONE_CLASS`, `useCharacterGone`; gilt auch
+  für Charaktere im Papierkorb):
   im Seitentitel (`deleted` in `PageMeta`), in `CharacterBubble`, in der
   Szenen-Charakterkarte und in der Charakterübersicht. Es gibt kein Spieler*innen-Profil
   mehr, nur die Charakterprofile. Main Characters gelten als gelöscht, wenn ihre

@@ -73,7 +73,7 @@ export function CharacterBubble({
     <Bubble
       href={linked ? `/charaktere/${c.id}` : undefined}
       tone={tone}
-      title={gone ? `${c.name} (Konto gelöscht)` : c.name}
+      title={gone ? `${c.name} (gelöscht)` : c.name}
       className={className}
       leading={
         c.faceclaim_image_url || c.is_npc ? (

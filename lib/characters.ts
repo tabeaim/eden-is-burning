@@ -35,14 +35,16 @@ export function playsAs(
   return tierOf(c) === "extra" ? co : c.player_id === playerId || co;
 }
 
-// Hat/haben die Spieler*in(nen) hinter dem Charakter ihr Konto gelöscht? Dann bleibt der
-// Charakter bestehen, wird aber überall als „gelöscht" gekennzeichnet. Main Characters:
-// ihr*e Besitzer*in; Supporting Characters: erst wenn alle Zugeordneten weg sind;
-// Statist*innen gehören allen und sind nie betroffen.
+// Gilt der Charakter als gelöscht? Das ist er, wenn er im Papierkorb liegt oder die
+// Spieler*in(nen) dahinter ihr Konto gelöscht haben. Er bleibt dann in Szenen und
+// Posts bestehen, wird aber überall durchgestrichen gekennzeichnet. Konto gelöscht:
+// Main Characters, wenn ihre Besitzer*in weg ist; Supporting Characters erst, wenn
+// alle Zugeordneten weg sind; Statist*innen nie (sie gehören allen).
 export function ownerGone(
-  c: Pick<Character, "is_npc" | "npc_tier" | "player_id" | "co_owner_ids">,
+  c: Pick<Character, "is_npc" | "npc_tier" | "player_id" | "co_owner_ids" | "deleted_at">,
   player: (id: string) => { deleted_at?: string | null } | undefined,
 ): boolean {
+  if (c.deleted_at) return true;
   const tier = tierOf(c);
   if (tier === "extra") return false;
   const owners = tier === "supporting" ? [c.player_id, ...(c.co_owner_ids ?? [])] : [c.player_id];

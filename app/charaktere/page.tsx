@@ -208,7 +208,7 @@ function CharacterCard({
       <div className="font-display lowercase text-[1.625rem] leading-none text-text-primary">
         <Link
           href={`/charaktere/${c.id}`}
-          title={gone ? "Konto der Spieler*in gelöscht" : undefined}
+          title={gone ? "Charakter gelöscht" : undefined}
           className={`after:absolute after:inset-0 after:content-[''] ${gone ? GONE_CLASS : ""}`}
         >
           {c.name}

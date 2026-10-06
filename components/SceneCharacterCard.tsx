@@ -55,7 +55,7 @@ export function SceneCharacterCard({
       {/* Name – führt wie das Bild aufs Profil */}
       <Link
         href={`/charaktere/${character.id}`}
-        title={gone ? "Konto der Spieler*in gelöscht" : undefined}
+        title={gone ? "Charakter gelöscht" : undefined}
         className={`mt-3 block text-center font-serif font-bold text-[1.125rem] uppercase tracking-wide text-text-primary hover:text-accent ${
           gone ? GONE_CLASS : ""
         }`}
