@@ -177,3 +177,18 @@ export const EXTRA_AREAS: Record<string, { name: string; character: string }> = 
 export function areaName(key: string): string {
   return AREAS[key as AreaKey]?.name ?? EXTRA_AREAS[key]?.name ?? key;
 }
+
+/**
+ * Bild einer Gegend: das von Admins hinterlegte (Einstellungen → Admin → Design),
+ * sonst das fest eingetragene, sonst ein Platzhalter.
+ */
+export function areaImage(
+  key: string,
+  settings: { areaImages?: Record<string, string> } | null | undefined,
+): string {
+  return (
+    settings?.areaImages?.[key] ||
+    AREAS[key as AreaKey]?.image ||
+    `https://picsum.photos/seed/${encodeURIComponent(`area-${key}`)}/800/240`
+  );
+}

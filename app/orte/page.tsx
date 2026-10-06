@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
-import { AREAS, EXTRA_AREAS, areaName, type AreaKey } from "@/lib/world";
-import { placeholderImg } from "@/lib/format";
+import { AREAS, EXTRA_AREAS, areaImage, areaName, type AreaKey } from "@/lib/world";
+import { bannerStyle } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
 import { EdenMap } from "@/components/EdenMap";
 import { LocationList } from "@/components/LocationList";
@@ -84,7 +84,7 @@ export default function PlacesPage() {
 
 function MapView() {
   const router = useRouter();
-  const { scenes, characters, locationsOf, addLocation } = useStore();
+  const { scenes, characters, locationsOf, addLocation, appSettings } = useStore();
   const [selected, setSelected] = useState<string>("rivers_edge");
   const [adding, setAdding] = useState(false);
   // Link auf eine Gegend (z.B. vom Arbeitsplatz im Charakterprofil): /orte?area=byron
@@ -146,11 +146,9 @@ function MapView() {
             <>
               {/* Titelbild-Banner mit Namen */}
               <div className="relative h-32 w-full bg-bg-surface-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={info?.image ?? placeholderImg(`area-${selected}`, 800, 240)}
-                  alt={info?.name ?? extra?.name ?? ""}
-                  className="absolute inset-0 w-full h-full object-cover"
+                <div
+                  className="absolute inset-0 bg-cover"
+                  style={bannerStyle(areaImage(selected, appSettings))}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-bg-surface via-bg-surface/30 to-transparent" />
                 <h2 className="absolute bottom-3 left-5 right-5 font-display lowercase text-[1.875rem] text-text-primary">

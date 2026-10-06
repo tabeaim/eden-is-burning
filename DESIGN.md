@@ -305,6 +305,9 @@ dem Inhalt:
   Wort in der Beschreibung oder ein Wort derselben Gruppe (Café → Diner). Die
   Gruppen stehen in `lib/place-words.ts`; Orte haben keine Kategorie.
 - **Karte:** wie bisher, mit Gegend-Panel.
+- **Bilder der Gegenden** pflegen Admins unter Einstellungen → Admin → Design
+  (`appSettings.areaImages`); immer über `areaImage(key, appSettings)`
+  (lib/world.ts) holen und mit `bannerStyle` zeichnen.
 
 ## Timeline
 

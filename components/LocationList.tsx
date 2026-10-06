@@ -4,15 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { AREA_ORDER, AREAS, type AreaKey } from "@/lib/world";
+import { AREA_ORDER, AREAS, areaImage, type AreaKey } from "@/lib/world";
 import { PHONE_AREA } from "@/lib/phone";
-import { placeholderImg } from "@/lib/format";
 import { bannerStyle } from "@/lib/headers";
 import { hasAnyWord, norm, relatedWords } from "@/lib/place-words";
 import { Icon } from "./Icon";
 import { MultiSelect } from "./MultiSelect";
 import { PlayerCharacterBubble } from "./PlayerCharacterBubble";
-import type { Location } from "@/lib/types";
+import type { AppSettings, Location } from "@/lib/types";
 
 type Tab = "all" | "played" | "unplayed";
 type SortKey = "name" | "scenes" | "played" | "created";
@@ -36,13 +35,8 @@ const sceneKey = (area: string, name: string) => `${area}\n${name}`;
 
 // Bild einer Ortskarte: eigenes Titelbild, sonst das erste Vibes-Foto, sonst das
 // Bild der Gegend (wie im Gegend-Panel der Karte).
-function cardImage(loc: Location): string {
-  return (
-    loc.image_url ||
-    loc.images?.[0] ||
-    AREAS[loc.area as AreaKey]?.image ||
-    placeholderImg(`area-${loc.area}`, 800, 240)
-  );
+function cardImage(loc: Location, settings: AppSettings): string {
+  return loc.image_url || loc.images?.[0] || areaImage(loc.area, settings);
 }
 
 // Listenansicht der Orte: alle Orte als Karten, durchsuchbar und filterbar –
@@ -341,9 +335,10 @@ const GRID = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4";
 // Ortskarte: Bild, Name, Kurzbeschreibung (falls vorhanden), Anzahl Szenen. Die
 // ganze Karte führt aufs Ortsprofil.
 function LocationCard({ loc, stats }: { loc: Location; stats: Stats }) {
+  const { appSettings } = useStore();
   return (
     <div className="relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-border-subtle bg-bg-surface transition-colors hover:bg-white/[0.03]">
-      <div className="h-32 w-full bg-bg-surface-2 bg-cover" style={bannerStyle(cardImage(loc))} />
+      <div className="h-32 w-full bg-bg-surface-2 bg-cover" style={bannerStyle(cardImage(loc, appSettings))} />
       <div className="flex flex-1 flex-col px-4 py-3.5">
         <h3 className="font-serif text-[1rem] text-text-primary leading-tight break-words">
           <Link

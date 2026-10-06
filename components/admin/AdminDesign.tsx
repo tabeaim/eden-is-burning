@@ -7,6 +7,7 @@ import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { bannerStyle, headersFor, pageHeader } from "@/lib/headers";
 import { BannerPosition } from "../BannerPosition";
 import { Icon } from "../Icon";
+import { AREA_ORDER, EXTRA_AREAS, areaImage, areaName } from "@/lib/world";
 import type { Theme } from "@/lib/types";
 import { hint, label, pill, row } from "./ui";
 
@@ -27,7 +28,13 @@ const PAGES: [string, string][] = [
   ["einstellungen", "Einstellungen"],
 ];
 
-// Design: Standard-Farbmodus der App und Header-Bilder je Stil (dunkel/hell).
+// Gegenden mit Bild: die Stadtteile plus die Karten-Bereiche ohne Steckbrief
+const AREA_KEYS: string[] = [...AREA_ORDER, ...Object.keys(EXTRA_AREAS)];
+// Schlüssel im gemeinsamen Entwurfs-/Upload-Zustand: Gegenden mit Vorsatz
+const AREA = "area:";
+
+// Design: Standard-Farbmodus der App, Header-Bilder je Stil (dunkel/hell) und
+// die Bilder der Gegenden.
 export function AdminDesign() {
   const { appSettings, updateAppSettings } = useStore();
   const { theme } = useTheme();
@@ -55,13 +62,22 @@ export function AdminDesign() {
       headers: { dark: headersFor(appSettings, "dark"), light: headersFor(appSettings, "light"), [style]: next },
     });
   };
+  const areaImages = appSettings.areaImages ?? {};
+  const setAreaImage = (key: string, url: string | null) => {
+    const next = { ...areaImages };
+    if (url) next[key] = url;
+    else delete next[key];
+    updateAppSettings({ areaImages: next });
+  };
   async function onFile(f: File | undefined) {
     const key = target.current;
     if (!f || !key) return;
     setBusy(key);
     try {
       clearDraft(key);
-      setHeader(key, await uploadImage(f, "headers", IMAGE_SIZES.banner));
+      const url = await uploadImage(f, "headers", IMAGE_SIZES.banner);
+      if (key.startsWith(AREA)) setAreaImage(key.slice(AREA.length), url);
+      else setHeader(key, url);
     } finally {
       setBusy(null);
     }
@@ -143,6 +159,63 @@ export function AdminDesign() {
                     onChange={(u) => setDraft((d) => ({ ...d, [key]: u }))}
                     onCommit={(u) => {
                       if (u !== headers[key]) setHeader(key, u);
+                      clearDraft(key);
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bilder der Gegenden */}
+      <div>
+        <div className={`${label} mb-2`}>Bilder der Gegenden</div>
+        <p className={`${hint} mb-3`}>
+          Erscheinen im Gegend-Panel der Karte und auf Ortskarten, deren Ort weder Titelbild noch Vibes-Foto hat. Gelten
+          für beide Stile. Ohne eigenes Bild steht ein Platzhalter. Querformat wirkt am besten.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {AREA_KEYS.map((area) => {
+            const key = AREA + area;
+            const own = areaImages[area];
+            const url = draft[key] ?? own;
+            return (
+              <div key={key} className={`${row} p-3`}>
+                <div className="mb-2 flex items-center justify-between gap-2 text-[0.875rem] text-text-primary">
+                  {areaName(area)}
+                  {own && (
+                    <button
+                      onClick={() => setAreaImage(area, null)}
+                      className="text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+                    >
+                      Standard
+                    </button>
+                  )}
+                </div>
+                <div
+                  className="relative h-24 w-full overflow-hidden rounded-md border border-border-subtle bg-bg-primary bg-cover"
+                  style={bannerStyle(url || areaImage(area, null))}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
+                  <button
+                    disabled={busy === key}
+                    onClick={() => {
+                      target.current = key;
+                      file.current?.click();
+                    }}
+                    className="absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-black/50 px-2.5 py-1.5 text-[0.8125rem] text-white hover:bg-black/70 disabled:opacity-50"
+                  >
+                    <Icon name="upload" size={14} /> {busy === key ? "Lädt hoch…" : "Bild hochladen"}
+                  </button>
+                </div>
+                {own && (
+                  <BannerPosition
+                    url={url!}
+                    onChange={(u) => setDraft((d) => ({ ...d, [key]: u }))}
+                    onCommit={(u) => {
+                      if (u !== own) setAreaImage(area, u);
                       clearDraft(key);
                     }}
                   />
