@@ -305,6 +305,9 @@ dem Inhalt:
   Wort in der Beschreibung oder ein Wort derselben Gruppe (Café → Diner). Die
   Gruppen stehen in `lib/place-words.ts`; Orte haben keine Kategorie.
 - **Karte:** wie bisher, mit Gegend-Panel.
+- **Farben der Karte** stehen als `--map-*` in `app/globals.css` (je ein Satz für
+  dunkel und hell), nie fest in `EdenMap.tsx`. Die Gegend-Box trägt
+  `panel-shadow` – Schatten nur im dunklen Stil.
 - **Bilder der Gegenden** pflegen Admins unter Einstellungen → Admin → Design
   (`appSettings.areaImages`); immer über `areaImage(key, appSettings)`
   (lib/world.ts) holen und mit `bannerStyle` zeichnen.

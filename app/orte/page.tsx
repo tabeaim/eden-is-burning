@@ -141,7 +141,7 @@ function MapView() {
         </div>
 
         {/* Detail-Panel */}
-        <div className="relative z-10 w-full lg:w-[410px] lg:shrink-0 lg:ml-auto rounded-xl border border-border-subtle bg-bg-surface/95 backdrop-blur-sm shadow-2xl shadow-black/60 min-h-[320px] overflow-hidden">
+        <div className="relative z-10 w-full lg:w-[410px] lg:shrink-0 lg:ml-auto rounded-xl border border-border-subtle bg-bg-surface/95 backdrop-blur-sm panel-shadow min-h-[320px] overflow-hidden">
           {info || extra ? (
             <>
               {/* Titelbild-Banner mit Namen */}

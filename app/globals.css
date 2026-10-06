@@ -18,6 +18,24 @@
   --accent-soft: rgba(232, 154, 60, 0.14);
   --olive: #a3a380; /* Military-Olive */
   --olive-soft: rgba(163, 163, 128, 0.16);
+  /* Karte (components/EdenMap.tsx) */
+  --map-land: #2b2e27;
+  --map-land-stroke: #445130;
+  --map-land-sel: #2e2411;
+  --map-label: #b8c4a0;
+  --map-water: #192438;
+  --map-water-stroke: #4a6080;
+  --map-water-label: #8aa3c2;
+  --map-beach: #7f8263;
+  --map-muted: #9e9e9e;
+  --map-umland: #8a8a8a;
+  --map-campus: #e87520;
+  --map-pill: #1e1e23;
+  --map-pill-stroke: #4f4f54;
+  --map-pill-text: #dedede;
+  --map-accent: var(--accent);
+  /* Schatten der Gegend-Box über der Karte */
+  --panel-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
 }
 
 @theme inline {
@@ -109,11 +127,36 @@ html[data-theme="light"] {
   --text-secondary: rgba(23, 20, 15, 0.86);
   --text-tertiary: rgba(23, 20, 15, 0.66);
   --accent: #e8a95a; /* sandiges Orange (Flächen, Knöpfe) */
-  --accent-ink: #a85a08; /* dasselbe als Schriftfarbe: kräftiger für Kontrast auf Creme */
+  /* dasselbe als Schriftfarbe: kräftiger, mind. 4,5:1 auf allen Creme-Flächen */
+  --accent-ink: #8a4706;
   --accent-soft: rgba(232, 169, 90, 0.3);
-  --olive: #6f6f4d;
+  --olive: #58583a;
   --olive-soft: rgba(111, 111, 77, 0.16);
   --color-white: #3a2a10;
+  /* Rote Warn-/Lösch-Schrift: auf Creme dunkelrot statt hellrot (Kontrast) */
+  --color-red-200: #a3271f;
+  --color-red-300: #a3271f;
+  --color-red-400: #a3271f;
+  /* Karte: helles Salbeigrün und Wasserblau, Beschriftung dunkel */
+  --map-land: #d5dfb8;
+  --map-land-stroke: #68794a;
+  --map-land-sel: #f6dfb8;
+  --map-label: #3c4a22;
+  --map-water: #cfe3f1;
+  --map-water-stroke: #86a6c2;
+  --map-water-label: #3f6283;
+  --map-beach: #ead9ad;
+  --map-muted: #6b6558;
+  --map-umland: #6b6558;
+  --map-campus: #b8510a;
+  --map-pill: #f1ebdd;
+  --map-pill-stroke: #958b78;
+  --map-pill-text: #17140f;
+  --map-accent: var(--accent-ink);
+  --panel-shadow: none;
+}
+html[data-theme="light"] .text-yellow-400 {
+  color: #7a5a00;
 }
 html[data-theme="light"] body {
   background-image: none;
@@ -135,6 +178,27 @@ html[data-theme="light"] .prose-serif mark {
 }
 html[data-theme="light"] ::-webkit-scrollbar-thumb {
   background: rgba(60, 45, 20, 0.18);
+}
+
+/* Platzhalter in Eingabefeldern: lesbar (WCAG 1.4.3) statt halbtransparent */
+::placeholder {
+  color: var(--text-tertiary);
+  opacity: 1;
+}
+
+/* Gegend-Box der Karte: Schatten nur im dunklen Stil – im hellen sieht sie aus
+   wie jede andere Box. */
+.panel-shadow {
+  box-shadow: var(--panel-shadow);
+}
+
+/* Handy-Display: wie auf einem echten Handy keine sichtbare Scrollleiste – der
+   Inhalt (z.B. Captic-Bilder) reicht bis an den Rand; gescrollt wird wie gewohnt. */
+.phone-display * {
+  scrollbar-width: none;
+}
+.phone-display ::-webkit-scrollbar {
+  display: none;
 }
 
 /* Display-Font (ZCOOL KuaiLe) – Bildmarke & Seiten-Überschriften */

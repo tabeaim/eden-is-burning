@@ -104,7 +104,7 @@ export function PhoneFrame({
         {/* Display */}
         <div
           style={tone === "home" ? { background: phone.wallpaper } : undefined}
-          className={`relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--phone-screen,#0c0c0e)] ${screenRadius} ${
+          className={`phone-display relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--phone-screen,#0c0c0e)] ${screenRadius} ${
             burner ? "phone-burner" : ""
           } ${tone === "home" ? `phone-home ${phone.wallpaperLight ? "phone-home-light" : ""}` : ""}`}
         >

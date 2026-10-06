@@ -90,18 +90,18 @@ const WATER: { d: string; transform: string; fill: string; stroke?: string }[] =
   {
     d: "M156.562 18.3516L177.5 117.053V214.5L170.501 363.477L170.498 363.521L170.504 363.564L177.458 417.211L137.853 437.014L43.3555 448.453L14.9785 355.354L0.52832 301.041L43.4561 205.204L43.5 205.106V165.039L54.4922 101.585L54.5059 101.51L54.4961 101.435L43.5537 18.3789L116.95 0.525391L156.562 18.3516Z",
     transform: "translate(448 -18)",
-    fill: "#192438",
-    stroke: "#4A6080",
+    fill: "var(--map-water)",
+    stroke: "var(--map-water-stroke)",
   },
   {
     d: "M0 97.5286L8.5 41.0083L69.5 0L155.5 9.24933L178 72.7673L196 499.091L21 487.249L28.5 359.675L0 297.673L8.5 241.251L13.5 180.992L0 97.5286Z",
     transform: "translate(493 378.51)",
-    fill: "#192438",
+    fill: "var(--map-water)",
   },
   {
     d: "M4 25.9112L12.9477 0L64 13.5L69.5 84.1824L25.3707 86.6955L0 40.3624L4 25.9112Z",
     transform: "translate(512.5 523)",
-    fill: "#192438",
+    fill: "var(--map-water)",
   },
 ];
 
@@ -142,10 +142,10 @@ const PILL_BY_KEY = new Map(PILLS.map((p) => [p.key, p]));
 type LabelBox = { x: number; y: number; width: number; height: number };
 
 function fillFor(isSel: boolean) {
-  return isSel ? "#2e2411" : "#2B2E27";
+  return isSel ? "var(--map-land-sel)" : "var(--map-land)";
 }
 function strokeFor(isSel: boolean) {
-  return isSel ? "var(--accent)" : "#445130";
+  return isSel ? "var(--map-accent)" : "var(--map-land-stroke)";
 }
 
 export function EdenMap({
@@ -207,7 +207,7 @@ export function EdenMap({
       <text
         x="530"
         y="92"
-        fill="#4a6080"
+        fill="var(--map-water-label)"
         fontSize="12"
         textAnchor="middle"
         transform="rotate(-91.02 530 92)"
@@ -218,7 +218,7 @@ export function EdenMap({
       <text
         x="540"
         y="470"
-        fill="#4a6080"
+        fill="var(--map-water-label)"
         fontSize="12"
         textAnchor="middle"
         transform="rotate(-90 540 470)"
@@ -228,7 +228,7 @@ export function EdenMap({
       </text>
 
       {/* Umland-Label (Bereich = Frame-Hintergrund) */}
-      <text ref={labelRef("umland")} x="63" y="408" fill="#808080" fontSize="12" className="pointer-events-none">
+      <text ref={labelRef("umland")} x="63" y="408" fill="var(--map-umland)" fontSize="12" className="pointer-events-none">
         Umland
       </text>
 
@@ -249,7 +249,7 @@ export function EdenMap({
             </g>
             <g
               ref={labelRef(d.key)}
-              fill={isSel ? "var(--text-primary)" : "#b8c4a0"}
+              fill={isSel ? "var(--text-primary)" : "var(--map-label)"}
               fontSize="12"
               className="pointer-events-none"
             >
@@ -268,7 +268,7 @@ export function EdenMap({
 
       {/* Belle View Beach – Sandstreifen */}
       <g transform={BEACH.transform} style={{ pointerEvents: "none" }}>
-        <path d={BEACH.d} fill="#7F8263" />
+        <path d={BEACH.d} fill="var(--map-beach)" />
       </g>
 
       {/* Byron University – gestrichelter Campus (klickbar) */}
@@ -277,17 +277,17 @@ export function EdenMap({
           <path
             d={BYRON.d}
             fill={byronSel ? "rgba(232,117,32,0.12)" : "transparent"}
-            stroke="#e87520"
+            stroke="var(--map-campus)"
             strokeWidth={byronSel ? 2.6 : 2}
             strokeDasharray="7 4"
             strokeLinejoin="round"
             className="transition-all duration-150"
           />
         </g>
-        <text x={BYRON.lx} y={BYRON.ly} fill="#b8c4a0" fontSize="12" className="pointer-events-none">
+        <text x={BYRON.lx} y={BYRON.ly} fill="var(--map-label)" fontSize="12" className="pointer-events-none">
           Byron
         </text>
-        <text x={BYRON.lx} y={BYRON.ly + 14} fill="#b8c4a0" fontSize="12" className="pointer-events-none">
+        <text x={BYRON.lx} y={BYRON.ly + 14} fill="var(--map-label)" fontSize="12" className="pointer-events-none">
           University
         </text>
       </g>
@@ -297,7 +297,7 @@ export function EdenMap({
         <path
           d="M4.65118 18.5117V1.51167M8.65118 8.51167L4.65118 1.51167L0.651182 8.51167"
           transform="translate(270.35 4.36)"
-          stroke="#9E9E9E"
+          stroke="var(--map-muted)"
           strokeWidth="1.5"
           fill="none"
           style={{ pointerEvents: "none" }}
@@ -357,13 +357,13 @@ function ExternalPill({
         width={p.w}
         height={p.h}
         rx={16}
-        fill={selected ? "rgba(232,154,60,0.18)" : "#1e1e23"}
-        stroke={selected ? "var(--accent)" : "#4f4f54"}
+        fill={selected ? "var(--accent-soft)" : "var(--map-pill)"}
+        stroke={selected ? "var(--map-accent)" : "var(--map-pill-stroke)"}
         strokeWidth="1"
         className="transition-all hover:stroke-white/60"
       />
-      <circle cx={p.x + 16} cy={p.y + p.h / 2} r="3" fill="#9E9E9E" />
-      <text ref={labelRef} x={p.x + 27} y={p.y + p.h / 2 + 4} fill={selected ? "var(--accent)" : "#dedede"} fontSize="12" className="pointer-events-none">
+      <circle cx={p.x + 16} cy={p.y + p.h / 2} r="3" fill="var(--map-muted)" />
+      <text ref={labelRef} x={p.x + 27} y={p.y + p.h / 2 + 4} fill={selected ? "var(--map-accent)" : "var(--map-pill-text)"} fontSize="12" className="pointer-events-none">
         {p.label}
       </text>
     </>
