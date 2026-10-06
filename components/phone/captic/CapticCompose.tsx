@@ -22,6 +22,11 @@ import { CapticMedia } from "./CapticPost";
 
 type Media = Pick<CapticPost, "kind" | "url" | "poster_url" | "ar">;
 
+// Videos sind abgeschaltet: Sie gehen unverkleinert in den Speicher (bis 25 MB je
+// Video) und würden das gemeinsame Kontingent schnell füllen. Auf `true` stellen
+// schaltet den Upload wieder frei – Anzeige und Speichern sind weiter vorhanden.
+const VIDEO_UPLOAD = false;
+
 const CROP_RATIOS = [
   { label: "Quadrat", value: 1 },
   { label: "Hoch 4:5", value: 4 / 5 },
@@ -31,7 +36,7 @@ const CROP_RATIOS = [
 export const capticField =
   "w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/25 sm:text-[0.875rem]";
 
-// Neuer Beitrag (Foto mit Zuschnitt, GIF oder kurzes Video) bzw. einen
+// Neuer Beitrag (Foto mit Zuschnitt oder GIF; Videos siehe VIDEO_UPLOAD) bzw. einen
 // vorhandenen bearbeiten – dann bleibt das Medium, wie es ist.
 export function CapticCompose({
   me,
@@ -71,7 +76,9 @@ export function CapticCompose({
   function pick(f: File | undefined) {
     if (!f) return;
     setPanel(null);
-    if (f.type.startsWith("video/")) {
+    if (f.type.startsWith("video/") && !VIDEO_UPLOAD) {
+      setError("Videos gehen hier nicht – bitte ein Bild oder GIF auswählen.");
+    } else if (f.type.startsWith("video/")) {
       void run("Video wird hochgeladen …", async () => {
         const v = await uploadVideo(f, "captic");
         return { kind: "video", url: v.url, poster_url: v.poster, ar: v.ar };
@@ -159,7 +166,7 @@ export function CapticCompose({
           <div className="flex gap-2">
             <button onClick={() => file.current?.click()} disabled={!!busy} className={source}>
               <Icon name="photo" size={24} />
-              Foto oder Video
+              {VIDEO_UPLOAD ? "Foto oder Video" : "Foto oder GIF"}
             </button>
             <button
               onClick={() => setPanel((p) => (p === "gif" ? null : "gif"))}
@@ -173,7 +180,7 @@ export function CapticCompose({
           <input
             ref={file}
             type="file"
-            accept="image/*,video/mp4,video/webm,video/quicktime"
+            accept={VIDEO_UPLOAD ? "image/*,video/mp4,video/webm,video/quicktime" : "image/*"}
             hidden
             onChange={(e) => {
               pick(e.target.files?.[0]);
@@ -182,8 +189,10 @@ export function CapticCompose({
           />
           {panel === "gif" && <GifPicker onPick={pickGif} />}
           <p className="mt-2 text-[0.75rem] leading-snug text-text-tertiary">
-            Fotos lassen sich zuschneiden. Videos (mit Ton) bis {MAX_VIDEO_SECONDS} Sekunden und{" "}
-            {MAX_VIDEO_BYTES / 1024 / 1024} MB, GIFs bis 8 MB.
+            Fotos lassen sich zuschneiden.{" "}
+            {VIDEO_UPLOAD &&
+              `Videos (mit Ton) bis ${MAX_VIDEO_SECONDS} Sekunden und ${MAX_VIDEO_BYTES / 1024 / 1024} MB. `}
+            GIFs aus der Suche brauchen keinen Speicher, eigene GIF-Dateien bis 8 MB.
           </p>
         </div>
       )}

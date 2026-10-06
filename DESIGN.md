@@ -432,7 +432,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
     über ⋯ als Blatt von unten (eigene Beiträge; Admins: alle).
   - **Neuer Beitrag** (`CapticCompose`): Fotos werden mit `CropDialog`
     zugeschnitten (Formate Quadrat/4:5/Quer) und nur der Ausschnitt hochgeladen;
-    GIFs per Datei oder GIF-Suche; Videos mit Ton bis 60 s / 25 MB (`uploadVideo`).
+    GIFs per Datei oder GIF-Suche. Video-Upload ist wegen des Speicherplatzes
+    abgeschaltet (`VIDEO_UPLOAD` in `CapticCompose`).
   - Captic-Pink (`CAPTIC_PINK`) nur für Herz, „Folgen" und „Posten".
 - **Sprechblasen:** eigene rechts in `bg-accent text-black`, fremde links in
   `bg-bg-surface-2`; nur die letzte Blase einer Folge hat die spitze Ecke. Bis zu
