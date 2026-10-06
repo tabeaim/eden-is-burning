@@ -40,7 +40,7 @@ import {
 } from "@/components/ProfileSections";
 import type { Character, RelationCategory, Scene } from "@/lib/types";
 
-type Tab = "general" | "character" | "personal" | "moodboard" | "inplay" | "relations";
+type Tab = "character" | "personal" | "moodboard" | "inplay" | "relations";
 
 // Bausteine aus DESIGN.md: Buttons, Primär-Aktion, Formularfelder
 const btn =
@@ -68,7 +68,7 @@ export default function CharacterPage({
     canEditCharacter,
   } = store;
   const c = character(id);
-  const [tab, setTab] = useState<Tab>("general");
+  const [tab, setTab] = useState<Tab>("character");
 
   const [editing, setEditing] = useState(false);
 
@@ -117,10 +117,18 @@ export default function CharacterPage({
     .map((cid) => characters.find((x) => x.id === cid))
     .filter(Boolean) as Character[];
 
+  const tabs: [Tab, string][] = [
+    ["character", "Character"],
+    // „Pockets": das Handy und die Gegenstände (nur Main Characters)
+    ...(c.is_npc ? [] : ([["personal", "Pockets"]] as [Tab, string][])),
+    // eingebundenes Pinterest-Board, falls eines hinterlegt ist
+    ...(c.pinterest_url ? ([["moodboard", "Moodboard"]] as [Tab, string][]) : []),
+    ["inplay", "Scenes"],
+    ["relations", "Relations"],
+  ];
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-1 pb-8">
-      {/* Inhalt linksbündig in gewohnter Breite – Container-Breite bleibt einheitlich */}
-      <div className="max-w-4xl">
       {/* Zitat – direkt unter dem Seitentitel, über der Trennlinie */}
       {/* Der Knopf sitzt rechts oben, das Zitat fließt um ihn herum */}
       <div className="flow-root">
@@ -143,8 +151,9 @@ export default function CharacterPage({
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mt-4 mb-6" />
 
-      <div className="grid md:grid-cols-[250px_1fr] gap-8 items-start">
-        {/* LINKS: Profil-Banner + Usertag */}
+      {/* OBEN (wie im Spieler*innen-Profil): Banner, Kurzbeschreibung, Facts */}
+      <div className="grid items-start gap-x-8 gap-y-6 md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_minmax(19rem,24rem)]">
+        {/* Profil-Banner + Usertag */}
         <div>
           <ProfileBanner c={c} />
           {c.tagline && (
@@ -154,98 +163,90 @@ export default function CharacterPage({
           )}
         </div>
 
-        {/* RECHTS: Tabs + Inhalt */}
-        <div>
-          {/* Tabs */}
-          <div className="flex flex-wrap gap-1.5 mb-6">
-            {(
-              [
-                ["general", "General"],
-                ["character", "Character"],
-                // „Personal Things": das Handy (nur Main Characters haben eins)
-                ...(c.is_npc ? [] : [["personal", "Pockets"]]),
-                // eingebundenes Pinterest-Board, falls eines hinterlegt ist
-                ...(c.pinterest_url ? [["moodboard", "Moodboard"]] : []),
-                ["inplay", "Scenes"],
-                ["relations", "Relations"],
-              ] as [Tab, string][]
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
-                  tab === key
-                    ? "bg-accent text-black font-medium"
-                    : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+        {/* Kurzbeschreibung – scrollt in sich, statt länger zu laufen als der Banner hoch ist */}
+        {c.bio ? (
+          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary md:max-h-[580px] md:overflow-y-auto md:pr-3">
+            {c.bio}
+          </p>
+        ) : (
+          <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
+        )}
 
-          {/* Lange Reiter scrollen in sich, damit der Text nicht viel länger läuft
-              als der Banner daneben hoch ist (nur neben dem Banner, also ab md). Im
-              ersten Reiter scrollt nur die Kurzbeschreibung, die Facts bleiben stehen. */}
-          <div className={tab === "general" || tab === "moodboard" ? "" : "md:max-h-[524px] md:overflow-y-auto md:pr-3"}>
-          {tab === "general" && <GeneralTab c={c} />}
-          {tab === "moodboard" && c.pinterest_url && (
-            <section>
-              <PinterestBoard url={c.pinterest_url} />
-            </section>
-          )}
-          {tab === "character" && <CharacterTab c={c} />}
-          {/* „Pockets": was der Charakter bei sich hat – das Handy, nur zum Ansehen
-              (Look, Startbildschirm, Kontaktliste) */}
-          {tab === "personal" && !c.is_npc && (
-            <section>
-              {/* links das Handy, daneben die Collage der Gegenstände */}
-              <div className="flex flex-col items-start gap-6 sm:flex-row">
-                {/* ohne Handy (Einstellungen) nur die Gegenstände */}
-                {hasPhone(c) && (
-                  <div className="shrink-0">
-                    <PhonePreview character={c} />
-                  </div>
-                )}
-                <ThingsBoard items={c.profile?.things ?? []} />
-                {!hasPhone(c) && !(c.profile?.things ?? []).length && (
-                  <p className="text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>
-                )}
-              </div>
-            </section>
-          )}
-          {tab === "inplay" && <InplayTab inScenes={inScenes} />}
-          {tab === "relations" && (
-            <RelationsTab
-              c={c}
-              coChars={coChars}
-              canEdit={playsAs(c, store.currentPlayerId)}
-            />
-          )}
-
-          </div>
-
-          {/* Footer */}
-          <div className="mt-8 border-t border-border-subtle pt-4">
-            <div className="font-display lowercase text-[1.625rem] leading-none text-accent">
-              brought to you by{" "}
-              {p ? (
-                <Link href={`/spieler/${p.username}`} className="hover:underline">
-                  {p.username}
-                </Link>
-              ) : (
-                "–"
-              )}
-              .
-            </div>
-            <div className="mt-2 text-[0.8125rem] text-text-tertiary">
-              {postCount} {postCount === 1 ? "Post" : "Posts"} · registriert am{" "}
-              {formatInplayDate(c.created_at.slice(0, 10))}
-              {p && <> · zuletzt online {timeAgo(p.last_seen)}</>}
-            </div>
-          </div>
+        {/* Facts, Studium/Arbeit (Looks stehen nur im Hover über dem Profil-Banner) */}
+        <div className="flex flex-col gap-7 md:col-start-2 lg:col-start-auto">
+          <ProfileFacts c={c} />
         </div>
       </div>
+
+      <div className="mt-6 mb-6 border-b border-border-subtle" />
+
+      {/* UNTEN: Reiter + Inhalt */}
+      <div className="flex flex-wrap gap-1.5 mb-6">
+        {tabs.map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
+              tab === key
+                ? "bg-accent text-black font-medium"
+                : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="max-w-4xl">
+        {tab === "moodboard" && c.pinterest_url && (
+          <section>
+            <PinterestBoard url={c.pinterest_url} />
+          </section>
+        )}
+        {tab === "character" && <CharacterTab c={c} />}
+        {/* „Pockets": was der Charakter bei sich hat – das Handy, nur zum Ansehen
+            (Look, Startbildschirm, Kontaktliste) */}
+        {tab === "personal" && !c.is_npc && (
+          <section>
+            {/* links das Handy, daneben die Collage der Gegenstände; mobil untereinander */}
+            <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+              {/* ohne Handy (Einstellungen) nur die Gegenstände */}
+              {hasPhone(c) && (
+                <div className="max-w-full shrink-0">
+                  <PhonePreview character={c} />
+                </div>
+              )}
+              <ThingsBoard items={c.profile?.things ?? []} />
+              {!hasPhone(c) && !(c.profile?.things ?? []).length && (
+                <p className="self-start text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>
+              )}
+            </div>
+          </section>
+        )}
+        {tab === "inplay" && <InplayTab inScenes={inScenes} />}
+        {tab === "relations" && (
+          <RelationsTab c={c} coChars={coChars} canEdit={playsAs(c, store.currentPlayerId)} />
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 border-t border-border-subtle pt-4">
+        <div className="font-display lowercase text-[1.625rem] leading-none text-accent">
+          brought to you by{" "}
+          {p ? (
+            <Link href={`/spieler/${p.username}`} className="hover:underline">
+              {p.username}
+            </Link>
+          ) : (
+            "–"
+          )}
+          .
+        </div>
+        <div className="mt-2 text-[0.8125rem] text-text-tertiary">
+          {postCount} {postCount === 1 ? "Post" : "Posts"} · registriert am{" "}
+          {formatInplayDate(c.created_at.slice(0, 10))}
+          {p && <> · zuletzt online {timeAgo(p.last_seen)}</>}
+        </div>
       </div>
     </div>
   );
@@ -402,38 +403,14 @@ function Heading({ children }: { children: React.ReactNode }) {
   );
 }
 
-function GeneralTab({ c }: { c: Character }) {
-  return (
-    <div className="grid items-start gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1fr)_minmax(19rem,1.1fr)]">
-      {/* Kurzbeschreibung – links neben den Facts (die brauchen den Platz für lange Namen) */}
-      <div>
-        {c.bio ? (
-          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary lg:max-h-[500px] lg:overflow-y-auto lg:pr-3">
-            {c.bio}
-          </p>
-        ) : (
-          <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
-        )}
-      </div>
-
-      {/* Facts, Studium/Arbeit, Looks – rechts */}
-      <div className="flex flex-col gap-7">
-        {/* Looks stehen nur im Hover über dem Profil-Banner */}
-        <ProfileFacts c={c} />
-      </div>
-
-      {(c.vibes ?? []).length > 0 && <Vibes c={c} />}
-    </div>
-  );
-}
-
 // Ausführliche Beschreibung und alles, was den Charakter ausmacht
 function CharacterTab({ c }: { c: Character }) {
   const p = c.profile ?? {};
   const empty =
     !c.personality &&
     !(p.traits_plus?.length || p.traits_minus?.length || p.skills?.length || p.sliders?.length) &&
-    !(p.likes?.length || p.dislikes?.length || p.timeline?.length || p.family?.length);
+    !(p.likes?.length || p.dislikes?.length || p.timeline?.length || p.family?.length) &&
+    !c.vibes?.length;
   return (
     <div className="flex flex-col gap-9">
       {c.personality && (
@@ -450,6 +427,7 @@ function CharacterTab({ c }: { c: Character }) {
       <ProfileLikes c={c} />
       <ProfileFamilyTree c={c} />
       <ProfileTimeline c={c} />
+      <Vibes c={c} />
       {empty && (
         <p className="text-[0.875rem] text-text-tertiary">Noch keine Charakterbeschreibung hinterlegt.</p>
       )}
@@ -473,6 +451,8 @@ function InplayTab({ inScenes }: { inScenes: Scene[] }) {
   );
 }
 
+const RELATION_HINT_USES = 3;
+
 function RelationsTab({
   c,
   coChars,
@@ -482,6 +462,15 @@ function RelationsTab({
   coChars: Character[];
   canEdit: boolean;
 }) {
+  const { characters, npcs, currentPlayerId } = useStore();
+  // Der Hinweis erklärt die Funktion nur, bis sie sitzt: Sind bei den eigenen
+  // Charakteren drei Beziehungen eingetragen, verschwindet er.
+  const mine = new Map([...characters, ...npcs].filter((x) => playsAs(x, currentPlayerId)).map((x) => [x.id, x]));
+  const filled = [...mine.values()].reduce(
+    (n, x) => n + Object.values(x.relationships ?? {}).filter((r) => r && (r.label || r.note || r.category)).length,
+    0,
+  );
+  const showHint = canEdit && filled < RELATION_HINT_USES;
   return (
     <section>
       {coChars.length === 0 ? (
@@ -491,12 +480,12 @@ function RelationsTab({
         </p>
       ) : (
         <>
-          <p className="mb-4 text-[0.8125rem] text-text-tertiary">
-            Verbindungen werden automatisch aus gemeinsamen Szenen erkannt.
-            {canEdit
-              ? " Trag ein, um was für eine Beziehung es sich handelt."
-              : ` Nur wer ${c.name} spielt, kann die Art der Beziehung eintragen.`}
-          </p>
+          {showHint && (
+            <p className="mb-4 text-[0.8125rem] text-text-tertiary">
+              Verbindungen werden automatisch aus gemeinsamen Szenen erkannt. Trag ein, um was für
+              eine Beziehung es sich handelt.
+            </p>
+          )}
           {/* nach Kategorie gruppiert; ohne Kategorie stehen sie zuletzt */}
           {[...RELATION_CATEGORIES, [null, "others."] as const].map(([key, title]) => {
             const rows = coChars.filter((rc) => (c.relationships?.[rc.id]?.category ?? null) === key);

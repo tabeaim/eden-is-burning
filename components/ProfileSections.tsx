@@ -1,6 +1,6 @@
 "use client";
 
-import type { Character, CharacterProfile } from "@/lib/types";
+import type { Character, CharacterProfile, FamilyMember } from "@/lib/types";
 import {
   DEGREES,
   ageAt,
@@ -262,24 +262,42 @@ export function ProfileTimeline({ c }: { c: Character }) {
 
 // Stammbaum: Verwandte nach Generation in Reihen (oben die Ältesten), die Reihen
 // durch eine Linie verbunden; der Charakter selbst steht hervorgehoben in seiner
-// Generation. Mit einem Charakter verknüpfte Einträge führen auf dessen Profil.
-const GENERATIONS: [number, string][] = [
-  [-2, "Großeltern"],
-  [-1, "Eltern"],
-  [0, "Gleiche Generation"],
-  [1, "Kinder"],
-  [2, "Enkel"],
+// Generation. Neben der direkten Linie hat jede der oberen Generationen eine
+// Seitenlinie: Geschwister der Großeltern, Onkel/Tanten, Cousinen/Cousins.
+// Mit einem Charakter verknüpfte Einträge führen auf dessen Profil.
+export const FAMILY_SLOTS: { key: string; generation: number; side: boolean; label: string }[] = [
+  { key: "-2", generation: -2, side: false, label: "Großeltern" },
+  { key: "-2s", generation: -2, side: true, label: "Geschwister der Großeltern" },
+  { key: "-1", generation: -1, side: false, label: "Eltern" },
+  { key: "-1s", generation: -1, side: true, label: "Onkel & Tanten" },
+  { key: "0", generation: 0, side: false, label: "Geschwister & Partner*innen" },
+  { key: "0s", generation: 0, side: true, label: "Cousinen & Cousins" },
+  { key: "1", generation: 1, side: false, label: "Kinder" },
+  { key: "2", generation: 2, side: false, label: "Enkel" },
 ];
-export { GENERATIONS };
+// Platz eines Eintrags; Seitenlinien gibt es nur bis zur eigenen Generation
+export const familySlotOf = (m: FamilyMember) =>
+  FAMILY_SLOTS.find((x) => x.generation === m.generation && x.side === !!m.side) ??
+  FAMILY_SLOTS.find((x) => x.generation === m.generation && !x.side) ??
+  FAMILY_SLOTS[2];
 
 export function ProfileFamilyTree({ c }: { c: Character }) {
   const { character } = useStore();
   const family = c.profile?.family ?? [];
   if (family.length === 0) return null;
-  const rows = GENERATIONS.map(([gen]) => family.filter((m) => m.generation === gen)).map((members, i) =>
-    GENERATIONS[i][0] === 0 ? [null, ...members] : members,
-  );
-  const used = rows.map((r, i) => ({ gen: GENERATIONS[i][0], members: r })).filter((r) => r.members.length > 0);
+  const generations = [...new Set(FAMILY_SLOTS.map((x) => x.generation))];
+  const used = generations
+    .map((gen) => ({
+      gen,
+      // je Generation erst die direkte Linie (in der eigenen mit dem Charakter selbst), dann die Seitenlinie
+      groups: FAMILY_SLOTS.filter((x) => x.generation === gen)
+        .map((slot) => {
+          const members: (FamilyMember | null)[] = family.filter((m) => familySlotOf(m) === slot);
+          return { slot, members: gen === 0 && !slot.side ? [null, ...members] : members };
+        })
+        .filter((g) => g.members.length > 0),
+    }))
+    .filter((r) => r.groups.length > 0);
   const card = "flex w-28 flex-col items-center gap-1 rounded-lg border px-2 py-2 text-center";
   return (
     <section>
@@ -288,46 +306,58 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
         {used.map((row, i) => (
           <div key={row.gen} className="flex flex-col items-center">
             {i > 0 && <span className="h-5 w-px bg-white/25" />}
-            <div className="flex flex-wrap justify-center gap-2 border-t border-white/25 pt-3 first:border-t-0">
-              {row.members.map((m) => {
-                if (m === null) {
-                  return (
-                    <div key="self" className={`${card} border-accent/70 bg-accent-soft`}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={characterImage(c)} alt="" className="h-10 w-10 rounded-full object-cover" />
-                      <span className="text-[0.8125rem] leading-tight text-text-primary">{c.name.split(" ")[0]}</span>
-                    </div>
-                  );
-                }
-                const linked = m.character_id ? character(m.character_id) : undefined;
-                const body = (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={linked ? characterImage(linked) : DEFAULT_AVATAR}
-                      alt=""
-                      className="h-10 w-10 rounded-full object-cover"
-                    />
-                    <span className="text-[0.8125rem] leading-tight text-text-primary">{m.name}</span>
-                    {m.relation && (
-                      <span className="text-[0.6875rem] uppercase tracking-wider text-text-tertiary">{m.relation}</span>
-                    )}
-                  </>
-                );
-                return linked ? (
-                  <Link
-                    key={m.id}
-                    href={`/charaktere/${linked.id}`}
-                    className={`${card} border-border-subtle bg-bg-surface hover:border-accent/50`}
-                  >
-                    {body}
-                  </Link>
-                ) : (
-                  <div key={m.id} className={`${card} border-border-subtle bg-bg-surface`}>
-                    {body}
+            <div className={`flex flex-wrap items-start justify-center gap-x-6 gap-y-4 pt-3 ${i > 0 ? "border-t border-white/25" : ""}`}>
+              {row.groups.map(({ slot, members }) => (
+                <div key={slot.key} className="flex flex-col items-center gap-2">
+                  {/* Beschriftung nur, wenn in der Reihe auch die Seitenlinie steht */}
+                  {row.groups.some((g) => g.slot.side) && (
+                    <span className="text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
+                      {slot.generation === 0 && !slot.side ? "Geschwister" : slot.label}
+                    </span>
+                  )}
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {members.map((m) => {
+                      if (m === null) {
+                        return (
+                          <div key="self" className={`${card} border-accent/70 bg-accent-soft`}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={characterImage(c)} alt="" className="h-10 w-10 rounded-full object-cover" />
+                            <span className="text-[0.8125rem] leading-tight text-text-primary">{c.name.split(" ")[0]}</span>
+                          </div>
+                        );
+                      }
+                      const linked = m.character_id ? character(m.character_id) : undefined;
+                      const body = (
+                        <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={linked ? characterImage(linked) : DEFAULT_AVATAR}
+                            alt=""
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
+                          <span className="text-[0.8125rem] leading-tight text-text-primary">{m.name}</span>
+                          {m.relation && (
+                            <span className="text-[0.6875rem] uppercase tracking-wider text-text-tertiary">{m.relation}</span>
+                          )}
+                        </>
+                      );
+                      return linked ? (
+                        <Link
+                          key={m.id}
+                          href={`/charaktere/${linked.id}`}
+                          className={`${card} border-border-subtle bg-bg-surface hover:border-accent/50`}
+                        >
+                          {body}
+                        </Link>
+                      ) : (
+                        <div key={m.id} className={`${card} border-border-subtle bg-bg-surface`}>
+                          {body}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </div>
         ))}

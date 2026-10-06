@@ -125,8 +125,10 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   (Name, Age, Gender, Residence, Origin, Status, Sexuality, Occupation …).
 - **Alter und Studienjahr** werden berechnet (`ageAt`, `studyYearAt`): im Profil
   zum 1.1.2022 bzw. für den Herbst 2021, in einer Szene zum Datum der Szene.
-- **Profil-Reiter:** General (Kurzbeschreibung, Facts) · Character
-  (Beschreibung, Eigenschaften, Skills, Slider, Likes, Timeline) ·
+- **Profil-Aufbau** (wie das Spieler*innen-Profil, zwei Bereiche untereinander):
+  oben Banner, Kurzbeschreibung und Facts, darunter die Reiter.
+- **Profil-Reiter:** Character
+  (Beschreibung, Eigenschaften, Skills, Slider, Likes, Stammbaum, Timeline, Vibes) ·
   Pockets (Handy und Gegenstände, nur Main Characters) · Scenes · Relations (nach
   Kategorie: love life, family, acquainted). Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
@@ -157,8 +159,11 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   Hintergrund – `.pinterest-board` in globals.css).
 - **Stammbaum** (`ProfileFamilyTree`, Reiter Character): Verwandte nach
   Generation in Reihen, der Charakter selbst hervorgehoben; verknüpfte Einträge
-  führen aufs Profil.
-- **Relations** bearbeitet nur, wer den Charakter selbst spielt (`playsAs`).
+  führen aufs Profil. Neben der direkten Linie die Seitenlinien (`side`):
+  Geschwister der Großeltern, Onkel & Tanten, Cousinen & Cousins (`FAMILY_SLOTS`).
+- **Relations** bearbeitet nur, wer den Charakter selbst spielt (`playsAs`). Der
+  erklärende Hinweis steht nur beim eigenen Charakter und nur, bis bei den
+  eigenen Charakteren drei Beziehungen eingetragen sind.
 - **Namen aufzählen:** zwei mit „&", mehr mit Kommas (`joinNames`).
 - **Formular-Abschnitte** in den Charakter-Einstellungen sind aufklappbar
   (`Collapsible`); Abschnitte mit fehlender Pflichtangabe bleiben offen. Kleine

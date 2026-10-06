@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { Character, CharacterProfile, FamilyMember, ThingItem } from "@/lib/types";
-import { GENERATIONS } from "./ProfileSections";
+import { FAMILY_SLOTS, familySlotOf } from "./ProfileSections";
 import { SuggestInput } from "./SuggestInput";
 import { ThingsBoard } from "./ThingsBoard";
 import { useStore } from "@/lib/store";
@@ -336,7 +336,8 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
 
       <div className={group}>Stammbaum</div>
       <p className={`-mt-2 ${hint}`}>
-        Verwandte nach Generation. Tippst du den Namen eines Charakters und wählst ihn aus, führt
+        Verwandte nach Generation – auch die Seitenlinien (Geschwister der Großeltern, Onkel und
+        Tanten, Cousinen und Cousins). Tippst du den Namen eines Charakters und wählst ihn aus, führt
         der Eintrag im Stammbaum auf dessen Profil.
       </p>
       {family.map((m, i) => {
@@ -371,14 +372,17 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
               className={`${field} min-w-36 flex-1`}
             />
             <select
-              value={m.generation}
-              onChange={(e) => change({ generation: parseInt(e.target.value, 10) })}
+              value={familySlotOf(m).key}
+              onChange={(e) => {
+                const slot = FAMILY_SLOTS.find((x) => x.key === e.target.value);
+                if (slot) change({ generation: slot.generation, side: slot.side });
+              }}
               aria-label="Generation"
               className={`${field} w-auto`}
             >
-              {GENERATIONS.map(([gen, name]) => (
-                <option key={gen} value={gen} className="bg-bg-surface">
-                  {name}
+              {FAMILY_SLOTS.map((slot) => (
+                <option key={slot.key} value={slot.key} className="bg-bg-surface">
+                  {slot.label}
                 </option>
               ))}
             </select>
@@ -438,8 +442,8 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         <>
           <div className={group}>Pockets – Gegenstände</div>
           <p className={`-mt-2 ${hint}`}>
-            Was hat der Charakter immer dabei? Bilder aufs Whiteboard legen und anordnen – im Profil
-            erscheinen sie als Collage neben dem Handy.
+            Was hat dein Charakter immer dabei? Die hochgeladenen Bilder erscheinen im Profil als
+            Collage neben dem Handy.
           </p>
           <ThingsBoard items={things} onChange={setThings} />
         </>

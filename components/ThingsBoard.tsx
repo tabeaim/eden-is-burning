@@ -142,7 +142,15 @@ export function ThingsBoard({
   const range = "w-full accent-[var(--accent)]";
 
   return (
-    <div className="min-w-0 flex-1">
+    // Bearbeiten: Fläche links, Werkzeuge daneben (mobil darunter). Ansicht: nur
+    // die Fläche, mobil in voller Breite unter dem Handy.
+    <div
+      className={
+        editing
+          ? "grid items-start gap-4 md:grid-cols-[minmax(0,26rem)_minmax(15rem,24rem)]"
+          : "flex w-full min-w-0 justify-center sm:flex-1 sm:justify-start"
+      }
+    >
       {/* Die Fläche: fester Rahmen 3:4; in der Ansicht durchsichtig */}
       <div
         ref={board}
@@ -155,7 +163,7 @@ export function ThingsBoard({
       >
         {editing && shown.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-[0.8125rem] text-text-tertiary">
-            Füge unten ein Bild hinzu (oder per Einfügen aus der Zwischenablage) und schieb es an
+            Füge ein Bild hinzu (oder per Einfügen aus der Zwischenablage) und schieb es an
             seinen Platz.
           </div>
         )}
@@ -231,7 +239,7 @@ export function ThingsBoard({
       </div>
 
       {editing && (
-        <div className="mt-3 flex max-w-[26rem] flex-col gap-3">
+        <div className="flex min-w-0 max-w-[26rem] flex-col gap-3">
           {/* Gewählter Gegenstand: Größe, Drehung, Stapel, entfernen */}
           {active ? (
             <div className="flex flex-col gap-2 rounded-lg border border-border-subtle p-3 text-[0.8125rem] text-text-secondary">
@@ -257,7 +265,7 @@ export function ThingsBoard({
                   className={range}
                 />
               </label>
-              <div className="flex gap-1.5 [&>button]:flex-1 [&>button]:justify-center [&>button]:whitespace-nowrap [&>button]:px-2">
+              <div className="flex flex-wrap gap-1.5 [&>button]:flex-1 [&>button]:justify-center [&>button]:whitespace-nowrap [&>button]:px-2">
                 <button
                   onClick={() => setItems((list) => [...list.filter((t) => t.id !== active.id), active])}
                   className={btn}

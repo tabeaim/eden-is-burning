@@ -96,6 +96,8 @@ export interface FamilyMember {
   name: string;
   relation: string; // z.B. „Mutter", „Stiefbruder"
   generation: number;
+  // Seitenlinie: Geschwister der Großeltern (-2), Onkel/Tanten (-1), Cousinen/Cousins (0)
+  side?: boolean;
   character_id?: string | null;
 }
 
