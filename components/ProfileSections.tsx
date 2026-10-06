@@ -3,6 +3,7 @@
 import type { Character, CharacterProfile, FamilyMember } from "@/lib/types";
 import {
   DEGREES,
+  TIER_NAMES,
   ageAt,
   isHidden,
   isStudent,
@@ -12,12 +13,13 @@ import {
   tierOf,
   zodiacOf,
 } from "@/lib/characters";
-import { areaName } from "@/lib/world";
+import { AREA_ORDER, AREAS, areaName } from "@/lib/world";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { DEFAULT_AVATAR, characterImage } from "@/lib/avatar";
 import { Facts, FactRow } from "./Facts";
-import { LocationBubble } from "./Bubble";
+import { Bubble, LocationBubble } from "./Bubble";
+import { Icon } from "./Icon";
 
 // Bausteine des Charakterprofils (siehe DESIGN.md): Facts mit englischen Labels,
 // dazu die frei gestaltbaren Abschnitte Skills, Eigenschaften, Slider,
@@ -54,15 +56,35 @@ export function ProfileFacts({ c }: { c: Character }) {
   const full = tierOf(c) !== "extra";
 
   // Arbeitsplatz und Uni stehen direkt hinter der Beschäftigung: „Rolle at Ort".
-  // Gibt es den Ort im Verzeichnis, steht er als Pilltag (Link aufs Ortsprofil).
+  // Gibt es den Ort im Verzeichnis, steht er als Pilltag (Link aufs Ortsprofil);
+  // ebenso eine Gegend (Byron University ist Gegend und Arbeitsplatz zugleich).
   const place = (name: string | null | undefined, id?: string | null) => {
     if (!name) return null;
+    const q = name.trim().toLowerCase();
     const loc =
-      (id ? locations.find((l) => l.id === id) : undefined) ??
-      locations.find((l) => l.name.toLowerCase() === name.trim().toLowerCase());
-    if (!loc) return <span key={name}>{name}</span>;
-    const played = scenes.some((s) => s.location_area === loc.area && s.location_name === loc.name);
-    return <LocationBubble key={loc.id} id={loc.id} name={loc.name} played={played} className="align-middle" />;
+      (id ? locations.find((l) => l.id === id) : undefined) ?? locations.find((l) => l.name.toLowerCase() === q);
+    if (loc) {
+      const played = scenes.some((s) => s.location_area === loc.area && s.location_name === loc.name);
+      return <LocationBubble key={loc.id} id={loc.id} name={loc.name} played={played} className="align-middle" />;
+    }
+    const area = AREA_ORDER.find((k) => AREAS[k].name.toLowerCase() === q);
+    if (area) {
+      return (
+        <Bubble
+          key={area}
+          href={`/orte?area=${area}`}
+          className="align-middle"
+          leading={
+            <span className="flex h-5 w-5 items-center justify-center text-accent">
+              <Icon name="map" size={13} />
+            </span>
+          }
+        >
+          {AREAS[area].name}
+        </Bubble>
+      );
+    }
+    return <span key={name}>{name}</span>;
   };
   const role = shown(c, "role", c.role) ?? (c.job || null);
   const places = [
@@ -93,21 +115,53 @@ export function ProfileFacts({ c }: { c: Character }) {
           .filter(Boolean)
           .join(" · ")
       : null;
+  // Supporting Characters und Statist*innen tragen ihre Art als „Status"
+  const tier = tierOf(c);
+  const groups: [string, [string, React.ReactNode][]][] = [
+    [
+      "identity.",
+      [
+        ["Name", shown(c, "full_name", c.full_name) ?? c.name],
+        ["Age", shown(c, "age", age != null ? `${age}` : null)],
+        ["Zodiac", shown(c, "age", zodiacOf(p.birthdate)?.en)],
+        ["Gender", shown(c, "gender", p.gender)],
+        ["Status", tier === "main" ? null : TIER_NAMES[tier]],
+      ],
+    ],
+    [
+      "life.",
+      [
+        ["Residence", shown(c, "area", c.area ? areaName(c.area) : null)],
+        ["Origin", shown(c, "origin", c.origin)],
+        ["Relationship", shown(c, "status", c.status)],
+        ["Sexuality", shown(c, "sexuality", c.sexuality)],
+      ],
+    ],
+    [
+      "occupation.",
+      [
+        ["Occupation", occupation],
+        ["Studies", studies],
+      ],
+    ],
+  ];
   return (
-    <FactBox title="facts.">
-      <Facts>
-        <FactRow label="Name" value={shown(c, "full_name", c.full_name) ?? c.name} />
-        <FactRow label="Age" value={shown(c, "age", age != null ? `${age}` : null)} />
-        <FactRow label="Zodiac" value={shown(c, "age", zodiacOf(p.birthdate)?.en)} />
-        <FactRow label="Gender" value={shown(c, "gender", p.gender)} />
-        <FactRow label="Residence" value={shown(c, "area", c.area ? areaName(c.area) : null)} />
-        <FactRow label="Origin" value={shown(c, "origin", c.origin)} />
-        <FactRow label="Status" value={shown(c, "status", c.status)} />
-        <FactRow label="Sexuality" value={shown(c, "sexuality", c.sexuality)} />
-        <FactRow label="Occupation" value={occupation} />
-        <FactRow label="Studies" value={studies} />
-      </Facts>
-    </FactBox>
+    <>
+      {groups.map(([title, rows]) =>
+        rows.some(([, v]) => v !== null && v !== undefined && v !== "") ? (
+          // die Beschäftigung braucht mit Ort die ganze Breite
+          <div key={title} className={title === "occupation." ? "sm:col-span-2" : ""}>
+            <FactBox title={title}>
+              <Facts>
+                {rows.map(([label, value]) => (
+                  <FactRow key={label} label={label} value={value} />
+                ))}
+              </Facts>
+            </FactBox>
+          </div>
+        ) : null,
+      )}
+    </>
   );
 }
 
@@ -249,12 +303,12 @@ export function ProfileLikes({ c }: { c: WithProfile }) {
   );
 }
 
-export function ProfileTimeline({ c }: { c: Character }) {
+export function ProfileTimeline({ c, bare = false }: { c: Character; bare?: boolean }) {
   const items = c.profile?.timeline ?? [];
   if (items.length === 0) return null;
   return (
     <section>
-      <SectionHeading>timeline.</SectionHeading>
+      {!bare && <SectionHeading>timeline.</SectionHeading>}
       <ol className="relative ml-2 border-l-2 border-white/20 pl-7">
         {items.map((t, i) => (
           <li key={i} className="relative pb-7 last:pb-0">
@@ -313,15 +367,15 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
         .filter((g) => g.members.length > 0),
     }))
     .filter((r) => r.groups.length > 0);
-  const card = "flex w-28 flex-col items-center gap-1 rounded-lg border px-2 py-2 text-center";
+  const card = "flex w-32 flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-center sm:w-40";
+  const face = "h-14 w-14 rounded-full object-cover sm:h-16 sm:w-16";
   return (
     <section>
-      {/* der Baum ist in sich mittig, steht als Ganzes aber links */}
-      <div className="flex w-fit max-w-full flex-col items-center">
+      <div className="flex flex-col items-center">
         {used.map((row, i) => (
           <div key={row.gen} className="flex flex-col items-center">
-            {i > 0 && <span className="h-5 w-px bg-white/25" />}
-            <div className={`flex flex-wrap items-start justify-center gap-x-6 gap-y-4 pt-3 ${i > 0 ? "border-t border-white/25" : ""}`}>
+            {i > 0 && <span className="h-8 w-px bg-white/25" />}
+            <div className={`flex flex-wrap items-start justify-center gap-x-12 gap-y-6 px-4 pt-5 sm:px-10 ${i > 0 ? "border-t border-white/25" : ""}`}>
               {row.groups.map(({ slot, members }) => (
                 <div key={slot.key} className="flex flex-col items-center gap-2">
                   {/* Beschriftung nur, wenn in der Reihe auch die Seitenlinie steht */}
@@ -330,14 +384,14 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
                       {slot.generation === 0 && !slot.side ? "Geschwister" : slot.label}
                     </span>
                   )}
-                  <div className="flex flex-wrap justify-center gap-2">
+                  <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
                     {members.map((m) => {
                       if (m === null) {
                         return (
                           <div key="self" className={`${card} border-accent/70 bg-accent-soft`}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={characterImage(c)} alt="" className="h-10 w-10 rounded-full object-cover" />
-                            <span className="text-[0.8125rem] leading-tight text-text-primary">{c.name.split(" ")[0]}</span>
+                            <img src={characterImage(c)} alt="" className={face} />
+                            <span className="text-[0.875rem] leading-tight text-text-primary">{c.name.split(" ")[0]}</span>
                           </div>
                         );
                       }
@@ -348,9 +402,9 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
                           <img
                             src={linked ? characterImage(linked) : DEFAULT_AVATAR}
                             alt=""
-                            className="h-10 w-10 rounded-full object-cover"
+                            className={face}
                           />
-                          <span className="text-[0.8125rem] leading-tight text-text-primary">{m.name}</span>
+                          <span className="text-[0.875rem] leading-tight text-text-primary">{m.name}</span>
                           {m.relation && (
                             <span className="text-[0.6875rem] uppercase tracking-wider text-text-tertiary">{m.relation}</span>
                           )}

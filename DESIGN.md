@@ -126,20 +126,22 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
 - **Alter und Studienjahr** werden berechnet (`ageAt`, `studyYearAt`): im Profil
   zum 1.1.2022 bzw. für den Herbst 2021, in einer Szene zum Datum der Szene.
 - **Profil-Aufbau** (zwei Bereiche untereinander, beide mit eigenen Reitern):
-  oben links der Avatar (statt des früheren Profil-Banners), darunter Usertag
-  und bei Supporting Characters der Pilltag „Supporting Char"; daneben die
-  Reiter General (Kurzbeschreibung, Facts) · Scenes · Relations (nach
-  Kategorie: love life, family, acquainted).
+  oben General (Kurzbeschreibung, daneben die Facts in Gruppen) · Scenes ·
+  Relations (nach Kategorie: love life, family, acquainted). Kein Avatar und
+  kein Usertag im Profil; dafür hat jeder Charakter ein eigenes Header-Bild
+  (`banner_url`, über „Bearbeiten"), das oben über dem Namen steht.
 - **Profil-Reiter unten:** Character (Beschreibung, Eigenschaften, Skills,
   Slider, Likes, Vibes) · Looks (Angaben zum Aussehen, daneben das
   Style-Whiteboard `profile.outfit`) · Biography (Timeline) · Family Tree ·
   Pockets (Handy und Gegenstände, nicht bei Statist*innen) · Moodboard (falls
-  hinterlegt). Alle linksbündig über die ganze Breite. Bausteine in
+  hinterlegt). Linksbündig über die ganze Breite; Stammbaum und Pockets mittig.
+  Das Pinterest-Board wird schon beim Öffnen des Profils unsichtbar aufgebaut. Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
-- **Facts:** eine einzige Box. Arbeitsplatz und Uni stehen hinter der
-  Beschäftigung („Occupation: Rolle at Ort", Ort als `LocationBubble`, wenn es
-  ihn im Verzeichnis gibt); Studiengang, Abschluss und Jahr in der Zeile
-  „Studies". Keine eigenen Boxen „studies."/„work." mehr.
+- **Facts:** drei kleine Boxen – identity (Name, Age, Zodiac, Gender, bei
+  Supporting Characters und Statist*innen „Status"), life (Residence, Origin,
+  Relationship, Sexuality), occupation. Arbeitsplatz und Uni stehen hinter der
+  Beschäftigung („Rolle at Ort") als Pilltag, wenn es den Ort oder die Gegend
+  gibt (Gegend → `/orte?area=…`); Studiengang, Abschluss und Jahr in „Studies".
 - **Supporting Characters** können dasselbe ausfüllen wie Main Characters;
   Pflichtangaben gelten nur für Mains.
 - **Lösen** von einer Statist*in oder einem Supporting Character fragt immer

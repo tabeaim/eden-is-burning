@@ -24,7 +24,7 @@ const toList = (text: string) =>
     .map((t) => t.trim())
     .filter(Boolean);
 
-// Profil direkt im Profil bearbeiten: alles Beschreibende – Zitat,
+// Profil direkt im Profil bearbeiten: alles Beschreibende – Zitat, Header-Bild,
 // ausführliche Beschreibung, Eigenschaften, Skills, Slider, Likes/Dislikes,
 // Stammbaum, Timeline, der Style („Looks") und die Gegenstände („Pockets"); bei Supporting Characters und Statist*innen dazu „Vibes"
 // (Inspo-Bilder). Die Grunddaten stehen unter Einstellungen → Meine Charaktere –
@@ -47,7 +47,8 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   const [minus, setMinus] = useState((prof.traits_minus ?? []).join(", "));
   const [likes, setLikes] = useState((prof.likes ?? []).join(", "));
   const [dislikes, setDislikes] = useState((prof.dislikes ?? []).join(", "));
-  const [uploading, setUploading] = useState<null | "photo" | "vibes">(null);
+  const [uploading, setUploading] = useState<null | "banner" | "photo" | "vibes">(null);
+  const bannerFile = useRef<HTMLInputElement>(null);
   const photoFile = useRef<HTMLInputElement>(null);
   const vibesFile = useRef<HTMLInputElement>(null);
   const vibes = d.vibes ?? [];
@@ -61,11 +62,12 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   });
   const nameMissing = !d.name.trim();
 
-  async function upload(kind: "photo", f: File | undefined) {
+  async function upload(kind: "banner" | "photo", f: File | undefined) {
     if (!f) return;
     setUploading(kind);
     try {
-      set("faceclaim_image_url", await uploadImage(f, "characters", IMAGE_SIZES.portrait));
+      if (kind === "banner") set("banner_url", await uploadImage(f, "characters", IMAGE_SIZES.banner));
+      else set("faceclaim_image_url", await uploadImage(f, "characters", IMAGE_SIZES.portrait));
     } finally {
       setUploading(null);
     }
@@ -105,6 +107,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
     const patch: Partial<Character> = {
       quote: d.quote,
       personality: d.personality,
+      banner_url: d.banner_url,
       profile,
     };
     if (tier !== "extra") patch.pinterest_url = d.pinterest_url;
@@ -226,6 +229,29 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         Zitat
         <input {...text("quote")} className={`mt-1 ${field}`} />
       </label>
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="text-[0.875rem] text-text-secondary">Header-Bild (oben über dem Namen)</span>
+        <button disabled={uploading !== null} onClick={() => bannerFile.current?.click()} className={uploadBtn}>
+          <Icon name="upload" size={13} />{" "}
+          {uploading === "banner" ? "Lädt…" : d.banner_url ? "Header ersetzen" : "Header hochladen"}
+        </button>
+        {d.banner_url && (
+          <button onClick={() => set("banner_url", null)} className="text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+            Header entfernen
+          </button>
+        )}
+        <input
+          ref={bannerFile}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            void upload("banner", f);
+          }}
+        />
+      </div>
 
       <div className={group}>Ausführliche Beschreibung</div>
       <textarea {...text("personality")} rows={6} className={`resize-y ${field}`} placeholder="Wer ist dieser Charakter?" />

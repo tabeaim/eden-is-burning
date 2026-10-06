@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import { AREAS, EXTRA_AREAS, areaName, type AreaKey } from "@/lib/world";
 import { placeholderImg } from "@/lib/format";
@@ -19,6 +19,11 @@ export default function PlacesPage() {
   const { scenes, characters, locationsOf, addLocation } = useStore();
   const [selected, setSelected] = useState<string>("rivers_edge");
   const [adding, setAdding] = useState(false);
+  // Link auf eine Gegend (z.B. vom Arbeitsplatz im Charakterprofil): /orte?area=byron
+  useEffect(() => {
+    const area = new URLSearchParams(window.location.search).get("area");
+    if (area && (area in AREAS || area in EXTRA_AREAS)) setSelected(area);
+  }, []);
 
   const areaStats = useMemo(() => {
     const stats: Record<string, { active: number; total: number }> = {};

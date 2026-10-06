@@ -7,7 +7,7 @@ import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
 import { formatInplayDate, timeAgo } from "@/lib/format";
 import { Icon } from "@/components/Icon";
-import { Bubble, LocationBubble } from "@/components/Bubble";
+import { LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
 import { SceneCard } from "@/components/SceneCard";
 import {
@@ -78,7 +78,8 @@ export default function CharacterPage({
   useSetPageMeta(
     c ? c.name : "Charakter",
     undefined,
-    undefined,
+    // eigenes Header-Bild des Charakters (sonst das der Seite)
+    c?.banner_url ?? undefined,
     "max-w-6xl",
   );
 
@@ -163,56 +164,31 @@ export default function CharacterPage({
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mt-4 mb-6" />
 
-      {/* OBEN: Avatar, daneben General (Kurzbeschreibung, Facts) · Scenes · Relations */}
-      <div className="grid items-start gap-x-8 gap-y-6 md:grid-cols-[250px_minmax(0,1fr)]">
-        {/* Avatar + Usertag, bei Supporting Characters darunter der Hinweis */}
-        <div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={characterImage(c)}
-            alt={`Avatar von ${c.name}`}
-            className="aspect-[600/502] w-full rounded-xl bg-bg-surface object-cover"
-          />
-          {(c.tagline || tierOf(c) === "supporting") && (
-            <div className="mt-3 flex flex-col items-center gap-1.5">
-              {c.tagline && <Bubble className="uppercase tracking-wider">{c.tagline}</Bubble>}
-              {tierOf(c) === "supporting" && (
-                <Bubble tone="accent" className="uppercase tracking-wider">
-                  Supporting Char
-                </Bubble>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="min-w-0">
-          <div className="mb-6 flex flex-wrap gap-1.5">
-            {topTabs.map(([key, label]) => (
-              <button key={key} onClick={() => setTopTab(key)} className={tabBtn(topTab === key)}>
-                {label}
-              </button>
-            ))}
-          </div>
-          {topTab === "general" && (
-            <div className="grid items-start gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1fr)_minmax(19rem,24rem)]">
-              {/* Kurzbeschreibung – scrollt in sich, statt die Facts daneben weit zu überragen */}
-              {c.bio ? (
-                <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary lg:max-h-[420px] lg:overflow-y-auto lg:pr-3">
-                  {c.bio}
-                </p>
-              ) : (
-                <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
-              )}
-              {/* Facts (Looks stehen im Reiter „Looks") */}
-              <ProfileFacts c={c} />
-            </div>
-          )}
-          {topTab === "inplay" && <InplayTab inScenes={inScenes} />}
-          {topTab === "relations" && (
-            <RelationsTab c={c} coChars={coChars} canEdit={playsAs(c, store.currentPlayerId)} />
-          )}
-        </div>
+      {/* OBEN: General (Kurzbeschreibung, daneben die Facts in Gruppen) · Scenes · Relations */}
+      <div className="mb-6 flex flex-wrap gap-1.5">
+        {topTabs.map(([key, label]) => (
+          <button key={key} onClick={() => setTopTab(key)} className={tabBtn(topTab === key)}>
+            {label}
+          </button>
+        ))}
       </div>
+      {topTab === "general" && (
+        <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-2">
+          {c.bio ? (
+            <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary">{c.bio}</p>
+          ) : (
+            <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
+          )}
+          {/* Facts (Looks stehen im Reiter „Looks") */}
+          <div className="grid items-start gap-x-5 gap-y-6 sm:grid-cols-2">
+            <ProfileFacts c={c} />
+          </div>
+        </div>
+      )}
+      {topTab === "inplay" && <InplayTab inScenes={inScenes} />}
+      {topTab === "relations" && (
+        <RelationsTab c={c} coChars={coChars} canEdit={playsAs(c, store.currentPlayerId)} />
+      )}
 
       <div className="mt-6 mb-6 border-b border-border-subtle" />
 
@@ -225,25 +201,30 @@ export default function CharacterPage({
         ))}
       </div>
 
-      {tab === "moodboard" && c.pinterest_url && (
-        <section>
+      {/* Das Pinterest-Board wird schon beim Öffnen des Profils aufgebaut (unsichtbar),
+          damit es beim Wechsel auf den Reiter sofort da ist */}
+      {c.pinterest_url && (
+        <section
+          aria-hidden={tab !== "moodboard"}
+          className={tab === "moodboard" ? "" : "invisible h-0 overflow-hidden"}
+        >
           <PinterestBoard url={c.pinterest_url} />
         </section>
       )}
       {/* „Pockets": was der Charakter bei sich hat – das Handy, nur zum Ansehen
           (Look, Startbildschirm, Kontaktliste), daneben die Collage der
-          Gegenstände; mobil untereinander */}
+          Gegenstände; mittig, mobil untereinander */}
       {tab === "personal" && tierOf(c) !== "extra" && (
-        <section className="flex flex-col items-center gap-8 sm:flex-row sm:items-start">
+        <section className="flex flex-col items-center justify-center gap-10 md:flex-row md:items-start">
           {/* ohne Handy (Einstellungen) nur die Gegenstände */}
           {hasPhone(c) && (
             <div className="max-w-full shrink-0">
               <PhonePreview character={c} />
             </div>
           )}
-          <ThingsBoard items={c.profile?.things ?? []} />
+          <ThingsBoard items={c.profile?.things ?? []} wide />
           {!hasPhone(c) && !(c.profile?.things ?? []).length && (
-            <p className="self-start text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>
+            <p className="text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>
           )}
         </section>
       )}
@@ -251,7 +232,7 @@ export default function CharacterPage({
       {tab === "look" && <LookTab c={c} />}
       {tab === "biography" &&
         (c.profile?.timeline?.length ? (
-          <ProfileTimeline c={c} />
+          <ProfileTimeline c={c} bare />
         ) : (
           <p className="text-[0.875rem] text-text-tertiary">Noch keine Timeline hinterlegt.</p>
         ))}
