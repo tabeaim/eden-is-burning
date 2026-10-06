@@ -119,7 +119,7 @@ export function AdminDesign() {
         <p className={`${hint} mb-3`}>
           Je Stil ein eigenes Bild pro Seite – im dunklen Stil passen dunkle, im hellen helle Fotos. Ohne eigenes Bild
           gilt der generierte Standard-Header. Eigene Header von Szenen, Orten, Charakteren und Spieler*innen haben
-          Vorrang. Querformat wirkt am besten.
+          Vorrang.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           {PAGES.map(([key, name]) => {
@@ -174,7 +174,7 @@ export function AdminDesign() {
         <div className={`${label} mb-2`}>Bilder der Gegenden</div>
         <p className={`${hint} mb-3`}>
           Erscheinen im Gegend-Panel der Karte und auf Ortskarten, deren Ort weder Titelbild noch Vibes-Foto hat. Gelten
-          für beide Stile. Ohne eigenes Bild steht ein Platzhalter. Querformat wirkt am besten.
+          für beide Stile. Ohne eigenes Bild steht ein Platzhalter.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           {AREA_KEYS.map((area) => {

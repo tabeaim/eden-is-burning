@@ -8,7 +8,6 @@ import { AdminCharacters } from "./AdminCharacters";
 import { AdminDesign } from "./AdminDesign";
 import { AdminPlayers } from "./AdminPlayers";
 import { AdminLocations, AdminScenes, AdminTrash } from "./AdminWorld";
-import { hint } from "./ui";
 
 // Einstellungen → Admin: alles, was nur Admins ändern. Fremde Charakterprofile
 // lassen sich nur hier bearbeiten, nicht im Profil selbst.
@@ -26,9 +25,6 @@ export function AdminPanel() {
   ];
   return (
     <div className="flex flex-col gap-3">
-      <p className={hint}>
-        Hier verwaltest du Spieler*innen, Charaktere, Orte und das Design der App.
-      </p>
       <div className="flex flex-wrap gap-2">
         {stats.map(([n, name]) => (
           <span

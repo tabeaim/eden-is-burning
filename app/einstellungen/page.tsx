@@ -398,7 +398,7 @@ function AppearanceTab() {
           />
         )}
         <p className="mt-1 text-[0.8125rem] text-text-tertiary">
-          Nur du siehst diesen Header, oben auf deinem Dashboard. Querformat wirkt am besten.
+          Nur du siehst diesen Header, oben auf deinem Dashboard.
         </p>
       </div>
 
@@ -431,9 +431,6 @@ function AppearanceTab() {
             </button>
           )}
         </div>
-        <p className="mt-2 text-[0.8125rem] text-text-tertiary">
-          Gilt nur für dieses Gerät. Ohne eigene Wahl bestimmt der Standard der App den Modus.
-        </p>
       </div>
     </div>
   );
