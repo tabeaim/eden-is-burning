@@ -118,6 +118,8 @@ interface StoreValue extends PersistedState {
   // Löscht die Szene samt aller Posts und Zitate
   deleteScene: (id: string) => void;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
+  // Konto löschen (eigenes, oder als Admin das anderer). Siehe supabase/schema-delete-player.sql
+  deletePlayer: (id: string) => Promise<{ error: string | null; authKept: boolean }>;
   addScene: (scene: Omit<Scene, "id" | "created_at">) => string;
   updateScene: (id: string, patch: Partial<Scene>) => void;
   resetData: () => void;
@@ -857,6 +859,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [state.locations, currentPlayer?.id, canEditLocation],
   );
 
+  const deletePlayer = useCallback(
+    async (id: string) => {
+      const { data, error } = await supabase.rpc("delete_player", { p_id: id });
+      if (error) return { error: error.message, authKept: false };
+      setState((s) => ({ ...s, players: s.players.filter((p) => p.id !== id) }));
+      // Charaktere wechseln den Besitz (Papierkorb) – neu laden
+      void loadWorld();
+      return { error: null, authKept: data === "auth_kept" };
+    },
+    [loadWorld],
+  );
+
   const deleteLocation = useCallback((id: string) => {
     persist("deleteLocation", supabase.from("locations").delete().eq("id", id));
     setState((s) => ({ ...s, locations: s.locations.filter((l) => l.id !== id) }));
@@ -1464,6 +1478,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       changeEmail,
       refresh,
       appSettings,
+      deletePlayer,
       updateAppSettings,
       deleteLocation,
       charactersOf,
@@ -1539,6 +1554,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       changeEmail,
       refresh,
       appSettings,
+      deletePlayer,
       updateAppSettings,
       deleteLocation,
       charactersOf,

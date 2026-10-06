@@ -2,25 +2,18 @@
 
 import { useRef, useState } from "react";
 import { useStore } from "@/lib/store";
+import { useTheme } from "@/lib/theme";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
-import { bannerStyle, pageHeader } from "@/lib/headers";
+import { bannerStyle, headersFor, pageHeader } from "@/lib/headers";
 import { BannerPosition } from "../BannerPosition";
 import { Icon } from "../Icon";
-import { btn, hint, label, row } from "./ui";
+import type { Theme } from "@/lib/types";
+import { hint, label, pill, row } from "./ui";
 
-// Primärfarben zur Auswahl; die erste ist das Standard-Orange der App
-const COLORS: [string, string][] = [
-  ["#e89a3c", "Feuer-Orange"],
-  ["#e0524b", "Rot"],
-  ["#d9648f", "Rosa"],
-  ["#9b7be0", "Violett"],
-  ["#5aa0e8", "Blau"],
-  ["#3fb8a5", "Türkis"],
-  ["#7fbf5a", "Grün"],
-  ["#e6c34a", "Gelb"],
-  ["#d8d4cc", "Silber"],
+const THEMES: [Theme, string][] = [
+  ["dark", "Dunkel"],
+  ["light", "Hell"],
 ];
-const DEFAULT_COLOR = COLORS[0][0];
 
 // Seiten mit Header-Bild (erstes Pfadstück). Das Handy hat keinen Header.
 const PAGES: [string, string][] = [
@@ -34,32 +27,40 @@ const PAGES: [string, string][] = [
   ["einstellungen", "Einstellungen"],
 ];
 
+// Design: Standard-Farbmodus der App und Header-Bilder je Stil (dunkel/hell).
 export function AdminDesign() {
   const { appSettings, updateAppSettings } = useStore();
-  const headers = appSettings.headers ?? {};
-  const accent = appSettings.accent ?? DEFAULT_COLOR;
+  const { theme } = useTheme();
+  const defaultTheme: Theme = appSettings.defaultTheme === "light" ? "light" : "dark";
+  // Für welchen Stil werden gerade Header gepflegt?
+  const [style, setStyle] = useState<Theme>(theme);
+  const headers = headersFor(appSettings, style);
   // Entwurf, solange der Ausschnitt-Regler bewegt wird (gespeichert beim Loslassen)
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const file = useRef<HTMLInputElement>(null);
   const target = useRef<string>("");
 
+  const clearDraft = (key: string) =>
+    setDraft((d) => {
+      const rest = { ...d };
+      delete rest[key];
+      return rest;
+    });
   const setHeader = (key: string, url: string | null) => {
     const next = { ...headers };
     if (url) next[key] = url;
     else delete next[key];
-    updateAppSettings({ headers: next });
+    updateAppSettings({
+      headers: { dark: headersFor(appSettings, "dark"), light: headersFor(appSettings, "light"), [style]: next },
+    });
   };
   async function onFile(f: File | undefined) {
     const key = target.current;
     if (!f || !key) return;
     setBusy(key);
     try {
-      setDraft((d) => {
-        const { [key]: _drop, ...rest } = d;
-        void _drop;
-        return rest;
-      });
+      clearDraft(key);
       setHeader(key, await uploadImage(f, "headers", IMAGE_SIZES.banner));
     } finally {
       setBusy(null);
@@ -68,49 +69,41 @@ export function AdminDesign() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Primärfarbe */}
+      {/* Standard-Farbmodus */}
       <div>
-        <div className={`${label} mb-2`}>Primärfarbe der App</div>
-        <div className="flex flex-wrap items-center gap-2">
-          {COLORS.map(([hex, name]) => (
+        <div className={`${label} mb-2`}>Farbmodus für alle</div>
+        <div className="flex flex-wrap gap-2">
+          {THEMES.map(([key, name]) => (
             <button
-              key={hex}
-              onClick={() => updateAppSettings({ accent: hex === DEFAULT_COLOR ? null : hex })}
-              title={name}
-              aria-label={name}
-              aria-pressed={accent.toLowerCase() === hex}
-              style={{ backgroundColor: hex }}
-              className={`h-9 w-9 rounded-full border border-border-subtle ${
-                accent.toLowerCase() === hex ? "ring-2 ring-text-primary ring-offset-2 ring-offset-bg-surface" : ""
-              }`}
-            />
-          ))}
-          <label className="flex items-center gap-2 pl-2 text-[0.8125rem] text-text-secondary">
-            eigene
-            <input
-              type="color"
-              value={accent}
-              onChange={(e) => updateAppSettings({ accent: e.target.value })}
-              className="h-9 w-12 cursor-pointer rounded-md border border-border-subtle bg-transparent"
-            />
-          </label>
-          {appSettings.accent && (
-            <button onClick={() => updateAppSettings({ accent: null })} className={btn}>
-              Standard
+              key={key}
+              onClick={() => updateAppSettings({ defaultTheme: key === "dark" ? null : key })}
+              aria-pressed={defaultTheme === key}
+              className={pill(defaultTheme === key)}
+            >
+              {name}
             </button>
-          )}
+          ))}
         </div>
         <p className={`${hint} mt-2`}>
-          Gilt für alle: Pillen, Knöpfe, Überschriften, Akzente. Wähle eine Farbe, auf der schwarze Schrift gut lesbar ist.
+          Gilt für alle, die unter Einstellungen → Darstellung keinen eigenen Modus gewählt haben. Der helle Stil nutzt
+          Creme- und Orange-Töne.
         </p>
       </div>
 
-      {/* Header-Bilder */}
+      {/* Header-Bilder je Stil */}
       <div>
-        <div className={`${label} mb-1`}>Header-Bilder der Seiten</div>
+        <div className={`${label} mb-2`}>Header-Bilder der Seiten</div>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {THEMES.map(([key, name]) => (
+            <button key={key} onClick={() => setStyle(key)} aria-pressed={style === key} className={pill(style === key)}>
+              Stil {name.toLowerCase()}
+            </button>
+          ))}
+        </div>
         <p className={`${hint} mb-3`}>
-          Das Bild oben auf jeder Seite, für alle. Ohne eigenes Bild gilt der Standard-Header. Eigene Header von
-          Szenen, Orten, Charakteren und Spieler*innen haben Vorrang. Querformat wirkt am besten.
+          Je Stil ein eigenes Bild pro Seite – im dunklen Stil passen dunkle, im hellen helle Fotos. Ohne eigenes Bild
+          gilt der generierte Standard-Header. Eigene Header von Szenen, Orten, Charakteren und Spieler*innen haben
+          Vorrang. Querformat wirkt am besten.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           {PAGES.map(([key, name]) => {
@@ -130,7 +123,7 @@ export function AdminDesign() {
                 </div>
                 <div
                   className="relative h-24 w-full overflow-hidden rounded-md border border-border-subtle bg-bg-primary bg-cover"
-                  style={bannerStyle(url || pageHeader(key))}
+                  style={bannerStyle(url || pageHeader(key, style))}
                 >
                   <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
                   <button
@@ -139,7 +132,7 @@ export function AdminDesign() {
                       target.current = key;
                       file.current?.click();
                     }}
-                    className="absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-black/50 px-2.5 py-1.5 text-[0.8125rem] text-text-primary hover:bg-black/70 disabled:opacity-50"
+                    className="absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-black/50 px-2.5 py-1.5 text-[0.8125rem] text-white hover:bg-black/70 disabled:opacity-50"
                   >
                     <Icon name="upload" size={14} /> {busy === key ? "Lädt hoch…" : "Bild hochladen"}
                   </button>
@@ -150,11 +143,7 @@ export function AdminDesign() {
                     onChange={(u) => setDraft((d) => ({ ...d, [key]: u }))}
                     onCommit={(u) => {
                       if (u !== headers[key]) setHeader(key, u);
-                      setDraft((d) => {
-                        const { [key]: _drop, ...rest } = d;
-                        void _drop;
-                        return rest;
-                      });
+                      clearDraft(key);
                     }}
                   />
                 )}

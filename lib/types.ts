@@ -340,12 +340,15 @@ export interface ChatMessage {
   created_at: string; // echte Zeit – bestimmt nur die Reihenfolge
 }
 
+// Farbmodus der App: dunkel (Standard) oder hell (Creme, angelehnt an klassische Foren)
+export type Theme = "dark" | "light";
+
 // App-weite Einstellungen (Einstellungen → Admin → Design). Liegen als eine Zeile
 // (key "app") in der Tabelle app_settings; schreiben dürfen nur Admins.
 export interface AppSettings {
-  // Primärfarbe der App (Hex, z. B. "#e89a3c"); leer = Standard-Orange
-  accent?: string | null;
-  // Eigene Header-Bilder je Seite (erstes Pfadstück: dashboard, szenen, handy …),
-  // Bildadresse ggf. mit Ausschnitt-Anhang „#y=…" (siehe lib/headers.ts)
-  headers?: Record<string, string>;
+  // Modus für alle, die keinen eigenen gewählt haben
+  defaultTheme?: Theme | null;
+  // Eigene Header-Bilder je Stil und Seite (erstes Pfadstück: dashboard, szenen,
+  // orte …), Bildadresse ggf. mit Ausschnitt-Anhang „#y=…" (siehe lib/headers.ts)
+  headers?: { dark?: Record<string, string>; light?: Record<string, string> };
 }

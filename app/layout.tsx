@@ -3,6 +3,7 @@ import { Montserrat, ZCOOL_KuaiLe } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
+import { THEME_BOOT_SCRIPT, ThemeProvider } from "@/lib/theme";
 
 // Serifenlose Schrift für Fließtext, Content-Titel und Prosa
 const sans = Montserrat({
@@ -31,10 +32,16 @@ export default function RootLayout({
     <html
       lang="de"
       className={`${sans.variable} ${display.variable} h-full`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body className="min-h-full">
         <StoreProvider>
-          <AppShell>{children}</AppShell>
+          <ThemeProvider>
+            <AppShell>{children}</AppShell>
+          </ThemeProvider>
         </StoreProvider>
       </body>
     </html>

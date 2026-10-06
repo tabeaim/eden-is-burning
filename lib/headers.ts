@@ -355,20 +355,24 @@ const SCENE_PALETTES: Omit<Theme, "glowX" | "motif">[] = [
 ];
 const SCENE_MOTIFS: Motif[] = ["skyline", "spires", "hills", "moon", "crowd", "industry"];
 
+// Heller Stil: dieselben Motive, aber Sand-/Orange-Himmel mit braunen Silhouetten
+const LIGHT_SKY: [number, string][] = [[0, "#f6dfb4"], [0.5, "#f0c78a"], [0.8, "#e8a95a"], [0.93, "#d9b987"], [1, "#fbf5ea"]];
+const lightOf = (t: Theme): Theme => ({ ...t, sky: LIGHT_SKY, glow: "#f2b564", silhouette: "#8a6a3c", windows: "#fff1cf" });
+
 /** Header-Hintergrund (CSS-Wert für background-image) für eine Seite. */
-export function pageHeader(segment: string | undefined): string {
+export function pageHeader(segment: string | undefined, mode: "dark" | "light" = "dark"): string {
   const t = PAGE_THEMES[segment ?? "dashboard"] ?? PAGE_THEMES.dashboard;
-  return toDataUri(buildSvg(t, hashStr("page:" + (segment ?? "dashboard"))));
+  return toDataUri(buildSvg(mode === "light" ? lightOf(t) : t, hashStr("page:" + (segment ?? "dashboard"))));
 }
 
 /** Header-Hintergrund für eine einzelne Szene – variiert deterministisch nach id. */
-export function sceneHeader(id: string): string {
+export function sceneHeader(id: string, mode: "dark" | "light" = "dark"): string {
   const h = hashStr("scene:" + id);
   const pal = SCENE_PALETTES[h % SCENE_PALETTES.length];
   const motif = SCENE_MOTIFS[(h >> 8) % SCENE_MOTIFS.length];
   const glowX = 0.25 + ((h >> 16) % 100) / 100 * 0.5; // 0.25..0.75
   const theme: Theme = { ...pal, glowX, motif };
-  return toDataUri(buildSvg(theme, h));
+  return toDataUri(buildSvg(mode === "light" ? lightOf(theme) : theme, h));
 }
 
 // --- Bildausschnitt eigener Header-Bilder ---
@@ -394,4 +398,16 @@ export function bannerStyle(url: string): { backgroundImage: string; backgroundP
     backgroundImage: `url("${url.replace(BANNER_Y, "")}")`,
     backgroundPosition: `center ${bannerY(url)}%`,
   };
+}
+
+/** Eigene Header-Bilder der Admins für diesen Stil (Seite -> Bildadresse). */
+export function headersFor(
+  settings: { headers?: unknown } | null | undefined,
+  mode: "dark" | "light",
+): Record<string, string> {
+  const h = settings?.headers as Record<string, unknown> | undefined;
+  if (!h) return {};
+  // Altes Format (ohne Stil, flach): galt für den dunklen Stil
+  if (!("dark" in h) && !("light" in h)) return mode === "dark" ? (h as Record<string, string>) : {};
+  return (h[mode] as Record<string, string> | undefined) ?? {};
 }

@@ -438,10 +438,42 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   „Profil", „Grunddaten", „Handy" und „Besitz & Stufe" je Charakter dieselben
   Formulare wie in den eigenen Einstellungen.
 - **Design** (`app_settings`, Zeile `app`, SQL: `supabase/schema-app-settings.sql`,
-  schreiben nur Admins): Primärfarbe (`--accent`, `--accent-soft`, gesetzt in
-  `AppShell`) und ein Header-Bild je Seite (inkl. Ausschnitt-Regler). Eigene
-  Header von Szenen, Orten, Charakteren und Spieler*innen haben Vorrang.
+  schreiben nur Admins): der Standard-Farbmodus der App (dunkel/hell) und je Stil
+  (dunkel/hell) ein Header-Bild pro Seite, inkl. Ausschnitt-Regler. Eigene Header
+  von Szenen, Orten, Charakteren und Spieler*innen haben Vorrang. Keine
+  Farbauswahl: Die Akzentfarbe gehört zum jeweiligen Stil.
+- **Konto löschen:** eigenes Konto unter Mein Profil (Username zur Bestätigung
+  eintippen), das anderer Admins unter Admin → Spieler*innen. Beides ruft die
+  SQL-Funktion `delete_player` auf (`supabase/schema-delete-player.sql`):
+  Main Characters kommen in den Papierkorb und gehen an den Admin (sonst würden
+  sie samt Posts per Cascade gelöscht), Supporting Characters und Statist*innen
+  bleiben, danach werden Spieler*in und Login entfernt. Der letzte Admin ist
+  geschützt.
 - Gefährliche Aktionen (sperren, Admin entziehen, löschen, Stufe ändern)
   fragen immer per `ConfirmDialog` nach.
 - **Alter Egos** (Seitenleiste) zeigen auch zugeordnete Supporting Characters, mit
   kleinem „SC"-Tag.
+
+## Farbmodi (dunkel / hell)
+
+- **Dunkel** ist der Standard und das Design, auf dem alles andere in dieser Datei
+  beruht. **Hell** ist ein zweiter Stil mit Creme-Tönen und sandigem Orange (nach dem
+  Vorbild klassischer Foren); Schrift, Abstände, Radien und alle Bausteine bleiben
+  gleich. Es gibt nur diese zwei Modi.
+- **Umschalten** per `data-theme="light"` am `<html>` (siehe `lib/theme.tsx`,
+  `ThemeProvider`, `useTheme`): wer in Einstellungen → Darstellung selbst gewählt hat
+  (pro Gerät), behält das; sonst gilt der Standard aus Admin → Design. Ein Skript im
+  Layout setzt den Modus vor dem ersten Zeichnen.
+- **Farben nur über Tokens** (`globals.css`, Block `html[data-theme="light"]`):
+  `--bg-primary #fbf5ea`, `--bg-sidebar #dcd8c6`, `--bg-surface #f1ebdd`,
+  `--bg-surface-2 #e7dfcc`, Text `#17140f`, `--accent #e8a95a`. Neue Komponenten
+  nutzen weiter `bg-bg-surface`, `text-text-primary`, `border-border-subtle`,
+  `bg-accent` usw. und funktionieren dann in beiden Modi. Weiße Überlagerungen
+  (`bg-white/[0.04]`, `border-white/20`, `hover:bg-white/[0.08]`) sind erlaubt: Im
+  hellen Stil ist `--color-white` dunkel getönt. Schwarze Schrift auf `bg-accent` bleibt.
+- **Akzent als Schrift** (`text-accent`, `hover:text-accent`) nutzt im hellen Stil
+  `--accent-ink` (kräftigeres Orange), weil das helle Orange auf Creme zu blass wäre.
+- **Header** je Stil: Ohne eigenes Bild erzeugt `pageHeader(segment, modus)` einen
+  Standard-Header (dunkel: Nachthimmel, hell: Sand-Himmel mit braunen Silhouetten);
+  Admins hinterlegen je Stil eigene Bilder.
+- Bewusst dunkel bleiben die Grafiken: Karte (`EdenMap`) und Handy-Gehäuse.

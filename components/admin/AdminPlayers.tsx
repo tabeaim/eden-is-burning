@@ -6,12 +6,13 @@ import { playsAs, tierOf } from "@/lib/characters";
 import { timeAgo } from "@/lib/format";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Player } from "@/lib/types";
-import { btn, btnPrimary, hint, row } from "./ui";
+import { btn, btnDanger, btnPrimary, hint, row } from "./ui";
 
-// Spieler*innen: freischalten/sperren, Admin-Rechte vergeben, Überblick über ihre
-// Charaktere. (Löschen läuft bewusst nicht hier: Das Konto hängt am Login.)
+// Spieler*innen: freischalten/sperren, Admin-Rechte vergeben, Konto löschen,
+// Überblick über ihre Charaktere. Die eigene Löschung steht in „Mein Profil".
 export function AdminPlayers() {
-  const { players, characters, npcs, updatePlayer, currentPlayer, onlineIds, refresh } = useStore();
+  const { players, characters, npcs, updatePlayer, deletePlayer, currentPlayer, onlineIds, refresh } = useStore();
+  const [note, setNote] = useState<string | null>(null);
   const [ask, setAsk] = useState<{ title: string; text: string; label: string; run: () => void } | null>(null);
   const sorted = [...players].sort(
     (a, b) => Number(!!a.approved) - Number(!!b.approved) || a.username.localeCompare(b.username, "de"),
@@ -29,6 +30,11 @@ export function AdminPlayers() {
           Aktualisieren
         </button>
       </p>
+      {note && (
+        <p role="status" className="text-[0.8125rem] text-text-secondary">
+          {note}
+        </p>
+      )}
       {sorted.map((p) => {
         const me = p.id === currentPlayer?.id;
         return (
@@ -74,6 +80,30 @@ export function AdminPlayers() {
                     Sperren
                   </button>
                 )
+              )}
+              {!me && (
+                <button
+                  onClick={() =>
+                    setAsk({
+                      title: `${p.username} löschen?`,
+                      text: `Das Konto und der Login von ${p.username} werden endgültig gelöscht. Die Main Characters (${characters.filter((c) => c.player_id === p.id && !c.deleted_at).length}) kommen in den Papierkorb und gehen an dich, Supporting Characters und Statist*innen bleiben bei dir, Posts bleiben in den Szenen stehen. Das lässt sich nicht rückgängig machen.`,
+                      label: "Konto löschen",
+                      run: () =>
+                        void deletePlayer(p.id).then((res) =>
+                          setNote(
+                            res.error
+                              ? `Löschen fehlgeschlagen: ${res.error}`
+                              : res.authKept
+                                ? `${p.username} ist gelöscht. Das Login-Konto ließ sich nicht entfernen – bitte im Supabase-Dashboard unter Authentication löschen.`
+                                : `${p.username} ist gelöscht.`,
+                          ),
+                        ),
+                    })
+                  }
+                  className={btnDanger}
+                >
+                  Löschen
+                </button>
               )}
               {p.approved && !me && (
                 <button

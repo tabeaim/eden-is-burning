@@ -11,7 +11,9 @@ import { PageMetaProvider, usePageMeta } from "@/lib/page-meta";
 import { Icon, type IconName } from "./Icon";
 import { LoginScreen } from "./LoginScreen";
 import { PendingScreen } from "./PendingScreen";
-import { pageHeader, sceneHeader } from "@/lib/headers";
+import { headersFor, pageHeader, sceneHeader } from "@/lib/headers";
+import { useTheme } from "@/lib/theme";
+import type { Theme } from "@/lib/types";
 
 // `title` weicht nur ab, wenn der Seitentitel anders heißt als der Menüpunkt.
 const NAV: { href: string; label: string; icon: IconName; title?: string }[] = [
@@ -26,7 +28,7 @@ const NAV: { href: string; label: string; icon: IconName; title?: string }[] = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { ready, currentPlayer, isApproved, touchPresence, saveError, clearSaveError, refresh, appSettings } =
+  const { ready, currentPlayer, isApproved, touchPresence, saveError, clearSaveError, refresh } =
     useStore();
   const pathname = usePathname();
   // Handy: Navigation als Schublade, die über die Menü-Taste aufgeht
@@ -52,20 +54,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
   }
-
-  // Primärfarbe der App (Einstellungen → Admin → Design): überschreibt das Standard-Orange
-  const accent = appSettings.accent;
-  useEffect(() => {
-    const root = document.documentElement;
-    const rgb = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(accent ?? "");
-    if (rgb) {
-      root.style.setProperty("--accent", accent!);
-      root.style.setProperty("--accent-soft", `rgba(${parseInt(rgb[1], 16)}, ${parseInt(rgb[2], 16)}, ${parseInt(rgb[3], 16)}, 0.14)`);
-    } else {
-      root.style.removeProperty("--accent");
-      root.style.removeProperty("--accent-soft");
-    }
-  }, [accent]);
 
   // "Zuletzt online" aktuell halten: bei jedem Seitenwechsel last_seen setzen.
   useEffect(() => {
@@ -197,20 +185,22 @@ function MenuIcon() {
 }
 
 // Glut-/Rauch-Verlauf als verlässlicher Banner-Hintergrund (auch ohne Foto)
-const EMBER_BG =
-  "radial-gradient(120% 140% at 20% -40%, rgba(232,154,60,0.22), transparent 55%), radial-gradient(80% 120% at 100% 0%, rgba(120,130,90,0.14), transparent 60%), linear-gradient(180deg, #16130f, #0a0a0b)";
+const EMBER_BG: Record<Theme, string> = {
+  dark: "radial-gradient(120% 140% at 20% -40%, rgba(232,154,60,0.22), transparent 55%), radial-gradient(80% 120% at 100% 0%, rgba(120,130,90,0.14), transparent 60%), linear-gradient(180deg, #16130f, #0a0a0b)",
+  light: "radial-gradient(120% 140% at 20% -40%, rgba(232,169,90,0.55), transparent 55%), linear-gradient(180deg, #f3dcb0, #fbf5ea)",
+};
 
 // Wählt den generierten Header passend zur Route. Szenen-Detailseiten bekommen
 // einen pro Szene variierenden Header, alle anderen Seiten ihren eigenen.
 // Ein von Admins hochgeladenes Header-Bild (Einstellungen → Admin → Design) gilt für
 // die ganze Seite; Szenen-Detailseiten behalten ihren eigenen Header.
-function bannerForPath(pathname: string, custom: Record<string, string> = {}): string {
+function bannerForPath(pathname: string, custom: Record<string, string>, theme: Theme): string {
   const seg = pathname.split("/").filter(Boolean);
   if (seg[0] === "szenen" && seg[1] && seg[1] !== "neu") {
-    return sceneHeader(seg[1]);
+    return sceneHeader(seg[1], theme);
   }
   const key = seg[0] ?? "dashboard";
-  return custom[key] || pageHeader(key);
+  return custom[key] || pageHeader(key, theme);
 }
 
 // Banner-Header: Titelbild pro Seite (Foto über Glut-Verlauf). Der Seitentitel
@@ -226,6 +216,7 @@ function BannerHeader({
 }) {
   const meta = usePageMeta();
   const { appSettings } = useStore();
+  const { theme } = useTheme();
 
   const navMatch = NAV.find(
     (n) => pathname === n.href || pathname.startsWith(n.href + "/"),
@@ -246,14 +237,14 @@ function BannerHeader({
   // Jede Seite bekommt einen eigenen, generierten Header (dunkle Skyline-Optik).
   // Szenen-Detailseiten variieren zusätzlich pro Szene; ein echtes header_url der
   // Szene (falls gesetzt) überschreibt die Vorlage.
-  const banner = (onThisPage && meta.bannerImage) || bannerForPath(pathname, appSettings.headers);
+  const banner = (onThisPage && meta.bannerImage) || bannerForPath(pathname, headersFor(appSettings, theme), theme);
 
   return (
     <header className="relative bg-bg-primary">
       {/* Titelbild – Foto über Glut-Verlauf. background-image statt <img>, damit ein
           fehlgeschlagener Ladevorgang kein kaputtes Icon zeigt, sondern den Verlauf. */}
       {!noBanner && (
-      <div className="relative h-40 w-full overflow-hidden" style={{ backgroundImage: EMBER_BG }}>
+      <div className="relative h-40 w-full overflow-hidden" style={{ backgroundImage: EMBER_BG[theme] }}>
         <div
           className="absolute inset-0 bg-cover"
           style={bannerStyle(banner)}

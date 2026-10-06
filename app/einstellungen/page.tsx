@@ -18,6 +18,7 @@ import { PlayExistingButton } from "@/components/PlayExistingButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MultiSelect } from "@/components/MultiSelect";
 import { Icon } from "@/components/Icon";
+import { useTheme } from "@/lib/theme";
 import { AdminPanel } from "@/components/admin/AdminPanel";
 import type { Character } from "@/lib/types";
 
@@ -78,7 +79,7 @@ const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
 function ProfileTab() {
-  const { currentPlayer, players, updatePlayer, changeEmail, changePassword } = useStore();
+  const { currentPlayer, players, updatePlayer, changeEmail, changePassword, deletePlayer, signOut } = useStore();
   const [username, setUsername] = useState(currentPlayer?.username ?? "");
   const [saved, setSaved] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -88,7 +89,22 @@ function ProfileTab() {
   const [pw2, setPw2] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
+  // Konto löschen: erst aufklappen, dann den Usernamen zur Bestätigung eintippen
+  const [deleting, setDeleting] = useState(false);
+  const [confirmName, setConfirmName] = useState("");
   if (!currentPlayer) return null;
+
+  async function removeAccount() {
+    if (!currentPlayer) return;
+    setBusy(true);
+    const res = await deletePlayer(currentPlayer.id);
+    if (res.error) {
+      setBusy(false);
+      setNotice({ ok: false, text: `Das Konto ließ sich nicht löschen: ${res.error}` });
+      return;
+    }
+    await signOut();
+  }
 
   async function onAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -239,13 +255,70 @@ function ProfileTab() {
           {notice.text}
         </p>
       )}
+
+      {/* Konto löschen */}
+      <h2 className={`${heading} mt-6`}>konto löschen.</h2>
+      {!deleting ? (
+        <div>
+          <p className="mb-2 text-[0.8125rem] text-text-tertiary">
+            Löscht dein Konto samt Login. Das lässt sich nicht rückgängig machen.
+          </p>
+          <button
+            onClick={() => setDeleting(true)}
+            className="rounded-md border border-red-400/40 px-3 py-1.5 text-[0.8125rem] text-red-300 hover:bg-red-500/10"
+          >
+            Konto löschen …
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3 rounded-lg border border-red-400/40 p-4">
+          <p className="text-[0.875rem] font-medium text-red-300">Das lässt sich NICHT rückgängig machen.</p>
+          <ul className="list-disc pl-5 text-[0.8125rem] leading-relaxed text-text-secondary">
+            <li>Dein Login und dein Spieler*innen-Profil werden gelöscht.</li>
+            <li>
+              Deine Main Characters kommen in den Papierkorb und gehen an die Admins – von dort lassen sie sich
+              wiederherstellen oder endgültig löschen.
+            </li>
+            <li>Deine Supporting Characters bleiben erhalten und gehen ebenfalls an die Admins.</li>
+            <li>Posts bleiben in den Szenen stehen.</li>
+          </ul>
+          <label className="text-[0.8125rem] text-text-secondary">
+            Tippe zur Bestätigung deinen Usernamen ein: <span className="text-text-primary">{currentPlayer.username}</span>
+            <input
+              value={confirmName}
+              onChange={(e) => setConfirmName(e.target.value)}
+              autoComplete="off"
+              className={`mt-1 ${field} max-w-xs`}
+            />
+          </label>
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={() => {
+                setDeleting(false);
+                setConfirmName("");
+              }}
+              className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+            >
+              Abbrechen
+            </button>
+            <button
+              onClick={() => void removeAccount()}
+              disabled={busy || confirmName.trim() !== currentPlayer.username}
+              className="rounded-md border border-red-400/60 bg-red-500/10 px-3 py-1.5 text-[0.8125rem] text-red-200 hover:bg-red-500/20 disabled:opacity-40"
+            >
+              {busy ? "Löscht …" : "Konto endgültig löschen"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// Darstellung: eigener Dashboard-Header und Farbmodus.
+// Darstellung: eigener Dashboard-Header und Farbmodus (dunkel/hell).
 function AppearanceTab() {
   const { currentPlayer, updatePlayer } = useStore();
+  const { theme, chosen, setTheme } = useTheme();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   // Entwurf, solange der Ausschnitt-Regler bewegt wird (gespeichert beim Loslassen)
@@ -322,17 +395,35 @@ function AppearanceTab() {
       {/* Farbmodus */}
       <div>
         <div className="text-[0.875rem] text-text-secondary mb-2">Farbmodus</div>
-        <div className="flex gap-2">
-          <span className="rounded-md border border-accent/50 bg-accent-soft px-3 py-1.5 text-[0.8125rem] text-text-primary">
-            Dunkel
-          </span>
-          <span
-            title="Der Hellmodus kommt später"
-            className="rounded-md border border-border-subtle bg-bg-primary px-3 py-1.5 text-[0.8125rem] text-text-tertiary opacity-60"
-          >
-            Hell <span className="text-[0.75rem]">(kommt später)</span>
-          </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {(
+            [
+              ["dark", "Dunkel"],
+              ["light", "Hell"],
+            ] as const
+          ).map(([key, name]) => (
+            <button
+              key={key}
+              onClick={() => setTheme(key)}
+              aria-pressed={theme === key}
+              className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
+                theme === key
+                  ? "bg-accent text-black font-medium"
+                  : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+          {chosen && (
+            <button onClick={() => setTheme(null)} className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+              Standard der App
+            </button>
+          )}
         </div>
+        <p className="mt-2 text-[0.8125rem] text-text-tertiary">
+          Gilt nur für dieses Gerät. Ohne eigene Wahl bestimmt der Standard der App den Modus.
+        </p>
       </div>
     </div>
   );
