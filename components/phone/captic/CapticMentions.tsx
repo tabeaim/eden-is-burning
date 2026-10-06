@@ -17,6 +17,9 @@ export function useCapticProfiles() {
   }, [characters, npcs]);
 }
 
+// Ende eines Namens: kein Buchstabe/Ziffer mehr – ein Punkt nur, wenn danach
+// nichts weitergeht („@Irina." ja, „@irina.k" nein)
+const END = "(?![\\p{L}\\p{N}_]|\\.[\\p{L}\\p{N}_])";
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // „@Reece Malone" oder „@Reece" → „@reecemalone": Wer den Namen statt des
@@ -27,7 +30,7 @@ export function normalizeMentions(text: string, profiles: Character[]): string {
   const handles = new Set(profiles.map((c) => capticHandle(c).toLowerCase()));
   // volle Namen zuerst (längste zuerst), dann eindeutige Vornamen
   for (const c of [...profiles].sort((a, b) => b.name.length - a.name.length)) {
-    out = out.replace(new RegExp(`@${escape(c.name)}(?![\\p{L}\\p{N}_.])`, "giu"), `@${capticHandle(c)}`);
+    out = out.replace(new RegExp(`@${escape(c.name)}${END}`, "giu"), `@${capticHandle(c)}`);
   }
   const firsts = new Map<string, Character[]>();
   for (const c of profiles) {
@@ -36,7 +39,7 @@ export function normalizeMentions(text: string, profiles: Character[]): string {
   }
   for (const [first, who] of firsts) {
     if (who.length !== 1 || handles.has(first)) continue;
-    out = out.replace(new RegExp(`@${escape(first)}(?![\\p{L}\\p{N}_.])`, "giu"), `@${capticHandle(who[0])}`);
+    out = out.replace(new RegExp(`@${escape(first)}${END}`, "giu"), `@${capticHandle(who[0])}`);
   }
   return out;
 }
