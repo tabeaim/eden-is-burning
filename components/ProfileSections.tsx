@@ -370,7 +370,7 @@ export function normalizeFamily(family: FamilyMember[]): FamilyMember[] {
     if (m.partner_of && valid.get(m.id) !== m.partner_of) next.partner_of = null;
     if (!next.partner_of) delete next.partner_status;
     if (m.parent_ids) {
-      const parents = m.parent_ids.filter((id) => ids.has(id) && id !== m.id);
+      const parents = m.parent_ids.filter((id) => (id === "self" || ids.has(id)) && id !== m.id);
       if (parents.length) next.parent_ids = parents;
       else delete next.parent_ids;
     }
@@ -378,15 +378,17 @@ export function normalizeFamily(family: FamilyMember[]): FamilyMember[] {
   });
 }
 
-// Linien von Onkeln/Tanten zu ihren Kindern (Cousinen/Cousins) im Stammbaum.
+// Linien von den Eltern zu ihren Kindern im Stammbaum („Kind von"-Angaben). Ein
+// Paar bekommt eine Klammer unter den Karten und eine gemeinsame Linie nach unten.
 // Gezeichnet wird per DOM (ohne State), nachdem die Karten ihren Platz haben, und
 // neu, sobald sich die Größe ändert.
+type FamilyLink = { parents: string[]; child: string; couple: boolean };
 function useFamilyLines(
   wrap: React.RefObject<HTMLDivElement | null>,
   svg: React.RefObject<SVGSVGElement | null>,
-  pairs: [string, string][],
+  links: FamilyLink[],
 ) {
-  const key = pairs.map((p) => p.join(">")).join("|");
+  const key = JSON.stringify(links);
   useLayoutEffect(() => {
     const el = wrap.current;
     const out = svg.current;
@@ -394,25 +396,41 @@ function useFamilyLines(
     const draw = () => {
       const box = el.getBoundingClientRect();
       out.replaceChildren();
-      for (const pair of key ? key.split("|") : []) {
-        const [from, to] = pair.split(">");
-        const a = el.querySelector<HTMLElement>(`[data-fam="${from}"]`)?.getBoundingClientRect();
-        const b = el.querySelector<HTMLElement>(`[data-fam="${to}"]`)?.getBoundingClientRect();
-        if (!a || !b || b.top <= a.bottom) continue;
-        const x1 = a.left + a.width / 2 - box.left;
-        const x2 = b.left + b.width / 2 - box.left;
-        const y1 = a.bottom - box.top;
-        const y2 = b.top - box.top;
-        const ym = y1 + (y2 - y1) / 2;
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d", `M${x1} ${y1} V${ym} H${x2} V${y2}`);
-        path.setAttribute("fill", "none");
-        path.setAttribute("stroke", "var(--accent)");
-        path.setAttribute("stroke-opacity", "0.6");
-        path.setAttribute("stroke-width", "1.5");
-        path.setAttribute("stroke-linejoin", "round");
-        out.appendChild(path);
+      const rect = (id: string) => el.querySelector<HTMLElement>(`[data-fam="${id}"]`)?.getBoundingClientRect();
+      let d = "";
+      for (const link of JSON.parse(key) as FamilyLink[]) {
+        const c = rect(link.child);
+        const ps = link.parents.map(rect).filter((r): r is DOMRect => !!r);
+        if (!c || ps.length === 0) continue;
+        const cx = c.left + c.width / 2 - box.left;
+        const cy = c.top - box.top;
+        const below = Math.max(...ps.map((r) => r.bottom)) - box.top;
+        if (cy <= below) continue;
+        if (link.couple && ps.length === 2) {
+          // Klammer unter dem Paar, von ihrer Mitte weiter nach unten
+          const [a, b] = ps.map((r) => r.left + r.width / 2 - box.left);
+          const yb = below + 8;
+          const xm = (a + b) / 2;
+          const ym = yb + (cy - yb) / 2;
+          d += `M${a} ${below} V${yb} H${b} V${below} M${xm} ${yb} V${ym} H${cx} V${cy} `;
+        } else {
+          for (const r of ps) {
+            const x = r.left + r.width / 2 - box.left;
+            const y = r.bottom - box.top;
+            const ym = y + (cy - y) / 2;
+            d += `M${x} ${y} V${ym} H${cx} V${cy} `;
+          }
+        }
       }
+      if (!d) return;
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", "var(--accent)");
+      path.setAttribute("stroke-opacity", "0.6");
+      path.setAttribute("stroke-width", "1.5");
+      path.setAttribute("stroke-linejoin", "round");
+      out.appendChild(path);
     };
     draw();
     const ro = new ResizeObserver(draw);
@@ -426,17 +444,27 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
   const wrap = useRef<HTMLDivElement>(null);
   const lines = useRef<SVGSVGElement>(null);
   const family = c.profile?.family ?? [];
-  // Onkel/Tante → Cousin*e
+  // Eltern → Kind (alle „Kind von"-Angaben, auch die des Charakters selbst)
   const ids = new Set(family.map((m) => m.id));
-  const pairs = family.flatMap((m) =>
-    (m.parent_ids ?? []).filter((p) => ids.has(p) && p !== m.id).map((p) => [p, m.id] as [string, string]),
-  );
-  useFamilyLines(wrap, lines, pairs);
+  const partnerOf = familyPartners(family);
+  const known = (id: string) => id === "self" || ids.has(id);
+  const links: FamilyLink[] = [
+    ...family.map((m) => ({ child: m.id, parents: (m.parent_ids ?? []).filter((p) => known(p) && p !== m.id) })),
+    { child: "self", parents: (c.profile?.family_parents ?? []).filter((p) => ids.has(p)) },
+  ]
+    .filter((l) => l.parents.length > 0)
+    .map((l) => ({
+      ...l,
+      // zwei Eltern, die ein Paar sind
+      couple:
+        l.parents.length === 2 &&
+        (partnerOf.get(l.parents[0]) === l.parents[1] || partnerOf.get(l.parents[1]) === l.parents[0]),
+    }));
+  useFamilyLines(wrap, lines, links);
   if (family.length === 0) return null;
   // Angeheiratete/Partner*innen stehen direkt neben ihrer Person (verbunden
   // durch ein Herz) statt als eigener Eintrag in der Reihe – so sind sie von
   // Geschwistern zu unterscheiden.
-  const partnerOf = familyPartners(family);
   const partnersOf = (id: string) => family.filter((m) => partnerOf.get(m.id) === id);
   const generations = [...new Set(FAMILY_SLOTS.map((x) => x.generation))];
   const used = generations
@@ -519,7 +547,7 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
     const partners = partnersOf(m ? m.id : "self");
     const own =
       m === null ? (
-        <div key="self" className={`${card} border-accent/70 bg-accent-soft`}>
+        <div key="self" data-fam="self" className={`${card} border-accent/70 bg-accent-soft`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={characterImage(c)} alt="" className={face} />
           <span title={c.full_name || c.name} className={name}>
@@ -566,10 +594,10 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
       <div ref={wrap} style={sizes} className="relative flex flex-col items-center">
         {used.map((row, i) => (
           <div key={row.gen} className="flex w-full flex-col items-center">
-            {i > 0 && <span className="h-6 w-px bg-white/25 sm:h-8" />}
+            {i > 0 && !links.length && <span className="h-6 w-px bg-white/25 sm:h-8" />}
             <div
               className={`flex w-full flex-nowrap items-start justify-center gap-x-3 pt-4 sm:gap-x-12 sm:px-10 sm:pt-5 ${
-                i > 0 ? "border-t border-white/25" : ""
+                i > 0 ? (links.length ? "mt-6 sm:mt-8" : "border-t border-white/25") : ""
               }`}
             >
               {row.groups.map(({ slot, members }) => {

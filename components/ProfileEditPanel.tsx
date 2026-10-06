@@ -42,6 +42,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   const [sliders, setSliders] = useState(prof.sliders ?? []);
   const [timeline, setTimeline] = useState(prof.timeline ?? []);
   const [family, setFamily] = useState<FamilyMember[]>(() => normalizeFamily(prof.family ?? []));
+  const [selfParents, setSelfParents] = useState<string[]>(prof.family_parents ?? []);
   const [things, setThings] = useState<ThingItem[]>(prof.things ?? []);
   const [outfit, setOutfit] = useState<ThingItem[]>(prof.outfit ?? []);
   const { characters, npcs } = useStore();
@@ -99,7 +100,13 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       timeline: timeline
         .filter((t) => t.year.trim() || t.title.trim() || t.text.trim())
         .sort((a, b) => a.year.localeCompare(b.year, "de", { numeric: true })),
-      family: normalizeFamily(family.filter((m) => m.name.trim()).map((m) => ({ ...m, name: m.name.trim() }))),
+      ...(() => {
+        const kept = normalizeFamily(family.filter((m) => m.name.trim()).map((m) => ({ ...m, name: m.name.trim() })));
+        return {
+          family: kept,
+          family_parents: selfParents.filter((id) => kept.some((m) => m.id === id)),
+        };
+      })(),
       things,
       outfit,
       traits_plus: toList(plus),
@@ -365,11 +372,20 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
 
       <Collapsible title="Stammbaum">
       <p className={hint}>
-        Verwandte nach Generation und Seitenlinie. Wählst du beim Namen einen vorhandenen Charakter
-        aus, führt der Eintrag im Stammbaum auf dessen Profil. Partner*innen und Angeheiratete legst
-        du unter ihrer Person an – im Stammbaum stehen sie dann direkt daneben.
+        Bei jeder Person gibst du an, wessen Kind sie ist (Kind von) – auch bei deinem Charakter
+        selbst. Partner*innen und Angeheiratete legst du unter ihrer Person an. Am schnellsten geht
+        es über + Verwandte*r: Elternteil, Kind, Geschwister oder Partner*in, Platz im Baum und
+        Verknüpfung ergeben sich dann von selbst. Wählst du beim Namen einen vorhandenen Charakter
+        aus, führt der Eintrag im Stammbaum auf dessen Profil.
       </p>
-      <FamilyEditor family={family} onChange={setFamily} character={character} everyone={everyone} />
+      <FamilyEditor
+          family={family}
+          onChange={setFamily}
+          selfParents={selfParents}
+          onSelfParents={setSelfParents}
+          character={character}
+          everyone={everyone}
+        />
 
       </Collapsible>
 

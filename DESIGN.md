@@ -204,23 +204,29 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   Hintergrund – `.pinterest-board` in globals.css).
 - **Signatur** (`profile.signature_url`, Einstellungen → Meine Charaktere):
   ein Bild am Ende jedes Posts des Charakters, sonst nirgends.
-- **Stammbaum** (`ProfileFamilyTree`, Reiter Stammbaum): Verwandte nach
+- **Stammbaum** (`ProfileFamilyTree`, Reiter Family Tree): Verwandte nach
   Generation in Reihen (jede Generation bleibt auch mobil in einer Zeile, die
-  Karten schrumpfen; alle Karten gleich groß, ohne Etikett. Verlinkte Karten
-  heben sich beim Hover an und werden orange – so ist klar, dass man sie
-  anklicken kann), der Charakter selbst hervorgehoben; verknüpfte Einträge
-  führen aufs Profil und tragen bei Supporting Characters/Statist*innen deren
-  Art. Neben der direkten Linie die Seitenlinien (`side`): Geschwister der
-  Großeltern, Onkel & Tanten, Cousinen & Cousins (`FAMILY_SLOTS`).
-  Angeheiratete/Partner*innen (`partner_of`) stehen direkt neben ihrer Person,
-  verbunden durch ein Herz – so unterscheiden sie sich von Geschwistern. Ketten
-  und Kreise gelten nicht (`familyPartners`, `normalizeFamily`).
-  Bearbeiten (`FamilyEditor`): ein Kasten je Generation/Seitenlinie mit „Hinzufügen",
-  Name und Verhältnis nebeneinander, ✕ immer rechts in derselben Zeile;
-  „+ Partner*in" legt eine neue Person an oder ordnet eine vorhandene zu.
-  Paare können getrennt (gestrichelt, leeres Herz) oder geschieden (zusätzlich
-  durchgestrichen) sein (`partner_status`). Cousinen/Cousins werden über „Kind
-  von" mit ihren Onkeln/Tanten verbunden (`parent_ids`, Linien in `FamilyLines`).
+  Karten schrumpfen; alle Karten gleich groß, ohne Etikett). Verlinkte Karten
+  (Charaktere im Verzeichnis) heben sich beim Hover an und werden orange – so
+  ist klar, dass man sie anklicken kann. Neben der direkten Linie die
+  Seitenlinien (`side`): Geschwister der Großeltern, Onkel & Tanten, Cousinen &
+  Cousins (`FAMILY_SLOTS`).
+  **Modell:** zwei Beziehungsarten, alles andere ergibt sich daraus –
+  „Kind von" (`parent_ids` bei jedem Eintrag, „self" = der Charakter selbst;
+  die Eltern des Charakters stehen in `profile.family_parents`) und „Partner*in
+  von" (`partner_of`, `partner_status`: getrennt = gestrichelt mit leerem Herz,
+  geschieden = zusätzlich durchgestrichen). Geschwister sind, wer dieselben
+  Eltern hat. Partner*innen stehen direkt neben ihrer Person; Linien (orange,
+  `useFamilyLines`) führen von den Eltern zu den Kindern, ein Paar bekommt eine
+  Klammer. Sobald es Verbindungen gibt, entfallen die grauen Trennlinien
+  zwischen den Generationen. Ketten und Kreise gelten nicht (`familyPartners`,
+  `normalizeFamily`).
+  **Bearbeiten** (`FamilyEditor`): ein Kasten je Generation/Seitenlinie mit
+  „Hinzufügen"; bei jeder Person „Kind von"-Pillen und eingerückt ihre
+  Partner*innen; „+ Verwandte*r" an jeder Person legt Elternteil, Kind,
+  Geschwister oder Partner*in neu an (Platz und Verknüpfung ergeben sich) oder
+  ordnet eine vorhandene Zeile als Partner*in zu. Name und Verhältnis stehen
+  nebeneinander, ✕ immer rechts in derselben Zeile.
 - **Relations** bearbeitet nur, wer den Charakter selbst spielt (`playsAs`). Der
   erklärende Hinweis steht nur beim eigenen Charakter und verschwindet nach drei
   Eintragungen/Leerungen (Zähler `relation_uses` im Spieler*innen-Profil).
@@ -419,3 +425,23 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Buttons und Erläuterung.
 - **Charakterprofil:** Kein Avatar und kein Usertag; oben das eigene Header-Bild.
   Das Pinterest-Board steht im Reiter „Moodboard".
+
+## Admin (Einstellungen → Admin)
+
+- **Nur für Admins**, als Reiter neben „Mein Profil" usw. (`components/admin/`).
+  Alles in aufklappbaren Abschnitten (`Collapsible`): Spieler*innen &
+  Freischaltungen · Main Characters · Supporting Characters · Statist*innen ·
+  Orte · Szenen & Plots · Handy-Apps · Design · Papierkorb; oben eine
+  Zahlenübersicht.
+- **Fremde Charakterprofile bearbeiten Admins nur hier**, nicht im Profil:
+  `canEditCharacter` kennt keine Admin-Ausnahme mehr. In der Verwaltung öffnet
+  „Profil", „Grunddaten", „Handy" und „Besitz & Stufe" je Charakter dieselben
+  Formulare wie in den eigenen Einstellungen.
+- **Design** (`app_settings`, Zeile `app`, SQL: `supabase/schema-app-settings.sql`,
+  schreiben nur Admins): Primärfarbe (`--accent`, `--accent-soft`, gesetzt in
+  `AppShell`) und ein Header-Bild je Seite (inkl. Ausschnitt-Regler). Eigene
+  Header von Szenen, Orten, Charakteren und Spieler*innen haben Vorrang.
+- Gefährliche Aktionen (sperren, Admin entziehen, löschen, Stufe ändern)
+  fragen immer per `ConfirmDialog` nach.
+- **Alter Egos** (Seitenleiste) zeigen auch zugeordnete Supporting Characters, mit
+  kleinem „SC"-Tag.

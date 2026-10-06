@@ -2,6 +2,7 @@
 
 import { bannerStyle } from "@/lib/headers";
 import { characterImage } from "@/lib/avatar";
+import { tierOf } from "@/lib/characters";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -25,7 +26,7 @@ const NAV: { href: string; label: string; icon: IconName; title?: string }[] = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { ready, currentPlayer, isApproved, touchPresence, saveError, clearSaveError, refresh } =
+  const { ready, currentPlayer, isApproved, touchPresence, saveError, clearSaveError, refresh, appSettings } =
     useStore();
   const pathname = usePathname();
   // Handy: Navigation als Schublade, die über die Menü-Taste aufgeht
@@ -51,6 +52,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
   }
+
+  // Primärfarbe der App (Einstellungen → Admin → Design): überschreibt das Standard-Orange
+  const accent = appSettings.accent;
+  useEffect(() => {
+    const root = document.documentElement;
+    const rgb = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(accent ?? "");
+    if (rgb) {
+      root.style.setProperty("--accent", accent!);
+      root.style.setProperty("--accent-soft", `rgba(${parseInt(rgb[1], 16)}, ${parseInt(rgb[2], 16)}, ${parseInt(rgb[3], 16)}, 0.14)`);
+    } else {
+      root.style.removeProperty("--accent");
+      root.style.removeProperty("--accent-soft");
+    }
+  }, [accent]);
 
   // "Zuletzt online" aktuell halten: bei jedem Seitenwechsel last_seen setzen.
   useEffect(() => {
@@ -187,12 +202,15 @@ const EMBER_BG =
 
 // Wählt den generierten Header passend zur Route. Szenen-Detailseiten bekommen
 // einen pro Szene variierenden Header, alle anderen Seiten ihren eigenen.
-function bannerForPath(pathname: string): string {
+// Ein von Admins hochgeladenes Header-Bild (Einstellungen → Admin → Design) gilt für
+// die ganze Seite; Szenen-Detailseiten behalten ihren eigenen Header.
+function bannerForPath(pathname: string, custom: Record<string, string> = {}): string {
   const seg = pathname.split("/").filter(Boolean);
   if (seg[0] === "szenen" && seg[1] && seg[1] !== "neu") {
     return sceneHeader(seg[1]);
   }
-  return pageHeader(seg[0] ?? "dashboard");
+  const key = seg[0] ?? "dashboard";
+  return custom[key] || pageHeader(key);
 }
 
 // Banner-Header: Titelbild pro Seite (Foto über Glut-Verlauf). Der Seitentitel
@@ -207,6 +225,7 @@ function BannerHeader({
   navHidden?: boolean; // dann sitzt oben links die Einblenden-Taste
 }) {
   const meta = usePageMeta();
+  const { appSettings } = useStore();
 
   const navMatch = NAV.find(
     (n) => pathname === n.href || pathname.startsWith(n.href + "/"),
@@ -227,7 +246,7 @@ function BannerHeader({
   // Jede Seite bekommt einen eigenen, generierten Header (dunkle Skyline-Optik).
   // Szenen-Detailseiten variieren zusätzlich pro Szene; ein echtes header_url der
   // Szene (falls gesetzt) überschreibt die Vorlage.
-  const banner = (onThisPage && meta.bannerImage) || bannerForPath(pathname);
+  const banner = (onThisPage && meta.bannerImage) || bannerForPath(pathname, appSettings.headers);
 
   return (
     <header className="relative bg-bg-primary">
@@ -330,6 +349,8 @@ function Sidebar({
     isSubscribed,
   } = useStore();
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
+  // Alter Egos: eigene Main Characters und zugeordnete Supporting Characters (mit SC-Tag)
+  const egos = [...myChars, ...myNpcs.filter((c) => tierOf(c) === "supporting")];
   const phoneBadge = unreadChatCount + incomingCalls.length;
   // Orange Zähler im Menü: Szenen = alle ungelesenen; Dashboard = Bewegung bei
   // den eigenen Charakteren (eigene Szenen, Chats, Anrufe)
@@ -434,17 +455,17 @@ function Sidebar({
           aria-expanded={charsOpen}
           className="flex w-full items-center justify-between px-2.5 text-[0.75rem] uppercase tracking-[0.2em] text-text-tertiary hover:text-text-secondary"
         >
-          <span>Alter Egos ({myChars.length})</span>
+          <span>Alter Egos ({egos.length})</span>
           <span className={`transition-transform ${charsOpen ? "" : "rotate-180"}`}>▾</span>
         </button>
         {charsOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setCharsOpen(false)} />
             <div className="absolute bottom-full left-2 right-2 z-20 mb-1 flex max-h-[min(60vh,22rem)] flex-col gap-0.5 overflow-y-auto rounded-lg border border-border-subtle bg-bg-surface-2 p-1 shadow-2xl shadow-black/70">
-              {myChars.length === 0 && (
+              {egos.length === 0 && (
                 <div className="px-2.5 py-2 text-[0.8125rem] text-text-tertiary">Noch keine Charaktere.</div>
               )}
-              {myChars.map((c) => (
+              {egos.map((c) => (
                 <Link
                   key={c.id}
                   href={`/charaktere/${c.id}`}
@@ -458,6 +479,14 @@ function Sidebar({
                     className="h-[17px] w-[17px] shrink-0 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
                   />
                   <span className="truncate">{c.name}</span>
+                  {tierOf(c) === "supporting" && (
+                    <span
+                      title="Supporting Character"
+                      className="ml-auto shrink-0 rounded-full border border-border-subtle px-1.5 py-px text-[0.625rem] uppercase tracking-wider text-text-tertiary"
+                    >
+                      SC
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>

@@ -106,7 +106,7 @@ export interface FamilyMember {
   partner_of?: string | null;
   // Nur bei Partner*innen: ist die Beziehung beendet? (leer = zusammen/verheiratet)
   partner_status?: "separated" | "divorced" | null;
-  // Nur bei Cousinen/Cousins: ids der Onkel/Tanten, deren Kinder sie sind
+  // „Kind von": ids der Eltern (andere Einträge, oder „self" = der Charakter selbst)
   parent_ids?: string[];
   character_id?: string | null;
 }
@@ -171,6 +171,9 @@ export interface CharacterProfile {
   // Stammbaum: Verwandte nach Generation (-2 Großeltern, -1 Eltern, 0 gleiche
   // Generation, 1 Kinder, 2 Enkel); optional mit einem Charakter verknüpft
   family?: FamilyMember[];
+  // Eltern des Charakters selbst (ids von Stammbaum-Einträgen); bei den Einträgen
+  // steht dasselbe als `parent_ids`
+  family_parents?: string[];
 }
 
 // Alle Felder optional – Fehlendes füllt `resolvePhone` (lib/phone.ts) mit Standards.
@@ -335,4 +338,14 @@ export interface ChatMessage {
   reactions?: Record<string, string[]> | null; // Emoji -> Charakter-IDs
   inplay_time?: string | null; // Inplay-Uhrzeit „23:41" (nie die echte)
   created_at: string; // echte Zeit – bestimmt nur die Reihenfolge
+}
+
+// App-weite Einstellungen (Einstellungen → Admin → Design). Liegen als eine Zeile
+// (key "app") in der Tabelle app_settings; schreiben dürfen nur Admins.
+export interface AppSettings {
+  // Primärfarbe der App (Hex, z. B. "#e89a3c"); leer = Standard-Orange
+  accent?: string | null;
+  // Eigene Header-Bilder je Seite (erstes Pfadstück: dashboard, szenen, handy …),
+  // Bildadresse ggf. mit Ausschnitt-Anhang „#y=…" (siehe lib/headers.ts)
+  headers?: Record<string, string>;
 }

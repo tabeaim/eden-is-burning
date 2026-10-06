@@ -18,6 +18,7 @@ import { PlayExistingButton } from "@/components/PlayExistingButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MultiSelect } from "@/components/MultiSelect";
 import { Icon } from "@/components/Icon";
+import { AdminPanel } from "@/components/admin/AdminPanel";
 import type { Character } from "@/lib/types";
 
 type SettingsTab = "profile" | "characters" | "appearance" | "admin";
@@ -39,14 +40,14 @@ export default function SettingsPage() {
     ["characters", "Meine Charaktere"],
     ["appearance", "Darstellung"],
   ];
-  if (isAdmin) tabs.push(["admin", "Freischaltungen"]);
+  if (isAdmin) tabs.push(["admin", "Admin"]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader title="Einstellungen" width="max-w-6xl" />
 
-      {/* Inhalt linksbündig in Formularbreite – Container-Breite bleibt einheitlich */}
-      <div className="max-w-2xl">
+      {/* Inhalt linksbündig in Formularbreite; die Admin-Verwaltung braucht mehr Platz */}
+      <div className={tab === "admin" ? "max-w-5xl" : "max-w-2xl"}>
       {/* Reiter wie in der Szenen-Übersicht (runde Pills) */}
       <div className="flex flex-wrap gap-1.5 mb-6">
         {tabs.map(([key, label]) => (
@@ -67,76 +68,7 @@ export default function SettingsPage() {
       {tab === "profile" && <ProfileTab />}
       {tab === "characters" && <CharactersTab />}
       {tab === "appearance" && <AppearanceTab />}
-      {tab === "admin" && isAdmin && <AdminTab />}
-      </div>
-    </div>
-  );
-}
-
-// Nur für Admins: neu registrierte Spieler*innen freischalten.
-function AdminTab() {
-  const { players, updatePlayer, currentPlayer, refresh } = useStore();
-  const pending = players.filter((p) => !p.approved);
-  const approved = players.filter((p) => p.approved);
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <div className="text-[0.875rem] text-text-secondary mb-3">
-          Wartet auf Freischaltung ({pending.length})
-        </div>
-        {pending.length === 0 ? (
-          <p className="text-[0.875rem] text-text-tertiary">
-            Niemand wartet gerade.{" "}
-            <button onClick={() => refresh()} className="underline hover:text-text-secondary">
-              Aktualisieren
-            </button>
-          </p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {pending.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center gap-3 bg-bg-surface border border-border-subtle rounded-lg px-3 py-2"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="text-[0.875rem] text-text-primary truncate">
-                    {p.username}
-                  </div>
-                  <div className="text-[0.875rem] text-text-tertiary truncate">
-                    {p.email}
-                  </div>
-                </div>
-                <button
-                  onClick={() => updatePlayer(p.id, { approved: true })}
-                  className="rounded-md bg-accent/90 hover:bg-accent text-black font-medium border border-accent px-3 py-1.5 text-[0.8125rem] transition-colors"
-                >
-                  Freischalten
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div>
-        <div className="text-[0.875rem] text-text-secondary mb-3">
-          Freigeschaltet ({approved.length})
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {approved.map((p) => (
-            <span
-              key={p.id}
-              className="inline-flex items-center gap-1.5 bg-bg-surface border border-border-subtle rounded-full px-3 py-1 text-[0.8125rem] text-text-secondary"
-            >
-              {p.username}
-              {p.is_admin && <span className="text-accent">· Admin</span>}
-              {p.id === currentPlayer?.id && (
-                <span className="text-text-tertiary">· du</span>
-              )}
-            </span>
-          ))}
-        </div>
+      {tab === "admin" && isAdmin && <AdminPanel />}
       </div>
     </div>
   );
@@ -316,9 +248,9 @@ function AppearanceTab() {
   const { currentPlayer, updatePlayer } = useStore();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
-  if (!currentPlayer) return null;
   // Entwurf, solange der Ausschnitt-Regler bewegt wird (gespeichert beim Loslassen)
   const [draft, setDraft] = useState<string | null>(null);
+  if (!currentPlayer) return null;
   const header = draft ?? currentPlayer.dashboard_header_url ?? null;
 
   async function onHeader(e: React.ChangeEvent<HTMLInputElement>) {

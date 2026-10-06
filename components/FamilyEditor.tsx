@@ -20,30 +20,46 @@ const TITLE: Record<string, string> = { "0": "Du & Geschwister" };
 
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
+const smallSelect =
+  "max-w-full rounded-md border border-border-subtle bg-bg-primary px-2 py-1 text-[0.75rem] text-text-primary outline-none focus:border-white/20";
 const removeBtn =
   "flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-tertiary hover:bg-white/[0.06] hover:text-red-300";
 const addBtn =
   "inline-flex shrink-0 items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 py-1 text-[0.75rem] text-text-tertiary hover:border-accent/50 hover:text-accent";
 
-// Stammbaum bearbeiten (Profil → Bearbeiten): ein Kasten je Generation bzw.
-// Seitenlinie, darin die Verwandten. Partner*innen und Angeheiratete legt man
-// direkt unter ihrer Person an („+ Partner*in") – im Stammbaum stehen sie dann
-// daneben. Wählt man beim Namen einen vorhandenen Charakter, führt der Eintrag
-// aufs Profil.
+// Wo steht jemand im Baum? `side` = Seitenlinie (Onkel/Tanten, Cousins …)
+type Ref = { id: string; generation: number; side: boolean };
+
+// Stammbaum bearbeiten (Profil → Bearbeiten). Zwei Beziehungsarten genügen, alles
+// andere ergibt sich daraus:
+//   · „Kind von" – bei jeder Person (auch beim Charakter selbst) die Eltern
+//   · „Partner*in von" – unter der Person, mit Status (zusammen/getrennt/geschieden)
+// Geschwister sind, wer dieselben Eltern hat; Großeltern, Onkel/Tanten und Cousins
+// folgen aus der Kette. Neue Leute legt man am schnellsten über „+ Verwandte*r"
+// an der Person an: Elternteil, Kind, Geschwister oder Partner*in – Platz im Baum
+// und Verknüpfung ergeben sich dabei von selbst. Wählt man beim Namen einen
+// vorhandenen Charakter, führt der Eintrag aufs Profil.
 export function FamilyEditor({
   family,
   onChange,
+  selfParents,
+  onSelfParents,
   character,
   everyone,
 }: {
   family: FamilyMember[];
   onChange: (next: FamilyMember[]) => void;
+  selfParents: string[];
+  onSelfParents: (next: string[]) => void;
   character: Character;
   everyone: Character[];
 }) {
   const partnerOf = familyPartners(family);
+  const selfName = character.full_name || character.name;
   const update = (id: string, patch: Partial<FamilyMember>) =>
     onChange(family.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  const partnersFor = (id: string) => family.filter((x) => partnerOf.get(x.id) === id);
+
   // `id` wird Partner*in von `target` (Person oder „self"). Das Ziel wird dabei zur
   // Hauptperson (keine Ketten), und wer bisher an `id` hing, wird wieder ein
   // gewöhnlicher Eintrag.
@@ -55,9 +71,10 @@ export function FamilyEditor({
         return m;
       }),
     );
-  // Wer entfernt wird, hinterlässt seine Partner*innen als gewöhnliche Einträge
-  // und verschwindet aus den „Kind von"-Angaben
-  const remove = (id: string) =>
+  // Wer entfernt wird, hinterlässt seine Partner*innen als gewöhnliche Einträge und
+  // verschwindet aus allen „Kind von"-Angaben
+  const remove = (id: string) => {
+    onSelfParents(selfParents.filter((p) => p !== id));
     onChange(
       family
         .filter((m) => m.id !== id)
@@ -67,12 +84,143 @@ export function FamilyEditor({
           parent_ids: m.parent_ids?.filter((p) => p !== id),
         })),
     );
-  // Onkel/Tanten (samt angeheirateten) – die Eltern der Cousinen und Cousins
-  const aunts = family.filter((m) => m.generation === -1 && m.side && m.name.trim());
-  const add = (patch: Partial<FamilyMember>) =>
-    onChange([...family, { id: newId(), name: "", relation: "", generation: -1, character_id: null, partner_of: null, ...patch }]);
+  };
 
-  // Eine Zeile: Name (mit Vorschlägen) und Verhältnis nebeneinander, ✕ rechts
+  // --- „Kind von" ------------------------------------------------------------
+  // Mögliche Eltern: die Generation darüber. Bei Cousins die Onkel/Tanten, sonst die
+  // direkte Linie; Kinder (Generation 1) können auch den Charakter selbst als Elternteil haben.
+  const parentPool = (generation: number, side: boolean) => {
+    const wantSide = generation === 0 ? side : false;
+    const pool = family
+      .filter((x) => x.generation === generation - 1 && !!x.side === wantSide && x.name.trim())
+      .map((x) => ({ id: x.id, name: x.name }));
+    return generation === 1 ? [{ id: "self", name: selfName }, ...pool] : pool;
+  };
+  const toggle = (list: string[], id: string) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
+  const parentPills = (
+    pool: { id: string; name: string }[],
+    chosen: string[],
+    onToggle: (id: string) => void,
+    hint?: string,
+  ) => {
+    if (pool.length === 0 && !hint) return null;
+    return (
+      <div className="ml-3 flex flex-wrap items-center gap-1.5 pl-3 text-[0.75rem] text-text-tertiary">
+        Kind von
+        {pool.length === 0 && <span>– {hint}</span>}
+        {pool.map((a) => {
+          const on = chosen.includes(a.id);
+          return (
+            <button
+              key={a.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => onToggle(a.id)}
+              className={`rounded-full border px-2 py-0.5 transition-colors ${
+                on ? "border-accent/70 bg-accent-soft text-text-primary" : "border-border-subtle hover:text-text-primary"
+              }`}
+            >
+              {a.name}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // --- „+ Verwandte*r" -------------------------------------------------------
+  const siblingSlot = (ref: Ref) =>
+    // Geschwister der Eltern/Großeltern stehen in der Seitenlinie, sonst im selben Platz
+    ref.generation <= -1 && !ref.side ? { generation: ref.generation, side: true } : { generation: ref.generation, side: ref.side };
+  const options = (ref: Ref): [string, string][] => {
+    const g = ref.generation;
+    const list: [string, string][] = [["partner", "Partner*in"]];
+    if (g > -2) list.push(["parent", "Elternteil"]);
+    if (g === -2 && !ref.side) {
+      list.push(["child_direct", "Kind (Elternteil von " + selfName.split(" ")[0] + ")"], ["child_side", "Kind (Onkel/Tante)"]);
+    } else if (g === -2) {
+      list.push(["child_side", "Kind"]);
+    } else if (g < 2) {
+      list.push(["child", g === -1 ? (ref.side ? "Kind (Cousin*e)" : `Kind (Geschwister von ${selfName.split(" ")[0]})`) : "Kind"]);
+    }
+    list.push(["sibling", "Geschwister"]);
+    return list;
+  };
+  const create = (kind: string, ref: Ref) => {
+    const id = newId();
+    const refParents = ref.id === "self" ? selfParents : (family.find((x) => x.id === ref.id)?.parent_ids ?? []);
+    const entry: FamilyMember = {
+      id,
+      name: "",
+      relation: "",
+      generation: ref.generation,
+      side: ref.side,
+      character_id: null,
+      partner_of: null,
+    };
+    let next = family;
+    if (kind === "partner") {
+      entry.partner_of = ref.id;
+    } else if (kind === "parent") {
+      entry.generation = ref.generation - 1;
+      entry.side = ref.generation === 0 ? ref.side : false;
+      if (ref.id === "self") onSelfParents([...selfParents, id]);
+      else next = family.map((x) => (x.id === ref.id ? { ...x, parent_ids: [...(x.parent_ids ?? []), id] } : x));
+    } else if (kind.startsWith("child")) {
+      // Kinder der Großeltern: Elternteil des Charakters (direkte Linie) oder Onkel/Tante
+      const ofGrandparent = kind === "child_direct" || kind === "child_side";
+      entry.generation = ofGrandparent ? -1 : ref.generation + 1;
+      entry.side = kind === "child_side" ? true : kind === "child_direct" ? false : ref.generation === -1 ? ref.side : false;
+      // Kinder gehören zu beiden Eltern, wenn die Person einen Partner hat
+      entry.parent_ids = [ref.id, ...partnersFor(ref.id).map((x) => x.id)];
+    } else if (kind === "sibling") {
+      const slot = siblingSlot(ref);
+      entry.generation = slot.generation;
+      entry.side = slot.side;
+      if (refParents.length) entry.parent_ids = [...refParents];
+    }
+    onChange([...next, entry]);
+  };
+  const menu = (ref: Ref) => {
+    const candidates = family.filter(
+      (o) => o.id !== ref.id && o.name.trim() && !partnerOf.has(o.id) && !family.some((x) => partnerOf.get(x.id) === o.id),
+    );
+    return (
+      <select
+        value=""
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v.startsWith("existing:")) attach(v.slice(9), ref.id);
+          else if (v) create(v, ref);
+        }}
+        aria-label="Verwandte*n hinzufügen"
+        className="max-w-full self-start rounded-full border border-dashed border-border-strong bg-transparent px-2.5 py-1 text-[0.75rem] text-text-tertiary outline-none hover:border-accent/50 hover:text-accent focus:border-accent/50"
+      >
+        <option value="" className="bg-bg-surface">
+          + Verwandte*r
+        </option>
+        <optgroup label="Neu anlegen">
+          {options(ref).map(([value, label]) => (
+            <option key={value} value={value} className="bg-bg-surface">
+              {label}
+            </option>
+          ))}
+        </optgroup>
+        {candidates.length > 0 && (
+          <optgroup label="Vorhandene als Partner*in zuordnen">
+            {candidates.map((o) => (
+              <option key={o.id} value={`existing:${o.id}`} className="bg-bg-surface">
+                {o.name}
+              </option>
+            ))}
+          </optgroup>
+        )}
+      </select>
+    );
+  };
+
+  // --- Zeilen ----------------------------------------------------------------
+  // Name (mit Vorschlägen) und Verhältnis nebeneinander, ✕ rechts in derselben Zeile
   const row = (m: FamilyMember, placeholder: string) => {
     const q = m.name.trim().toLowerCase();
     return (
@@ -111,9 +259,10 @@ export function FamilyEditor({
     );
   };
 
-  // Partner*innen einer Person (oder des Charakters selbst) – eingerückt darunter
-  const partnersBlock = (target: string, at: { generation: number; side?: boolean }) => {
-    const partners = family.filter((x) => partnerOf.get(x.id) === target);
+  // Partner*innen einer Person (oder des Charakters selbst) – eingerückt darunter,
+  // mit Auswahl, bei wem sie stehen, und Beziehungsstatus
+  const partnersBlock = (ref: Ref) => {
+    const partners = partnersFor(ref.id);
     return (
       <div className={`ml-3 flex flex-col gap-2 pl-3 ${partners.length ? "border-l border-border-subtle" : ""}`}>
         {partners.map((x) => (
@@ -123,83 +272,52 @@ export function FamilyEditor({
             </span>
             <div className="flex min-w-0 flex-col gap-1">
               {row(x, "z. B. Ehefrau")}
-              {/* umhängen: bei wem steht sie/er im Stammbaum? */}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <label className="flex flex-wrap items-center gap-2 text-[0.75rem] text-text-tertiary">
-                Partner*in von
-                <select
-                  value={x.partner_of ?? ""}
-                  onChange={(e) => attach(x.id, e.target.value || null)}
-                  className="max-w-full rounded-md border border-border-subtle bg-bg-primary px-2 py-1 text-[0.75rem] text-text-primary outline-none focus:border-white/20"
-                >
-                  <option value="self" className="bg-bg-surface">
-                    {character.full_name || character.name}
-                  </option>
-                  {family
-                    .filter((o) => o.id !== x.id && o.name.trim() && !partnerOf.has(o.id))
-                    .map((o) => (
-                      <option key={o.id} value={o.id} className="bg-bg-surface">
-                        {o.name}
-                      </option>
-                    ))}
-                  <option value="" className="bg-bg-surface">
-                    niemand (normaler Eintrag)
-                  </option>
-                </select>
-              </label>
-              <label className="flex flex-wrap items-center gap-2 text-[0.75rem] text-text-tertiary">
-                Status
-                <select
-                  value={x.partner_status ?? ""}
-                  onChange={(e) => update(x.id, { partner_status: (e.target.value || null) as FamilyMember["partner_status"] })}
-                  className="max-w-full rounded-md border border-border-subtle bg-bg-primary px-2 py-1 text-[0.75rem] text-text-primary outline-none focus:border-white/20"
-                >
-                  <option value="" className="bg-bg-surface">
-                    zusammen / verheiratet
-                  </option>
-                  <option value="separated" className="bg-bg-surface">
-                    getrennt
-                  </option>
-                  <option value="divorced" className="bg-bg-surface">
-                    geschieden
-                  </option>
-                </select>
-              </label>
+                <label className="flex flex-wrap items-center gap-2 text-[0.75rem] text-text-tertiary">
+                  Partner*in von
+                  <select
+                    value={x.partner_of ?? ""}
+                    onChange={(e) => attach(x.id, e.target.value || null)}
+                    className={smallSelect}
+                  >
+                    <option value="self" className="bg-bg-surface">
+                      {selfName}
+                    </option>
+                    {family
+                      .filter((o) => o.id !== x.id && o.name.trim() && !partnerOf.has(o.id))
+                      .map((o) => (
+                        <option key={o.id} value={o.id} className="bg-bg-surface">
+                          {o.name}
+                        </option>
+                      ))}
+                    <option value="" className="bg-bg-surface">
+                      niemand (normaler Eintrag)
+                    </option>
+                  </select>
+                </label>
+                <label className="flex flex-wrap items-center gap-2 text-[0.75rem] text-text-tertiary">
+                  Status
+                  <select
+                    value={x.partner_status ?? ""}
+                    onChange={(e) => update(x.id, { partner_status: (e.target.value || null) as FamilyMember["partner_status"] })}
+                    className={smallSelect}
+                  >
+                    <option value="" className="bg-bg-surface">
+                      zusammen / verheiratet
+                    </option>
+                    <option value="separated" className="bg-bg-surface">
+                      getrennt
+                    </option>
+                    <option value="divorced" className="bg-bg-surface">
+                      geschieden
+                    </option>
+                  </select>
+                </label>
               </div>
             </div>
           </div>
         ))}
-        {/* neue Person anlegen – oder eine vorhandene Zeile als Partner*in zuordnen */}
-        <select
-          value=""
-          onChange={(e) => {
-            const v = e.target.value;
-            if (v === "new") add({ partner_of: target, generation: at.generation, side: at.side });
-            else if (v) attach(v, target);
-          }}
-          aria-label="Partner*in hinzufügen"
-          className="max-w-full self-start rounded-full border border-dashed border-border-strong bg-transparent px-2.5 py-1 text-[0.75rem] text-text-tertiary outline-none hover:border-accent/50 hover:text-accent focus:border-accent/50"
-        >
-          <option value="" className="bg-bg-surface">
-            + Partner*in
-          </option>
-          <option value="new" className="bg-bg-surface">
-            Neue Person anlegen
-          </option>
-          {family
-            .filter(
-              (o) =>
-                o.id !== target &&
-                o.name.trim() &&
-                !partnerOf.has(o.id) &&
-                !family.some((x) => partnerOf.get(x.id) === o.id),
-            )
-            .map((o) => (
-              <option key={o.id} value={o.id} className="bg-bg-surface">
-                {o.name} (vorhanden)
-              </option>
-            ))}
-        </select>
+        {menu(ref)}
       </div>
     );
   };
@@ -215,7 +333,10 @@ export function FamilyEditor({
           <div key={slot.key} className="rounded-lg border border-border-subtle p-3">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[0.8125rem] font-medium text-text-primary">{TITLE[slot.key] ?? slot.label}</span>
-              <button onClick={() => add({ generation: slot.generation, side: slot.side })} className={addBtn}>
+              <button
+                onClick={() => onChange([...family, { id: newId(), name: "", relation: "", generation: slot.generation, side: slot.side, character_id: null, partner_of: null }])}
+                className={addBtn}
+              >
                 <Icon name="plus" size={11} /> Hinzufügen
               </button>
             </div>
@@ -224,47 +345,28 @@ export function FamilyEditor({
                 {own && (
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2 rounded-md bg-accent-soft px-3 py-2 text-[0.875rem] text-text-primary">
-                      {character.full_name || character.name}
+                      {selfName}
                       <span className="text-[0.75rem] text-text-tertiary">(dein Charakter)</span>
                     </div>
-                    {partnersBlock("self", { generation: 0 })}
+                    {parentPills(
+                      parentPool(0, false),
+                      selfParents,
+                      (id) => onSelfParents(toggle(selfParents, id)),
+                      "lege zuerst Eltern an",
+                    )}
+                    {partnersBlock({ id: "self", generation: 0, side: false })}
                   </div>
                 )}
                 {members.map((m) => (
                   <div key={m.id} className="flex flex-col gap-2">
                     {row(m, PLACEHOLDER[slot.key])}
-                    {/* Cousinen und Cousins: mit ihren Eltern (Onkel/Tanten) verbinden */}
-                    {slot.key === "0s" && (
-                      <div className="ml-3 flex flex-wrap items-center gap-1.5 pl-3 text-[0.75rem] text-text-tertiary">
-                        Kind von
-                        {aunts.length === 0 && <span>– lege zuerst Onkel oder Tanten an</span>}
-                        {aunts.map((a) => {
-                          const on = (m.parent_ids ?? []).includes(a.id);
-                          return (
-                            <button
-                              key={a.id}
-                              type="button"
-                              aria-pressed={on}
-                              onClick={() =>
-                                update(m.id, {
-                                  parent_ids: on
-                                    ? (m.parent_ids ?? []).filter((id) => id !== a.id)
-                                    : [...(m.parent_ids ?? []), a.id],
-                                })
-                              }
-                              className={`rounded-full border px-2 py-0.5 transition-colors ${
-                                on
-                                  ? "border-accent/70 bg-accent-soft text-text-primary"
-                                  : "border-border-subtle hover:text-text-primary"
-                              }`}
-                            >
-                              {a.name}
-                            </button>
-                          );
-                        })}
-                      </div>
+                    {parentPills(
+                      parentPool(m.generation, !!m.side),
+                      m.parent_ids ?? [],
+                      (id) => update(m.id, { parent_ids: toggle(m.parent_ids ?? [], id) }),
+                      slot.key === "0s" ? "lege zuerst Onkel oder Tanten an" : undefined,
                     )}
-                    {partnersBlock(m.id, { generation: m.generation, side: m.side })}
+                    {partnersBlock({ id: m.id, generation: m.generation, side: !!m.side })}
                   </div>
                 ))}
               </div>

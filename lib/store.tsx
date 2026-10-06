@@ -10,6 +10,7 @@ import {
 } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type {
+  AppSettings,
   Character,
   Chat,
   ChatMessage,
@@ -96,6 +97,11 @@ interface StoreValue extends PersistedState {
   // Legt den Ort an (oder findet den bestehenden) und gibt seine ID zurück.
   addLocation: (area: string, name: string, description?: string | null) => string | null;
   updateLocation: (id: string, patch: Partial<Location>) => void;
+  // Löscht den Ort (Szenen behalten ihren Ortsnamen als Text)
+  deleteLocation: (id: string) => void;
+  // App-weite Einstellungen (Akzentfarbe, Header-Bilder); ändern nur Admins
+  appSettings: AppSettings;
+  updateAppSettings: (patch: Partial<AppSettings>) => void;
   addNpc: (npc: Pick<Character, "name" | "role" | "age">, tier?: "extra" | "supporting") => string;
   addPlot: (name: string, tokens: string[], aus: string[], areas?: string[]) => string;
   updatePlot: (id: string, patch: Partial<Plot>) => void;
@@ -252,6 +258,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<PersistedState>(EMPTY);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [ready, setReady] = useState(false);
+  const [appSettings, setAppSettings] = useState<AppSettings>({});
   // Lese-Status pro Szene (wann zuletzt geöffnet). Eine Szene gilt als "neu",
   // wenn ihr jüngster Post neuer ist als der letzte Besuch (oder nie geöffnet).
   const [reads, setReads] = useState<Record<string, string>>({});
@@ -270,7 +277,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Lädt alle Welt-Daten (nur für freigeschaltete Nutzer*innen sichtbar; RLS).
   const loadWorld = useCallback(async () => {
-    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, calls] = await Promise.all([
+    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, calls, as] = await Promise.all([
       supabase.from("players").select("*"),
       supabase.from("characters").select("*"),
       supabase.from("scenes").select("*"),
@@ -281,7 +288,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       fetchAll<Chat>("chats"),
       fetchAll<ChatMessage>("chat_messages"),
       fetchAll<PhoneCall>("calls"),
+      // Tabelle evtl. noch nicht angelegt (schema-app-settings.sql) – dann Standard
+      supabase.from("app_settings").select("*"),
     ]);
+    const appRow = (as.data as { key: string; value: AppSettings }[] | null)?.find((r) => r.key === "app");
+    if (!as.error) setAppSettings(appRow?.value ?? {});
     setState({
       players: (pl.data as Player[]) ?? [],
       characters: (ch.data as Character[]) ?? [],
@@ -657,12 +668,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     (id: string) => state.locations.find((l) => l.id === id),
     [state.locations],
   );
-  // Charaktere/NPCs bearbeiten dürfen Admins und wer sie angelegt hat.
+  // Charaktere/NPCs bearbeiten darf, wer sie spielt – auch Admins nur die eigenen.
+  // Fremde Profile pflegen Admins ausschließlich über Einstellungen → Admin.
   const canEditCharacter = useCallback(
     (c: Character) =>
       !!currentPlayer &&
-      (Boolean(currentPlayer.is_admin) ||
-        tierOf(c) === "extra" || // Statist*innen dürfen alle bearbeiten
+      (tierOf(c) === "extra" || // Statist*innen dürfen alle bearbeiten
         c.player_id === currentPlayer.id ||
         (c.co_owner_ids ?? []).includes(currentPlayer.id)),
     [currentPlayer],
@@ -845,6 +856,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     [state.locations, currentPlayer?.id, canEditLocation],
   );
+
+  const deleteLocation = useCallback((id: string) => {
+    persist("deleteLocation", supabase.from("locations").delete().eq("id", id));
+    setState((s) => ({ ...s, locations: s.locations.filter((l) => l.id !== id) }));
+  }, []);
+
+  const updateAppSettings = useCallback((patch: Partial<AppSettings>) => {
+    setAppSettings((prev) => {
+      const next = { ...prev, ...patch };
+      persist(
+        "updateAppSettings",
+        supabase.from("app_settings").upsert({ key: "app", value: next, updated_at: new Date().toISOString() }),
+      );
+      return next;
+    });
+  }, []);
 
   const updateLocation = useCallback((id: string, patch: Partial<Location>) => {
     persist("updateLocation", supabase.from("locations").update(patch).eq("id", id));
@@ -1436,6 +1463,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       changePassword,
       changeEmail,
       refresh,
+      appSettings,
+      updateAppSettings,
+      deleteLocation,
       charactersOf,
       postsOf,
       character,
@@ -1508,6 +1538,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       changePassword,
       changeEmail,
       refresh,
+      appSettings,
+      updateAppSettings,
+      deleteLocation,
       charactersOf,
       postsOf,
       character,
