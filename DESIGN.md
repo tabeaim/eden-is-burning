@@ -286,6 +286,23 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
 - **„Neu anlegen" in einer Bubble-Reihe:** gestrichelte Pill mit Plus und Text
   („+ Neuer Ort", „+ Als Plot speichern").
 
+## Orte – `app/orte/page.tsx`
+
+Ein Menüpunkt „Orte", zwei Ansichten (Umschalter oben, die zuletzt genutzte merkt
+sich das Gerät; ein Link `/orte?area=…` öffnet immer die Karte):
+
+- **Liste** (`components/LocationList.tsx`): alle Orte als Karten, aufgebaut wie
+  die Szenen-Übersicht – Reiter (Alle, Bespielt, Noch nicht bespielt),
+  Filterleiste (Wortsuche, Gegend, Charaktere), darüber „Neuer Ort" und die
+  Sortierung. Die Ortskarte zeigt Bild (eigenes Titelbild, sonst erstes
+  Vibes-Foto, sonst Bild der Gegend), Name, Kurzbeschreibung und die Anzahl
+  Szenen mit Streichholz (orange, wenn dort eine Szene aktiv ist); die ganze
+  Karte führt aufs Ortsprofil.
+- **Wortsuche:** oben, was das Wort im Namen trägt; darunter „verwandt." – das
+  Wort in der Beschreibung oder ein Wort derselben Gruppe (Café → Diner). Die
+  Gruppen stehen in `lib/place-words.ts`; Orte haben keine Kategorie.
+- **Karte:** wie bisher, mit Gegend-Panel.
+
 ## Timeline
 
 Der Zeitstrahl nutzt dieselben Bausteine wie die Szenenboxen (Karte mit Rahmen,

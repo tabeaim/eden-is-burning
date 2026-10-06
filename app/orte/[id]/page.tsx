@@ -53,7 +53,7 @@ export default function LocationPage({
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-16 text-text-tertiary">
         Ort nicht gefunden.{" "}
         <Link href="/orte" className="underline">
-          Zur Karte
+          Zu den Orten
         </Link>
       </div>
     );

@@ -22,7 +22,7 @@ const NAV: { href: string; label: string; icon: IconName; title?: string }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/szenen", label: "Szenen", icon: "book" },
   { href: "/handy", label: "Handy", icon: "phone" },
-  { href: "/orte", label: "Karte", icon: "map", title: "Eden, Virginia" },
+  { href: "/orte", label: "Orte", icon: "map", title: "Eden, Virginia" },
   { href: "/kalender", label: "Timeline", icon: "calendar" },
   { href: "/charaktere", label: "Charaktere", icon: "users" },
   { href: "/spieler", label: "Spieler*innen", icon: "star" },

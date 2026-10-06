@@ -8,13 +8,76 @@ import { AREAS, EXTRA_AREAS, areaName, type AreaKey } from "@/lib/world";
 import { placeholderImg } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { EdenMap } from "@/components/EdenMap";
+import { LocationList } from "@/components/LocationList";
 import { Icon } from "@/components/Icon";
 import { CharacterBubble, LocationBubble } from "@/components/Bubble";
 import { SceneRow } from "@/components/SceneCard";
 import { Facts, FactRow } from "@/components/Facts";
 import type { Location } from "@/lib/types";
 
+type View = "map" | "list";
+const VIEW_KEY = "eden.orte.view";
+
+// Orte: eine Seite, zwei Ansichten – die Karte und die Liste aller Orte. Die
+// zuletzt genutzte Ansicht merkt sich das Gerät; ohne Merker startet die Liste.
 export default function PlacesPage() {
+  // null bis nach der Hydration (localStorage und Adresse gibt es erst im Browser)
+  const [view, setView] = useState<View | null>(null);
+  useEffect(() => {
+    // Link auf eine Gegend (/orte?area=byron) meint immer die Karte
+    const area = new URLSearchParams(window.location.search).get("area");
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(VIEW_KEY);
+    } catch {}
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setView(area || stored === "map" ? "map" : "list");
+  }, []);
+
+  function choose(v: View) {
+    setView(v);
+    try {
+      localStorage.setItem(VIEW_KEY, v);
+    } catch {}
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-6">
+      <PageHeader
+        title="Eden, Virginia"
+        subtitle="Eden, Virginia – fünf Gegenden, ein Fluss, und alles dahinter." width="max-w-6xl" />
+
+      {view && (
+        <div className="flex gap-1.5 mb-4">
+          {(
+            [
+              ["list", "Liste", "book"],
+              ["map", "Karte", "map"],
+            ] as const
+          ).map(([key, label, icon]) => (
+            <button
+              key={key}
+              onClick={() => choose(key)}
+              aria-pressed={view === key}
+              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[0.8125rem] transition-colors ${
+                view === key
+                  ? "border-accent/50 bg-accent-soft text-text-primary"
+                  : "border-border-subtle bg-bg-primary text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              <Icon name={icon} size={14} /> {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {view === "list" && <LocationList />}
+      {view === "map" && <MapView />}
+    </div>
+  );
+}
+
+function MapView() {
   const router = useRouter();
   const { scenes, characters, locationsOf, addLocation } = useStore();
   const [selected, setSelected] = useState<string>("rivers_edge");
@@ -63,11 +126,7 @@ export default function PlacesPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-6">
-      <PageHeader
-        title="Eden, Virginia"
-        subtitle="Eden, Virginia – fünf Gegenden, ein Fluss, und alles dahinter." width="max-w-6xl" />
-
+    <>
       {/* Karte liegt frei (ohne Kasten, ohne Banner-Header) auf der Seite und füllt
           die Fensterhöhe; das schmale Detail-Panel sitzt rechtsbündig und darf bei
           wenig Platz ein Stück über das auslaufende Wasser ragen. */}
@@ -185,7 +244,7 @@ export default function PlacesPage() {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

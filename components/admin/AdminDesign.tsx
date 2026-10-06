@@ -19,7 +19,7 @@ const THEMES: [Theme, string][] = [
 const PAGES: [string, string][] = [
   ["dashboard", "Dashboard"],
   ["szenen", "Szenen"],
-  ["orte", "Karte"],
+  ["orte", "Orte"],
   ["kalender", "Timeline"],
   ["charaktere", "Charaktere"],
   ["spieler", "Spieler*innen"],
