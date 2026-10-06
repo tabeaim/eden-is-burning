@@ -80,6 +80,11 @@ export interface ResolvedPhone {
   captic: boolean; // Captic aktiviert (nie auf dem Burner Phone)
 }
 
+// Hat der Charakter überhaupt ein Handy? (abschaltbar in den Handy-Einstellungen)
+export function hasPhone(c: Pick<Character, "phone"> | null | undefined): boolean {
+  return !c?.phone?.disabled;
+}
+
 export function wallpaperCss(value: string | null | undefined): string {
   if (value && !value.startsWith("preset:")) {
     return `center / cover no-repeat url("${value.replace(/"/g, "%22")}")`;

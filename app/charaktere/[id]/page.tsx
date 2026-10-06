@@ -17,17 +17,20 @@ import {
   ageAt,
   isHidden,
   normalizeHeight,
+  playsAs,
   tierLabel,
   tierOf,
 } from "@/lib/characters";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ThingsBoard } from "@/components/ThingsBoard";
 import { PinterestBoard } from "@/components/PinterestBoard";
+import { hasPhone } from "@/lib/phone";
 import { PhonePreview } from "@/components/phone/PhonePreview";
 import { StatistActions } from "@/components/StatistActions";
 import { ProfileEditPanel } from "@/components/ProfileEditPanel";
 import {
   ProfileFacts,
+  ProfileFamilyTree,
   ProfileLikes,
   ProfileLooks,
   ProfileSkills,
@@ -184,7 +187,7 @@ export default function CharacterPage({
           {/* Lange Reiter scrollen in sich, damit der Text nicht viel länger läuft
               als der Banner daneben hoch ist (nur neben dem Banner, also ab md). Im
               ersten Reiter scrollt nur die Kurzbeschreibung, die Facts bleiben stehen. */}
-          <div className={tab === "general" ? "" : "md:max-h-[624px] md:overflow-y-auto md:pr-3"}>
+          <div className={tab === "general" || tab === "moodboard" ? "" : "md:max-h-[524px] md:overflow-y-auto md:pr-3"}>
           {tab === "general" && <GeneralTab c={c} />}
           {tab === "moodboard" && c.pinterest_url && (
             <section>
@@ -198,10 +201,16 @@ export default function CharacterPage({
             <section>
               {/* links das Handy, daneben die Collage der Gegenstände */}
               <div className="flex flex-col items-start gap-6 sm:flex-row">
-                <div className="shrink-0">
-                  <PhonePreview character={c} />
-                </div>
-                <ThingsBoard character={c} canEdit={canEditCharacter(c)} />
+                {/* ohne Handy (Einstellungen) nur die Gegenstände */}
+                {hasPhone(c) && (
+                  <div className="shrink-0">
+                    <PhonePreview character={c} />
+                  </div>
+                )}
+                <ThingsBoard items={c.profile?.things ?? []} />
+                {!hasPhone(c) && !(c.profile?.things ?? []).length && (
+                  <p className="text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>
+                )}
               </div>
             </section>
           )}
@@ -210,7 +219,7 @@ export default function CharacterPage({
             <RelationsTab
               c={c}
               coChars={coChars}
-              canEdit={canEditCharacter(c)}
+              canEdit={playsAs(c, store.currentPlayerId)}
             />
           )}
 
@@ -307,7 +316,7 @@ function NpcFacts({ c }: { c: Character }) {
 function ProfileBanner({ c }: { c: Character }) {
   return (
     <div
-      className="group relative h-[680px] w-full overflow-hidden rounded-xl bg-bg-surface"
+      className="group relative h-[580px] w-full overflow-hidden rounded-xl bg-bg-surface"
       style={{
         backgroundImage: c.banner_url
           ? undefined
@@ -399,7 +408,7 @@ function GeneralTab({ c }: { c: Character }) {
       {/* Kurzbeschreibung – links neben den Facts (die brauchen den Platz für lange Namen) */}
       <div>
         {c.bio ? (
-          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary lg:max-h-[600px] lg:overflow-y-auto lg:pr-3">
+          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary lg:max-h-[500px] lg:overflow-y-auto lg:pr-3">
             {c.bio}
           </p>
         ) : (
@@ -424,7 +433,7 @@ function CharacterTab({ c }: { c: Character }) {
   const empty =
     !c.personality &&
     !(p.traits_plus?.length || p.traits_minus?.length || p.skills?.length || p.sliders?.length) &&
-    !(p.likes?.length || p.dislikes?.length || p.timeline?.length);
+    !(p.likes?.length || p.dislikes?.length || p.timeline?.length || p.family?.length);
   return (
     <div className="flex flex-col gap-9">
       {c.personality && (
@@ -439,6 +448,7 @@ function CharacterTab({ c }: { c: Character }) {
       <ProfileSkills c={c} />
       <ProfileSliders c={c} />
       <ProfileLikes c={c} />
+      <ProfileFamilyTree c={c} />
       <ProfileTimeline c={c} />
       {empty && (
         <p className="text-[0.875rem] text-text-tertiary">Noch keine Charakterbeschreibung hinterlegt.</p>
@@ -612,11 +622,6 @@ function RelationRow({
             )}
           </Link>
           {facts && <div className="text-[0.8125rem] text-text-tertiary">{facts}</div>}
-        </div>
-        <div className={`flex shrink-0 flex-wrap justify-end gap-1.5 ${canEdit ? "mr-12" : ""}`}>
-          <Link href={`/szenen?chars=${c.id},${rc.id}`} className={btn}>
-            Szenen
-          </Link>
         </div>
       </div>
 

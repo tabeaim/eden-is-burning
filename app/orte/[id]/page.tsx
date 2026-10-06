@@ -8,7 +8,7 @@ import { areaName } from "@/lib/world";
 import { pageHeader } from "@/lib/headers";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { Icon } from "@/components/Icon";
-import { isHidden, isStudent, isWorking } from "@/lib/characters";
+import { isHidden, isWorking } from "@/lib/characters";
 import { CharacterBubble } from "@/components/Bubble";
 import { SceneCard } from "@/components/SceneCard";
 import { Facts, FactRow } from "@/components/Facts";
@@ -71,9 +71,6 @@ export default function LocationPage({
   // Charaktere, die diesen Ort als Arbeitgeber eingetragen haben (und es zeigen)
   const workers = characters.filter(
     (c) => isWorking(c) && c.profile?.employer_location_id === loc.id && !isHidden(c, "employer"),
-  );
-  const students = characters.filter(
-    (c) => isStudent(c) && c.profile?.university_location_id === loc.id && !isHidden(c, "university"),
   );
   const people = loc.people ?? [];
 
@@ -139,17 +136,6 @@ export default function LocationPage({
               <Heading>works here.</Heading>
               <div className="flex flex-wrap gap-1.5">
                 {workers.map((w) => (
-                  <CharacterBubble key={w.id} character={w} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {students.length > 0 && (
-            <section>
-              <Heading>studies here.</Heading>
-              <div className="flex flex-wrap gap-1.5">
-                {students.map((w) => (
                   <CharacterBubble key={w.id} character={w} />
                 ))}
               </div>

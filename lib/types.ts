@@ -91,6 +91,14 @@ export interface Character {
   phone?: PhoneSettings | null;
 }
 
+export interface FamilyMember {
+  id: string;
+  name: string;
+  relation: string; // z.B. „Mutter", „Stiefbruder"
+  generation: number;
+  character_id?: string | null;
+}
+
 export interface ThingItem {
   id: string;
   src: string;
@@ -113,7 +121,6 @@ export interface CharacterProfile {
   is_working?: boolean;
   occupation_kind?: "student" | "working" | null; // Altbestand, siehe isStudent/isWorking
   university?: string | null;
-  university_location_id?: string | null; // … falls ein Ort gewählt wurde („studies here")
   major?: string | null; // Studiengang
   degree?: "undergraduate" | "graduate" | "phd" | "mba" | null;
   study_start?: string | null; // ISO-Datum; daraus das Studienjahr
@@ -131,10 +138,14 @@ export interface CharacterProfile {
   // x/y = Mitte in % der Fläche, w = Breite in % der Flächenbreite, r = Drehung
   // in Grad; die Reihenfolge ist die Stapelfolge (letztes liegt oben).
   things?: ThingItem[];
+  // Stammbaum: Verwandte nach Generation (-2 Großeltern, -1 Eltern, 0 gleiche
+  // Generation, 1 Kinder, 2 Enkel); optional mit einem Charakter verknüpft
+  family?: FamilyMember[];
 }
 
 // Alle Felder optional – Fehlendes füllt `resolvePhone` (lib/phone.ts) mit Standards.
 export interface PhoneSettings {
+  disabled?: boolean; // der Charakter hat kein Handy
   avatar?: string | null; // eigenes Profilbild im Messenger (sonst das Charakterbild)
   model?: string; // Schlüssel aus PHONE_MODELS
   color?: string; // Schlüssel aus PHONE_COLORS

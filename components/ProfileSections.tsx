@@ -1,3 +1,5 @@
+"use client";
+
 import type { Character, CharacterProfile } from "@/lib/types";
 import {
   DEGREES,
@@ -11,6 +13,9 @@ import {
   zodiacOf,
 } from "@/lib/characters";
 import { areaName } from "@/lib/world";
+import Link from "next/link";
+import { useStore } from "@/lib/store";
+import { DEFAULT_AVATAR, characterImage } from "@/lib/avatar";
 import { Facts, FactRow } from "./Facts";
 
 // Bausteine des Charakterprofils (siehe DESIGN.md): Facts mit englischen Labels,
@@ -251,6 +256,82 @@ export function ProfileTimeline({ c }: { c: Character }) {
           </li>
         ))}
       </ol>
+    </section>
+  );
+}
+
+// Stammbaum: Verwandte nach Generation in Reihen (oben die Ältesten), die Reihen
+// durch eine Linie verbunden; der Charakter selbst steht hervorgehoben in seiner
+// Generation. Mit einem Charakter verknüpfte Einträge führen auf dessen Profil.
+const GENERATIONS: [number, string][] = [
+  [-2, "Großeltern"],
+  [-1, "Eltern"],
+  [0, "Gleiche Generation"],
+  [1, "Kinder"],
+  [2, "Enkel"],
+];
+export { GENERATIONS };
+
+export function ProfileFamilyTree({ c }: { c: Character }) {
+  const { character } = useStore();
+  const family = c.profile?.family ?? [];
+  if (family.length === 0) return null;
+  const rows = GENERATIONS.map(([gen]) => family.filter((m) => m.generation === gen)).map((members, i) =>
+    GENERATIONS[i][0] === 0 ? [null, ...members] : members,
+  );
+  const used = rows.map((r, i) => ({ gen: GENERATIONS[i][0], members: r })).filter((r) => r.members.length > 0);
+  const card = "flex w-28 flex-col items-center gap-1 rounded-lg border px-2 py-2 text-center";
+  return (
+    <section>
+      <SectionHeading>family tree.</SectionHeading>
+      <div className="flex flex-col items-center">
+        {used.map((row, i) => (
+          <div key={row.gen} className="flex flex-col items-center">
+            {i > 0 && <span className="h-5 w-px bg-white/25" />}
+            <div className="flex flex-wrap justify-center gap-2 border-t border-white/25 pt-3 first:border-t-0">
+              {row.members.map((m) => {
+                if (m === null) {
+                  return (
+                    <div key="self" className={`${card} border-accent/70 bg-accent-soft`}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={characterImage(c)} alt="" className="h-10 w-10 rounded-full object-cover" />
+                      <span className="text-[0.8125rem] leading-tight text-text-primary">{c.name.split(" ")[0]}</span>
+                    </div>
+                  );
+                }
+                const linked = m.character_id ? character(m.character_id) : undefined;
+                const body = (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={linked ? characterImage(linked) : DEFAULT_AVATAR}
+                      alt=""
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                    <span className="text-[0.8125rem] leading-tight text-text-primary">{m.name}</span>
+                    {m.relation && (
+                      <span className="text-[0.6875rem] uppercase tracking-wider text-text-tertiary">{m.relation}</span>
+                    )}
+                  </>
+                );
+                return linked ? (
+                  <Link
+                    key={m.id}
+                    href={`/charaktere/${linked.id}`}
+                    className={`${card} border-border-subtle bg-bg-surface hover:border-accent/50`}
+                  >
+                    {body}
+                  </Link>
+                ) : (
+                  <div key={m.id} className={`${card} border-border-subtle bg-bg-surface`}>
+                    {body}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

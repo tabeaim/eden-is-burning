@@ -76,7 +76,8 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
   const tabs: [Tab, string][] = [
     ["characters", "Characters"],
     ["scenes", "Scenes"],
-    ["about", "About"],
+    // nur sichtbar, wenn Skills, Slider oder Likes hinterlegt sind
+    ...(hasAbout ? ([["about", "About"]] as [Tab, string][]) : []),
   ];
   const btn =
     "inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
@@ -176,12 +177,11 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
       )}
 
       {/* Skills, Slider, Likes – wie bei den Charakteren */}
-      {tab === "about" && (
+      {tab === "about" && hasAbout && (
         <div className="flex max-w-4xl flex-col gap-9">
           <ProfileSkills c={p} />
           <ProfileSliders c={p} />
           <ProfileLikes c={p} />
-          {!hasAbout && <p className="text-[0.875rem] text-text-tertiary">Noch nichts hinterlegt.</p>}
         </div>
       )}
 

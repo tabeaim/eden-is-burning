@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
-import { PHONE_OWNER_KEY, contactName, contactPhoto, resolvePhone, type PhoneModel } from "@/lib/phone";
+import { PHONE_OWNER_KEY, contactName, contactPhoto, hasPhone, resolvePhone, type PhoneModel } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
 import { tierLabel } from "@/lib/characters";
 
@@ -566,7 +566,10 @@ export function useMyPhone() {
   const { currentPlayer, charactersOf, myNpcs } = useStore();
   // Main Characters und die Nebenfiguren, die ich bespiele (zugeordnete SCs,
   // zeitweise Statist*innen) – sie alle haben ein Handy zum In-die-Hand-nehmen
-  const myChars = currentPlayer ? [...charactersOf(currentPlayer.id), ...myNpcs] : [];
+  // … außer denen, die laut Einstellungen gar kein Handy haben.
+  const myChars = currentPlayer
+    ? [...charactersOf(currentPlayer.id), ...myNpcs].filter((c) => hasPhone(c))
+    : [];
   const [stored, setOwner] = usePhoneOwner();
   const me = myChars.find((c) => c.id === stored) ?? myChars[0];
   return { myChars, me: me as Character | undefined, stored, setOwner };

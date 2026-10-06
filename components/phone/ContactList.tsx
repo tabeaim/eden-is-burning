@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { contactName } from "@/lib/phone";
+import { contactName, hasPhone } from "@/lib/phone";
 import { tierLabel } from "@/lib/characters";
 import { Icon } from "@/components/Icon";
 import { ContactAvatar } from "./PhoneFrame";
@@ -56,7 +56,8 @@ export function ContactList({
     return count;
   }, [owner.id, scenes, posts, chats, chatMessages]);
 
-  const everyone = [...characters, ...npcs].filter((c) => c.id !== owner.id);
+  // wer kein Handy hat, steht in keiner Kontaktliste
+  const everyone = [...characters, ...npcs].filter((c) => c.id !== owner.id && hasPhone(c));
   // Kontakt gehabt: gemeinsame Szene oder Chat, ein Anruf, oder ein eigener
   // Kontakt-Eintrag (umbenannt / mit Foto)
   const known = (c: Character) =>

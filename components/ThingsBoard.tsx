@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Character, ThingItem } from "@/lib/types";
-import { useStore } from "@/lib/store";
+import type { ThingItem } from "@/lib/types";
 import { loadImageFile, removeBackground, toCanvas, uploadCanvas } from "@/lib/cutout";
 import { Icon } from "./Icon";
 import { Toggle } from "./Toggle";
@@ -10,17 +9,25 @@ import { Toggle } from "./Toggle";
 const MAX_THINGS = 12;
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
-// „Personal Things": Gegenstände, die der Charakter bei sich hat, als Collage.
-// Ansicht: die Bilder liegen frei auf durchsichtigem Grund. Bearbeiten: ein
-// kleines Whiteboard – Bilder hinzufügen (auf Wunsch mit entferntem Hintergrund),
-// mit Maus oder Finger verschieben, Größe und Drehung einstellen, speichern.
+// „Pockets": Gegenstände, die der Charakter bei sich hat, als Collage.
+// Ansicht: die Bilder liegen frei auf durchsichtigem Grund. Bearbeiten (im
+// „Bearbeiten"-Formular des Profils): ein kleines Whiteboard – Bilder hinzufügen
+// (auf Wunsch mit entferntem Hintergrund), mit Maus oder Finger verschieben,
+// Größe und Drehung direkt am Objekt einstellen.
 // Positionen sind Prozente der Fläche, damit die Collage auf jedem Bildschirm
 // gleich aussieht.
-export function ThingsBoard({ character, canEdit }: { character: Character; canEdit: boolean }) {
-  const { updateCharacter } = useStore();
-  const saved = character.profile?.things ?? [];
-  const [editing, setEditing] = useState(false);
-  const [items, setItems] = useState<ThingItem[]>(saved);
+export function ThingsBoard({
+  items,
+  onChange,
+}: {
+  items: ThingItem[];
+  // Mit onChange ist die Fläche ein Whiteboard zum Bearbeiten (steckt im
+  // „Bearbeiten"-Formular des Profils, das auch speichert); ohne nur Ansicht.
+  onChange?: (items: ThingItem[]) => void;
+}) {
+  const editing = !!onChange;
+  const setItems = (next: ThingItem[] | ((list: ThingItem[]) => ThingItem[])) =>
+    onChange?.(typeof next === "function" ? next(items) : next);
   const [selected, setSelected] = useState<string | null>(null);
   const board = useRef<HTMLDivElement>(null);
   // Laufende Geste: verschieben, Größe ändern (Ecke) oder drehen (Griff oben)
@@ -126,20 +133,9 @@ export function ThingsBoard({ character, canEdit }: { character: Character; canE
     },
   });
 
-  function start() {
-    setItems(saved);
-    setSelected(null);
-    setEditing(true);
-  }
-  function save() {
-    updateCharacter(character.id, { profile: { ...(character.profile ?? {}), things: items } });
-    setEditing(false);
-    setPending(null);
-  }
-
-  const shown = editing ? items : saved;
+  const shown = items;
   const active = items.find((t) => t.id === selected);
-  if (!editing && saved.length === 0 && !canEdit) return null;
+  if (!editing && items.length === 0) return null;
 
   const btn =
     "inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-primary disabled:opacity-40";
@@ -233,12 +229,6 @@ export function ThingsBoard({ character, canEdit }: { character: Character; canE
           );
         })}
       </div>
-
-      {!editing && canEdit && (
-        <button onClick={start} className={`${btn} mt-3`}>
-          <Icon name="edit" size={14} /> Gegenstände bearbeiten
-        </button>
-      )}
 
       {editing && (
         <div className="mt-3 flex max-w-[26rem] flex-col gap-3">
@@ -366,24 +356,6 @@ export function ThingsBoard({ character, canEdit }: { character: Character; canE
             }}
           />
 
-          <div className="flex items-center justify-end gap-3 border-t border-border-subtle pt-3">
-            <button
-              onClick={() => {
-                setEditing(false);
-                setPending(null);
-              }}
-              className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
-            >
-              Abbrechen
-            </button>
-            <button
-              onClick={save}
-              disabled={busy}
-              className="rounded-md bg-accent/90 px-3 py-1.5 text-[0.8125rem] font-medium text-black hover:bg-accent disabled:opacity-40"
-            >
-              Speichern
-            </button>
-          </div>
         </div>
       )}
     </div>

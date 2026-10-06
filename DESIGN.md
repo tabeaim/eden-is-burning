@@ -130,8 +130,10 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   Pockets (Handy und Gegenstände, nur Main Characters) · Scenes · Relations (nach
   Kategorie: love life, family, acquainted). Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
-- **Personal Things** (`ThingsBoard`): neben dem Handy eine Collage der
-  Gegenstände, die der Charakter bei sich hat. Bearbeiten öffnet ein Whiteboard
+- **Pockets** (`ThingsBoard`): neben dem Handy eine Collage der Gegenstände, die
+  der Charakter bei sich hat (ohne Handy – abschaltbar in den
+  Handy-Einstellungen – nur die Gegenstände). Bearbeitet wird im
+  „Bearbeiten"-Formular des Profils auf einem Whiteboard
   (Bilder hinzufügen – auch per Einfügen aus der Zwischenablage –, verschieben,
   Größe an den Ecken, Drehung am Griff oben, Stapelfolge); gespeichert
   liegen die Bilder frei auf durchsichtigem Grund. Beim Hinzufügen kann ein
@@ -153,6 +155,10 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   „Moodboard" es direkt ein (`PinterestBoard`, Pinterests Einbett-Skript, erst
   beim Öffnen des Reiters geladen; ohne Kopf mit Nutzer*in und mit durchsichtigem
   Hintergrund – `.pinterest-board` in globals.css).
+- **Stammbaum** (`ProfileFamilyTree`, Reiter Character): Verwandte nach
+  Generation in Reihen, der Charakter selbst hervorgehoben; verknüpfte Einträge
+  führen aufs Profil.
+- **Relations** bearbeitet nur, wer den Charakter selbst spielt (`playsAs`).
 - **Namen aufzählen:** zwei mit „&", mehr mit Kommas (`joinNames`).
 - **Formular-Abschnitte** in den Charakter-Einstellungen sind aufklappbar
   (`Collapsible`); Abschnitte mit fehlender Pflichtangabe bleiben offen. Kleine

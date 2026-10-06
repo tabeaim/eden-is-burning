@@ -100,6 +100,14 @@ export function PhoneSettings({ character, reduced = false }: { character: Chara
         )}
       </div>
 
+      <Toggle checked={!raw.disabled} onChange={(on) => save({ disabled: !on })}>
+        Hat ein Handy{" "}
+        <span className="text-text-tertiary">
+          (aus: kein Handy im Profil, keine SMS und Anrufe, nicht in Kontaktlisten)
+        </span>
+      </Toggle>
+      {raw.disabled ? null : (
+      <>
       <div>
         <div className={label}>
           Profilbild im Messenger{" "}
@@ -294,6 +302,8 @@ export function PhoneSettings({ character, reduced = false }: { character: Chara
             </div>
           </div>
         </>
+      )}
+      </>
       )}
     </div>
   );

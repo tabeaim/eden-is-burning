@@ -265,8 +265,9 @@ body {
 }
 
 /* Eingebundenes Pinterest-Board (Reiter „Moodboard"): Pinterests Skript baut
-   Elemente mit Klassen wie PIN_<Zahl>_embed_grid, …_hd (Kopf mit Nutzer*in),
-   …_bd (Pins), …_ft (Folgen-Knopf). Kopf und Fuß weg, Hintergrund durchsichtig. */
+   Elemente mit Klassen wie PIN_<Zahl>_embed_grid, …_hd (Kopf mit Konto – bleibt,
+   als Weg zum Board), …_bd (Pins), …_ft (Folgen-Knopf). Hintergrund
+   durchsichtig, Schrift im Kopf hell, Fuß weg. */
 .pinterest-board [class*="_embed_grid"] {
   background: transparent !important;
   border: 0 !important;
@@ -276,6 +277,10 @@ body {
   max-width: 100% !important;
 }
 .pinterest-board [class*="_embed_grid"] [class$="_hd"],
+.pinterest-board [class*="_embed_grid"] [class$="_hd"] * {
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+}
 .pinterest-board [class*="_embed_grid"] [class$="_ft"] {
   display: none !important;
 }

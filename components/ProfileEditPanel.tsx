@@ -1,7 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Character, CharacterProfile } from "@/lib/types";
+import type { Character, CharacterProfile, FamilyMember, ThingItem } from "@/lib/types";
+import { GENERATIONS } from "./ProfileSections";
+import { SuggestInput } from "./SuggestInput";
+import { ThingsBoard } from "./ThingsBoard";
 import { useStore } from "@/lib/store";
 import { normalizeHeight, tierOf } from "@/lib/characters";
 import { AREA_ORDER, AREAS } from "@/lib/world";
@@ -23,7 +26,7 @@ const toList = (text: string) =>
 
 // Profil direkt im Profil bearbeiten: alles Beschreibende – Zitat, Banner,
 // ausführliche Beschreibung, Eigenschaften, Skills, Slider, Likes/Dislikes,
-// Timeline; bei Supporting Characters und Statist*innen dazu „Vibes"
+// Stammbaum, Timeline und die Gegenstände („Pockets"); bei Supporting Characters und Statist*innen dazu „Vibes"
 // (Inspo-Bilder). Die Grunddaten stehen unter Einstellungen → Meine Charaktere –
 // außer bei Statist*innen: Die darf jede*r bearbeiten, deshalb stehen ihre
 // Grunddaten gleich hier mit.
@@ -35,6 +38,10 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   const [skills, setSkills] = useState(prof.skills ?? []);
   const [sliders, setSliders] = useState(prof.sliders ?? []);
   const [timeline, setTimeline] = useState(prof.timeline ?? []);
+  const [family, setFamily] = useState<FamilyMember[]>(prof.family ?? []);
+  const [things, setThings] = useState<ThingItem[]>(prof.things ?? []);
+  const { characters, npcs } = useStore();
+  const everyone = [...characters, ...npcs].filter((c) => c.id !== character.id);
   const [plus, setPlus] = useState((prof.traits_plus ?? []).join(", "));
   const [minus, setMinus] = useState((prof.traits_minus ?? []).join(", "));
   const [likes, setLikes] = useState((prof.likes ?? []).join(", "));
@@ -88,6 +95,8 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       timeline: timeline
         .filter((t) => t.year.trim() || t.title.trim() || t.text.trim())
         .sort((a, b) => a.year.localeCompare(b.year, "de", { numeric: true })),
+      family: family.filter((m) => m.name.trim()).map((m) => ({ ...m, name: m.name.trim() })),
+      things,
       traits_plus: toList(plus),
       traits_minus: toList(minus),
       likes: toList(likes),
@@ -325,6 +334,72 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         </label>
       </div>
 
+      <div className={group}>Stammbaum</div>
+      <p className={`-mt-2 ${hint}`}>
+        Verwandte nach Generation. Tippst du den Namen eines Charakters und wählst ihn aus, führt
+        der Eintrag im Stammbaum auf dessen Profil.
+      </p>
+      {family.map((m, i) => {
+        const q = m.name.trim().toLowerCase();
+        const change = (patch: Partial<FamilyMember>) =>
+          setFamily(family.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+        return (
+          <div key={m.id} className="flex flex-wrap items-start gap-2">
+            <SuggestInput
+              className="min-w-40 flex-1"
+              value={m.name}
+              placeholder="Name"
+              onChange={(value) =>
+                change({
+                  name: value,
+                  character_id: everyone.find((c) => c.name.toLowerCase() === value.trim().toLowerCase())?.id ?? null,
+                })
+              }
+              suggestions={everyone
+                .filter((c) => q && c.name.toLowerCase().includes(q))
+                .slice(0, 6)
+                .map((c) => ({ key: c.id, label: c.name, hint: c.role ?? undefined }))}
+              onPick={(id) => {
+                const c = everyone.find((x) => x.id === id);
+                if (c) change({ name: c.name, character_id: c.id });
+              }}
+            />
+            <input
+              value={m.relation}
+              onChange={(e) => change({ relation: e.target.value })}
+              placeholder="Verhältnis, z. B. Mutter"
+              className={`${field} min-w-36 flex-1`}
+            />
+            <select
+              value={m.generation}
+              onChange={(e) => change({ generation: parseInt(e.target.value, 10) })}
+              aria-label="Generation"
+              className={`${field} w-auto`}
+            >
+              {GENERATIONS.map(([gen, name]) => (
+                <option key={gen} value={gen} className="bg-bg-surface">
+                  {name}
+                </option>
+              ))}
+            </select>
+            <button onClick={() => setFamily(family.filter((_, j) => j !== i))} aria-label="Eintrag entfernen" className={removeBtn}>
+              ✕
+            </button>
+          </div>
+        );
+      })}
+      <button
+        onClick={() =>
+          setFamily([
+            ...family,
+            { id: `fam_${Math.random().toString(36).slice(2, 9)}`, name: "", relation: "", generation: -1, character_id: null },
+          ])
+        }
+        className={addBtn}
+      >
+        <Icon name="plus" size={12} /> Familienmitglied
+      </button>
+
       <div className={group}>Timeline (steht im Reiter „Character“)</div>
       <p className={`-mt-2 ${hint}`}>Wird beim Speichern nach Jahr sortiert.</p>
       {timeline.map((t, i) => (
@@ -358,6 +433,17 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       <button onClick={() => setTimeline([...timeline, { year: "", title: "", text: "" }])} className={addBtn}>
         <Icon name="plus" size={12} /> Timeline-Eintrag
       </button>
+
+      {tier === "main" && (
+        <>
+          <div className={group}>Pockets – Gegenstände</div>
+          <p className={`-mt-2 ${hint}`}>
+            Was hat der Charakter immer dabei? Bilder aufs Whiteboard legen und anordnen – im Profil
+            erscheinen sie als Collage neben dem Handy.
+          </p>
+          <ThingsBoard items={things} onChange={setThings} />
+        </>
+      )}
 
       {tier === "main" && (
         <>

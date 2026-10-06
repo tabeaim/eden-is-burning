@@ -25,6 +25,8 @@ import { DatePicker } from "./DatePicker";
 import { Icon } from "./Icon";
 import { SuggestInput } from "./SuggestInput";
 
+const BYRON = "Byron University";
+
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
@@ -91,8 +93,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       is_student: student,
       is_working: working,
       occupation_kind: null, // abgelöst durch is_student / is_working
-      university: p.university ?? null,
-      university_location_id: p.university_location_id ?? null,
+      university: student ? (p.university ?? BYRON) : (p.university ?? null),
       major: p.major ?? null,
       degree: p.degree ?? null,
       study_start: p.study_start ?? null,
@@ -125,6 +126,8 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
   const student = isStudent({ profile: p });
   const working = isWorking({ profile: p });
   const zodiac = zodiacOf(p.birthdate);
+  // Universität: Byron (die Uni von Eden) oder eine andere als reiner Text
+  const otherUni = p.university != null && p.university !== BYRON;
 
   // Universität und Arbeitgeber: Orte und ganze Gegenden (z.B. „Byron University")
   // werden vorgeschlagen. Ein Ort wird verknüpft („works here" / „studies here"),
@@ -341,21 +344,28 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
                 label: "Universität",
                 hideKey: "university",
                 children: (
-                  <SuggestInput
-                    value={p.university ?? ""}
-                    placeholder="z. B. Byron University"
-                    onChange={(value) =>
-                      setProfile({
-                        university: value || null,
-                        university_location_id: placeByName(value)?.id ?? null,
-                      })
-                    }
-                    suggestions={placeSuggestions(p.university)}
-                    onPick={(key) => {
-                      const hit = pickPlace(key);
-                      if (hit) setProfile({ university: hit.name, university_location_id: hit.id });
-                    }}
-                  />
+                  <>
+                    <select
+                      value={otherUni ? "other" : BYRON}
+                      onChange={(e) => setProfile({ university: e.target.value === "other" ? "" : BYRON })}
+                      className={field}
+                    >
+                      <option value={BYRON} className="bg-bg-surface">
+                        {BYRON}
+                      </option>
+                      <option value="other" className="bg-bg-surface">
+                        Andere …
+                      </option>
+                    </select>
+                    {otherUni && (
+                      <input
+                        value={p.university ?? ""}
+                        onChange={(e) => setProfile({ university: e.target.value })}
+                        placeholder="Name der Universität"
+                        className={`mt-2 ${field}`}
+                      />
+                    )}
+                  </>
                 ),
               })}
               {F({

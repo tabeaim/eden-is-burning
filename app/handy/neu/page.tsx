@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import type { ChatMessageKind } from "@/lib/types";
-import { SMS_TO_KEY, addMinutes, contactName, contactShortName, resolvePhone } from "@/lib/phone";
+import { SMS_TO_KEY, hasPhone, addMinutes, contactName, contactShortName, resolvePhone } from "@/lib/phone";
 import { tierLabel } from "@/lib/characters";
 import { DatePicker } from "@/components/DatePicker";
 import { Composer } from "@/components/phone/Composer";
@@ -31,7 +31,7 @@ export default function NewSmsPage() {
   const [date, setDate] = useState("");
   const [timeOverride, setTimeOverride] = useState<string | null>(null);
 
-  const everyone = [...characters, ...npcs];
+  const everyone = [...characters, ...npcs].filter((c) => hasPhone(c)); // ohne Handy keine SMS
   const to = everyone.find((c) => c.id === toId && c.id !== from?.id);
   const query = q.trim().toLowerCase();
   const suggestions = everyone
