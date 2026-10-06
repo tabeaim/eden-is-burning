@@ -180,6 +180,21 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
   background: rgba(60, 45, 20, 0.18);
 }
 
+/* Dunkle Überlagerung (Hover-Bio über dem Avatar, Knöpfe auf Bildern): darin
+   gelten immer die hellen Schriftfarben des dunklen Stils – sonst stünde im
+   hellen Stil dunkle Schrift auf Schwarz. */
+.on-dark {
+  --text-primary: #ece8e0;
+  --text-secondary: rgba(236, 232, 224, 0.88);
+  --text-tertiary: rgba(236, 232, 224, 0.72);
+  --accent: #e89a3c;
+  --accent-ink: #e89a3c;
+  --border: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.24);
+  --color-white: #fff;
+  color: var(--text-primary);
+}
+
 /* Platzhalter in Eingabefeldern: lesbar (WCAG 1.4.3) statt halbtransparent */
 ::placeholder {
   color: var(--text-tertiary);

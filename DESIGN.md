@@ -42,6 +42,10 @@ kleingeschriebenen Abschnitts-Überschriften mit Punkt („facts.", „scenes.")
 Alles andere ist Montserrat. Standard-Textgröße `0.875rem`, Bubbles/Buttons
 `0.8125rem`.
 
+Schrift auf einer dunklen Überlagerung (`bg-black/…` über Bildern, Hover-Bio über
+dem Avatar) bekommt zusätzlich die Klasse `on-dark` – sonst ist sie im hellen
+Stil dunkel auf Schwarz.
+
 ## Bubbles – `components/Bubble.tsx`
 
 Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schreiben.

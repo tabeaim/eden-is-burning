@@ -254,7 +254,7 @@ function CharacterCard({
             className="absolute inset-0 h-full w-full object-cover"
           />
           {c.bio && (
-            <div className="pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <div className="on-dark pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
               <div className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-wider text-text-primary">
                 {[capFirst(c.role), c.age ? `${c.age}` : null].filter(Boolean).join(" · ")}
               </div>

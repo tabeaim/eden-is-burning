@@ -129,7 +129,7 @@ export function SceneEditPanel({
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-md bg-black/50 hover:bg-black/70 border border-border-subtle px-2.5 py-1.5 text-[0.8125rem] text-text-primary"
+            className="on-dark absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-md bg-black/50 hover:bg-black/70 border border-border-subtle px-2.5 py-1.5 text-[0.8125rem] text-text-primary"
           >
             <Icon name="upload" size={14} /> Bild hochladen
           </button>

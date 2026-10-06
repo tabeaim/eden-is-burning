@@ -547,7 +547,7 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
           <button
             type="button"
             onClick={() => coverRef.current?.click()}
-            className="absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-md bg-black/50 hover:bg-black/70 border border-border-subtle px-2.5 py-1.5 text-[0.8125rem] text-text-primary"
+            className="on-dark absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-md bg-black/50 hover:bg-black/70 border border-border-subtle px-2.5 py-1.5 text-[0.8125rem] text-text-primary"
           >
             <Icon name="upload" size={14} /> Bild hochladen
           </button>
@@ -608,7 +608,7 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
                   type="button"
                   onClick={() => setImages((cur) => cur.filter((_, j) => j !== i))}
                   title="Foto entfernen"
-                  className="absolute right-1 top-1 rounded bg-black/60 p-1 text-text-primary opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
+                  className="on-dark absolute right-1 top-1 rounded bg-black/60 p-1 text-text-primary opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
                 >
                   <Icon name="trash" size={13} />
                 </button>

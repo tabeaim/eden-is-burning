@@ -90,7 +90,7 @@ export function SceneCharacterCard({
 
           {/* Bio-Overlay beim Hover */}
           {character.bio && (
-            <div className="pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 text-center opacity-0 transition-opacity duration-200 group-hover/ava:opacity-100">
+            <div className="on-dark pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 text-center opacity-0 transition-opacity duration-200 group-hover/ava:opacity-100">
               <div className="mb-2 text-[0.875rem] font-semibold uppercase tracking-wider text-text-primary">
                 {[capFirst(character.role), age != null ? `${age}` : null].filter(Boolean).join(" · ")}
               </div>
