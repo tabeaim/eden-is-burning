@@ -19,6 +19,7 @@ import { DatePicker } from "@/components/DatePicker";
 import { EmojiPicker } from "../EmojiPicker";
 import { GifPicker } from "../GifPicker";
 import { CapticMedia } from "./CapticPost";
+import { MentionSuggest, normalizeMentions, useCapticProfiles } from "./CapticMentions";
 
 type Media = Pick<CapticPost, "kind" | "url" | "poster_url" | "ar">;
 
@@ -69,6 +70,8 @@ export function CapticCompose({
   );
   const file = useRef<HTMLInputElement>(null);
   const area = useRef<HTMLTextAreaElement>(null);
+  const [caret, setCaret] = useState(0);
+  const profiles = useCapticProfiles().list;
 
   async function run(label: string, work: () => Promise<Media>) {
     setBusy(label);
@@ -156,6 +159,7 @@ export function CapticCompose({
 
   function share() {
     if (!media) return;
+    const text = normalizeMentions(caption.trim(), profiles);
     if (story) {
       onDone(
         addCapticStory({
@@ -163,13 +167,13 @@ export function CapticCompose({
           kind: media.kind,
           url: media.url,
           ar: media.ar,
-          caption: caption.trim(),
+          caption: text,
         }),
       );
       return;
     }
     const fields = {
-      caption: caption.trim(),
+      caption: text,
       likes: parseCount(likes) ?? 0,
       inplay_date: date || null,
     };
@@ -276,12 +280,25 @@ export function CapticCompose({
           <textarea
             ref={area}
             value={caption}
-            onChange={(e) => setCaption(e.target.value)}
+            onChange={(e) => {
+              setCaption(e.target.value);
+              setCaret(e.target.selectionStart ?? e.target.value.length);
+            }}
+            onSelect={(e) => setCaret(e.currentTarget.selectionStart ?? 0)}
             maxLength={story ? 200 : 2200}
             rows={story ? 2 : 3}
             className={`mt-1 resize-none ${capticField}`}
           />
         </label>
+        <MentionSuggest
+          value={caption}
+          caret={caret}
+          onPick={(value, at) => {
+            setCaption(value);
+            setCaret(at);
+            requestAnimationFrame(() => area.current?.setSelectionRange(at, at));
+          }}
+        />
         {panel === "emoji" && <EmojiPicker onPick={insertEmoji} />}
         {!story && (
           <>

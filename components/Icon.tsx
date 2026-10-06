@@ -41,7 +41,8 @@ type IconName =
   | "volume"
   | "mute"
   | "more"
-  | "bell";
+  | "bell"
+  | "send";
 
 const paths: Record<IconName, React.ReactNode> = {
   dashboard: (
@@ -254,6 +255,12 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <path d="M4 9v6h4l5 4V5L8 9H4z" />
       <path d="M16.5 9.5l5 5M21.5 9.5l-5 5" />
+    </>
+  ),
+  send: (
+    <>
+      <path d="M21 3L3 10.2l7.2 2.6L12.8 20 21 3z" />
+      <path d="M10.2 12.8L21 3" />
     </>
   ),
   bell: (

@@ -439,6 +439,10 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
     Handy-Wechsel und „Handy" im Menü sowie im Dashboard als „Neue Aktivität auf
     Captic" je Charakter. Das Öffnen der Aktivitäten gilt als gesehen
     (`read_marks`, Schlüssel `captic:<Charakter>`). Eigene Aktionen zählen nie.
+  - **Verlinkungen** (`CapticMentions.tsx`): „@nutzername" in Bildunterschrift und
+    Kommentar führt aufs Profil. Beim Tippen von „@" kommen Vorschläge (Nutzer-
+    oder Charaktername); ein getippter Charaktername wird beim Abschicken in den
+    Nutzernamen umgewandelt.
   - **Doppelklick** bzw. doppeltes Antippen auf das Bild liket (Herz ploppt auf).
   - **Profil:** Beiträge im Dreier-Raster (quadratisch; Videos/GIFs als Standbild
     mit Zeichen). Eigenes Profil: „Profil bearbeiten" (Nutzername, Bio, Follower-

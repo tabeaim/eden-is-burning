@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PhoneAvatar } from "../PhoneFrame";
 import { EmojiPicker } from "../EmojiPicker";
 import { Sheet, SheetButton, SheetList } from "../Sheet";
+import { MentionSuggest, MentionText, normalizeMentions, useCapticProfiles } from "./CapticMentions";
 
 // Bild, GIF oder Video eines Beitrags. Videos laufen stumm los, sobald sie im
 // Bild sind, und halten an, wenn man weiterscrollt; Antippen schaltet den Ton.
@@ -130,7 +131,9 @@ export function CapticPostCard({
   const [confirm, setConfirm] = useState(false);
   const [text, setText] = useState("");
   const [emoji, setEmoji] = useState(false);
+  const [caret, setCaret] = useState(0);
   const input = useRef<HTMLInputElement>(null);
+  const profiles = useCapticProfiles().list;
 
   const comments = capticComments
     .filter((c) => c.post_id === post.id)
@@ -143,7 +146,7 @@ export function CapticPostCard({
 
   function send() {
     if (!text.trim()) return;
-    addCapticComment(post.id, me.id, text);
+    addCapticComment(post.id, me.id, normalizeMentions(text, profiles));
     setText("");
     setEmoji(false);
   }
@@ -200,7 +203,7 @@ export function CapticPostCard({
             <button onClick={() => author && onProfile(author.id)} className={name}>
               {author ? capticHandle(author) : "unbekannt"}
             </button>{" "}
-            {post.caption}
+            <MentionText text={post.caption} onProfile={onProfile} />
           </p>
         )}
 
@@ -221,7 +224,7 @@ export function CapticPostCard({
                     <button onClick={() => by && onProfile(by.id)} className={name}>
                       {by ? capticHandle(by) : "unbekannt"}
                     </button>{" "}
-                    {c.content}
+                    <MentionText text={c.content} onProfile={onProfile} />
                   </p>
                   {full && canDelete && (
                     <button
@@ -250,6 +253,15 @@ export function CapticPostCard({
 
       {full && (
         <div className="mt-3 border-t border-border-subtle px-3 pt-2.5">
+          <MentionSuggest
+            value={text}
+            caret={caret}
+            onPick={(value, at) => {
+              setText(value);
+              setCaret(at);
+              requestAnimationFrame(() => input.current?.setSelectionRange(at, at));
+            }}
+          />
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -261,9 +273,14 @@ export function CapticPostCard({
             <input
               ref={input}
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => {
+                setText(e.target.value);
+                setCaret(e.target.selectionStart ?? e.target.value.length);
+              }}
+              onSelect={(e) => setCaret(e.currentTarget.selectionStart ?? 0)}
               maxLength={500}
-              placeholder={`Kommentieren als ${capticHandle(me)} …`}
+              placeholder="Kommentieren …"
+              aria-label={`Kommentieren als ${capticHandle(me)}`}
               className="min-w-0 flex-1 rounded-full border border-border-subtle bg-bg-primary px-3 py-1.5 text-[16px] text-text-primary outline-none focus:border-white/25 sm:text-[0.8125rem]"
             />
             <button
@@ -278,13 +295,22 @@ export function CapticPostCard({
             <button
               type="submit"
               disabled={!text.trim()}
+              aria-label="Kommentar abschicken"
+              title="Abschicken"
               style={{ color: CAPTIC_PINK }}
-              className="shrink-0 text-[0.8125rem] font-semibold disabled:opacity-40"
+              className="flex h-8 w-8 shrink-0 items-center justify-center disabled:opacity-40"
             >
-              Posten
+              <Icon name="send" size={22} />
             </button>
           </form>
-          {emoji && <EmojiPicker onPick={(e) => setText((t) => t + e)} />}
+          {emoji && (
+            <EmojiPicker
+              onPick={(e) => {
+                setText((t) => t + e);
+                setCaret(text.length + e.length);
+              }}
+            />
+          )}
         </div>
       )}
 
