@@ -1,5 +1,6 @@
 "use client";
 
+import { capFirst } from "@/lib/format";
 import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
 import type { Character, Player } from "@/lib/types";
@@ -22,7 +23,7 @@ export function SceneCharacterCard({
   const age = ageAt(character, at);
   const gone = useCharacterGone(character);
   return (
-    <div className="w-[260px] max-w-full shrink-0">
+    <div className="w-[260px] max-w-full shrink-0 [container-type:inline-size]">
       <div
         className="group/ava relative aspect-[600/502] w-full overflow-hidden rounded-lg border border-border-subtle bg-bg-surface"
       >
@@ -41,7 +42,7 @@ export function SceneCharacterCard({
             className="pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 text-center opacity-0 transition-opacity duration-200 group-hover/ava:opacity-100"
           >
             <div className="mb-2 text-[0.875rem] font-semibold uppercase tracking-wider text-text-primary">
-              {[character.role, age != null ? `${age}` : null]
+              {[capFirst(character.role), age != null ? `${age}` : null]
                 .filter(Boolean)
                 .join(" · ")}
             </div>
@@ -51,6 +52,18 @@ export function SceneCharacterCard({
           </div>
         )}
       </div>
+
+      {/* GIF des Charakters: höchstens so breit wie der Avatar und halb so hoch */}
+      {character.profile?.scene_gif_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={character.profile.scene_gif_url}
+          alt=""
+          loading="lazy"
+          draggable={false}
+          className="mx-auto mt-2 block max-h-[calc(100cqw*251/600)] max-w-full rounded-md"
+        />
+      )}
 
       {/* Name – führt wie das Bild aufs Profil */}
       <Link

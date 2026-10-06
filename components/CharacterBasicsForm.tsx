@@ -18,9 +18,10 @@ import { Toggle } from "./Toggle";
 import { Collapsible } from "./Collapsible";
 import { AREA_ORDER, AREAS, areaName } from "@/lib/world";
 import { PHONE_AREA } from "@/lib/phone";
-import { uploadImage, IMAGE_SIZES } from "@/lib/images";
+import { uploadImage, uploadAnimation, IMAGE_SIZES } from "@/lib/images";
+import { GifPicker } from "./phone/GifPicker";
 import { characterImage } from "@/lib/avatar";
-import { formatInplayDate } from "@/lib/format";
+import { capFirst, formatInplayDate } from "@/lib/format";
 import { DatePicker } from "./DatePicker";
 import { Icon } from "./Icon";
 import { SuggestInput } from "./SuggestInput";
@@ -49,6 +50,11 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
   const [signature, setSignature] = useState(character.profile?.signature_url ?? null);
   const [uploadingSig, setUploadingSig] = useState(false);
   const sigFile = useRef<HTMLInputElement>(null);
+  const [gif, setGif] = useState(character.profile?.scene_gif_url ?? null);
+  const [gifBusy, setGifBusy] = useState(false);
+  const [gifError, setGifError] = useState<string | null>(null);
+  const [gifSearch, setGifSearch] = useState(false);
+  const gifFile = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof Character>(key: K, value: Character[K]) =>
     setD((x) => ({ ...x, [key]: value }));
@@ -101,6 +107,26 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
     }
   }
 
+  // GIF unter dem Avatar in Szenen – ebenfalls sofort gespeichert
+  function saveGif(url: string | null) {
+    setGif(url);
+    setGifError(null);
+    setGifSearch(false);
+    updateCharacter(character.id, { profile: { ...(character.profile ?? {}), scene_gif_url: url } });
+  }
+  async function onGif(f: File | undefined) {
+    if (!f) return;
+    setGifBusy(true);
+    setGifError(null);
+    try {
+      saveGif(await uploadAnimation(f, "characters"));
+    } catch (e) {
+      setGifError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setGifBusy(false);
+    }
+  }
+
   function save() {
     if (invalid) return;
     // Die beschreibenden Teile des Profils (Skills, Timeline …) pflegt das Profil
@@ -108,6 +134,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
     const profile: CharacterProfile = {
       ...(character.profile ?? {}),
       signature_url: signature,
+      scene_gif_url: gif,
       birthdate: p.birthdate ?? null,
       gender: p.gender ?? null,
       hidden,
@@ -128,7 +155,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       faceclaim: d.faceclaim,
       tagline: d.tagline,
       bio: d.bio,
-      role: d.role,
+      role: capFirst(d.role) || null,
       area: d.area,
       origin: d.origin,
       status: d.status,
@@ -540,6 +567,56 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
             }}
           />
         </div>
+      </Collapsible>
+
+      {/* --- GIF unter dem Avatar --- */}
+      <Collapsible title="GIF in Szenen">
+        <p className="text-[0.8125rem] text-text-tertiary">
+          Ein GIF, das in Szenen unter dem Avatar dieses Charakters steht – höchstens so breit wie der Avatar
+          und halb so hoch.
+        </p>
+        {gif && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={gif} alt="GIF" className="max-h-[109px] max-w-[260px] rounded-md" />
+        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            disabled={gifBusy}
+            onClick={() => gifFile.current?.click()}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08] disabled:opacity-50"
+          >
+            <Icon name="upload" size={13} /> {gifBusy ? "Lädt…" : gif ? "GIF ersetzen" : "GIF hochladen"}
+          </button>
+          <button
+            onClick={() => setGifSearch((v) => !v)}
+            aria-expanded={gifSearch}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08]"
+          >
+            GIF suchen oder verlinken
+          </button>
+          {gif && (
+            <button onClick={() => saveGif(null)} className="text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+              GIF entfernen
+            </button>
+          )}
+          <input
+            ref={gifFile}
+            type="file"
+            accept="image/gif,image/webp"
+            hidden
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              void onGif(f);
+            }}
+          />
+        </div>
+        {gifError && <p className="text-[0.8125rem] text-red-300">{gifError}</p>}
+        {gifSearch && (
+          <div className="max-w-md rounded-lg border border-border-subtle px-2 pb-2">
+            <GifPicker onPick={saveGif} />
+          </div>
+        )}
       </Collapsible>
 
       <p className="text-[0.8125rem] text-text-tertiary">

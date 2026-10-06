@@ -360,6 +360,14 @@ export function familyPartners(family: FamilyMember[]): Map<string, string> {
   return out;
 }
 
+// Mehrere (ehemalige) Partner*innen einer Person, von der ältesten zur neuesten
+// Beziehung: erst die beendeten, dann die bestehenden – jeweils in der Reihenfolge,
+// in der sie eingetragen wurden. Die letzte ist die neueste: Neben ihr steht die
+// Person im Stammbaum, alle früheren stehen auf der anderen Seite.
+export function sortPartners(partners: FamilyMember[]): FamilyMember[] {
+  return [...partners.filter((m) => m.partner_status), ...partners.filter((m) => !m.partner_status)];
+}
+
 // Räumt Altlasten auf: Angaben, die laut `familyPartners` nicht gelten (Ketten,
 // Kreise, verwaiste Verweise), werden zu gewöhnlichen Einträgen.
 export function normalizeFamily(family: FamilyMember[]): FamilyMember[] {
@@ -382,7 +390,8 @@ export function normalizeFamily(family: FamilyMember[]): FamilyMember[] {
 // Paar bekommt eine Klammer unter den Karten und eine gemeinsame Linie nach unten.
 // Gezeichnet wird per DOM (ohne State), nachdem die Karten ihren Platz haben, und
 // neu, sobald sich die Größe ändert.
-type FamilyLink = { parents: string[]; child: string; couple: boolean };
+// `partner` = wer von den beiden Eltern als Partner*in neben dem anderen steht
+type FamilyLink = { parents: string[]; child: string; couple: boolean; partner?: string };
 function useFamilyLines(
   wrap: React.RefObject<HTMLDivElement | null>,
   svg: React.RefObject<SVGSVGElement | null>,
@@ -398,7 +407,22 @@ function useFamilyLines(
       out.replaceChildren();
       const rect = (id: string) => el.querySelector<HTMLElement>(`[data-fam="${id}"]`)?.getBoundingClientRect();
       let d = "";
-      for (const link of JSON.parse(key) as FamilyLink[]) {
+      const all = JSON.parse(key) as FamilyLink[];
+      // Hat jemand mehrere Partner*innen, liegen die Klammern der Paare gestaffelt
+      // untereinander (die engste zuoberst), damit sie sich nicht überdecken.
+      const mid = (r: DOMRect) => r.left + r.width / 2;
+      const spans = new Map<string, [number, number]>();
+      for (const link of all) {
+        if (!link.couple) continue;
+        const [a, b] = link.parents.map(rect);
+        if (a && b) spans.set([...link.parents].sort().join("|"), [Math.min(mid(a), mid(b)), Math.max(mid(a), mid(b))]);
+      }
+      const depth = (parents: string[]) => {
+        const own = spans.get([...parents].sort().join("|"));
+        if (!own) return 0;
+        return [...spans.values()].filter(([l, r]) => (l > own[0] - 1 && r < own[1] + 1 && r - l < own[1] - own[0] - 1)).length;
+      };
+      for (const link of all) {
         const c = rect(link.child);
         const ps = link.parents.map(rect).filter((r): r is DOMRect => !!r);
         if (!c || ps.length === 0) continue;
@@ -409,8 +433,16 @@ function useFamilyLines(
         if (link.couple && ps.length === 2) {
           // Klammer unter dem Paar, von ihrer Mitte weiter nach unten
           const [a, b] = ps.map((r) => r.left + r.width / 2 - box.left);
-          const yb = below + 8;
-          const xm = (a + b) / 2;
+          const yb = below + 8 + depth(link.parents) * 6;
+          // Die Linie nach unten beginnt am Herz neben der Partner*in – bei mehreren
+          // Beziehungen ist so klar, aus welcher das Kind stammt.
+          const pr = link.partner ? rect(link.partner) : undefined;
+          const other = ps.find((r) => r !== pr && pr && r.left !== pr.left);
+          const heart = el.querySelector<HTMLElement>("[data-fam-heart]")?.getBoundingClientRect().width ?? 0;
+          const xm =
+            pr && other
+              ? (other.left > pr.left ? pr.right + heart / 2 : pr.left - heart / 2) - box.left
+              : (a + b) / 2;
           const ym = yb + (cy - yb) / 2;
           d += `M${a} ${below} V${yb} H${b} V${below} M${xm} ${yb} V${ym} H${cx} V${cy} `;
         } else {
@@ -453,31 +485,65 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
     { child: "self", parents: (c.profile?.family_parents ?? []).filter((p) => ids.has(p)) },
   ]
     .filter((l) => l.parents.length > 0)
-    .map((l) => ({
-      ...l,
+    .map((l) => {
       // zwei Eltern, die ein Paar sind
-      couple:
-        l.parents.length === 2 &&
-        (partnerOf.get(l.parents[0]) === l.parents[1] || partnerOf.get(l.parents[1]) === l.parents[0]),
-    }));
+      const [a, b] = l.parents;
+      const partner = l.parents.length !== 2 ? undefined : partnerOf.get(a) === b ? a : partnerOf.get(b) === a ? b : undefined;
+      return { ...l, couple: !!partner, partner };
+    });
   useFamilyLines(wrap, lines, links);
   if (family.length === 0) return null;
   // Angeheiratete/Partner*innen stehen direkt neben ihrer Person (verbunden
   // durch ein Herz) statt als eigener Eintrag in der Reihe – so sind sie von
   // Geschwistern zu unterscheiden.
-  const partnersOf = (id: string) => family.filter((m) => partnerOf.get(m.id) === id);
+  // Bei mehreren Partner*innen steht die Person neben der neuesten Beziehung
+  // (rechts), die früheren links von ihr – die älteste ganz außen.
+  const partnersOf = (id: string) => sortPartners(family.filter((m) => partnerOf.get(m.id) === id));
+  const sidesOf = (id: string) => {
+    const all = partnersOf(id);
+    return { former: all.slice(0, -1), latest: all[all.length - 1] as FamilyMember | undefined };
+  };
   const generations = [...new Set(FAMILY_SLOTS.map((x) => x.generation))];
+  // Kinder stehen in der Reihenfolge ihrer Eltern: die aus einer früheren Beziehung
+  // links, die aus der neuesten rechts – so kreuzen sich die Linien nicht. `column`
+  // merkt sich dafür, an welcher Stelle jede Karte der Reihe darüber steht.
+  let column = new Map<string, number>();
+  const parentsOf = (m: FamilyMember | null) =>
+    m ? (m.parent_ids ?? []) : (c.profile?.family_parents ?? []);
   const used = generations
-    .map((gen) => ({
-      gen,
+    .map((gen) => {
+      const above = column;
+      const where = (m: FamilyMember | null) => {
+        const cols = parentsOf(m).map((id) => above.get(id)).filter((n): n is number => n !== undefined);
+        return cols.length ? cols.reduce((a, b) => a + b, 0) / cols.length : null;
+      };
       // je Generation erst die direkte Linie (in der eigenen mit dem Charakter selbst), dann die Seitenlinie
-      groups: FAMILY_SLOTS.filter((x) => x.generation === gen)
+      const groups = FAMILY_SLOTS.filter((x) => x.generation === gen)
         .map((slot) => {
           const members: (FamilyMember | null)[] = family.filter((m) => !partnerOf.has(m.id) && familySlotOf(m) === slot);
-          return { slot, members: gen === 0 && !slot.side ? [null, ...members] : members };
+          const row = gen === 0 && !slot.side ? [null, ...members] : members;
+          // wer keine Eltern in der Reihe darüber hat, behält seinen Platz
+          const placed = row.map(where);
+          const sorted = row
+            .map((m, i) => ({ m, at: placed[i] }))
+            .filter((x): x is { m: FamilyMember | null; at: number } => x.at !== null)
+            .sort((a, b) => a.at - b.at);
+          let next = 0;
+          return { slot, members: row.map((m, i) => (placed[i] === null ? m : sorted[next++].m)) };
         })
-        .filter((g) => g.members.length > 0),
-    }))
+        .filter((g) => g.members.length > 0);
+      if (groups.length) {
+        column = new Map();
+        for (const g of groups) {
+          for (const m of g.members) {
+            const id = m ? m.id : "self";
+            const { former, latest } = sidesOf(id);
+            for (const x of [...former.map((f) => f.id), id, ...(latest ? [latest.id] : [])]) column.set(x, column.size);
+          }
+        }
+      }
+      return { gen, groups };
+    })
     .filter((r) => r.groups.length > 0);
 
   // Alle Karten sind gleich groß. Eine Generation bleibt immer in EINER Zeile: Die
@@ -542,6 +608,7 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
         role="img"
         aria-label={label}
         title={label}
+        data-fam-heart
       >
         <span className={line} />
         <span className="relative px-0.5 text-[0.625rem] leading-none sm:px-1 sm:text-[0.75rem]">
@@ -554,7 +621,7 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
   };
   // eine Person samt Partner*innen: Karte – ♥ – Karte
   const unit = (m: FamilyMember | null) => {
-    const partners = partnersOf(m ? m.id : "self");
+    const { former, latest } = sidesOf(m ? m.id : "self");
     const own =
       m === null ? (
         <div key="self" data-fam="self" className={`${card} border-accent/70 bg-accent-soft`}>
@@ -568,16 +635,22 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
         memberCard(m)
       );
     return {
-      n: 1 + partners.length,
+      n: 1 + former.length + (latest ? 1 : 0),
       node: (
         <div key={m ? m.id : "self"} className="flex items-center">
-          {own}
-          {partners.map((x) => (
+          {former.map((x) => (
             <div key={x.id} className="flex items-center">
-              {connector(x.partner_status)}
               {memberCard(x)}
+              {connector(x.partner_status)}
             </div>
           ))}
+          {own}
+          {latest && (
+            <div className="flex items-center">
+              {connector(latest.partner_status)}
+              {memberCard(latest)}
+            </div>
+          )}
         </div>
       ),
     };

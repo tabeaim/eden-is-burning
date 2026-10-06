@@ -1,5 +1,6 @@
 "use client";
 
+import { capFirst } from "@/lib/format";
 import { characterImage } from "@/lib/avatar";
 import { useState } from "react";
 import type { Character } from "@/lib/types";
@@ -93,7 +94,7 @@ export function CharacterPicker({
                 <span className="min-w-0 flex-1 truncate">
                   {c.name}{" "}
                   <span className="text-text-tertiary">
-                    {c.role}
+                    {capFirst(c.role)}
                     {myCharIds?.has(c.id) ? " · du" : ""}
                   </span>
                 </span>

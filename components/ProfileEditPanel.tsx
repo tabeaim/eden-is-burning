@@ -1,5 +1,6 @@
 "use client";
 
+import { capFirst } from "@/lib/format";
 import { BannerPosition } from "./BannerPosition";
 import { bannerStyle } from "@/lib/headers";
 import { useRef, useState } from "react";
@@ -129,7 +130,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         full_name: d.full_name,
         tagline: d.tagline,
         bio: d.bio,
-        role: d.role,
+        role: capFirst(d.role) || null,
         age: d.age,
         area: d.area,
         faceclaim_image_url: d.faceclaim_image_url,

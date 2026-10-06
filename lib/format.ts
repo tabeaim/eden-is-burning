@@ -114,3 +114,9 @@ export function withinHours(iso: string, hours: number): boolean {
 export function joinNames(names: string[]): string {
   return names.length === 2 ? names.join(" & ") : names.join(", ");
 }
+
+// Erster Buchstabe groß (Beschäftigung u. Ä.): „barkeeper" -> „Barkeeper"
+export function capFirst(s: string | null | undefined): string {
+  const t = (s ?? "").trimStart();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : "";
+}

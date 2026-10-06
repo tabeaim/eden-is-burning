@@ -72,3 +72,19 @@ export async function uploadImage(
   }
   return supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
 }
+
+// Animierte Bilder (GIF, animiertes WebP) dürfen nicht neu kodiert werden – sonst
+// bleibt nur das erste Bild. Sie gehen unverändert in den Speicher.
+export const MAX_GIF_BYTES = 8 * 1024 * 1024;
+export async function uploadAnimation(file: File, folder: string): Promise<string> {
+  if (!/^image\/(gif|webp)$/.test(file.type)) throw new Error("Bitte ein GIF auswählen.");
+  if (file.size > MAX_GIF_BYTES) throw new Error("Das GIF ist zu groß (höchstens 8 MB).");
+  const ext = file.type === "image/webp" ? "webp" : "gif";
+  const path = `${folder}/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
+  const { error } = await supabase.storage.from(IMAGE_BUCKET).upload(path, file, {
+    contentType: file.type,
+    cacheControl: "31536000",
+  });
+  if (error) throw new Error(`Hochladen fehlgeschlagen: ${error.message}`);
+  return supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+}

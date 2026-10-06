@@ -4,7 +4,8 @@ import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
-import { formatInplayDate, renderPost } from "@/lib/format";
+import { formatDateTime, formatInplayDate, renderPost } from "@/lib/format";
+import { copyRich, useProseEditor } from "@/lib/editor";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { SceneCharacterCard } from "@/components/SceneCharacterCard";
 import { SceneEditPanel } from "@/components/SceneEditPanel";
@@ -16,7 +17,7 @@ import { tierOf } from "@/lib/characters";
 import { AuTag } from "@/components/SceneCard";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { CharacterSelect } from "@/components/CharacterSelect";
-import type { Character, Post, Scene } from "@/lib/types";
+import type { Character, Post, PostDraft, Scene } from "@/lib/types";
 
 function focusReplyEditor() {
   const el = document.getElementById("reply-box");
@@ -92,6 +93,8 @@ export default function ScenePage({
   // Antwortfeld erscheint erst nach Klick auf „Antworten"
   const [replyOpen, setReplyOpen] = useState(false);
   const [closing, setClosing] = useState(false);
+  // Entwurf, der gerade im Antwortfeld weitergeschrieben wird
+  const [draftId, setDraftId] = useState<string | null>(null);
 
   const scene = scenes.find((s) => s.id === id);
   const posts = scene ? postsOf(scene.id) : [];
@@ -180,8 +183,16 @@ export default function ScenePage({
   const safePage = Math.min(page, pages.length - 1);
   const pagePosts = pages[safePage] ?? [];
 
-  function openReply() {
+  // Meine Entwürfe zu dieser Szene (andere sieht man nie) – der älteste zuerst
+  const myDrafts = store.drafts
+    .filter((d) => d.scene_id === sceneId && character(d.character_id))
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const openDraft = replyOpen ? myDrafts.find((d) => d.id === draftId) : undefined;
+  const lastPage = safePage === Math.max(0, pages.length - 1);
+
+  function openReply(draft?: PostDraft) {
     setPage(Math.max(0, pages.length - 1));
+    setDraftId(draft?.id ?? null);
     setReplyOpen(true);
     setTimeout(focusReplyEditor, 120);
   }
@@ -207,7 +218,7 @@ export default function ScenePage({
         myTurn={myTurn}
         isParticipant={isParticipant}
         canReply={canReply}
-        onReply={openReply}
+        onReply={() => openReply()}
         onPassTurn={passTurn}
         closing={closing}
         setClosing={setClosing}
@@ -275,9 +286,25 @@ export default function ScenePage({
         </div>
       )}
 
+      {/* Entwürfe: hängen unter der Szene, sieht nur, wer sie geschrieben hat */}
+      {lastPage &&
+        myDrafts
+          .filter((d) => d.id !== openDraft?.id)
+          .map((d) => (
+            <DraftRow
+              key={d.id}
+              draft={d}
+              scene={scene}
+              canPublish={canReply}
+              onEdit={() => openReply(d)}
+            />
+          ))}
+
       {/* Antwort-Editor – erst nach Klick auf „Antworten", auf der letzten Seite */}
-      {canReply && replyOpen && safePage === Math.max(0, pages.length - 1) && (
+      {canReply && replyOpen && lastPage && (
         <ReplyBox
+          key={openDraft?.id ?? "new"}
+          draft={openDraft}
           scene={scene}
           // Charaktere der Szene zuerst, dann die übrigen eigenen
           myChars={[...myCharsInScene, ...myChars.filter((c) => !myCharsInScene.includes(c))]}
@@ -296,7 +323,7 @@ export default function ScenePage({
         <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
           {canReply && !replyOpen && (
             <button
-              onClick={openReply}
+              onClick={() => openReply()}
               title={myTurn ? "Du bist am Zug" : undefined}
               className={
                 myTurn
@@ -582,6 +609,16 @@ function PostRow({
     null,
   );
   const [editing, setEditing] = useState(false);
+  useProseEditor(editRef, editing);
+  const [copied, setCopied] = useState(false);
+
+  // Ganzen Post samt Formatierung kopieren – so, wie er im Editor steht
+  async function copy() {
+    const ok = await copyRich(renderPost(post.content), proseRef.current?.innerText ?? "");
+    if (!ok) return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
 
   // Bei Textauswahl im Post „Zitat hinzufügen" anbieten. Die Auswahl selbst bleibt
   // stehen und lässt sich ganz normal kopieren (Tastatur oder Rechtsklick).
@@ -648,6 +685,8 @@ function PostRow({
         ref={editRef}
         contentEditable
         suppressContentEditableWarning
+        lang="de"
+        spellCheck
         className="reply-editor prose-serif w-full min-h-[120px] rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-text-primary outline-none focus:border-white/20"
       />
       <div className="mt-2 flex justify-end gap-2">
@@ -718,22 +757,34 @@ function PostRow({
           }}
         />
       )}
-      {canModify && !editing && (
+      {!editing && (
         <div className="mb-1 flex justify-end gap-0.5 opacity-0 transition-opacity group-hover/post:opacity-100 focus-within:opacity-100">
           <button
-            onClick={startEdit}
-            title="Post bearbeiten"
-            className="rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-accent"
+            onClick={copy}
+            title={copied ? "Kopiert" : "Post kopieren (mit Formatierung)"}
+            aria-label="Post kopieren"
+            className={`rounded p-1 hover:bg-white/[0.06] hover:text-accent ${copied ? "text-accent" : "text-text-tertiary"}`}
           >
-            <Icon name="edit" size={14} />
+            <Icon name={copied ? "check" : "copy"} size={14} />
           </button>
-          <button
-            onClick={remove}
-            title="Post löschen"
-            className="rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-red-400"
-          >
-            <Icon name="trash" size={14} />
-          </button>
+          {canModify && (
+            <>
+              <button
+                onClick={startEdit}
+                title="Post bearbeiten"
+                className="rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-accent"
+              >
+                <Icon name="edit" size={14} />
+              </button>
+              <button
+                onClick={remove}
+                title="Post löschen"
+                className="rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-red-400"
+              >
+                <Icon name="trash" size={14} />
+              </button>
+            </>
+          )}
         </div>
       )}
       <div className="flex flex-col md:flex-row gap-5 items-start">
@@ -744,28 +795,126 @@ function PostRow({
   );
 }
 
+// Post veröffentlichen (aus dem Antwortfeld oder aus einem Entwurf)
+function usePublish(scene: Scene) {
+  const { addPost, updateScene, updateCharacter, currentPlayer } = useStore();
+  return (c: Character, html: string) => {
+    // Als Statist*in antworten heißt: sie (zeitweise) bespielen
+    if (currentPlayer && tierOf(c) === "extra" && !(c.co_owner_ids ?? []).includes(currentPlayer.id)) {
+      updateCharacter(c.id, { co_owner_ids: [...(c.co_owner_ids ?? []), currentPlayer.id] });
+    }
+    // Mit einem neuen Charakter antworten heißt: in die Szene einsteigen
+    if (!scene.participant_ids.includes(c.id)) {
+      updateScene(scene.id, { participant_ids: [...scene.participant_ids, c.id] });
+    }
+    addPost(scene.id, c.id, html);
+    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 50);
+  };
+}
+
+// Entwurf unter der Szene: sieht aus wie ein Post, gestrichelt umrandet und nur
+// für die Person sichtbar, die ihn geschrieben hat.
+function DraftRow({
+  draft,
+  scene,
+  canPublish,
+  onEdit,
+}: {
+  draft: PostDraft;
+  scene: Scene;
+  canPublish: boolean; // Szene aktiv
+  onEdit: () => void;
+}) {
+  const { character, player, deleteDraft } = useStore();
+  const publish = usePublish(scene);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const c = character(draft.character_id);
+  const html = useMemo(() => ({ __html: renderPost(draft.content) }), [draft.content]);
+  if (!c) return null;
+  const btn =
+    "flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
+  return (
+    <div className="mt-7 rounded-xl border border-dashed border-border-strong p-4 sm:p-5">
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Entwurf löschen?"
+          text={`Der Entwurf für ${c.name} wird endgültig gelöscht. Das lässt sich nicht rückgängig machen.`}
+          confirmLabel="Entwurf löschen"
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => deleteDraft(draft.id)}
+        />
+      )}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="text-[0.8125rem] text-text-tertiary">
+          <span className="mr-2 rounded bg-white/[0.06] px-2 py-0.5 uppercase tracking-wider text-text-secondary">
+            Entwurf
+          </span>
+          nur für dich sichtbar · gespeichert {formatDateTime(draft.updated_at)}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {canPublish && (
+            <button onClick={onEdit} className={btn}>
+              <Icon name="edit" size={14} /> Weiterschreiben
+            </button>
+          )}
+          {canPublish && (
+            <button
+              onClick={() => {
+                publish(c, draft.content);
+                deleteDraft(draft.id);
+              }}
+              className="flex items-center gap-1.5 rounded-md border border-accent/70 bg-accent-soft px-3 py-1.5 text-[0.8125rem] text-text-primary"
+            >
+              <Icon name="check" size={14} /> Veröffentlichen
+            </button>
+          )}
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="flex items-center gap-1.5 rounded-md border border-red-400/40 px-3 py-1.5 text-[0.8125rem] text-red-300 hover:bg-red-400/10"
+          >
+            <Icon name="trash" size={14} /> Löschen
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-col md:flex-row gap-5 items-start">
+        <SceneCharacterCard character={c} player={player(c.player_id)} at={scene.inplay_date} />
+        <div className="prose-serif min-w-0 flex-1 text-text-primary" dangerouslySetInnerHTML={html} />
+      </div>
+    </div>
+  );
+}
+
 function ReplyBox({
+  draft,
   scene,
   myChars,
   extras,
   suggestedCharId,
   onClose,
 }: {
+  draft?: PostDraft; // ein gespeicherter Entwurf wird weitergeschrieben
   scene: Scene;
   myChars: Character[]; // alle eigenen Charaktere – auch die (noch) nicht in der Szene
   extras: Character[]; // Statist*innen, die ich (noch) nicht bespiele – per Suche wählbar
   suggestedCharId: string | null;
   onClose: () => void;
 }) {
-  const { addPost, updateScene, updateCharacter, character, player, currentPlayer } = useStore();
-  const [activeCharId, setActiveCharId] = useState<string | null>(suggestedCharId);
+  const { character, player, saveDraft, deleteDraft } = useStore();
+  const publish = usePublish(scene);
+  const [activeCharId, setActiveCharId] = useState<string | null>(draft?.character_id ?? suggestedCharId);
   const [preview, setPreview] = useState<string | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  useProseEditor(editorRef);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setActiveCharId(suggestedCharId);
-  }, [suggestedCharId]);
+    if (!draft) setActiveCharId(suggestedCharId);
+  }, [suggestedCharId, draft]);
+  // Entwurf ins Feld legen (einmal beim Öffnen – das Feld gehört danach dem Browser)
+  useEffect(() => {
+    if (draft && editorRef.current) editorRef.current.innerHTML = draft.content;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function togglePreview() {
     setPreview((p) => (p === null ? editorRef.current?.innerHTML ?? "" : null));
@@ -782,27 +931,19 @@ function ReplyBox({
     const html = editorRef.current?.innerHTML ?? "";
     const text = editorRef.current?.textContent?.trim() ?? "";
     if (!activeChar || !text) return;
-    // Als Statist*in antworten heißt: sie (zeitweise) bespielen
-    if (
-      currentPlayer &&
-      tierOf(activeChar) === "extra" &&
-      !(activeChar.co_owner_ids ?? []).includes(currentPlayer.id)
-    ) {
-      updateCharacter(activeChar.id, {
-        co_owner_ids: [...(activeChar.co_owner_ids ?? []), currentPlayer.id],
-      });
-    }
-    // Mit einem neuen Charakter antworten heißt: in die Szene einsteigen
-    if (!scene.participant_ids.includes(activeChar.id)) {
-      updateScene(scene.id, { participant_ids: [...scene.participant_ids, activeChar.id] });
-    }
-    addPost(scene.id, activeChar.id, html);
+    publish(activeChar, html);
+    if (draft) deleteDraft(draft.id);
     if (editorRef.current) editorRef.current.innerHTML = "";
     onClose();
-    setTimeout(
-      () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }),
-      50,
-    );
+  }
+
+  // Als Entwurf speichern: hängt unter der Szene, nur für mich sichtbar
+  function keepDraft() {
+    const html = editorRef.current?.innerHTML ?? "";
+    const text = editorRef.current?.textContent?.trim() ?? "";
+    if (!activeChar || !text) return;
+    saveDraft(scene.id, activeChar.id, html, draft?.id);
+    onClose();
   }
 
   const toolBtn =
@@ -886,13 +1027,15 @@ function ReplyBox({
         ref={editorRef}
         contentEditable
         suppressContentEditableWarning
+        lang="de"
+        spellCheck
         data-placeholder={`Schreibe als ${activeChar?.name}…`}
         className="reply-editor prose-serif min-h-[160px] w-full rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-[0.875rem] leading-[1.8] text-text-primary outline-none focus:border-white/20"
       />
 
-      <div className="mt-3 flex items-center justify-end gap-3">
+      <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
         <span className="mr-auto text-[0.875rem] text-text-tertiary">
-          HTML wird übernommen
+          {draft ? "Entwurf – nur für dich sichtbar" : "Formatierung wird beim Einfügen übernommen"}
         </span>
         <button
           onClick={onClose}
@@ -911,10 +1054,17 @@ function ReplyBox({
           {preview !== null ? "Vorschau aus" : "Vorschau"}
         </button>
         <button
+          onClick={keepDraft}
+          title="Hängt unter der Szene, bleibt aber nur für dich sichtbar, bis du ihn veröffentlichst"
+          className="rounded-md border border-border-subtle bg-white/[0.04] px-4 py-2 text-[0.8125rem] text-text-secondary transition-colors hover:bg-white/[0.08] hover:text-text-primary"
+        >
+          {draft ? "Entwurf speichern" : "Als Entwurf speichern"}
+        </button>
+        <button
           onClick={send}
           className="rounded-md bg-white/[0.1] hover:bg-white/[0.16] border border-border-subtle px-5 py-2 text-[0.8125rem] text-text-primary transition-colors"
         >
-          Senden
+          {draft ? "Veröffentlichen" : "Senden"}
         </button>
       </div>
     </div>

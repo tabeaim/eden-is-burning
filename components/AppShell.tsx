@@ -14,6 +14,7 @@ import { PendingScreen } from "./PendingScreen";
 import { headersFor, pageHeader, sceneHeader } from "@/lib/headers";
 import { useTheme } from "@/lib/theme";
 import { GONE_CLASS } from "@/lib/gone";
+import { joinNames } from "@/lib/format";
 import type { Theme } from "@/lib/types";
 
 // `title` weicht nur ab, wenn der Seitentitel anders heißt als der Menüpunkt.
@@ -64,6 +65,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Der Messenger füllt den Bildschirm wie ein Handy: kein Banner, keine Kopfleiste.
   const bare = pathname === "/handy" || pathname.startsWith("/handy/");
+  // Titel im Browser-Tab vor der Anmeldung (danach übernimmt `TabTitle`)
+  const gate = !ready ? null : !currentPlayer ? "Anmelden" : !isApproved ? "Warten auf Freischaltung" : null;
+  useEffect(() => {
+    if (gate) document.title = `${gate} – ${SITE_TITLE}`;
+  }, [gate]);
 
   if (!ready) {
     return (
@@ -83,6 +89,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <PageMetaProvider>
+      <TabTitle pathname={pathname} />
       {/* Speichern fehlgeschlagen – die Änderung ist nur lokal sichtbar */}
       {saveError && (
         <div
@@ -202,6 +209,40 @@ function bannerForPath(pathname: string, custom: Record<string, string>, theme: 
   }
   const key = seg[0] ?? "dashboard";
   return custom[key] || pageHeader(key, theme);
+}
+
+// Titel im Browser-Tab: „Seite – Eden Is Burning". Detailseiten (Szene, Charakter,
+// Ort, Spieler*in) melden ihren Namen über den Seitentitel; im Handy, das keinen
+// Seitentitel hat, ergibt er sich aus der Adresse.
+const SITE_TITLE = "Eden Is Burning";
+const PHONE_TITLES: Record<string, string> = {
+  "/handy": "Handy",
+  "/handy/nachrichten": "Nachrichten",
+  "/handy/neu": "Neue Nachricht",
+  "/handy/captic": "Captic",
+  "/handy/telefon": "Telefon",
+  "/handy/kontakte": "Kontakte",
+};
+function TabTitle({ pathname }: { pathname: string }) {
+  const meta = usePageMeta();
+  const { chats, character } = useStore();
+  let page = "";
+  if (pathname === "/handy" || pathname.startsWith("/handy/")) {
+    const chat = chats.find((c) => `/handy/${c.id}` === pathname);
+    const names = chat?.participant_ids.map((id) => character(id)?.name.split(" ")[0]).filter(Boolean) as string[] | undefined;
+    page = PHONE_TITLES[pathname] ?? (names?.length ? `Chat: ${joinNames(names)}` : "Handy");
+  } else {
+    // Hauptseiten heißen wie ihr Menüpunkt (das Dashboard also nicht „Hallo, …"),
+    // Unterseiten wie ihr Seitentitel
+    const nav = NAV.find((n) => pathname === n.href);
+    const section = NAV.find((n) => pathname.startsWith(n.href + "/"));
+    page = nav?.label ?? (meta.path === pathname && meta.title ? meta.title : (section?.label ?? ""));
+  }
+  const title = page ? `${page} – ${SITE_TITLE}` : SITE_TITLE;
+  useEffect(() => {
+    document.title = title;
+  }, [title, pathname]);
+  return null;
 }
 
 // Banner-Header: Titelbild pro Seite (Foto über Glut-Verlauf). Der Seitentitel

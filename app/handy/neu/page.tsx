@@ -1,5 +1,6 @@
 "use client";
 
+import { capFirst } from "@/lib/format";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
@@ -123,7 +124,7 @@ export default function NewSmsPage() {
                       )}
                     </span>
                     <span className="block truncate text-[0.75rem] text-text-tertiary">
-                      {[c.role, c.player_id === currentPlayer?.id ? "du" : null]
+                      {[capFirst(c.role), c.player_id === currentPlayer?.id ? "du" : null]
                         .filter(Boolean)
                         .join(" · ")}
                     </span>

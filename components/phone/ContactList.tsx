@@ -1,5 +1,6 @@
 "use client";
 
+import { capFirst } from "@/lib/format";
 import { useMemo, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
@@ -122,7 +123,7 @@ export function ContactList({
             )}
           </span>
           <span className="block truncate text-[0.75rem] text-text-tertiary">
-            {[renamed ? c.name : c.role, c.player_id === currentPlayer?.id ? "du" : null]
+            {[renamed ? c.name : capFirst(c.role), c.player_id === currentPlayer?.id ? "du" : null]
               .filter(Boolean)
               .join(" · ")}
           </span>

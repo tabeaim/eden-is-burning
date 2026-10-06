@@ -6,7 +6,7 @@ import { useStore } from "@/lib/store";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { GONE_PLAYER_CLASS } from "@/lib/gone";
 import { areaName } from "@/lib/world";
-import { formatInplayDate, timeAgo } from "@/lib/format";
+import { formatInplayDate, timeAgo, capFirst } from "@/lib/format";
 import { Icon } from "@/components/Icon";
 import { Bubble, LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
@@ -616,7 +616,7 @@ function RelationRow({
   }
 
   const rcAge = ageAt(rc);
-  const facts = [rcAge != null ? `${rcAge}` : null, rc.role, rel.label].filter(Boolean).join(" · ");
+  const facts = [rcAge != null ? `${rcAge}` : null, capFirst(rc.role), rel.label].filter(Boolean).join(" · ");
 
   return (
     <div className="group/rel relative flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-surface p-3">

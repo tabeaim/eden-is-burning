@@ -171,6 +171,9 @@ export interface CharacterProfile {
   outfit?: ThingItem[];
   // Signatur: Bild, das am Ende jedes Posts des Charakters steht (sonst nirgends)
   signature_url?: string | null;
+  // GIF, das in Szenen unter dem Avatar steht (höchstens so breit wie der Avatar,
+  // halb so hoch)
+  scene_gif_url?: string | null;
   // Stammbaum: Verwandte nach Generation (-2 Großeltern, -1 Eltern, 0 gleiche
   // Generation, 1 Kinder, 2 Enkel); optional mit einem Charakter verknüpft
   family?: FamilyMember[];
@@ -239,6 +242,18 @@ export interface Post {
   content: string;
   post_number: number;
   created_at: string;
+}
+
+// Entwurf einer Antwort in einer Szene: hängt unter der Szene, ist aber nur für
+// die Person sichtbar, die ihn geschrieben hat – bis sie ihn veröffentlicht.
+export interface PostDraft {
+  id: string;
+  scene_id: string;
+  character_id: string;
+  player_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Ein benannter Ort innerhalb einer Area (z.B. "Café Marlowe").

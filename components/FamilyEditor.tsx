@@ -1,7 +1,8 @@
 "use client";
 
+import { capFirst } from "@/lib/format";
 import type { Character, FamilyMember } from "@/lib/types";
-import { FAMILY_SLOTS, familyPartners } from "./ProfileSections";
+import { FAMILY_SLOTS, familyPartners, sortPartners } from "./ProfileSections";
 import { SuggestInput } from "./SuggestInput";
 import { Icon } from "./Icon";
 
@@ -59,18 +60,28 @@ export function FamilyEditor({
   const update = (id: string, patch: Partial<FamilyMember>) =>
     onChange(family.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   const partnersFor = (id: string) => family.filter((x) => partnerOf.get(x.id) === id);
+  // die neueste Beziehung einer Person (neben ihr steht sie im Baum)
+  const latestPartner = (id: string) => sortPartners(partnersFor(id)).pop();
 
   // `id` wird Partner*in von `target` (Person oder „self"). Das Ziel wird dabei zur
   // Hauptperson (keine Ketten), und wer bisher an `id` hing, wird wieder ein
   // gewöhnlicher Eintrag.
-  const attach = (id: string, target: string | null) =>
-    onChange(
-      family.map((m) => {
-        if (m.id === id) return { ...m, partner_of: target };
+  // Kommt eine neue Beziehung dazu, gilt die bisherige als beendet („getrennt" –
+  // lässt sich am Eintrag ändern); die Neue rückt ans Ende der Liste und steht
+  // damit als neueste neben der Person.
+  const endCurrent = (m: FamilyMember, target: string): FamilyMember =>
+    partnerOf.get(m.id) === target && !m.partner_status ? { ...m, partner_status: "separated" } : m;
+  const attach = (id: string, target: string | null) => {
+    const moved = family.find((m) => m.id === id);
+    if (!moved) return;
+    const rest = family
+      .filter((m) => m.id !== id)
+      .map((m) => {
         if (m.id === target || m.partner_of === id) return { ...m, partner_of: null };
-        return m;
-      }),
-    );
+        return target ? endCurrent(m, target) : m;
+      });
+    onChange([...rest, { ...moved, partner_of: target, partner_status: null }]);
+  };
   // Wer entfernt wird, hinterlässt seine Partner*innen als gewöhnliche Einträge und
   // verschwindet aus allen „Kind von"-Angaben
   const remove = (id: string) => {
@@ -161,6 +172,7 @@ export function FamilyEditor({
     let next = family;
     if (kind === "partner") {
       entry.partner_of = ref.id;
+      next = family.map((x) => endCurrent(x, ref.id));
     } else if (kind === "parent") {
       entry.generation = ref.generation - 1;
       entry.side = ref.generation === 0 ? ref.side : false;
@@ -171,8 +183,10 @@ export function FamilyEditor({
       const ofGrandparent = kind === "child_direct" || kind === "child_side";
       entry.generation = ofGrandparent ? -1 : ref.generation + 1;
       entry.side = kind === "child_side" ? true : kind === "child_direct" ? false : ref.generation === -1 ? ref.side : false;
-      // Kinder gehören zu beiden Eltern, wenn die Person einen Partner hat
-      entry.parent_ids = [ref.id, ...partnersFor(ref.id).map((x) => x.id)];
+      // Kinder gehören zu beiden Eltern, wenn die Person eine*n Partner*in hat – bei
+      // mehreren zur neuesten Beziehung (über „Kind von" am Kind änderbar)
+      const other = latestPartner(ref.id);
+      entry.parent_ids = other ? [ref.id, other.id] : [ref.id];
     } else if (kind === "sibling") {
       const slot = siblingSlot(ref);
       entry.generation = slot.generation;
@@ -238,7 +252,7 @@ export function FamilyEditor({
             suggestions={everyone
               .filter((c) => q && c.name.toLowerCase().includes(q))
               .slice(0, 6)
-              .map((c) => ({ key: c.id, label: c.name, hint: c.role ?? undefined }))}
+              .map((c) => ({ key: c.id, label: c.name, hint: capFirst(c.role) || undefined }))}
             onPick={(id) => {
               const c = everyone.find((x) => x.id === id);
               if (c) update(m.id, { name: c.name, character_id: c.id });
@@ -329,6 +343,13 @@ export function FamilyEditor({
             </div>
           </div>
         ))}
+        {partners.length > 1 && (
+          <p className="text-[0.75rem] leading-relaxed text-text-tertiary">
+            Im Stammbaum steht {ref.id === "self" ? selfName : (family.find((x) => x.id === ref.id)?.name || "die Person")} neben{" "}
+            {latestPartner(ref.id)?.name || "der neuesten Beziehung"} (neueste Beziehung); frühere stehen auf der anderen
+            Seite. Kinder ordnest du über „Kind von“ dem richtigen Elternteil zu.
+          </p>
+        )}
         {menu(ref)}
       </div>
     );

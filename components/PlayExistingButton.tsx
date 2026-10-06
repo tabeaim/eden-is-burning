@@ -1,5 +1,6 @@
 "use client";
 
+import { capFirst } from "@/lib/format";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { TIER_NAMES, playsAs, tierOf } from "@/lib/characters";
@@ -38,7 +39,7 @@ export function PlayExistingButton({ tier }: { tier: "supporting" | "extra" }) {
         value={q}
         onChange={setQ}
         placeholder={`${TIER_NAMES[tier]} suchen …`}
-        suggestions={pool.slice(0, 8).map((c) => ({ key: c.id, label: c.name, hint: c.role ?? undefined }))}
+        suggestions={pool.slice(0, 8).map((c) => ({ key: c.id, label: c.name, hint: capFirst(c.role) || undefined }))}
         onPick={(id) => {
           const c = npcs.find((x) => x.id === id);
           if (c) updateCharacter(c.id, { co_owner_ids: [...(c.co_owner_ids ?? []), me] });

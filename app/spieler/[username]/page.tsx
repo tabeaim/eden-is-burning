@@ -8,7 +8,7 @@ import { useStore } from "@/lib/store";
 import type { Player, PlayerProfile } from "@/lib/types";
 import { areaName } from "@/lib/world";
 import { characterImage } from "@/lib/avatar";
-import { formatDateTime, formatInplayDate } from "@/lib/format";
+import { formatDateTime, formatInplayDate, capFirst } from "@/lib/format";
 import { playsAs, tierLabel } from "@/lib/characters";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
@@ -170,7 +170,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
                       </span>
                     )}
                   </div>
-                  <div className="text-[0.875rem] text-text-tertiary">{c.role}</div>
+                  <div className="text-[0.875rem] text-text-tertiary">{capFirst(c.role)}</div>
                   {c.area && <div className="mt-0.5 text-[0.875rem] text-text-tertiary">{areaName(c.area)}</div>}
                   {c.tagline && (
                     <div className="mt-1.5 inline-block rounded-full bg-white/[0.05] px-2 py-0.5 text-[0.6875rem] uppercase tracking-wider text-text-secondary">

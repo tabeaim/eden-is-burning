@@ -1,5 +1,6 @@
 "use client";
 
+import { capFirst } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { BannerPosition } from "@/components/BannerPosition";
 import { bannerStyle } from "@/lib/headers";
@@ -251,7 +252,7 @@ function PersonCard({ person }: { person: LocationPerson }) {
   const c = character(person.id);
   if (!c) return null;
 
-  const facts = [c.age ? `${c.age}` : null, c.role].filter(Boolean).join(" · ");
+  const facts = [c.age ? `${c.age}` : null, capFirst(c.role)].filter(Boolean).join(" · ");
 
   return (
     <div className="rounded-lg border border-border-subtle bg-bg-surface p-3">

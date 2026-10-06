@@ -7,7 +7,7 @@ import { NewCharacterButton } from "@/components/NewCharacterButton";
 import { TIER_NAMES, tierOf } from "@/lib/characters";
 import { StatistActions } from "@/components/StatistActions";
 import { useStore } from "@/lib/store";
-import { formatInplayDateShort } from "@/lib/format";
+import { formatInplayDateShort, capFirst } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { Bubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
@@ -256,7 +256,7 @@ function CharacterCard({
           {c.bio && (
             <div className="pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
               <div className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-wider text-text-primary">
-                {[c.role, c.age ? `${c.age}` : null].filter(Boolean).join(" · ")}
+                {[capFirst(c.role), c.age ? `${c.age}` : null].filter(Boolean).join(" · ")}
               </div>
               <p className="text-[0.8125rem] leading-relaxed text-text-primary/90 line-clamp-[8]">
                 {c.bio}

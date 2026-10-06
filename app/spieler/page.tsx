@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useStore } from "@/lib/store";
-import { formatDateTimeShort, formatInplayDateShort } from "@/lib/format";
+import { formatDateTimeShort, formatInplayDateShort, capFirst } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import type { Character, Player } from "@/lib/types";
 import { characterImage } from "@/lib/avatar";
@@ -140,7 +140,7 @@ function PlayerRow({
 // Eine Zeile in der Charakter-Liste: kleiner rechteckiger Avatar (Ausnahme vom
 // runden Standard, damit die Liste wie eine Galerie wirkt), Name, Alter · Beruf
 function CharacterRow({ c }: { c: Character }) {
-  const facts = [c.age ? `${c.age}` : null, c.role].filter(Boolean).join(" · ");
+  const facts = [c.age ? `${c.age}` : null, capFirst(c.role)].filter(Boolean).join(" · ");
   return (
     <Link
       href={`/charaktere/${c.id}`}

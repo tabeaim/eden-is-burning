@@ -1,5 +1,6 @@
 "use client";
 
+import { capFirst } from "@/lib/format";
 import { BannerPosition } from "@/components/BannerPosition";
 import { bannerStyle } from "@/lib/headers";
 import { characterImage } from "@/lib/avatar";
@@ -544,7 +545,7 @@ function CharacterEditor({ character }: { character: Character }) {
               </span>
             )}
           </div>
-          <div className="text-[0.875rem] text-text-tertiary">{character.role}</div>
+          <div className="text-[0.875rem] text-text-tertiary">{capFirst(character.role)}</div>
         </div>
         <span className="text-text-tertiary text-[0.875rem]">
           {open ? "Schließen" : "Bearbeiten"}

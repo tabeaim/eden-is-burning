@@ -100,8 +100,17 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
 - **Text im Post markieren:** Die Auswahl bleibt stehen (normal kopierbar),
   darüber erscheint nur „Zitat hinzufügen".
 - **Hover in der Szene:** Die Bio erscheint nur über dem Avatar (benannte Gruppe
-  `group/ava`), Bearbeiten/Löschen eines Posts beim Hovern über dem Post
-  (`group/post`) – verschachtelte Hover immer als benannte Gruppen.
+  `group/ava`), Kopieren/Bearbeiten/Löschen eines Posts beim Hovern über dem Post
+  (`group/post`) – verschachtelte Hover immer als benannte Gruppen. „Kopieren"
+  gibt es bei jedem Post; es legt ihn samt Formatierung in die Zwischenablage.
+- **Text-Editoren der Szenen** (Antwortfeld, Post bearbeiten) nutzen
+  `useProseEditor` (`lib/editor.ts`): deutsche Typografie beim Tippen („…",
+  ‚…', Apostroph, `--` → –, `...` → …) und Einfügen aus Schreibprogrammen, bei
+  dem nur Absätze, Umbrüche und fett/kursiv/unterstrichen/durchgestrichen
+  übernommen werden.
+- **Entwürfe** (`post_drafts`, nur für die eigene Person lesbar): „Als Entwurf
+  speichern" im Antwortfeld; der Entwurf hängt gestrichelt umrandet unter der
+  Szene (`DraftRow`) mit „Weiterschreiben", „Veröffentlichen", „Löschen".
 - **Löschen** (Szene, Charakter, Chat): roter Rand-Button
   (`border-red-400/40 text-red-300`) im Bearbeiten-Bereich, immer mit
   `ConfirmDialog`, der nennt, was mit verschwindet; für wirklich Endgültiges mit
@@ -204,6 +213,12 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   Hintergrund – `.pinterest-board` in globals.css).
 - **Signatur** (`profile.signature_url`, Einstellungen → Meine Charaktere):
   ein Bild am Ende jedes Posts des Charakters, sonst nirgends.
+- **GIF in Szenen** (`profile.scene_gif_url`, ebenda): steht in der Szene unter
+  dem Avatar (`SceneCharacterCard`), höchstens so breit wie der Avatar und halb
+  so hoch. Hochladen (unverändert, `uploadAnimation`) oder per GIPHY/Link.
+- **Beschäftigung** beginnt überall mit einem Großbuchstaben (`capFirst`).
+- **Titel im Browser-Tab:** „Seite – Eden Is Burning" (`TabTitle` in `AppShell`):
+  Hauptseiten heißen wie ihr Menüpunkt, Unterseiten wie ihr Seitentitel.
 - **Stammbaum** (`ProfileFamilyTree`, Reiter Family Tree): Verwandte nach
   Generation in Reihen (jede Generation bleibt auch mobil in einer Zeile, die
   Karten schrumpfen; alle Karten gleich groß, ohne Etikett). Verlinkte Karten
@@ -222,6 +237,12 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   Klammer. Sobald es Verbindungen gibt, entfallen die grauen Trennlinien
   zwischen den Generationen. Ketten und Kreise gelten nicht (`familyPartners`,
   `normalizeFamily`).
+  **Mehrere Partner*innen:** Eine Person kann beliebig viele (ehemalige)
+  Partner*innen haben (`sortPartners`: erst die beendeten, dann die bestehenden,
+  je in Eintragsreihenfolge). Sie steht neben der neuesten (rechts), frühere
+  stehen links von ihr. Kommt eine neue Beziehung dazu, gilt die bisherige als
+  „getrennt". Kinder hängen am Herz neben dem jeweiligen Elternteil und stehen in
+  der Reihenfolge ihrer Eltern; ein neues Kind gehört zur neuesten Beziehung.
   **Bearbeiten** (`FamilyEditor`): ein Kasten je Generation/Seitenlinie mit
   „Hinzufügen"; bei jeder Person „Kind von"-Pillen und eingerückt ihre
   Partner*innen; „+ Verwandte*r" an jeder Person legt Elternteil, Kind,

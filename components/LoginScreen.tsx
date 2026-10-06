@@ -5,6 +5,9 @@ import { useStore } from "@/lib/store";
 
 type Mode = "signin" | "signup";
 
+// Username: kein @ (sonst nicht von einer E-Mail zu unterscheiden), keine Leerzeichen
+const USERNAME_OK = /^[\p{L}\p{N}._-]{2,24}$/u;
+
 // Vorübergehender Testzugang: bestehende Spieler*innen können ohne Registrierung
 // per Klick rein (alle mit demselben Test-Passwort). Später entfernen.
 const TEST_PASSWORD = "Eden1234!";
@@ -21,6 +24,7 @@ export function LoginScreen() {
   const { signIn, signUp, signOut, configured, loginProblem } = useStore();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -35,7 +39,12 @@ export function LoginScreen() {
       return;
     }
     if (!email.trim() || !password) {
-      setError("Bitte E-Mail und Passwort eingeben.");
+      setError(mode === "signup" ? "Bitte E-Mail und Passwort eingeben." : "Bitte Username und Passwort eingeben.");
+      return;
+    }
+    const name = username.trim();
+    if (mode === "signup" && !USERNAME_OK.test(name)) {
+      setError("Bitte einen Username wählen: 2–24 Zeichen, nur Buchstaben, Ziffern, Punkt, Binde- und Unterstrich.");
       return;
     }
     setBusy(true);
@@ -45,14 +54,15 @@ export function LoginScreen() {
         if (error) setError(uebersetze(error));
         // Erfolg: onAuthStateChange lädt die App automatisch.
       } else {
-        const { error } = await signUp(email, password);
+        const { error } = await signUp(email, password, name);
         if (error) {
           setError(uebersetze(error));
         } else {
           setNotice(
-            "Registrierung eingegangen. Ein Admin muss dich freischalten – danach kannst du dich anmelden.",
+            `Registrierung eingegangen. Ein Admin muss dich freischalten – danach kannst du dich mit „${name}" und deinem Passwort anmelden.`,
           );
           setMode("signin");
+          setEmail(name);
           setPassword("");
         }
       }
@@ -128,9 +138,27 @@ export function LoginScreen() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder={mode === "signup" ? "du@beispiel.de" : "z.B. Vera oder du@beispiel.de"}
               autoComplete={mode === "signup" ? "email" : "username"}
+              name={mode === "signup" ? "email" : "username"}
               className="mt-1 w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
             />
           </label>
+          {mode === "signup" && (
+            <label className="text-[0.875rem] text-text-secondary">
+              Username
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="so heißt du auf der Plattform"
+                autoComplete="username"
+                maxLength={24}
+                className="mt-1 w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+              />
+              <span className="mt-1 block text-[0.75rem] text-text-tertiary">
+                Damit meldest du dich später an.
+              </span>
+            </label>
+          )}
           <label className="text-[0.875rem] text-text-secondary">
             Passwort
             <input
@@ -192,7 +220,7 @@ export function LoginScreen() {
         <p className="text-[0.75rem] text-text-tertiary text-center mt-4 leading-relaxed">
           {mode === "signin"
             ? "Neu hier? Wechsle oben zu Registrieren – ein Admin schaltet dich frei."
-            : "Nach der Registrierung wirst du von einem Admin freigeschaltet."}
+            : "Nach der Registrierung wirst du von einem Admin freigeschaltet und meldest dich dann mit Username und Passwort an."}
         </p>
       </div>
     </div>
@@ -202,7 +230,8 @@ export function LoginScreen() {
 // Häufige Supabase-Fehlermeldungen ins Deutsche übersetzen
 function uebersetze(msg: string): string {
   const m = msg.toLowerCase();
-  if (m.includes("invalid login")) return "E-Mail oder Passwort stimmt nicht.";
+  if (m.includes("invalid login")) return "Username oder Passwort stimmt nicht.";
+  if (m.includes("username taken")) return "Dieser Username ist schon vergeben.";
   if (m.includes("already registered") || m.includes("already been registered"))
     return "Diese E-Mail ist bereits registriert. Melde dich an.";
   if (m.includes("password should be")) return "Passwort zu kurz (mind. 6 Zeichen).";

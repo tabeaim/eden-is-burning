@@ -20,6 +20,7 @@ import type {
   Player,
   Plot,
   Post,
+  PostDraft,
   Scene,
   SceneQuote,
 } from "./types";
@@ -63,7 +64,7 @@ interface StoreValue extends PersistedState {
   isApproved: boolean;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, username: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   // Konto: neues Passwort bzw. neue E-Mail-Adresse für die Anmeldung
   changePassword: (password: string) => Promise<{ error: string | null }>;
@@ -90,6 +91,10 @@ interface StoreValue extends PersistedState {
   addPost: (sceneId: string, characterId: string, content: string) => void;
   updatePost: (postId: string, content: string) => void;
   deletePost: (postId: string) => void;
+  // Entwürfe für Antworten: nur für die Person sichtbar, die sie geschrieben hat
+  drafts: PostDraft[];
+  saveDraft: (sceneId: string, characterId: string, content: string, draftId?: string) => void;
+  deleteDraft: (draftId: string) => void;
   addQuote: (postId: string, text: string) => void;
   removeQuote: (quoteId: string) => void;
   touchPresence: (playerId: string) => void;
@@ -525,6 +530,42 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const myPlayerId = currentPlayer?.id;
+
+  // Entwürfe (Tabelle post_drafts; per RLS sieht jede*r nur die eigenen)
+  const [drafts, setDrafts] = useState<PostDraft[]>([]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDrafts([]);
+    if (!myPlayerId) return;
+    let cancelled = false;
+    void (async () => {
+      const { data, error } = await supabase.from("post_drafts").select("*").eq("player_id", myPlayerId);
+      if (!cancelled && !error && data) setDrafts(data as PostDraft[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [myPlayerId]);
+  const saveDraft = useCallback(
+    (sceneId: string, characterId: string, content: string, draftId?: string) => {
+      if (!myPlayerId) return;
+      const now = new Date().toISOString();
+      const patch = { character_id: characterId, content: content.trim(), updated_at: now };
+      if (draftId) {
+        persist("saveDraft", supabase.from("post_drafts").update(patch).eq("id", draftId));
+        setDrafts((d) => d.map((x) => (x.id === draftId ? { ...x, ...patch } : x)));
+        return;
+      }
+      const draft: PostDraft = { id: uid("draft"), scene_id: sceneId, player_id: myPlayerId, created_at: now, ...patch };
+      persist("saveDraft", supabase.from("post_drafts").insert(draft));
+      setDrafts((d) => [...d, draft]);
+    },
+    [myPlayerId],
+  );
+  const deleteDraft = useCallback((draftId: string) => {
+    persist("deleteDraft", supabase.from("post_drafts").delete().eq("id", draftId));
+    setDrafts((d) => d.filter((x) => x.id !== draftId));
+  }, []);
   const subscribe = useCallback(
     (itemId: string) => {
       if (myPlayerId) applyReads(myPlayerId, { [`sub:${itemId}`]: new Date().toISOString() });
@@ -591,10 +632,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return { error: error?.message ?? null };
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string) => {
+  // Registrierung mit E-Mail, Passwort und Username. Der Username reist in den
+  // Metadaten mit; der Trigger handle_new_user legt damit den Spieler-Eintrag an
+  // (schema-signup-username.sql).
+  const signUp = useCallback(async (email: string, password: string, username: string) => {
+    const name = username.trim();
+    const free = await supabase.rpc("username_available", { name });
+    if (!free.error && free.data === false) return { error: "username taken" };
     const { error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
+      options: { data: { username: name } },
     });
     return { error: error?.message ?? null };
   }, []);
@@ -1518,6 +1566,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addPost,
       updatePost,
       deletePost,
+      drafts,
+      saveDraft,
+      deleteDraft,
       addQuote,
       removeQuote,
       touchPresence,
@@ -1605,6 +1656,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addPost,
       updatePost,
       deletePost,
+      drafts,
+      saveDraft,
+      deleteDraft,
       addQuote,
       removeQuote,
       touchPresence,
