@@ -1,5 +1,7 @@
 "use client";
 
+import { BannerPosition } from "./BannerPosition";
+import { bannerStyle } from "@/lib/headers";
 import { useRef, useState } from "react";
 import type { Character, CharacterProfile, FamilyMember, ThingItem } from "@/lib/types";
 import { FAMILY_SLOTS, familySlotOf } from "./ProfileSections";
@@ -96,7 +98,17 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       timeline: timeline
         .filter((t) => t.year.trim() || t.title.trim() || t.text.trim())
         .sort((a, b) => a.year.localeCompare(b.year, "de", { numeric: true })),
-      family: family.filter((m) => m.name.trim()).map((m) => ({ ...m, name: m.name.trim() })),
+      family: family
+        .filter((m) => m.name.trim())
+        .map((m) => ({
+          ...m,
+          name: m.name.trim(),
+          // Partner*in von jemandem, der nicht (mehr) eingetragen ist → gewöhnlicher Eintrag
+          partner_of:
+            m.partner_of === "self" || family.some((x) => x.id === m.partner_of && x.id !== m.id && x.name.trim())
+              ? m.partner_of
+              : null,
+        })),
       things,
       outfit,
       traits_plus: toList(plus),
@@ -248,6 +260,15 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
           }}
         />
       </div>
+      {d.banner_url && (
+        <div>
+          <div
+            style={bannerStyle(d.banner_url)}
+            className="h-28 w-full rounded-md border border-border-subtle bg-cover"
+          />
+          <BannerPosition url={d.banner_url} onChange={(url) => set("banner_url", url)} />
+        </div>
+      )}
       <label className={label}>
         Zitat
         <input {...text("quote")} className={`mt-1 ${field}`} />
@@ -349,7 +370,8 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       <div className={group}>Stammbaum</div>
       <p className={`-mt-2 ${hint}`}>
         Verwandte nach Generation – auch die Seitenlinien (Geschwister der Großeltern, Onkel und
-        Tanten, Cousinen und Cousins). Tippst du den Namen eines Charakters und wählst ihn aus, führt
+        Tanten, Cousinen und Cousins). Angeheiratete und Partner*innen ordnest du ihrer Person zu,
+        im Stammbaum stehen sie dann direkt daneben. Tippst du den Namen eines Charakters und wählst ihn aus, führt
         der Eintrag im Stammbaum auf dessen Profil.
       </p>
       {family.map((m, i) => {
@@ -384,20 +406,43 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
               className={`${field} min-w-36 flex-1`}
             />
             <select
-              value={familySlotOf(m).key}
-              onChange={(e) => {
-                const slot = FAMILY_SLOTS.find((x) => x.key === e.target.value);
-                if (slot) change({ generation: slot.generation, side: slot.side });
-              }}
-              aria-label="Generation"
-              className={`${field} w-auto`}
+              value={m.partner_of ?? ""}
+              onChange={(e) => change({ partner_of: e.target.value || null })}
+              aria-label="Verwandt oder angeheiratet"
+              className={`${field} w-auto max-w-[14rem]`}
             >
-              {FAMILY_SLOTS.map((slot) => (
-                <option key={slot.key} value={slot.key} className="bg-bg-surface">
-                  {slot.label}
-                </option>
-              ))}
+              <option value="" className="bg-bg-surface">
+                Verwandt
+              </option>
+              <option value="self" className="bg-bg-surface">
+                Partner*in von {character.name}
+              </option>
+              {family
+                .filter((x) => x.id !== m.id && x.name.trim() && !x.partner_of)
+                .map((x) => (
+                  <option key={x.id} value={x.id} className="bg-bg-surface">
+                    Partner*in von {x.name}
+                  </option>
+                ))}
             </select>
+            {/* Partner*innen stehen neben ihrer Person – die Generation ergibt sich daraus */}
+            {!m.partner_of && (
+              <select
+                value={familySlotOf(m).key}
+                onChange={(e) => {
+                  const slot = FAMILY_SLOTS.find((x) => x.key === e.target.value);
+                  if (slot) change({ generation: slot.generation, side: slot.side });
+                }}
+                aria-label="Generation"
+                className={`${field} w-auto`}
+              >
+                {FAMILY_SLOTS.map((slot) => (
+                  <option key={slot.key} value={slot.key} className="bg-bg-surface">
+                    {slot.label}
+                  </option>
+                ))}
+              </select>
+            )}
             <button onClick={() => setFamily(family.filter((_, j) => j !== i))} aria-label="Eintrag entfernen" className={removeBtn}>
               ✕
             </button>

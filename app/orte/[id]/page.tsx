@@ -1,5 +1,7 @@
 "use client";
 
+import { BannerPosition } from "@/components/BannerPosition";
+import { bannerStyle } from "@/lib/headers";
 import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
@@ -535,8 +537,8 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
           )}
         </div>
         <div
-          className="relative h-28 w-full rounded-md overflow-hidden border border-border-subtle bg-bg-primary bg-center bg-cover"
-          style={{ backgroundImage: `url("${imageUrl || pageHeader("orte")}")` }}
+          className="relative h-28 w-full rounded-md overflow-hidden border border-border-subtle bg-bg-primary bg-cover"
+          style={bannerStyle(imageUrl || pageHeader("orte"))}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           <button
@@ -554,6 +556,7 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
           onChange={onCoverFile}
           className="hidden"
         />
+        {imageUrl && <BannerPosition url={imageUrl} onChange={setImageUrl} />}
       </div>
 
       <label className="text-[0.875rem] text-text-secondary">

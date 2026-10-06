@@ -101,7 +101,20 @@ export interface FamilyMember {
   generation: number;
   // Seitenlinie: Geschwister der Großeltern (-2), Onkel/Tanten (-1), Cousinen/Cousins (0)
   side?: boolean;
+  // Angeheiratet / Partner*in: id eines anderen Eintrags oder "self" (der
+  // Charakter selbst). Steht im Stammbaum dann direkt neben dieser Person.
+  partner_of?: string | null;
   character_id?: string | null;
+}
+
+// Ausschnitt eines Whiteboard-Bilds: x/y/w/h als Anteile (0–1) des Originals,
+// ar = Seitenverhältnis des Originals (Breite / Höhe)
+export interface ThingCrop {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  ar: number;
 }
 
 export interface ThingItem {
@@ -111,6 +124,7 @@ export interface ThingItem {
   y: number;
   w: number;
   r: number;
+  crop?: ThingCrop | null;
 }
 
 // Erweitertes Charakterprofil (JSON-Spalte `profile`). Grunddaten pflegt man in

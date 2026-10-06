@@ -1,5 +1,7 @@
 "use client";
 
+import { BannerPosition } from "./BannerPosition";
+import { bannerStyle } from "@/lib/headers";
 import { useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { PHONE_AREA, PHONE_LOCATION } from "@/lib/phone";
@@ -118,10 +120,8 @@ export function SceneEditPanel({
           )}
         </div>
         <div
-          className="relative h-28 w-full rounded-md overflow-hidden border border-border-subtle bg-center bg-cover"
-          style={{
-            backgroundImage: `url("${headerUrl || sceneHeader(title.trim() || scene.id)}")`,
-          }}
+          className="relative h-28 w-full rounded-md overflow-hidden border border-border-subtle bg-cover"
+          style={bannerStyle(headerUrl || sceneHeader(title.trim() || scene.id))}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           <button
@@ -139,6 +139,7 @@ export function SceneEditPanel({
           onChange={onHeaderFile}
           className="hidden"
         />
+        {headerUrl && <BannerPosition url={headerUrl} onChange={setHeaderUrl} />}
       </div>
 
       <label className="text-[0.875rem] text-text-secondary">

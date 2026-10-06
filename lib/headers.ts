@@ -370,3 +370,28 @@ export function sceneHeader(id: string): string {
   const theme: Theme = { ...pal, glowX, motif };
   return toDataUri(buildSvg(theme, h));
 }
+
+// --- Bildausschnitt eigener Header-Bilder ---
+// Header sind flache Streifen; von hochformatigen Bildern ist nur ein Ausschnitt
+// zu sehen. Welcher, steht als Anhang an der Bildadresse („…#y=30" = 30 % von
+// oben, ohne Anhang die Mitte) – so braucht kein Header-Feld eine zweite Spalte.
+const BANNER_Y = /#y=(\d{1,3})$/;
+
+export function bannerY(url: string | null | undefined): number {
+  const m = url?.match(BANNER_Y);
+  return m ? Math.min(100, parseInt(m[1], 10)) : 50;
+}
+
+export function withBannerY(url: string, y: number): string {
+  const src = url.replace(BANNER_Y, "");
+  const v = Math.round(Math.min(100, Math.max(0, y)));
+  return v === 50 ? src : `${src}#y=${v}`;
+}
+
+/** background-image + -position für ein Header-Bild samt gewähltem Ausschnitt. */
+export function bannerStyle(url: string): { backgroundImage: string; backgroundPosition: string } {
+  return {
+    backgroundImage: `url("${url.replace(BANNER_Y, "")}")`,
+    backgroundPosition: `center ${bannerY(url)}%`,
+  };
+}

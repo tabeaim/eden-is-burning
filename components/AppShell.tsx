@@ -1,5 +1,6 @@
 "use client";
 
+import { bannerStyle } from "@/lib/headers";
 import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -235,8 +236,8 @@ function BannerHeader({
       {!noBanner && (
       <div className="relative h-40 w-full overflow-hidden" style={{ backgroundImage: EMBER_BG }}>
         <div
-          className="absolute inset-0 bg-center bg-cover"
-          style={{ backgroundImage: `url("${banner}")` }}
+          className="absolute inset-0 bg-cover"
+          style={bannerStyle(banner)}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/35 to-transparent" />
       </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { BannerPosition } from "@/components/BannerPosition";
+import { bannerStyle } from "@/lib/headers";
 import { use, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
@@ -294,8 +296,8 @@ function PlayerEditPanel({ player, onClose }: { player: Player; onClose: () => v
       <div className="flex flex-wrap items-center gap-3">
         {header && (
           <span
-            style={{ backgroundImage: `url("${header}")` }}
-            className="h-12 w-40 rounded-md border border-border-subtle bg-cover bg-center"
+            style={bannerStyle(header)}
+            className="h-12 w-40 rounded-md border border-border-subtle bg-cover"
           />
         )}
         <button disabled={uploading} onClick={() => file.current?.click()} className={uploadBtn}>
@@ -308,6 +310,7 @@ function PlayerEditPanel({ player, onClose }: { player: Player; onClose: () => v
         )}
         <input ref={file} type="file" accept="image/*" hidden onChange={(e) => void onHeader(e.target.files?.[0])} />
       </div>
+      {header && <BannerPosition url={header} onChange={setHeader} />}
 
       <div className={group}>Skills</div>
       {skills.map((s, i) => (

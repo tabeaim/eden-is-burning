@@ -5,6 +5,7 @@ import type { ThingItem } from "@/lib/types";
 import { loadImageFile, removeBackground, toCanvas, uploadCanvas } from "@/lib/cutout";
 import { Icon } from "./Icon";
 import { Toggle } from "./Toggle";
+import { CropDialog } from "./CropDialog";
 
 const MAX_THINGS = 12;
 // Eingefügte Bilder (Strg/Cmd+V) gehen an das Whiteboard, das zuletzt berührt
@@ -22,8 +23,10 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
 export function ThingsBoard({
   items,
   onChange,
+  fill = false,
 }: {
   items: ThingItem[];
+  fill?: boolean; // Ansicht: die ganze Spalte füllen (Looks → Style)
   // Mit onChange ist die Fläche ein Whiteboard zum Bearbeiten (steckt im
   // „Bearbeiten"-Formular des Profils, das auch speichert); ohne nur Ansicht.
   onChange?: (items: ThingItem[]) => void;
@@ -32,6 +35,7 @@ export function ThingsBoard({
   const setItems = (next: ThingItem[] | ((list: ThingItem[]) => ThingItem[])) =>
     onChange?.(typeof next === "function" ? next(items) : next);
   const [selected, setSelected] = useState<string | null>(null);
+  const [cropping, setCropping] = useState<string | null>(null);
   const board = useRef<HTMLDivElement>(null);
   const [me] = useState(() => Symbol("board"));
   // Laufende Geste: verschieben, Größe ändern (Ecke) oder drehen (Griff oben)
@@ -160,14 +164,14 @@ export function ThingsBoard({
       className={
         editing
           ? "grid items-start gap-4 md:grid-cols-[minmax(0,28rem)_minmax(15rem,24rem)]"
-          : "w-full min-w-0 max-w-[28rem]"
+          : `w-full min-w-0 ${fill ? "" : "max-w-[28rem]"}`
       }
     >
       {/* Die Fläche: fester Rahmen 3:4; in der Ansicht durchsichtig */}
       <div
         ref={board}
         onPointerDown={() => editing && setSelected(null)}
-        className={`relative aspect-[3/4] w-full max-w-[28rem] overflow-hidden ${
+        className={`relative aspect-[3/4] w-full ${fill && !editing ? "" : "max-w-[28rem]"} overflow-hidden ${
           editing
             ? "touch-none rounded-xl border border-dashed border-border-strong bg-white/[0.04] [background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:10%_7.5%]"
             : ""
@@ -211,13 +215,37 @@ export function ThingsBoard({
                 isActive ? "outline outline-1 outline-accent" : ""
               }`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={t.src}
-                alt=""
-                draggable={false}
-                className="block w-full drop-shadow-[0_6px_10px_rgba(0,0,0,0.55)]"
-              />
+              {t.crop ? (
+                // zugeschnitten: Rahmen im Seitenverhältnis des Ausschnitts, das Bild dahinter verschoben
+                <div className="drop-shadow-[0_6px_10px_rgba(0,0,0,0.55)]">
+                  <div
+                    className="relative w-full overflow-hidden"
+                    style={{ aspectRatio: `${t.crop.w * t.crop.ar} / ${t.crop.h}` }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={t.src}
+                      alt=""
+                      draggable={false}
+                      style={{
+                        width: `${100 / t.crop.w}%`,
+                        height: `${100 / t.crop.h}%`,
+                        left: `${(-t.crop.x / t.crop.w) * 100}%`,
+                        top: `${(-t.crop.y / t.crop.h) * 100}%`,
+                      }}
+                      className="absolute max-w-none"
+                    />
+                  </div>
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={t.src}
+                  alt=""
+                  draggable={false}
+                  className="block w-full drop-shadow-[0_6px_10px_rgba(0,0,0,0.55)]"
+                />
+              )}
               {/* Griffe wie im Bildbearbeitungsprogramm: Ecke = Größe, oben = Drehung */}
               {isActive && (
                 <>
@@ -250,6 +278,17 @@ export function ThingsBoard({
         })}
       </div>
 
+      {editing && cropping && items.some((t) => t.id === cropping) && (
+        <CropDialog
+          src={items.find((t) => t.id === cropping)!.src}
+          crop={items.find((t) => t.id === cropping)!.crop}
+          onCancel={() => setCropping(null)}
+          onDone={(crop) => {
+            patch(cropping, { crop });
+            setCropping(null);
+          }}
+        />
+      )}
       {editing && (
         <div className="flex min-w-0 max-w-[28rem] flex-col gap-3">
           {/* Gewählter Gegenstand: Größe, Drehung, Stapel, entfernen */}
@@ -290,6 +329,9 @@ export function ThingsBoard({
                 >
                   Nach hinten
                 </button>
+                <button onClick={() => setCropping(active.id)} className={btn}>
+                  Zuschneiden
+                </button>
                 <button
                   onClick={() => {
                     setItems((list) => list.filter((t) => t.id !== active.id));
@@ -304,8 +346,8 @@ export function ThingsBoard({
           ) : (
             items.length > 0 && (
               <p className="text-[0.8125rem] text-text-tertiary">
-                Tippe einen Gegenstand an: Dann lässt er sich verschieben, an den Ecken in der Größe
-                ändern und am Griff oben drehen.
+                Tippe ein Bild an: Dann lässt es sich verschieben, an den Ecken in der Größe ändern,
+                am Griff oben drehen und zuschneiden.
               </p>
             )
           )}

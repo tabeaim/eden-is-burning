@@ -1,5 +1,7 @@
 "use client";
 
+import { BannerPosition } from "@/components/BannerPosition";
+import { bannerStyle } from "@/lib/headers";
 import { characterImage } from "@/lib/avatar";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
@@ -315,7 +317,9 @@ function AppearanceTab() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   if (!currentPlayer) return null;
-  const header = currentPlayer.dashboard_header_url ?? null;
+  // Entwurf, solange der Ausschnitt-Regler bewegt wird (gespeichert beim Loslassen)
+  const [draft, setDraft] = useState<string | null>(null);
+  const header = draft ?? currentPlayer.dashboard_header_url ?? null;
 
   async function onHeader(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -324,6 +328,7 @@ function AppearanceTab() {
     setBusy(true);
     try {
       const url = await uploadImage(file, "dashboards", IMAGE_SIZES.banner);
+      setDraft(null);
       updatePlayer(currentPlayer.id, { dashboard_header_url: url });
     } finally {
       setBusy(false);
@@ -342,7 +347,10 @@ function AppearanceTab() {
           {header && (
             <button
               type="button"
-              onClick={() => updatePlayer(currentPlayer.id, { dashboard_header_url: null })}
+              onClick={() => {
+                setDraft(null);
+                updatePlayer(currentPlayer.id, { dashboard_header_url: null });
+              }}
               className="text-[0.8125rem] text-text-tertiary hover:text-text-primary"
             >
               Entfernen
@@ -350,8 +358,8 @@ function AppearanceTab() {
           )}
         </div>
         <div
-          className="relative h-32 w-full rounded-md overflow-hidden border border-border-subtle bg-bg-primary bg-center bg-cover"
-          style={{ backgroundImage: `url("${header || pageHeader("dashboard")}")` }}
+          className="relative h-32 w-full rounded-md overflow-hidden border border-border-subtle bg-bg-primary bg-cover"
+          style={bannerStyle(header || pageHeader("dashboard"))}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           <button
@@ -364,6 +372,16 @@ function AppearanceTab() {
           </button>
         </div>
         <input ref={fileRef} type="file" accept="image/*" onChange={onHeader} className="hidden" />
+        {header && (
+          <BannerPosition
+            url={header}
+            onChange={setDraft}
+            onCommit={(url) => {
+              if (url !== currentPlayer.dashboard_header_url) updatePlayer(currentPlayer.id, { dashboard_header_url: url });
+              setDraft(null);
+            }}
+          />
+        )}
         <p className="mt-1 text-[0.8125rem] text-text-tertiary">
           Nur du siehst diesen Header, oben auf deinem Dashboard. Querformat wirkt am besten.
         </p>

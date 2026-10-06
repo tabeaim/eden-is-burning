@@ -117,6 +117,13 @@ export default function CharacterPage({
   }
 
   const p = player(c.player_id);
+  const presence: "online" | "idle" | null = !p
+    ? null
+    : p.id === store.currentPlayerId || (store.onlineIds.includes(p.id) && !store.idleIds.includes(p.id))
+      ? "online"
+      : store.onlineIds.includes(p.id)
+        ? "idle"
+        : null;
   const inScenes = scenes.filter((s) => s.participant_ids.includes(c.id));
   const postCount = posts.filter((x) => x.character_id === c.id).length;
 
@@ -266,6 +273,13 @@ export default function CharacterPage({
               }
             >
               {p.username}
+              {/* Online-Status wie in der Spieler*innen-Übersicht: grün = online, gelb = anderswo */}
+              {presence && (
+                <span
+                  title={presence === "online" ? "online" : "online, gerade anderswo"}
+                  className={`h-2 w-2 shrink-0 rounded-full ${presence === "online" ? "bg-green-500" : "bg-yellow-400"}`}
+                />
+              )}
             </Bubble>
           ) : (
             <span className="text-text-tertiary">–</span>
@@ -431,9 +445,10 @@ function LookTab({ c }: { c: Character }) {
     <div className={SPLIT}>
       <ProfileLooks c={c} />
       {outfit.length > 0 && (
-        <section className="flex flex-col items-center lg:items-start">
+        <section>
           <Heading>style.</Heading>
-          <ThingsBoard items={outfit} />
+          {/* füllt die Spalte bis zum Rand */}
+          <ThingsBoard items={outfit} fill />
         </section>
       )}
     </div>
