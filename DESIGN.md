@@ -103,6 +103,11 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   `group/ava`), Kopieren/Bearbeiten/Löschen eines Posts beim Hovern über dem Post
   (`group/post`) – verschachtelte Hover immer als benannte Gruppen. „Kopieren"
   gibt es bei jedem Post; es legt ihn samt Formatierung in die Zwischenablage.
+- **Charakterkarte in der Szene** (`SceneCharacterCard`): ab `md` groß neben dem
+  Post, der Name immer in einer Zeile (lange Namen werden kleiner gesetzt), keine
+  Social-Icons. Auf dem Handy eine Kopfzeile über dem Post: kleiner Avatar,
+  daneben Name, Tagline, Spieler*in. Dort ist die Prosa linksbündig statt im
+  Blocksatz, und die Post-Aktionen sind ohne Hover sichtbar.
 - **Text-Editoren der Szenen** (Antwortfeld, Post bearbeiten) nutzen
   `useProseEditor` (`lib/editor.ts`): deutsche Typografie beim Tippen („…",
   ‚…', Apostroph, `--` → –, `...` → …) und Einfügen aus Schreibprogrammen, bei

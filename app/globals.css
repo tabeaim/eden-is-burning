@@ -169,6 +169,13 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
   text-align: justify;
 }
 
+/* Handy: Blocksatz reißt in schmalen Spalten Löcher – dort linksbündig */
+@media (max-width: 767px) {
+  .prose-serif {
+    text-align: left;
+  }
+}
+
 .prose-serif em {
   font-style: italic;
   color: var(--text-secondary);

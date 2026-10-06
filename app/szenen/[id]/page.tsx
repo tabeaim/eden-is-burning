@@ -758,7 +758,7 @@ function PostRow({
         />
       )}
       {!editing && (
-        <div className="mb-1 flex justify-end gap-0.5 opacity-0 transition-opacity group-hover/post:opacity-100 focus-within:opacity-100">
+        <div className="mb-1 flex justify-end gap-0.5 transition-opacity focus-within:opacity-100 group-hover/post:opacity-100 [@media(hover:hover)]:opacity-0">
           <button
             onClick={copy}
             title={copied ? "Kopiert" : "Post kopieren (mit Formatierung)"}
@@ -787,7 +787,7 @@ function PostRow({
           )}
         </div>
       )}
-      <div className="flex flex-col md:flex-row gap-5 items-start">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start">
         {card}
         {prose}
       </div>
@@ -876,7 +876,7 @@ function DraftRow({
           </button>
         </div>
       </div>
-      <div className="flex flex-col md:flex-row gap-5 items-start">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start">
         <SceneCharacterCard character={c} player={player(c.player_id)} at={scene.inplay_date} />
         <div className="prose-serif min-w-0 flex-1 text-text-primary" dangerouslySetInnerHTML={html} />
       </div>
@@ -957,7 +957,7 @@ function ReplyBox({
           <div className="mb-3 text-[0.875rem] uppercase tracking-wider text-accent">
             Vorschau
           </div>
-          <div className="flex flex-col md:flex-row gap-5 items-start">
+          <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start">
             <SceneCharacterCard
               character={activeChar}
               player={player(activeChar.player_id)}
