@@ -372,7 +372,7 @@ function AppearanceTab() {
         </div>
         <div
           className="relative h-32 w-full rounded-md overflow-hidden border border-border-subtle bg-bg-primary bg-cover"
-          style={bannerStyle(header || pageHeader("dashboard"))}
+          style={bannerStyle(header || pageHeader("dashboard", theme))}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           <button

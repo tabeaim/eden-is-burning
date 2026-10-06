@@ -1,5 +1,6 @@
 "use client";
 
+import { useTheme } from "@/lib/theme";
 import { BannerPosition } from "@/components/BannerPosition";
 import { bannerStyle } from "@/lib/headers";
 import { use, useEffect, useRef, useState } from "react";
@@ -460,6 +461,7 @@ function PeopleEditor({
 // Editiermodus des Ortsprofils (Admins + Ersteller*in).
 function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => void }) {
   const { updateLocation, locationsOf } = useStore();
+  const { theme } = useTheme();
   const [name, setName] = useState(loc.name);
   const [description, setDescription] = useState(loc.description ?? "");
   const [imageUrl, setImageUrl] = useState(loc.image_url ?? "");
@@ -538,7 +540,7 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
         </div>
         <div
           className="relative h-28 w-full rounded-md overflow-hidden border border-border-subtle bg-bg-primary bg-cover"
-          style={bannerStyle(imageUrl || pageHeader("orte"))}
+          style={bannerStyle(imageUrl || pageHeader("orte", theme))}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           <button
