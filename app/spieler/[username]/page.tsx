@@ -36,9 +36,10 @@ function since(iso: string): string {
 // Username wird hier im Profil bearbeitet.
 export default function PlayerPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params);
-  const { playerByUsername, charactersOf, npcs, scenes, posts, currentPlayer, isAdmin } = useStore();
+  const { playerByUsername, charactersOf, npcs, scenes, posts, currentPlayer } = useStore();
   const p = playerByUsername(decodeURIComponent(username));
-  const [tab, setTab] = useState<Tab>("characters");
+  // Reiter: ohne eigene Wahl „About" (falls gefüllt), sonst „Characters"
+  const [chosenTab, setTab] = useState<Tab | null>(null);
   const [editing, setEditing] = useState(false);
 
   useSetPageMeta(
@@ -68,24 +69,27 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
   const myScenes = scenes
     .filter((s) => s.participant_ids.some((id) => ids.has(id)))
     .sort((a, b) => (lastPostAt(b.id) || b.created_at).localeCompare(lastPostAt(a.id) || a.created_at));
-  const canEdit = !!currentPlayer && (currentPlayer.id === p.id || isAdmin);
+  // Bearbeiten kann man nur das eigene Profil – auch Admins nicht das anderer
+  const canEdit = !!currentPlayer && currentPlayer.id === p.id;
   const prof = p.profile ?? {};
   const hasAbout =
     !!prof.skills?.length || !!prof.sliders?.length || !!prof.likes?.length || !!prof.dislikes?.length;
 
   const tabs: [Tab, string][] = [
+    // „About" nur, wenn Skills, Slider oder Likes hinterlegt sind – dann vorn
+    ...(hasAbout ? ([["about", "About"]] as [Tab, string][]) : []),
     ["characters", "Characters"],
     ["scenes", "Scenes"],
-    // nur sichtbar, wenn Skills, Slider oder Likes hinterlegt sind
-    ...(hasAbout ? ([["about", "About"]] as [Tab, string][]) : []),
   ];
+  const tab: Tab = chosenTab && (chosenTab !== "about" || hasAbout) ? chosenTab : hasAbout ? "about" : "characters";
   const btn =
     "inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-8">
-      {/* Zitat – der Bearbeiten-Knopf sitzt rechts oben, der Text fließt um ihn herum */}
-      <div className="mb-4 flow-root">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-1 pb-8">
+      {/* Zitat und Bearbeiten-Knopf stehen über der Trennlinie (die zeichnet die
+          Seite selbst, siehe ownsDivider in AppShell); der Text fließt um den Knopf */}
+      <div className="flow-root">
         {canEdit && !editing && (
           <button onClick={() => setEditing(true)} className={`${btn} float-right mb-2 ml-4`}>
             <Icon name="edit" size={14} /> Bearbeiten
@@ -98,6 +102,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
           </p>
         )}
       </div>
+      <div className="mt-4 mb-6 border-b border-border-subtle" />
       {editing && <PlayerEditPanel player={p} onClose={() => setEditing(false)} />}
 
       <div className="grid items-start gap-x-10 gap-y-6 md:grid-cols-[minmax(0,1fr)_minmax(22rem,1fr)]">

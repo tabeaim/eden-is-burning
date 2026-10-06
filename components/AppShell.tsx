@@ -221,6 +221,7 @@ function BannerHeader({
   const ownsDivider =
     (/^\/szenen\/[^/]+$/.test(pathname) && pathname !== "/szenen/neu") ||
     /^\/charaktere\/[^/]+$/.test(pathname) ||
+    /^\/spieler\/[^/]+$/.test(pathname) ||
     /^\/orte\/[^/]+$/.test(pathname);
   // Jede Seite bekommt einen eigenen, generierten Header (dunkle Skyline-Optik).
   // Szenen-Detailseiten variieren zusätzlich pro Szene; ein echtes header_url der

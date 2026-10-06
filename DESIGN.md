@@ -166,8 +166,10 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   Feld, nicht im Label.
 - **Spieler*innen-Profil:** Name mit rundem Avatar im Seitentitel
   (`useSetPageMeta(…, avatar)`), eigener Header, Facts (Member since, Characters,
-  Scenes, Posts, Last seen), darunter die Reiter Characters · Scenes · About
-  (Skills, Slider, Likes wie bei Charakteren). Bearbeitet wird direkt im Profil; unter
+  Scenes, Posts, Last seen), darunter die Reiter About (Skills, Slider, Likes
+  wie bei Charakteren; nur wenn gefüllt, dann vorn) · Characters · Scenes. Der
+  Bearbeiten-Knopf steht wie auf allen Detailseiten über der Trennlinie; das
+  Profil bearbeitet nur die Person selbst, auch Admins nicht. Bearbeitet wird direkt im Profil; unter
   Einstellungen → Mein Profil stehen nur Avatar, Username (jederzeit änderbar)
   und das Konto (E-Mail, Passwort).
 - **Szenen im Profil:** `SceneCard compact` – Beteiligte als zusammengerückte
