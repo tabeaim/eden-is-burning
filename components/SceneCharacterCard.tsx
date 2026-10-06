@@ -86,17 +86,18 @@ export function SceneCharacterCard({
               alt={character.name}
               className="absolute inset-0 h-full w-full object-cover"
             />
-          </Link>
-
-          {/* Bio-Overlay beim Hover */}
-          {character.bio && (
-            <div className="on-dark pointer-events-none absolute inset-0 flex flex-col justify-center bg-black/90 px-5 py-4 text-center opacity-0 transition-opacity duration-200 group-hover/ava:opacity-100">
-              <div className="mb-2 text-[0.875rem] font-semibold uppercase tracking-wider text-text-primary">
-                {[capFirst(character.role), age != null ? `${age}` : null].filter(Boolean).join(" · ")}
+            {/* Bio-Overlay beim Hover – langer Text lässt sich darin scrollen */}
+            {character.bio && (
+              <div className="on-dark absolute inset-0 flex flex-col overflow-y-auto bg-black/90 px-5 py-4 text-center opacity-0 transition-opacity duration-200 group-hover/ava:opacity-100">
+                <div className="my-auto">
+                  <div className="mb-2 text-[0.875rem] font-semibold uppercase tracking-wider text-text-primary">
+                    {[capFirst(character.role), age != null ? `${age}` : null].filter(Boolean).join(" · ")}
+                  </div>
+                  <p className="text-[0.875rem] leading-relaxed text-text-primary/90">{character.bio}</p>
+                </div>
               </div>
-              <p className="text-[0.875rem] leading-relaxed text-text-primary/90 line-clamp-[9]">{character.bio}</p>
-            </div>
-          )}
+            )}
+          </Link>
         </div>
 
         {/* GIF des Charakters: höchstens so breit wie der Avatar und halb so hoch */}

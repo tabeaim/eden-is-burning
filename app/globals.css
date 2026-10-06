@@ -138,10 +138,10 @@ html[data-theme="light"] {
   --color-red-300: #a3271f;
   --color-red-400: #a3271f;
   /* Karte: helles Salbeigrün und Wasserblau, Beschriftung dunkel */
-  --map-land: #bfcd9a;
-  --map-land-stroke: #8a9c68;
+  --map-land: #b3b68c;
+  --map-land-stroke: #84875c;
   --map-land-sel: #f6dfb8;
-  --map-label: #1f2a0e;
+  --map-label: #1e2009;
   --map-water: #cfe3f1;
   --map-water-stroke: #86a6c2;
   --map-water-label: #2f5070;
@@ -193,6 +193,9 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
   --border-strong: rgba(255, 255, 255, 0.24);
   --color-white: #fff;
   color: var(--text-primary);
+}
+.on-dark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* Platzhalter in Eingabefeldern: lesbar (WCAG 1.4.3) statt halbtransparent */

@@ -104,7 +104,7 @@ export function CharacterBubble({
 }
 
 // Ort: Karten-Icon + Name. Mit `id` verlinkt aufs Ortsprofil. Bespielte Orte
-// haben ein oranges Icon, noch unbespielte (`played={false}`) ein graues.
+// haben ein oranges Icon, noch unbespielte (`played={false}`) ein blasses graues.
 export function LocationBubble({
   name,
   id,
@@ -128,7 +128,7 @@ export function LocationBubble({
       leading={
         <span
           className={`flex h-5 w-5 items-center justify-center ${
-            played ? "text-accent" : "text-text-tertiary"
+            played ? "text-accent" : "text-text-tertiary opacity-45"
           }`}
         >
           <Icon name={icon} size={13} />

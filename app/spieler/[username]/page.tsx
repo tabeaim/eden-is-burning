@@ -195,7 +195,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
 
       {tab === "scenes" && (
         <section>
-          <div className="flex max-w-4xl flex-col gap-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {myScenes.map((s) => (
               <SceneCard key={s.id} scene={s} compact />
             ))}
