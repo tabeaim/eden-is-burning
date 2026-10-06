@@ -48,7 +48,7 @@ export default function ScenesPage() {
     isAdmin,
   } = store;
 
-  const [tab, setTab] = useState<Tab>("all");
+  const [tabState, setTab] = useState<Tab>("all");
   const [searchTitle, setSearchTitle] = useState("");
   const [searchPost, setSearchPost] = useState("");
   const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED
@@ -158,6 +158,17 @@ export default function ScenesPage() {
     setAreas([...(p.areas ?? [])]);
   }
 
+  // Reiter ohne Szenen werden nicht angezeigt („Alle" immer; ein einzelner Reiter braucht keine Leiste)
+  const sceneTabs: [Tab, string][] = [
+    ["all", "Alle"],
+    ...(scenes.some((s) => s.status === "active") ? ([["active", "Aktive"]] as [Tab, string][]) : []),
+    ...(scenes.some((s) => s.participant_ids.some((id) => myCharIds.has(id)))
+      ? ([["mine", "Meine"]] as [Tab, string][])
+      : []),
+    ...(scenes.some((s) => s.status === "closed") ? ([["archive", "Archiv"]] as [Tab, string][]) : []),
+  ];
+  const tab: Tab = sceneTabs.some(([k]) => k === tabState) ? tabState : "all";
+
   const filtered = scenes.filter((s) => {
     if (plotIds && !plotIds.has(s.id)) return false;
     if (tab === "active" && s.status !== "active") return false;
@@ -247,28 +258,23 @@ export default function ScenesPage() {
       <PageHeader title="Szenen" subtitle="Alle Threads in Eden." width="max-w-6xl" />
 
       {/* Primäre Tabs */}
-      <div className="flex gap-1.5 mb-4">
-        {(
-          [
-            ["all", "Alle"],
-            ["active", "Aktive"],
-            ["mine", "Meine"],
-            ["archive", "Archiv"],
-          ] as [Tab, string][]
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
-              tab === key
-                ? "bg-accent text-black font-medium"
-                : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {sceneTabs.length > 1 && (
+        <div className="flex gap-1.5 mb-4">
+          {sceneTabs.map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
+                tab === key
+                  ? "bg-accent text-black font-medium"
+                  : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Filterleiste */}
       <div className="rounded-xl border border-border-subtle bg-bg-surface p-4 flex flex-col gap-3">

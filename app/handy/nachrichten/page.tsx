@@ -45,7 +45,16 @@ export default function MessagesPage() {
       return "mine";
     }
   });
-  const tab: Tab = me ? tabState : "others";
+  // „Meine" und „Andere" nur, wenn es solche Chats gibt
+  const hasMine = !!me && chats.some((c) => c.participant_ids.includes(me.id));
+  const hasOthers = chats.some((c) => !me || !c.participant_ids.includes(me.id));
+  const tab: Tab = !me
+    ? "others"
+    : tabState === "others" && hasOthers
+      ? "others"
+      : hasMine || !hasOthers
+        ? "mine"
+        : "others";
   const [showArchive, setShowArchive] = useState(false);
   // Rechtsklick (am Handy: lange drücken) auf einen Chat öffnet seine Optionen
   const [menuChat, setMenuChat] = useState<Chat | null>(null);
@@ -117,8 +126,8 @@ export default function MessagesPage() {
     );
 
   const tabs: [Tab, string][] = [
-    ["mine", "Meine"],
-    ["others", "Andere"],
+    ...(hasMine ? ([["mine", "Meine"]] as [Tab, string][]) : []),
+    ...(hasOthers ? ([["others", "Andere"]] as [Tab, string][]) : []),
   ];
 
   return (
@@ -137,7 +146,7 @@ export default function MessagesPage() {
       <div className="flex shrink-0 flex-col gap-2 border-b border-border-subtle px-3 py-2">
         {me && (
           <div className="flex gap-1.5">
-            {tabs.map(([key, label]) => (
+            {tabs.length > 1 && tabs.map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setTab(key)}
@@ -156,7 +165,7 @@ export default function MessagesPage() {
               aria-pressed={showArchive}
               aria-label={showArchive ? "Archiv schließen" : "Archiv zeigen"}
               title={showArchive ? "Archiv schließen" : `Archiv zeigen${archivedCount > 0 ? ` (${archivedCount})` : ""}`}
-              className={`relative flex h-8 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
+              className={`relative ml-auto flex h-8 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
                 showArchive
                   ? "bg-accent text-black"
                   : "bg-white/[0.06] text-text-secondary hover:text-text-primary"

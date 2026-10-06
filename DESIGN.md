@@ -414,6 +414,16 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   aus `components/Facts.tsx` – graues Label fett in Großbuchstaben (`0.75rem`) samt
   Doppelpunkt, Wert daneben (`0.875rem`), lange Werte brechen um. Nie eigene
   `<dl>`-Klassen schreiben. Keine eckigen Tags.
+- **Leere Reiter werden nicht angezeigt** (global): Steckt hinter einem Reiter (noch)
+  nichts, weil nichts ausgefüllt oder vorhanden ist, gibt es ihn nicht – im
+  Charakterprofil (Scenes, Relations, Character, Looks, Biography, Family Tree,
+  Pockets), im Spieler*innen-Profil (About, Characters, Scenes), in der
+  Charakterübersicht, der Szenenübersicht und den Nachrichten am Handy. Bleibt nur
+  ein Reiter, entfällt die Leiste; ist der gewählte Reiter weg, gilt der erste
+  vorhandene. Neue Reiter prüfen vorher, ob sie Inhalt haben (siehe
+  `hasCharacterContent`/`hasLooksContent` im Charakterprofil). „Neu anlegen"-Knöpfe
+  hängen nicht an einem ausgeblendeten Reiter. Im Spieler*innen-Profil stehen unter
+  den Reitern keine Überschriften.
 - **Tabs:** runde Pills wie in der Szenen-Übersicht (aktiv `bg-accent text-black`).
   Reiter-Reihen: `flex flex-wrap gap-x-1.5 gap-y-2.5` – brechen sie (mobil) um,
   stehen die Zeilen etwas weiter auseinander als die Pills nebeneinander.

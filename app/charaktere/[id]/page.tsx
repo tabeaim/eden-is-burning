@@ -79,8 +79,8 @@ export default function CharacterPage({
     canEditCharacter,
   } = store;
   const c = character(id);
-  const [topTab, setTopTab] = useState<TopTab>("general");
-  const [tab, setTab] = useState<Tab>("character");
+  const [topTabState, setTopTab] = useState<TopTab>("general");
+  const [tabState, setTab] = useState<Tab>("character");
 
   const [editing, setEditing] = useState(false);
 
@@ -147,21 +147,27 @@ export default function CharacterPage({
     .map((cid) => characters.find((x) => x.id === cid))
     .filter(Boolean) as Character[];
 
+  // Reiter ohne Inhalt werden nicht angezeigt (noch nichts eingetragen / vorhanden)
   const topTabs: [TopTab, string][] = [
     ["general", "General"],
-    ["inplay", "Scenes"],
-    ["relations", "Relations"],
+    ...(inScenes.length > 0 ? ([["inplay", "Scenes"]] as [TopTab, string][]) : []),
+    ...(coChars.length > 0 ? ([["relations", "Relations"]] as [TopTab, string][]) : []),
   ];
   const tabs: [Tab, string][] = [
-    ["character", "Character"],
-    ["look", "Looks"],
-    ["biography", "Biography"],
-    ["family", "Family Tree"],
+    ...(hasCharacterContent(c) ? ([["character", "Character"]] as [Tab, string][]) : []),
+    ...(hasLooksContent(c) ? ([["look", "Looks"]] as [Tab, string][]) : []),
+    ...(c.profile?.timeline?.length ? ([["biography", "Biography"]] as [Tab, string][]) : []),
+    ...(c.profile?.family?.length ? ([["family", "Family Tree"]] as [Tab, string][]) : []),
     // „Pockets": das Handy und die Gegenstände (nicht bei Statist*innen)
-    ...(tierOf(c) === "extra" ? [] : ([["personal", "Pockets"]] as [Tab, string][])),
+    ...(tierOf(c) !== "extra" && (hasPhone(c) || (c.profile?.things ?? []).length > 0)
+      ? ([["personal", "Pockets"]] as [Tab, string][])
+      : []),
     // eingebundenes Pinterest-Board, falls eines hinterlegt ist
     ...(c.pinterest_url ? ([["moodboard", "Moodboard"]] as [Tab, string][]) : []),
   ];
+  // Gewählter Reiter, sonst der erste vorhandene
+  const topTab: TopTab = topTabs.some(([k]) => k === topTabState) ? topTabState : "general";
+  const tab: Tab | null = tabs.some(([k]) => k === tabState) ? tabState : (tabs[0]?.[0] ?? null);
   const tabBtn = (active: boolean) =>
     `rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
       active ? "bg-accent text-black font-medium" : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
@@ -217,6 +223,8 @@ export default function CharacterPage({
         <RelationsTab c={c} coChars={coChars} canEdit={playsAs(c, store.currentPlayerId)} />
       )}
 
+      {tabs.length > 0 && (
+        <>
       <div className="mt-6 mb-6 border-b border-border-subtle" />
 
       {/* UNTEN: Reiter + Inhalt, linksbündig über die ganze Breite */}
@@ -269,6 +277,9 @@ export default function CharacterPage({
         ) : (
           <p className="text-[0.875rem] text-text-tertiary">Noch kein Stammbaum hinterlegt.</p>
         ))}
+
+        </>
+      )}
 
       {/* Footer */}
       <div className="mt-6 border-t border-border-subtle pt-4">
@@ -427,13 +438,33 @@ function Heading({ children }: { children: React.ReactNode }) {
 }
 
 // Ausführliche Beschreibung und alles, was den Charakter ausmacht
-function CharacterTab({ c }: { c: Character }) {
+// Hat der Reiter „Character" etwas zu zeigen?
+function hasCharacterContent(c: Character): boolean {
   const p = c.profile ?? {};
-  const empty =
-    !c.personality &&
-    !(p.traits_plus?.length || p.traits_minus?.length || p.skills?.length || p.sliders?.length) &&
-    !(p.likes?.length || p.dislikes?.length) &&
-    !c.vibes?.length;
+  return !!(
+    c.personality ||
+    p.traits_plus?.length ||
+    p.traits_minus?.length ||
+    p.skills?.length ||
+    p.sliders?.length ||
+    p.likes?.length ||
+    p.dislikes?.length ||
+    c.vibes?.length
+  );
+}
+
+// … und der Reiter „Looks"?
+function hasLooksContent(c: Character): boolean {
+  return (
+    !!c.profile?.looks_note ||
+    !!c.faceclaim ||
+    (c.profile?.outfit ?? []).length > 0 ||
+    (["height", "figure", "hair", "eyes"] as const).some((k) => c[k] && !isHidden(c, k))
+  );
+}
+
+function CharacterTab({ c }: { c: Character }) {
+  const empty = !hasCharacterContent(c);
   return (
     <div className="grid items-start gap-x-10 gap-y-9 lg:grid-cols-2">
       {c.personality && (
@@ -460,11 +491,7 @@ function CharacterTab({ c }: { c: Character }) {
 // den Pockets, gepflegt über „Bearbeiten")
 function LookTab({ c }: { c: Character }) {
   const outfit = c.profile?.outfit ?? [];
-  const hasLooks =
-    !!c.profile?.looks_note ||
-    !!c.faceclaim ||
-    (["height", "figure", "hair", "eyes"] as const).some((k) => c[k] && !isHidden(c, k));
-  if (!hasLooks && outfit.length === 0) {
+  if (!hasLooksContent(c)) {
     return <p className="text-[0.875rem] text-text-tertiary">Noch nichts zum Aussehen hinterlegt.</p>;
   }
   return (

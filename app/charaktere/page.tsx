@@ -35,7 +35,7 @@ const SORT_LABELS: Record<SortKey, string> = {
 export default function CharaktereePage() {
   const { characters, npcs, posts, player } = useStore();
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<Tab>("played");
+  const [tabState, setTab] = useState<Tab>("played");
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
@@ -51,6 +51,21 @@ export default function CharaktereePage() {
     }
     return { postCounts, lastActive };
   }, [posts]);
+
+  // Reiter ohne Einträge werden nicht angezeigt; „Alle" nur, wenn sie mehr zeigt als ein einzelner Reiter
+  const counts: Record<Tab, number> = {
+    played: characters.length,
+    scs: npcs.filter((c) => tierOf(c) === "supporting").length,
+    extras: npcs.filter((c) => tierOf(c) === "extra").length,
+    all: characters.length + npcs.length,
+  };
+  const filled = TABS.filter(([k]) => k !== "all" && counts[k] > 0);
+  const visibleTabs = TABS.filter(([k]) => (k === "all" ? filled.length > 1 : counts[k] > 0));
+  const shown = visibleTabs.length > 0 ? visibleTabs : TABS.slice(0, 1);
+  const tab: Tab = shown.some(([k]) => k === tabState) ? tabState : shown[0][0];
+  // „Neu anlegen" gibt es für den aktiven Reiter – und für jede Art, deren Reiter (noch) fehlt,
+  // sonst ließe sich die erste nie anlegen
+  const canCreate = (kind: Tab) => tab === kind || tab === "all" || !shown.some(([k]) => k === kind);
 
   const q = query.trim().toLowerCase();
   const pool =
@@ -94,7 +109,7 @@ export default function CharaktereePage() {
 
       {/* Reiter wie in der Szenen-Übersicht; rechts „Neu anlegen" passend zum Reiter */}
       <div className="flex flex-wrap items-center gap-1.5 mb-4">
-        {TABS.map(([key, label]) => (
+        {shown.length > 1 && shown.map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -108,9 +123,9 @@ export default function CharaktereePage() {
           </button>
         ))}
         <div className="ml-auto flex flex-wrap items-center gap-1.5">
-          {(tab === "played" || tab === "all") && <NewCharacterButton kind="character" />}
-          {(tab === "scs" || tab === "all") && <NewCharacterButton kind="sc" />}
-          {(tab === "extras" || tab === "all") && <NewCharacterButton kind="extra" />}
+          {canCreate("played") && <NewCharacterButton kind="character" />}
+          {canCreate("scs") && <NewCharacterButton kind="sc" />}
+          {canCreate("extras") && <NewCharacterButton kind="extra" />}
         </div>
       </div>
 

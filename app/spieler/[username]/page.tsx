@@ -77,13 +77,14 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
   const hasAbout =
     !!prof.skills?.length || !!prof.sliders?.length || !!prof.likes?.length || !!prof.dislikes?.length;
 
+  // Reiter ohne Inhalt werden nicht angezeigt
   const tabs: [Tab, string][] = [
     // „About" nur, wenn Skills, Slider oder Likes hinterlegt sind – dann vorn
     ...(hasAbout ? ([["about", "About"]] as [Tab, string][]) : []),
-    ["characters", "Characters"],
-    ["scenes", "Scenes"],
+    ...(all.length > 0 ? ([["characters", "Characters"]] as [Tab, string][]) : []),
+    ...(myScenes.length > 0 ? ([["scenes", "Scenes"]] as [Tab, string][]) : []),
   ];
-  const tab: Tab = chosenTab && (chosenTab !== "about" || hasAbout) ? chosenTab : hasAbout ? "about" : "characters";
+  const tab: Tab | null = tabs.some(([k]) => k === chosenTab) ? chosenTab : (tabs[0]?.[0] ?? null);
   const btn =
     "inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
 
@@ -128,6 +129,8 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
         </section>
       </div>
 
+      {tabs.length > 0 && (
+        <>
       <div className="mt-6 mb-6 border-b border-border-subtle" />
 
       {/* Reiter wie im Charakterprofil */}
@@ -149,8 +152,6 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
 
       {tab === "characters" && (
         <section>
-          <SectionHeading>characters.</SectionHeading>
-          {all.length === 0 && <p className="text-[0.875rem] text-text-tertiary">Noch keine Charaktere.</p>}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {all.map((c) => (
               <Link
@@ -194,17 +195,14 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
 
       {tab === "scenes" && (
         <section>
-          <SectionHeading>scenes.</SectionHeading>
-          {myScenes.length === 0 ? (
-            <p className="text-[0.875rem] text-text-tertiary">Noch in keiner Szene.</p>
-          ) : (
-            <div className="flex max-w-4xl flex-col gap-2">
-              {myScenes.map((s) => (
-                <SceneCard key={s.id} scene={s} compact />
-              ))}
-            </div>
-          )}
+          <div className="flex max-w-4xl flex-col gap-2">
+            {myScenes.map((s) => (
+              <SceneCard key={s.id} scene={s} compact />
+            ))}
+          </div>
         </section>
+      )}
+        </>
       )}
     </div>
   );
