@@ -359,7 +359,7 @@ function NpcFacts({ c }: { c: Character }) {
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mb-6" />
 
-      <div className="grid sm:grid-cols-2 gap-x-8 gap-y-7 items-start max-w-4xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-7 items-start max-w-4xl">
         <ProfileFacts c={c} />
         <ProfileLooks c={c} />
         <Vibes c={c} />

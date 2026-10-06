@@ -100,7 +100,7 @@ export default function LocationPage({
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mb-6" />
 
-      <div className="grid md:grid-cols-[1fr_260px] gap-14 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_260px] gap-14 items-start">
         <div className="flex flex-col gap-9 min-w-0">
           <section>
             <Heading>about.</Heading>
@@ -414,7 +414,7 @@ function PeopleEditor({
               – Basis-Infos; das Profil kannst du später in den Einstellungen ausfüllen
             </span>
           </div>
-          <div className="grid sm:grid-cols-[1fr_1fr_90px] gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_90px] gap-2">
             <input
               value={npcName}
               onChange={(e) => setNpcName(e.target.value)}

@@ -398,7 +398,7 @@ export default function ScenesPage() {
         {sorted.length} {sorted.length === 1 ? "Szene" : "Szenen"}
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {sorted.map((s) => {
           const matchId = postMatchId(s);
           return (

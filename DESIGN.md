@@ -307,7 +307,9 @@ für den Banner-Titel), damit Titel und Inhalt beim Seitenwechsel nicht springen
 
 Alles muss auch auf dem Handy (~375px) benutzbar sein: Seiten-Gutter `px-4 sm:px-8`,
 mehrspaltige Raster und Karte-neben-Text erst ab `sm`/`md`/`lg` nebeneinander,
-Button-Reihen mit `flex-wrap`, keine festen Breiten ohne `max-w-full`. Die
+Button-Reihen mit `flex-wrap`, keine festen Breiten ohne `max-w-full`. Raster, die erst
+ab einem Breakpoint mehrspaltig werden, bekommen immer `grid-cols-1` dazu – sonst
+drückt breiter Inhalt die Spalte über den Bildschirmrand. Die
 Seitenleiste ist unter `md` eine Schublade (Menü-Taste in der Kopfleiste).
 
 ## Messenger („Handy") – `components/phone/`

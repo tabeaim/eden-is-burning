@@ -188,7 +188,7 @@ export default function DashboardPage() {
         <QuoteRotator />
       </div>
 
-      <div className="grid lg:grid-cols-[1.6fr_1fr] gap-8 lg:gap-16 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-8 lg:gap-16 items-start">
         {/* LINKS: Szenenübersicht, nach Charakteren gruppiert */}
         <div className="flex flex-col gap-6 lg:gap-10">
           {/* Klingelnde Anrufe an eigene Charaktere – führen aufs Handy zum Abheben */}
