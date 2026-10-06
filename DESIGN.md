@@ -371,5 +371,5 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Relations im Charakterprofil:** gleiche Karte, aber statt der Bubble links ein
   eckiger Avatar (`h-20 w-20 rounded-md object-cover`), daneben Name, Faktenzeile,
   Buttons und Erläuterung.
-- **Charakterprofil:** Oben links der Avatar, darunter mittig der Usertag
-  als `Bubble`. Das Pinterest-Board steht im Reiter „Moodboard".
+- **Charakterprofil:** Kein Avatar und kein Usertag; oben das eigene Header-Bild.
+  Das Pinterest-Board steht im Reiter „Moodboard".
