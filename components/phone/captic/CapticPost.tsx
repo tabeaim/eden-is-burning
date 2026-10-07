@@ -14,9 +14,9 @@ import { MentionSuggest, MentionText, normalizeMentions, useCapticProfiles } fro
 
 // Bild, GIF oder Video eines Beitrags. Videos laufen stumm los, sobald sie im
 // Bild sind, und halten an, wenn man weiterscrollt; Antippen schaltet den Ton.
-// Doppelklick bzw. doppeltes Antippen meldet `onDoubleTap` (liken) und lässt ein
-// Herz aufploppen.
-export function CapticMedia({ post, onDoubleTap }: { post: CapticPost; onDoubleTap?: () => void }) {
+// Doppelklick bzw. doppeltes Antippen meldet `onDoubleTap` (liken bzw. Like
+// zurücknehmen); gibt es `true` zurück, ploppt ein Herz auf.
+export function CapticMedia({ post, onDoubleTap }: { post: CapticPost; onDoubleTap?: () => boolean }) {
   const ratio = feedRatio(post.ar);
   const lastTap = useRef(0);
   const [pop, setPop] = useState(false);
@@ -29,7 +29,7 @@ export function CapticMedia({ post, onDoubleTap }: { post: CapticPost; onDoubleT
       return;
     }
     lastTap.current = 0;
-    onDoubleTap();
+    if (!onDoubleTap()) return;
     setPop(true);
     setTimeout(() => setPop(false), 700);
   }
@@ -175,7 +175,10 @@ export function CapticPostCard({
         )}
       </div>
 
-      <CapticMedia post={post} onDoubleTap={() => !liked && toggleCapticLike(post.id, me.id)} />
+      <CapticMedia post={post} onDoubleTap={() => {
+          toggleCapticLike(post.id, me.id);
+          return !liked;
+        }} />
 
       <div className="flex items-center gap-4 px-3 pt-2.5">
         <button

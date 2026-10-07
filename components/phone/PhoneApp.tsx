@@ -13,7 +13,7 @@ import {
   PhoneSceneDialog,
   useCreatePhoneScene,
 } from "@/components/phone/IncomingCall";
-import { contactName, contactShortName } from "@/lib/phone";
+import { contactName, contactShortName, hasPhone } from "@/lib/phone";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { ContactList } from "@/components/phone/ContactList";
 import {
@@ -132,7 +132,7 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
               const cls = "flex w-full items-center gap-3 px-3 py-2.5 text-left";
               return (
                 // Rechtsklick oder langes Drücken auf einen Eintrag: abbrechen (eigener
-                // klingelnder Anruf) / löschen
+                // klingelnder Anruf) / zurückrufen (nicht angenommen) / löschen
                 <div
                   key={c.id}
                   {...longPress(c)}
@@ -241,6 +241,23 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
                 Anruf abbrechen
               </SheetButton>
             )}
+            {/* nicht zustande gekommen: gleich nochmal versuchen (öffnet „Anrufen") */}
+            {(menuFor.status === "declined" || menuFor.status === "cancelled") &&
+              (() => {
+                const incoming = menuFor.callee_id === me.id;
+                const other = character(incoming ? menuFor.caller_id : menuFor.callee_id);
+                if (!other || other.deleted_at || !hasPhone(other)) return null;
+                return (
+                  <SheetButton
+                    onClick={() => {
+                      setContact(other);
+                      setMenuFor(null);
+                    }}
+                  >
+                    {incoming ? "Zurückrufen" : "Erneut anrufen"}
+                  </SheetButton>
+                );
+              })()}
             <SheetButton
               danger
               onClick={() => {

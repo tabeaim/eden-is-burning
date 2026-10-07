@@ -75,6 +75,14 @@
   outline-offset: 2px;
   border-radius: 3px;
 }
+/* Textfelder (Antwortfeld, SMS, Kommentare …) gelten beim Schreiben immer als
+   „Tastatur-Fokus" – dort kein oranger Rand, die Felder zeigen den Fokus selbst. */
+textarea:focus-visible,
+[contenteditable]:focus-visible,
+input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="button"], [type="submit"], [type="color"]):focus-visible {
+  outline: none;
+  border-radius: revert-layer;
+}
 
 html,
 body {

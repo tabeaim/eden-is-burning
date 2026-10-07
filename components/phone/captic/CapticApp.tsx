@@ -9,6 +9,7 @@ import {
   CAPTIC_PINK,
   capticHandle,
   cleanHandle,
+  defaultHandle,
   follows,
   formatCount,
   parseCount,
@@ -445,7 +446,7 @@ function Profile({
   onAddStory: () => void;
   onStory: () => void;
 }) {
-  const { capticPosts, capticStories, characters, npcs, updateCharacter } = useStore();
+  const { capticPosts, capticStories, characters, npcs, updateCharacter, renameCapticHandle } = useStore();
   const hasStory = capticStories.some((s) => s.character_id === who.id);
   const own = who.id === me.id;
   const profile = who.phone?.captic ?? {};
@@ -495,13 +496,16 @@ function Profile({
     setEditing(true);
   }
   function save() {
+    const next = cleanHandle(draft.handle);
+    // neuer Name: Verlinkungen in Beiträgen und Kommentaren ziehen mit
+    renameCapticHandle(handle, next || defaultHandle(who.name));
     updateCharacter(who.id, {
       phone: {
         ...who.phone,
         captic: {
           ...profile,
           enabled: true,
-          handle: cleanHandle(draft.handle) || undefined,
+          handle: next || undefined,
           bio: draft.bio.trim(),
           avatar,
           followers: parseCount(draft.followers),

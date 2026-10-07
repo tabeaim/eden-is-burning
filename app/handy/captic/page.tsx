@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useStore } from "@/lib/store";
 import { resolvePhone } from "@/lib/phone";
 import { PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
 import { CapticApp } from "@/components/phone/captic/CapticApp";
@@ -9,8 +11,17 @@ import { CapticApp } from "@/components/phone/captic/CapticApp";
 // dessen Handy man in der Hand hat. Captic ist optional (Einstellungen → Meine
 // Charaktere → Handy); die App selbst steckt in `CapticApp`.
 export default function CapticPage() {
+  const router = useRouter();
+  const { character } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
-  const frame = { options: myChars.map((c) => c.id), onOwner: setOwner };
+  const frame = {
+    options: myChars.map((c) => c.id),
+    // Wechsel auf ein Handy ohne Captic: zurück auf dessen Startbildschirm
+    onOwner: (id: string) => {
+      setOwner(id);
+      if (!resolvePhone(character(id)).captic) router.push("/handy");
+    },
+  };
 
   if (!me) {
     return (

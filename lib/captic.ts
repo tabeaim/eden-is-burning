@@ -21,6 +21,18 @@ export function cleanHandle(input: string): string {
   return input.trim().replace(/^@/, "").replace(/\s+/g, ".").toLowerCase();
 }
 
+// Ändert jemand den Captic-Namen, ziehen alle Verlinkungen mit: „@alt" → „@neu".
+// Trifft nur den ganzen Namen („@iri" nicht in „@irikalina"); ein Punkt am Satzende
+// gehört nicht dazu.
+export function replaceHandle(text: string, from: string, to: string): string {
+  if (!from || from === to || !text.includes("@")) return text;
+  const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return text.replace(
+    new RegExp(`@${escaped}(?![A-Za-z0-9_]|\\.[A-Za-z0-9_])`, "gi"),
+    `@${to}`,
+  );
+}
+
 // Wem folgt dieser Charakter in der App?
 export function follows(c: Pick<Character, "phone"> | null | undefined): string[] {
   return c?.phone?.captic?.follows ?? [];

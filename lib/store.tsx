@@ -30,6 +30,7 @@ import type {
 } from "./types";
 import { supabase, supabaseConfigured } from "./supabase";
 import { rememberPhone } from "./phone";
+import { replaceHandle } from "./captic";
 import { playsAs, tierOf } from "./characters";
 
 interface PersistedState {
@@ -190,6 +191,8 @@ interface StoreValue extends PersistedState {
   toggleCapticLike: (postId: string, characterId: string) => void;
   addCapticComment: (postId: string, characterId: string, content: string) => void;
   deleteCapticComment: (id: string) => void;
+  // Captic-Name geändert: alle Verlinkungen („@alt") in Beiträgen und Kommentaren mitziehen
+  renameCapticHandle: (from: string, to: string) => void;
   addCapticStory: (story: Omit<CapticStory, "id" | "created_at">) => string;
   deleteCapticStory: (id: string) => void;
   // `characterId` folgt `otherId` (oder nicht mehr)
@@ -1700,6 +1703,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const renameCapticHandle = useCallback((from: string, to: string) => {
+    setState((s) => {
+      const capticPosts = s.capticPosts.map((p) => {
+        const caption = replaceHandle(p.caption, from, to);
+        if (caption === p.caption) return p;
+        persist("renameCapticHandle", supabase.from("captic_posts").update({ caption }).eq("id", p.id));
+        return { ...p, caption };
+      });
+      const capticComments = s.capticComments.map((c) => {
+        const content = replaceHandle(c.content, from, to);
+        if (content === c.content) return c;
+        persist("renameCapticHandle", supabase.from("captic_comments").update({ content }).eq("id", c.id));
+        return { ...c, content };
+      });
+      return { ...s, capticPosts, capticComments };
+    });
+  }, []);
+
   const addCapticStory = useCallback((story: Omit<CapticStory, "id" | "created_at">) => {
     const row: CapticStory = { ...story, id: uid("caps"), created_at: new Date().toISOString() };
     rememberPhone(story.character_id);
@@ -1942,6 +1963,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       toggleCapticLike,
       addCapticComment,
       deleteCapticComment,
+      renameCapticHandle,
       addCapticStory,
       deleteCapticStory,
       toggleCapticFollow,
@@ -2049,6 +2071,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       toggleCapticLike,
       addCapticComment,
       deleteCapticComment,
+      renameCapticHandle,
       addCapticStory,
       deleteCapticStory,
       toggleCapticFollow,
