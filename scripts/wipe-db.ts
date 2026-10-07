@@ -24,7 +24,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline/promises";
-import { ADMIN_EMAIL, BACKUP_ROOT, args, db, envFile, fetchAll, flag, isMissingTable, projectRef, url } from "./env";
+import { ADMIN_EMAIL, BACKUP_ROOT, PROTECTED_CHARACTER_IDS, args, db, envFile, fetchAll, flag, isMissingTable, projectRef, url } from "./env";
 
 const MAX_BACKUP_AGE_H = 24;
 
@@ -118,6 +118,11 @@ async function main() {
       );
     }
     keepChars.push(hits[0]);
+  }
+  // Geschützte Charaktere (env.ts) bleiben immer, egal was beim Aufruf angegeben wurde
+  for (const id of PROTECTED_CHARACTER_IDS) {
+    const c = characters.find((x) => x.id === id);
+    if (c && !keepChars.includes(c)) keepChars.push(c);
   }
   // Der Charakter muss auch in der Sicherung stecken
   const backedUp = JSON.parse(await fs.readFile(path.join(backup.dir, "tables", "characters.json"), "utf8")) as Row[];

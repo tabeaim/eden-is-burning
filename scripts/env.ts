@@ -34,6 +34,11 @@ export const BUCKET = "images";
 export const BACKUP_ROOT = path.resolve(process.cwd(), "backups");
 export const ADMIN_EMAIL = "tabeaim@gmail.com";
 
+// Geschützte Charaktere: Ihr Profil wurde in der neuen App neu ausgefüllt und darf
+// weder geleert (wipe-db) noch vom Forum-Import überschrieben werden (import-mybb
+// überspringt ihre characters-Zeile; Szenen, Posts usw. verweisen trotzdem darauf).
+export const PROTECTED_CHARACTER_IDS = ["c_irina"];
+
 // Alle Tabellen der App mit ihren Schlüsselspalten. backup-db fragt die Liste
 // zusätzlich bei der Datenbank ab, damit auch später ergänzte Tabellen gesichert werden.
 export const TABLES: Record<string, string[]> = {
