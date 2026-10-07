@@ -23,6 +23,7 @@ import { CharacterPicker } from "@/components/CharacterPicker";
 import { auNames } from "@/components/AuNameField";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import type { Character, OffScene, Plot, Scene } from "@/lib/types";
+import { SCENE_KINDS, sceneHref, sceneKind } from "@/lib/chats";
 
 const MONTHS_DE = [
   "Januar", "Februar", "März", "April", "Mai", "Juni",
@@ -41,7 +42,8 @@ const sameSet = (a: string[], b: string[]) =>
 
 export default function TimelinePage() {
   const {
-    scenes,
+    scenes: playedScenes,
+    smsScenes,
     characters,
     players,
     plots,
@@ -53,6 +55,9 @@ export default function TimelinePage() {
     isAdmin,
     charactersOf,
   } = useStore();
+  // Gespielte Szenen (auch Telefonszenen) und SMS-Szenen auf einem Zeitstrahl
+  const scenes = useMemo(() => [...playedScenes, ...smsScenes], [playedScenes, smsScenes]);
+  const [kinds, setKinds] = useState<string[]>([]); // Szene | Anruf | SMS (leer = alle)
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED (leer = Canon)
   const [areas, setAreas] = useState<string[]>([]); // Gegend
@@ -85,9 +90,11 @@ export default function TimelinePage() {
   }, [scenes]);
 
   // Sichtbare Szenen: im offenen Plot mit den aktuell eingestellten Filtern
-  const shownScenes = plot
-    ? plotScenes(plot, scenes, filters, character)
-    : scenes.filter((s) => matchesFilters(s, filters, character));
+  const shownScenes = (
+    plot
+      ? plotScenes(plot, scenes, filters, character)
+      : scenes.filter((s) => matchesFilters(s, filters, character))
+  ).filter((s) => kinds.length === 0 || kinds.includes(sceneKind(s)));
 
   const myId = currentPlayer?.id ?? "";
   const myPlots = visiblePlots(
@@ -124,7 +131,7 @@ export default function TimelinePage() {
     g.items.push(e);
   }
 
-  const filterCount = tokens.length + aus.length + areas.length + activeYears.length;
+  const filterCount = tokens.length + aus.length + areas.length + activeYears.length + kinds.length;
   const filterChanged = plot
     ? !sameSet(plot.tokens, tokens) ||
       !sameSet(plot.aus, aus) ||
@@ -186,6 +193,13 @@ export default function TimelinePage() {
             />
           ))}
           <MultiSelect
+            label="Art"
+            options={SCENE_KINDS}
+            selected={kinds}
+            onToggle={(v) => toggle(kinds, setKinds, v)}
+            onClear={() => setKinds([])}
+          />
+          <MultiSelect
             label="Gegend"
             options={areaFilterOptions()}
             selected={areas}
@@ -231,6 +245,7 @@ export default function TimelinePage() {
               setAus([]);
               setAreas([]);
               setYearSel([]);
+              setKinds([]);
             }}
             className="text-[0.8125rem] text-text-tertiary hover:text-text-primary underline"
           >
@@ -462,7 +477,8 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
       <div className="relative rounded-xl border border-border-subtle bg-bg-surface px-4 py-3 transition-colors hover:bg-white/[0.03]">
         <div className="flex items-start justify-between gap-3">
           <div className="text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
-            {formatInplayDate(scene.inplay_date)} · {scene.inplay_time}
+            {formatInplayDate(scene.inplay_date)}
+            {scene.inplay_time && ` · ${scene.inplay_time}`}
           </div>
           {onRemove && (
             <span className="relative z-10">
@@ -472,7 +488,7 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
         </div>
         <h3 className="mt-0.5 font-serif text-[1rem] leading-tight text-text-primary">
           <Link
-            href={`/szenen/${scene.id}`}
+            href={sceneHref(scene)}
             className="after:absolute after:inset-0 after:content-['']"
           >
             {scene.title}

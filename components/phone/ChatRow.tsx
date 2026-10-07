@@ -1,37 +1,46 @@
 "use client";
 
 import Link from "next/link";
-import type { Chat } from "@/lib/types";
+import type { Chat, ChatScene } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { formatDateTimeShort, formatInplayDateShort } from "@/lib/format";
 import { rememberPhone } from "@/lib/phone";
-import { chatTitle } from "@/lib/chats";
+import { chatHref, chatTitle, newestMessage } from "@/lib/chats";
 import { Icon } from "@/components/Icon";
 
 // Chat als kompakte Zeile fürs Dashboard – gleicher Aufbau wie `SceneRow`
-// (Symbol, Titel, Unterzeile; rechts wer zuletzt schrieb und wann). Zeigt nie
-// den Text der Nachricht. Führt direkt
-// in den Chat auf dem Handy; mit `forCharacter` auf dem Handy dieses Charakters.
+// (Symbol, Titel, Unterzeile; rechts wer zuletzt schrieb und wann). Eine Zeile je
+// Strang: mit `scene` eine SMS-Szene (ihr Titel steht vorn), mit `scene: null` die
+// losen Nachrichten des Chats; ohne Angabe der ganze Chat. Zeigt nie den Text der
+// Nachricht. Führt direkt an die Stelle im Chat auf dem Handy; mit `forCharacter`
+// auf dem Handy dieses Charakters.
 export function ChatRow({
   chat,
+  scene,
   forCharacter,
   muted = false,
   action,
 }: {
   chat: Chat;
+  scene?: ChatScene | null;
   forCharacter?: string;
   muted?: boolean;
   action?: React.ReactNode; // z.B. „Leave on read"
 }) {
   const { messagesOf, character, isChatFresh } = useStore();
-  const messages = messagesOf(chat.id);
-  const last = [...messages].reverse().find((m) => m.kind !== "date");
-  const date = [...messages].reverse().find((m) => m.kind === "date");
+  const messages = messagesOf(chat.id).filter(
+    (m) => scene === undefined || (m.scene_id ?? null) === (scene?.id ?? null),
+  );
+  const last = newestMessage(messages);
   const lastChar = last ? character(last.character_id) : undefined;
   const others = chat.participant_ids.filter((id) => id !== forCharacter).map((id) => character(id));
-  const title = forCharacter
-    ? `Chat mit ${chatTitle(others)}`
-    : `Neue Nachrichten bei ${chatTitle(chat.participant_ids.map((id) => character(id)))}`;
+  const names = chatTitle(forCharacter ? others : chat.participant_ids.map((id) => character(id)));
+  const title = scene
+    ? scene.title
+    : forCharacter
+      ? `Chat mit ${names}`
+      : `Neue Nachrichten bei ${names}`;
+  const day = scene?.inplay_date || last?.day;
 
   return (
     <div
@@ -42,7 +51,9 @@ export function ChatRow({
       {/* wie das Streichholz der Szenen: orange bei Ungelesenem, sonst grau */}
       <span
         className={`flex h-6 w-6 shrink-0 items-center justify-center ${
-          isChatFresh(chat.id) ? "text-accent" : "text-text-tertiary opacity-60"
+          isChatFresh(chat.id, scene === undefined ? undefined : (scene?.id ?? null))
+            ? "text-accent"
+            : "text-text-tertiary opacity-60"
         }`}
       >
         <Icon name="phone" size={20} />
@@ -50,7 +61,7 @@ export function ChatRow({
       <div className="min-w-0 flex-1">
         <div className="font-serif text-[0.875rem] leading-snug text-text-primary">
           <Link
-            href={`/handy/${chat.id}`}
+            href={chatHref(chat.id, scene ? scene.id : last?.id)}
             onClick={() => forCharacter && rememberPhone(forCharacter)}
             className="after:absolute after:inset-0"
           >
@@ -59,7 +70,8 @@ export function ChatRow({
         </div>
         <div className="truncate text-[0.875rem] text-text-tertiary">
           {/* bewusst ohne Vorschau der Nachricht – nichts spoilern */}
-          SMS{date && ` · ${formatInplayDateShort(date.content.split("|")[0])}`}
+          SMS{scene && ` · ${names}`}
+          {day && ` · ${formatInplayDateShort(day)}`}
         </div>
       </div>
       {action ? (

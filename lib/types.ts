@@ -246,6 +246,9 @@ export interface Scene {
   summary?: string | null;
   // Gewähltes Header-/Titelbild der Szene (sonst Seed-Platzhalter)
   header_url?: string | null;
+  // Nur bei SMS-Szenen (aus `ChatScene` abgeleitet, keine Zeile in `scenes`): der
+  // Chat, in dem sie liegt. Führt aufs Handy statt auf die Szenenseite.
+  chat_id?: string | null;
 }
 
 export interface Post {
@@ -343,6 +346,22 @@ export interface Chat {
   archived_by?: string[] | null;
 }
 
+// SMS-Szene: ein benannter Abschnitt im fortlaufenden Chat – die Nachrichten, die
+// per `scene_id` dazugehören. Steht mit Titel in Szenenübersicht, Dashboard und
+// Timeline; Nachrichten ohne Szene bleiben „lose".
+export interface ChatScene {
+  id: string;
+  chat_id: string;
+  title: string;
+  inplay_date: string; // ISO-Datum (wann die Szene spielt bzw. beginnt)
+  summary?: string | null;
+  au?: boolean;
+  au_name?: string | null;
+  status: "active" | "closed";
+  created_by?: string | null; // Spieler-ID
+  created_at: string;
+}
+
 // Anruf zwischen zwei Charakteren. „ringing": klingelt noch beim Angerufenen.
 export interface PhoneCall {
   id: string;
@@ -356,7 +375,8 @@ export interface PhoneCall {
 }
 
 // text: `content` ist der Nachrichtentext · gif/image: Bild-Adresse ·
-// date: Tagestrenner mit Inplay-Datum, „2021-11-23"
+// date: Altbestand – Tagestrenner mit Inplay-Datum, „2021-11-23". Neue Nachrichten
+// tragen ihr Datum selbst (`inplay_date`); Trenner entstehen beim Anzeigen.
 export type ChatMessageKind = "text" | "gif" | "image" | "date";
 
 export interface ChatMessage {
@@ -368,7 +388,9 @@ export interface ChatMessage {
   reply_to?: string | null; // zitierte Nachricht
   reactions?: Record<string, string[]> | null; // Emoji -> Charakter-IDs
   inplay_time?: string | null; // Inplay-Uhrzeit „23:41" (nie die echte)
-  created_at: string; // echte Zeit – bestimmt nur die Reihenfolge
+  inplay_date?: string | null; // Inplay-Tag – danach sortiert der Chat
+  scene_id?: string | null; // SMS-Szene, zu der die Nachricht gehört (sonst lose)
+  created_at: string; // echte Zeit – Reihenfolge innerhalb eines Tages
 }
 
 // --- Captic -------------------------------------------------------------------

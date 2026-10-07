@@ -15,6 +15,7 @@ import type {
   Chat,
   ChatMessage,
   ChatMessageKind,
+  ChatScene,
   CapticComment,
   CapticEvent,
   CapticPost,
@@ -31,6 +32,7 @@ import type {
 import { supabase, supabaseConfigured } from "./supabase";
 import { rememberPhone } from "./phone";
 import { replaceHandle } from "./captic";
+import { orderMessages, smsAsScene, type DatedMessage } from "./chats";
 import { playsAs, tierOf } from "./characters";
 
 interface PersistedState {
@@ -43,6 +45,7 @@ interface PersistedState {
   plots: Plot[];
   chats: Chat[];
   chatMessages: ChatMessage[];
+  chatScenes: ChatScene[];
   calls: PhoneCall[];
   capticPosts: CapticPost[];
   capticComments: CapticComment[];
@@ -149,7 +152,19 @@ interface StoreValue extends PersistedState {
   markAllScenesSeen: () => void;
   markSceneUnread: (sceneId: string) => void;
   // --- Messenger ---
-  messagesOf: (chatId: string) => ChatMessage[];
+  // Nachrichten eines Chats in Lesereihenfolge (nach Inplay-Tag, siehe `orderMessages`)
+  messagesOf: (chatId: string) => DatedMessage[];
+  // SMS-Szenen in der Form von Szenen – für Szenenübersicht, Timeline und Plots
+  smsScenes: Scene[];
+  addChatScene: (
+    chatId: string,
+    data: Pick<ChatScene, "title" | "inplay_date" | "summary" | "au" | "au_name">,
+  ) => string;
+  updateChatScene: (id: string, patch: Partial<ChatScene>) => void;
+  // Löst die Szene auf – ihre Nachrichten bleiben lose im Chat
+  deleteChatScene: (id: string) => void;
+  // Mehrere Nachrichten einer Szene zuordnen (null: lösen) oder auf einen anderen Tag legen
+  patchMessages: (ids: string[], patch: Partial<Pick<ChatMessage, "scene_id" | "inplay_date">>) => void;
   // Darf ich als dieser Charakter schreiben? (eigene Charaktere und eigene NPCs)
   canWriteAs: (characterId: string) => boolean;
   // Findet den Chat dieser Charaktere oder legt ihn an; gibt die ID zurück.
@@ -159,7 +174,7 @@ interface StoreValue extends PersistedState {
     characterId: string,
     kind: ChatMessageKind,
     content: string,
-    opts?: { replyTo?: string | null; time?: string | null },
+    opts?: { replyTo?: string | null; time?: string | null; date?: string | null; sceneId?: string | null },
   ) => void;
   deleteMessage: (messageId: string) => void;
   updateMessage: (messageId: string, patch: Pick<ChatMessage, "content" | "inplay_time">) => void;
@@ -177,7 +192,8 @@ interface StoreValue extends PersistedState {
   markChatUnread: (chatId: string) => void;
   unreadChatCount: number;
   // Gibt es in diesem Chat (auch einem fremden) Nachrichten seit dem letzten Besuch?
-  isChatFresh: (chatId: string) => boolean;
+  // Mit `sceneId` nur für diese SMS-Szene (null: nur die losen Nachrichten).
+  isChatFresh: (chatId: string, sceneId?: string | null) => boolean;
   // --- Telefon ---
   addCall: (call: Omit<PhoneCall, "id" | "created_at">) => string;
   updateCall: (id: string, patch: Partial<PhoneCall>) => void;
@@ -226,6 +242,7 @@ const EMPTY: PersistedState = {
   plots: [],
   chats: [],
   chatMessages: [],
+  chatScenes: [],
   calls: [],
   capticPosts: [],
   capticComments: [],
@@ -261,6 +278,9 @@ function afterScene<T>(sceneId: string | null | undefined, run: () => PromiseLik
   const pending = sceneId ? pendingScenes.get(sceneId) : undefined;
   return pending ? pending.then(run, run) : run();
 }
+
+// … und für gerade angelegte SMS-Szenen (die erste Nachricht verweist auf sie)
+const pendingChatScenes = new Map<string, Promise<unknown>>();
 
 let lastMessageAt = 0;
 const NO_EVENTS: CapticEvent[] = [];
@@ -333,7 +353,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Lädt alle Welt-Daten (nur für freigeschaltete Nutzer*innen sichtbar; RLS).
   const loadWorld = useCallback(async () => {
-    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, calls, capticPosts, capticComments, capticStories, capticEvents, as] = await Promise.all([
+    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, chatScenes, calls, capticPosts, capticComments, capticStories, capticEvents, as] = await Promise.all([
       supabase.from("players").select("*"),
       supabase.from("characters").select("*"),
       supabase.from("scenes").select("*"),
@@ -343,6 +363,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       supabase.from("plots").select("*"),
       fetchAll<Chat>("chats"),
       fetchAll<ChatMessage>("chat_messages"),
+      fetchAll<ChatScene>("chat_scenes"),
       fetchAll<PhoneCall>("calls"),
       fetchAll<CapticPost>("captic_posts"),
       fetchAll<CapticComment>("captic_comments"),
@@ -363,6 +384,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       plots: (pt.data as Plot[]) ?? [],
       chats,
       chatMessages,
+      chatScenes,
       calls,
       capticPosts,
       capticComments,
@@ -470,6 +492,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setState((s) => ({ ...s, chatMessages: applyChange(s.chatMessages, p) })),
       )
       .subscribe();
+    // Eigener Kanal: fehlt die Tabelle (noch), bleiben die Chats trotzdem live.
+    const smsScenesChannel = supabase
+      .channel("eden-sms-scenes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_scenes" }, (p) =>
+        setState((s) => ({ ...s, chatScenes: applyChange(s.chatScenes, p) })),
+      )
+      .subscribe();
     const phoneCalls = supabase
       .channel("eden-calls")
       .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, (p) =>
@@ -566,6 +595,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("blur", trackNow);
       void supabase.removeChannel(world);
       void supabase.removeChannel(phone);
+      void supabase.removeChannel(smsScenesChannel);
       void supabase.removeChannel(phoneCalls);
       void supabase.removeChannel(captic);
       void supabase.removeChannel(presence);
@@ -1145,6 +1175,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         posts: s.posts.filter((p) => p.character_id !== id),
         quotes: s.quotes.filter((q) => q.character_id !== id),
         chats: s.chats.filter((c) => !gone.includes(c.id)),
+        chatScenes: s.chatScenes.filter((c) => !gone.includes(c.chat_id)),
         chatMessages: s.chatMessages.filter(
           (m) => m.character_id !== id && !gone.includes(m.chat_id),
         ),
@@ -1330,11 +1361,72 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // --- Messenger -------------------------------------------------------------
   const messagesOf = useCallback(
-    (chatId: string) =>
-      state.chatMessages
-        .filter((m) => m.chat_id === chatId)
-        .sort((a, b) => a.created_at.localeCompare(b.created_at)),
+    (chatId: string) => orderMessages(state.chatMessages.filter((m) => m.chat_id === chatId)),
     [state.chatMessages],
+  );
+
+  const smsScenes = useMemo(() => {
+    const out: Scene[] = [];
+    for (const sc of state.chatScenes) {
+      const chat = state.chats.find((c) => c.id === sc.chat_id);
+      if (chat) out.push(smsAsScene(sc, chat, state.chatMessages));
+    }
+    return out;
+  }, [state.chatScenes, state.chats, state.chatMessages]);
+
+  const addChatScene = useCallback(
+    (chatId: string, data: Pick<ChatScene, "title" | "inplay_date" | "summary" | "au" | "au_name">) => {
+      const row: ChatScene = {
+        ...data,
+        id: uid("sms"),
+        chat_id: chatId,
+        status: "active",
+        created_by: currentPlayer?.id ?? null,
+        created_at: new Date().toISOString(),
+      };
+      const insert = () => supabase.from("chat_scenes").insert(row);
+      const chatPending = pendingChats.get(chatId);
+      const req = Promise.resolve(chatPending ? chatPending.then(insert, insert) : insert());
+      pendingChatScenes.set(row.id, req);
+      void req.finally(() => pendingChatScenes.delete(row.id));
+      persist("addChatScene", req);
+      setState((s) => ({ ...s, chatScenes: [...s.chatScenes, row] }));
+      return row.id;
+    },
+    [currentPlayer?.id],
+  );
+
+  const updateChatScene = useCallback((id: string, patch: Partial<ChatScene>) => {
+    persist("updateChatScene", supabase.from("chat_scenes").update(patch).eq("id", id));
+    setState((s) => ({
+      ...s,
+      chatScenes: s.chatScenes.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    }));
+  }, []);
+
+  const deleteChatScene = useCallback((id: string) => {
+    // die Nachrichten bleiben: `scene_id` fällt per „on delete set null" weg
+    persist("deleteChatScene", supabase.from("chat_scenes").delete().eq("id", id));
+    setState((s) => ({
+      ...s,
+      chatScenes: s.chatScenes.filter((c) => c.id !== id),
+      chatMessages: s.chatMessages.map((m) => (m.scene_id === id ? { ...m, scene_id: null } : m)),
+    }));
+  }, []);
+
+  const patchMessages = useCallback(
+    (ids: string[], patch: Partial<Pick<ChatMessage, "scene_id" | "inplay_date">>) => {
+      if (ids.length === 0) return;
+      const update = () => supabase.from("chat_messages").update(patch).in("id", ids);
+      const pending = patch.scene_id ? pendingChatScenes.get(patch.scene_id) : undefined;
+      persist("patchMessages", pending ? pending.then(update, update) : update());
+      const set = new Set(ids);
+      setState((s) => ({
+        ...s,
+        chatMessages: s.chatMessages.map((m) => (set.has(m.id) ? { ...m, ...patch } : m)),
+      }));
+    },
+    [],
   );
 
   const canWriteAs = useCallback(
@@ -1389,7 +1481,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       characterId: string,
       kind: ChatMessageKind,
       content: string,
-      opts: { replyTo?: string | null; time?: string | null } = {},
+      opts: { replyTo?: string | null; time?: string | null; date?: string | null; sceneId?: string | null } = {},
     ) => {
       const text = content.trim();
       if (!text) return;
@@ -1402,14 +1494,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         reply_to: opts.replyTo ?? null,
         reactions: {},
         inplay_time: opts.time ?? null,
+        inplay_date: opts.date ?? null,
+        scene_id: opts.sceneId ?? null,
         // Mehrere Nachrichten im selben Augenblick (Tagestrenner + erste SMS)
         // behalten ihre Reihenfolge
         created_at: new Date(Math.max(Date.now(), lastMessageAt + 1)).toISOString(),
       };
       lastMessageAt = new Date(message.created_at).getTime();
       const send = () => supabase.from("chat_messages").insert(message);
-      const pending = pendingChats.get(chatId);
-      persist("addMessage", pending ? pending.then(send, send) : send());
+      // erst der Chat, dann (falls neu) die SMS-Szene, dann die Nachricht
+      const waits = [pendingChats.get(chatId), opts.sceneId ? pendingChatScenes.get(opts.sceneId) : undefined]
+        .filter((p): p is Promise<unknown> => !!p)
+        .map((p) => p.catch(() => {}));
+      persist("addMessage", waits.length ? Promise.all(waits).then(send) : send());
       if (kind !== "date") {
         rememberPhone(characterId);
         subscribe(chatId);
@@ -1449,6 +1546,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ...s,
       chats: s.chats.filter((c) => c.id !== chatId),
       chatMessages: s.chatMessages.filter((m) => m.chat_id !== chatId),
+      chatScenes: s.chatScenes.filter((c) => c.chat_id !== chatId),
     }));
   }, []);
 
@@ -1458,8 +1556,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const chat = s.chats.find((c) => c.id === chatId);
         if (!chat) return s;
         const left_on_read = { ...(chat.left_on_read ?? {}) };
-        if (messageId) left_on_read[characterId] = messageId;
-        else delete left_on_read[characterId];
+        // je Strang eine Nachricht (mit Komma getrennt); null hebt alle auf
+        if (messageId) {
+          const ids = (left_on_read[characterId] ?? "").split(",").filter((x) => x && x !== messageId);
+          left_on_read[characterId] = [...ids.slice(-9), messageId].join(",");
+        } else delete left_on_read[characterId];
         persist("leaveOnRead", supabase.from("chats").update({ left_on_read }).eq("id", chatId));
         return {
           ...s,
@@ -1550,10 +1651,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const isChatNew = useCallback((chatId: string) => unreadChatIds.has(chatId), [unreadChatIds]);
 
   const isChatFresh = useCallback(
-    (chatId: string) => {
+    (chatId: string, sceneId?: string | null) => {
       let newest = "";
       for (const m of state.chatMessages) {
-        if (m.chat_id === chatId && m.kind !== "date" && m.created_at > newest) newest = m.created_at;
+        if (m.chat_id !== chatId || m.kind === "date") continue;
+        if (sceneId !== undefined && (m.scene_id ?? null) !== sceneId) continue;
+        if (m.created_at > newest) newest = m.created_at;
       }
       if (!newest) return false;
       const seen = reads[chatId] ? new Date(reads[chatId]).getTime() : 0;
@@ -1940,6 +2043,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       markAllScenesSeen,
       markSceneUnread,
       messagesOf,
+      smsScenes,
+      addChatScene,
+      updateChatScene,
+      deleteChatScene,
+      patchMessages,
       canWriteAs,
       openChat,
       addMessage,
@@ -2048,6 +2156,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       markAllScenesSeen,
       markSceneUnread,
       messagesOf,
+      smsScenes,
+      addChatScene,
+      updateChatScene,
+      deleteChatScene,
+      patchMessages,
       canWriteAs,
       openChat,
       addMessage,

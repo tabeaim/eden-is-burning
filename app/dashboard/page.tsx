@@ -13,8 +13,8 @@ import { SceneCard, SceneRow } from "@/components/SceneCard";
 import { ChatRow } from "@/components/phone/ChatRow";
 import { rememberPhone } from "@/lib/phone";
 import { formatInplayDateShort } from "@/lib/format";
-import { isArchived, isLeftOnRead, lastMessages } from "@/lib/chats";
-import type { Character, Chat, Player, Scene } from "@/lib/types";
+import { chatUnits, isArchived, isLeftOnRead, unitKey, type ChatUnit } from "@/lib/chats";
+import type { Character, Player, Scene } from "@/lib/types";
 
 export default function DashboardPage() {
   const store = useStore();
@@ -29,6 +29,7 @@ export default function DashboardPage() {
     mobileIds,
     chats,
     chatMessages,
+    chatScenes,
     incomingCalls,
     capticAlerts,
     character,
@@ -64,23 +65,20 @@ export default function DashboardPage() {
     new Date(lastPostAt(b.id) ?? b.created_at).getTime() -
     new Date(lastPostAt(a.id) ?? a.created_at).getTime();
 
-  // Chats (Handy): unbeantwortet = die neueste Nachricht kommt von jemand anderem.
-  // Archivierte und „leave on read" markierte Chats sind pausiert.
-  const lastMsg = lastMessages(chatMessages);
+  // Chats (Handy), je Strang: jede aktive SMS-Szene und die losen Nachrichten eines
+  // Chats zählen einzeln. Unbeantwortet = die neueste Nachricht des Strangs kommt
+  // von jemand anderem. Archivierte Chats und „leave on read" sind pausiert.
+  const allUnits = chats.flatMap((ch) => chatUnits(ch, chatMessages, chatScenes));
   const openChatsOf = (c: Character) =>
-    chats.filter((ch) => {
-      const last = lastMsg.get(ch.id);
-      const charId = c.id;
-      return (
-        !!last &&
-        ch.participant_ids.includes(charId) &&
-        follows(c, ch.id) &&
-        !isArchived(ch) &&
-        !isLeftOnRead(ch, charId, last)
-      );
-    });
-  const byLastMsgDesc = (a: Chat, b: Chat) =>
-    (lastMsg.get(b.id)?.created_at ?? "").localeCompare(lastMsg.get(a.id)?.created_at ?? "");
+    allUnits.filter(
+      (u) =>
+        u.chat.participant_ids.includes(c.id) &&
+        follows(c, u.chat.id) &&
+        !isArchived(u.chat) &&
+        !isLeftOnRead(u.chat, c.id, u.last),
+    );
+  const byLastMsgDesc = (a: ChatUnit, b: ChatUnit) =>
+    b.last.created_at.localeCompare(a.last.created_at);
 
   // Pro Charakter: in welchen aktiven Szenen ist er dran / wartet er auf andere?
   const grouped = myChars
@@ -102,8 +100,8 @@ export default function DashboardPage() {
       dran.sort(byLastPostDesc);
       warten.sort(byLastPostDesc);
       const open = openChatsOf(c).sort(byLastMsgDesc);
-      const chatsDran = open.filter((ch) => lastMsg.get(ch.id)!.character_id !== c.id);
-      const chatsWarten = open.filter((ch) => lastMsg.get(ch.id)!.character_id === c.id);
+      const chatsDran = open.filter((u) => u.last.character_id !== c.id);
+      const chatsWarten = open.filter((u) => u.last.character_id === c.id);
       return { char: c, dran, warten, chatsDran, chatsWarten };
     })
     .filter(
@@ -122,9 +120,9 @@ export default function DashboardPage() {
       !s.paused &&
       myChars.some((c) => s.participant_ids.includes(c.id) && follows(c, s.id)),
   );
-  // Chats zählen mit (jeder Chat einmal, auch wenn mehrere eigene Charaktere dabei sind)
-  const openChatIds = new Set(grouped.flatMap((g) => [...g.chatsDran, ...g.chatsWarten].map((c) => c.id)));
-  const dranChatIds = new Set(grouped.flatMap((g) => g.chatsDran.map((c) => c.id)));
+  // Chat-Stränge zählen mit (jeder einmal, auch wenn mehrere eigene Charaktere dabei sind)
+  const openChatIds = new Set(grouped.flatMap((g) => [...g.chatsDran, ...g.chatsWarten].map(unitKey)));
+  const dranChatIds = new Set(grouped.flatMap((g) => g.chatsDran.map(unitKey)));
   const totalOpen = myOpenScenes.length + openChatIds.size;
   const dranCount =
     myOpenScenes.filter((s) => {
@@ -151,13 +149,10 @@ export default function DashboardPage() {
   // Chats mit neuen Nachrichten in den letzten 24h (alle, auch fremde) – stehen
   // zusammen mit den Szenen in einer nach Zeit sortierten Liste
   const recentItems = [
-    ...recentScenes.map(({ scene, last }) => ({ key: scene.id, at: last!.created_at, scene, chat: null })),
-    ...chats
-      .filter((ch) => {
-        const last = lastMsg.get(ch.id);
-        return last && withinHours(last.created_at, 24);
-      })
-      .map((ch) => ({ key: ch.id, at: lastMsg.get(ch.id)!.created_at, scene: null, chat: ch })),
+    ...recentScenes.map(({ scene, last }) => ({ key: scene.id, at: last!.created_at, scene, unit: null })),
+    ...allUnits
+      .filter((u) => withinHours(u.last.created_at, 24))
+      .map((u) => ({ key: unitKey(u), at: u.last.created_at, scene: null, unit: u })),
   ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
   // Anwesenheit: "jetzt" (live) vs. "letzte 24h" (ohne die jetzt-Online)
@@ -351,7 +346,7 @@ export default function DashboardPage() {
                   item.scene ? (
                     <SceneRow key={item.key} scene={item.scene} />
                   ) : (
-                    <ChatRow key={item.key} chat={item.chat!} />
+                    <ChatRow key={item.key} chat={item.unit!.chat} scene={item.unit!.scene} />
                   ),
                 )}
               </div>
@@ -457,12 +452,11 @@ function CharacterGroup({
 }: {
   char: Character;
   scenes: Scene[];
-  chats?: Chat[];
+  chats?: ChatUnit[];
   muted?: boolean;
   canLeaveOnRead?: boolean; // unbeantwortete Chats lassen sich pausieren
 }) {
-  const { chatMessages, leaveOnRead } = useStore();
-  const lastMsg = lastMessages(chatMessages);
+  const { leaveOnRead } = useStore();
   return (
     <div>
       <div className="flex items-center gap-2.5 mb-2.5">
@@ -491,16 +485,17 @@ function CharacterGroup({
         {scenes.map((s) => (
           <SceneCard key={s.id} scene={s} muted={muted} />
         ))}
-        {chats.map((ch) => (
+        {chats.map((u) => (
           <ChatRow
-            key={ch.id}
-            chat={ch}
+            key={unitKey(u)}
+            chat={u.chat}
+            scene={u.scene}
             forCharacter={char.id}
             muted={muted}
             action={
               canLeaveOnRead ? (
                 <button
-                  onClick={() => leaveOnRead(ch.id, char.id, lastMsg.get(ch.id)?.id ?? null)}
+                  onClick={() => leaveOnRead(u.chat.id, char.id, u.last.id)}
                   title="Nachricht unbeantwortet lassen – der Chat pausiert, bis jemand wieder schreibt"
                   className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
                 >

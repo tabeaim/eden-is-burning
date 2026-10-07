@@ -14,6 +14,7 @@ import { PlotBar, PlotTools } from "@/components/PlotBar";
 import { plotScenes, visiblePlots } from "@/lib/plots";
 import { AU_UNNAMED, auNames } from "@/components/AuNameField";
 import type { Plot, Scene } from "@/lib/types";
+import { SCENE_KINDS, chatHref, newestMessage, sceneKind } from "@/lib/chats";
 
 type Tab = "active" | "all" | "mine" | "archive";
 type SortKey = "active" | "inplay" | "created" | "title";
@@ -33,7 +34,9 @@ const MONTHS_DE = [
 export default function ScenesPage() {
   const store = useStore();
   const {
-    scenes,
+    scenes: playedScenes,
+    smsScenes,
+    chatMessages,
     characters,
     players,
     character,
@@ -48,7 +51,11 @@ export default function ScenesPage() {
     isAdmin,
   } = store;
 
+  // Gespielte Szenen (auch Telefonszenen) und SMS-Szenen in einer Liste
+  const scenes = useMemo(() => [...playedScenes, ...smsScenes], [playedScenes, smsScenes]);
+
   const [tabState, setTab] = useState<Tab>("all");
+  const [kinds, setKinds] = useState<string[]>([]); // Szene | Anruf | SMS (leer = alle)
   const [searchTitle, setSearchTitle] = useState("");
   const [searchPost, setSearchPost] = useState("");
   const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED
@@ -84,9 +91,12 @@ export default function ScenesPage() {
     [currentPlayer, charactersOf],
   );
 
-  const lastActivity = (sceneId: string, fallback: string) => {
-    const posts = postsOf(sceneId);
-    return posts.length ? posts[posts.length - 1].created_at : fallback;
+  const lastActivity = (s: Scene) => {
+    if (s.chat_id) {
+      return newestMessage(chatMessages.filter((m) => m.scene_id === s.id))?.created_at ?? s.created_at;
+    }
+    const posts = postsOf(s.id);
+    return posts.length ? posts[posts.length - 1].created_at : s.created_at;
   };
 
   // Optionen für die Mehrfach-Dropdowns
@@ -124,6 +134,12 @@ export default function ScenesPage() {
   const stripHtml = (h: string) => h.replace(/<[^>]*>/g, " ");
   const postMatchId = (scene: Scene): string | null => {
     if (!qPost) return null;
+    if (scene.chat_id) {
+      const hit = chatMessages.find(
+        (m) => m.scene_id === scene.id && m.kind === "text" && m.content.toLowerCase().includes(qPost),
+      );
+      return hit?.id ?? null;
+    }
     for (const p of postsOf(scene.id)) {
       if (stripHtml(p.content).toLowerCase().includes(qPost)) return p.id;
     }
@@ -171,6 +187,7 @@ export default function ScenesPage() {
 
   const filtered = scenes.filter((s) => {
     if (plotIds && !plotIds.has(s.id)) return false;
+    if (kinds.length > 0 && !kinds.includes(sceneKind(s))) return false;
     if (tab === "active" && s.status !== "active") return false;
     if (tab === "archive" && s.status !== "closed") return false;
     if (tab === "mine" && !s.participant_ids.some((id) => myCharIds.has(id)))
@@ -205,8 +222,7 @@ export default function ScenesPage() {
     switch (sortKey) {
       case "active":
         cmp =
-          new Date(lastActivity(a.id, a.created_at)).getTime() -
-          new Date(lastActivity(b.id, b.created_at)).getTime();
+          new Date(lastActivity(a)).getTime() - new Date(lastActivity(b)).getTime();
         break;
       case "inplay":
         cmp = a.inplay_date < b.inplay_date ? -1 : a.inplay_date > b.inplay_date ? 1 : 0;
@@ -235,6 +251,7 @@ export default function ScenesPage() {
     (qPost ? 1 : 0) +
     aus.length +
     (plot ? 1 : 0) +
+    kinds.length +
     tokens.length +
     areas.length +
     periods.length;
@@ -243,6 +260,7 @@ export default function ScenesPage() {
     setSearchTitle("");
     setSearchPost("");
     setAus([]);
+    setKinds([]);
     setPlotId(null);
     setBeforePlot(null);
     setTokens([]);
@@ -302,6 +320,13 @@ export default function ScenesPage() {
             />
           </div>
 
+          <MultiSelect
+            label="Art"
+            options={SCENE_KINDS}
+            selected={kinds}
+            onToggle={(v) => toggle(kinds, setKinds, v)}
+            onClear={() => setKinds([])}
+          />
           <MultiSelect
             label="Gegend"
             options={areaOptions}
@@ -406,9 +431,11 @@ export default function ScenesPage() {
               key={s.id}
               scene={s}
               href={
-                matchId
-                  ? `/szenen/${s.id}?q=${encodeURIComponent(searchPost.trim())}#post-${matchId}`
-                  : undefined
+                !matchId
+                  ? undefined
+                  : s.chat_id
+                    ? chatHref(s.chat_id, matchId)
+                    : `/szenen/${s.id}?q=${encodeURIComponent(searchPost.trim())}#post-${matchId}`
               }
             />
           );

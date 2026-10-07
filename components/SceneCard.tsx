@@ -12,6 +12,7 @@ import {
   formatInplayDateShort,
 } from "@/lib/format";
 import type { Character, Scene } from "@/lib/types";
+import { chatHref, newestMessage, sceneHref } from "@/lib/chats";
 import { Icon } from "./Icon";
 import { SceneTurnBar } from "./SceneTurnBar";
 
@@ -24,9 +25,10 @@ import { SceneTurnBar } from "./SceneTurnBar";
 // Status als Streichholz: brennt orange, solange der neueste Post ungelesen ist;
 // sonst grau und ohne Flamme; bei geschlossenen Szenen abgebrannt mit Rauch.
 export function SceneMatch({ scene, size = 20 }: { scene: Scene; size?: number }) {
-  const { isSceneNew } = useStore();
+  const { isSceneNew, isChatFresh } = useStore();
   const closed = scene.status === "closed";
-  const unread = !closed && isSceneNew(scene.id);
+  const unread =
+    !closed && (scene.chat_id ? isChatFresh(scene.chat_id, scene.id) : isSceneNew(scene.id));
   return (
     <span
       title={closed ? "geschlossen" : unread ? "aktiv · neuer Post" : "aktiv"}
@@ -69,6 +71,31 @@ function useSceneMenu(scene: Scene) {
 
 const STRETCHED = "after:absolute after:inset-0 after:content-['']";
 
+// Letzter Beitrag einer Szene und wohin er führt – bei SMS-Szenen die zuletzt
+// geschriebene Nachricht im Chat auf dem Handy.
+function useLastEntry(scene: Scene) {
+  const { postsOf, chatMessages } = useStore();
+  if (scene.chat_id) {
+    const last = newestMessage(chatMessages.filter((m) => m.scene_id === scene.id));
+    return {
+      posts: [],
+      last: last ?? null,
+      lastHref: last ? chatHref(scene.chat_id, last.id) : "",
+      what: "Letzte Nachricht",
+      none: "Noch keine Nachricht",
+    };
+  }
+  const posts = postsOf(scene.id);
+  const last = posts.length ? posts[posts.length - 1] : null;
+  return {
+    posts,
+    last,
+    lastHref: last ? `/szenen/${scene.id}#post-${last.id}` : "",
+    what: "Letzter Post",
+    none: "Noch kein Post",
+  };
+}
+
 // Ort in der Faktenzeile: bleibt reiner Text, führt aber aufs Ortsprofil. Orte
 // ohne eigenen Eintrag (Altbestand) sind nicht anklickbar.
 function SceneLocation({ scene }: { scene: Scene }) {
@@ -102,12 +129,11 @@ export function SceneCard({
   // Vornamen, ohne Bubbles und ohne die Zeile zum letzten Post
   compact?: boolean;
 }) {
-  const { character, postsOf } = useStore();
+  const { character } = useStore();
   const participants = scene.participant_ids
     .map((id) => character(id))
     .filter(Boolean) as Character[];
-  const posts = postsOf(scene.id);
-  const lastPost = posts.length ? posts[posts.length - 1] : null;
+  const { posts, last: lastPost, lastHref, what, none } = useLastEntry(scene);
   const { onContextMenu, menu } = useSceneMenu(scene);
 
   return (
@@ -123,7 +149,7 @@ export function SceneCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-serif text-[1rem] text-text-primary leading-tight">
-            <Link href={href ?? `/szenen/${scene.id}`} className={STRETCHED}>
+            <Link href={href ?? sceneHref(scene)} className={STRETCHED}>
               {scene.title}
             </Link>
           </h3>
@@ -142,7 +168,8 @@ export function SceneCard({
         </div>
 
         <div className="mt-1 text-[0.875rem] text-text-tertiary">
-          <SceneLocation scene={scene} /> · {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
+          <SceneLocation scene={scene} /> · {formatInplayDate(scene.inplay_date)}
+          {scene.inplay_time && `, ${scene.inplay_time}`}
           {scene.au && (
             <>
               {" · "}
@@ -181,14 +208,14 @@ export function SceneCard({
         <div className="mt-2 text-[0.8125rem] text-text-tertiary">
           {lastPost ? (
             <Link
-              href={`/szenen/${scene.id}#post-${lastPost.id}`}
-              title="Zum neuesten Post springen"
+              href={lastHref}
+              title="Zum neuesten Beitrag springen"
               className="relative z-10 hover:text-accent hover:underline"
             >
-              Letzter Post am {formatDateTime(lastPost.created_at)}
+              {what} am {formatDateTime(lastPost.created_at)}
             </Link>
           ) : (
-            "Noch kein Post"
+            none
           )}
         </div>
           </>
@@ -202,9 +229,8 @@ export function SceneCard({
 // (numerisch); rechts wer zuletzt gepostet hat und wann (Klick springt zum
 // neuesten Post).
 export function SceneRow({ scene }: { scene: Scene }) {
-  const { postsOf, character } = useStore();
-  const posts = postsOf(scene.id);
-  const lastPost = posts.length ? posts[posts.length - 1] : null;
+  const { character } = useStore();
+  const { last: lastPost, lastHref } = useLastEntry(scene);
   const lastChar = lastPost ? character(lastPost.character_id) : undefined;
   const { onContextMenu, menu } = useSceneMenu(scene);
 
@@ -217,7 +243,7 @@ export function SceneRow({ scene }: { scene: Scene }) {
       <SceneMatch scene={scene} size={24} />
       <div className="min-w-0 flex-1">
         <div className="font-serif text-[0.875rem] text-text-primary truncate">
-          <Link href={`/szenen/${scene.id}`} className={STRETCHED}>
+          <Link href={sceneHref(scene)} className={STRETCHED}>
             {scene.title}
           </Link>
         </div>
@@ -227,8 +253,8 @@ export function SceneRow({ scene }: { scene: Scene }) {
       </div>
       {lastPost && (
         <Link
-          href={`/szenen/${scene.id}#post-${lastPost.id}`}
-          title="Zum neuesten Post springen"
+          href={lastHref}
+          title="Zum neuesten Beitrag springen"
           className="group/last relative z-10 shrink-0 text-right text-[0.875rem]"
         >
           {lastChar && (

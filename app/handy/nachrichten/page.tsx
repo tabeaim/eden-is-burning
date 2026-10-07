@@ -5,6 +5,7 @@ import { useMemo, useRef, useState } from "react";
 import { formatInplayDateShort } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { Chat, ChatMessage } from "@/lib/types";
+import { newestMessage, orderMessages, type DatedMessage } from "@/lib/chats";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
 import { chatTitle, isArchived, isLeftOnRead, messageSnippet } from "@/lib/chats";
@@ -25,6 +26,7 @@ export default function MessagesPage() {
   const {
     chats,
     chatMessages,
+    chatScenes,
     character,
     isChatNew,
     canWriteAs,
@@ -84,21 +86,24 @@ export default function MessagesPage() {
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
 
-  // Je Chat: neueste Nachricht, neuester Tagestrenner und – bei einer Suche – die
-  // neueste Nachricht, die den Suchbegriff enthält
-  const { last, dates, hits } = useMemo(() => {
-    const last = new Map<string, ChatMessage>();
-    const dates = new Map<string, ChatMessage>();
+  // Je Chat: die zuletzt geschriebene Nachricht (mit ihrem Inplay-Tag) und – bei
+  // einer Suche – die neueste Nachricht, die den Suchbegriff enthält
+  const { last, hits } = useMemo(() => {
+    const byChat = new Map<string, ChatMessage[]>();
+    for (const m of chatMessages) byChat.set(m.chat_id, [...(byChat.get(m.chat_id) ?? []), m]);
+    const last = new Map<string, DatedMessage>();
     const hits = new Map<string, ChatMessage>();
-    const newer = (map: Map<string, ChatMessage>, m: ChatMessage) => {
-      const cur = map.get(m.chat_id);
-      if (!cur || m.created_at > cur.created_at) map.set(m.chat_id, m);
-    };
-    for (const m of chatMessages) {
-      newer(m.kind === "date" ? dates : last, m);
-      if (query && m.kind === "text" && m.content.toLowerCase().includes(query)) newer(hits, m);
+    for (const [chatId, list] of byChat) {
+      const ordered = orderMessages(list);
+      const newest = newestMessage(ordered);
+      if (newest) last.set(chatId, newest);
+      if (!query) continue;
+      const hit = newestMessage(
+        ordered.filter((m) => m.kind === "text" && m.content.toLowerCase().includes(query)),
+      );
+      if (hit) hits.set(chatId, hit);
     }
-    return { last, dates, hits };
+    return { last, hits };
   }, [chatMessages, query]);
 
   const myId = me?.id;
@@ -225,7 +230,8 @@ export default function MessagesPage() {
         {rows.map(({ chat, people, title, last: m, hit }) => {
           const unread = tab === "mine" && isChatNew(chat.id);
           const shown = hit ?? m;
-          const date = dates.get(chat.id);
+          // zuletzt wurde in einer SMS-Szene geschrieben: ihr Titel statt der Vorschau
+          const scene = !hit && m?.scene_id ? chatScenes.find((s) => s.id === m.scene_id) : undefined;
           const paused = tab === "mine" && !!myId && isLeftOnRead(chat, myId, m);
           return (
             <Link
@@ -275,12 +281,14 @@ export default function MessagesPage() {
                     {title}
                   </span>
                   <span className={`shrink-0 text-[0.75rem] ${unread ? "text-accent" : "text-text-tertiary"}`}>
-                    {date ? formatInplayDateShort(date.content.split("|")[0]) : ""}
+                    {m?.day ? formatInplayDateShort(m.day) : ""}
                   </span>
                 </span>
                 <span className="mt-0.5 flex items-center gap-2">
                   <span className={`min-w-0 flex-1 truncate text-[0.8125rem] ${unread || hit ? "text-text-primary" : "text-text-tertiary"}`}>
-                    {shown ? (
+                    {scene ? (
+                      scene.title
+                    ) : shown ? (
                       <>
                         {shown.character_id === myId && tab === "mine"
                           ? "Du: "

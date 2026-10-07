@@ -2,21 +2,24 @@
 
 import { capFirst } from "@/lib/format";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import type { ChatMessageKind } from "@/lib/types";
-import { SMS_TO_KEY, hasPhone, addMinutes, contactName, contactShortName, resolvePhone } from "@/lib/phone";
+import { SMS_TO_KEY, hasPhone, contactName, contactShortName, resolvePhone } from "@/lib/phone";
 import { tierLabel } from "@/lib/characters";
+import { chatHref, smsSceneTitle } from "@/lib/chats";
 import { DatePicker } from "@/components/DatePicker";
 import { Composer } from "@/components/phone/Composer";
 import { PhoneAvatar, PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
 
 // „Neue SMS": vom Handy des gewählten eigenen Charakters (Leiste über dem Gerät)
-// an einen beliebigen Charakter oder NPC. Ein neuer Chat beginnt immer mit dem
-// Inplay-Datum (Tagestrenner); gibt es den Chat schon, landet die Nachricht dort.
+// an einen beliebigen Charakter oder NPC. Je Paar gibt es einen fortlaufenden
+// Chat: Besteht er schon, geht es dort weiter (Szenen-Auswahl über dem
+// Eingabefeld). Ein neuer Chat braucht das Inplay-Datum der ersten Nachricht; mit
+// Titel beginnt er gleich als SMS-Szene.
 export default function NewSmsPage() {
   const router = useRouter();
-  const { characters, npcs, chats, currentPlayer, openChat, addMessage, messagesOf } = useStore();
+  const { characters, npcs, chats, currentPlayer, openChat, addMessage, addChatScene } = useStore();
   const { myChars, me: from, setOwner } = useMyPhone();
   // Aus den Kontakten kommend ist der/die Empfänger*in schon gewählt
   const [toId, setToId] = useState<string | null>(() => {
@@ -30,6 +33,7 @@ export default function NewSmsPage() {
   });
   const [q, setQ] = useState("");
   const [date, setDate] = useState("");
+  const [title, setTitle] = useState("");
   const [timeOverride, setTimeOverride] = useState<string | null>(null);
 
   const everyone = [...characters, ...npcs].filter((c) => hasPhone(c)); // ohne Handy keine SMS
@@ -51,19 +55,22 @@ export default function NewSmsPage() {
             c.participant_ids.includes(to.id),
         )
       : undefined;
-  const existingMessages = existing ? messagesOf(existing.id) : [];
-  // Ein bestehender Chat hat sein Datum schon; sonst muss es hier gesetzt werden
-  const needsDate = !existingMessages.some((m) => m.kind === "date");
-  const lastTime = [...existingMessages].reverse().find((m) => m.inplay_time)?.inplay_time;
-  const time = timeOverride ?? (lastTime ? addMinutes(lastTime, 1) : "12:00");
+  // Den Chat gibt es schon: dort weiterschreiben
+  const existingId = existing?.id;
+  useEffect(() => {
+    if (existingId) router.replace(chatHref(existingId));
+  }, [existingId, router]);
+  const time = timeOverride ?? "12:00";
 
   function send(kind: ChatMessageKind, content: string) {
-    if (!from || !to || (needsDate && !date)) return;
+    if (!from || !to || !date) return;
     const id = openChat([from.id, to.id]);
-    if (needsDate) addMessage(id, from.id, "date", date);
-    addMessage(id, from.id, kind, content, { time });
+    const sceneId = title.trim()
+      ? addChatScene(id, { title: title.trim(), inplay_date: date, summary: null, au: false, au_name: null })
+      : null;
+    addMessage(id, from.id, kind, content, { time, date, sceneId });
     setOwner(from.id);
-    router.push(`/handy/${id}`);
+    router.push(chatHref(id));
   }
 
   return (
@@ -138,28 +145,39 @@ export default function NewSmsPage() {
               <div className="flex flex-col items-center gap-2 px-5 pt-6 text-center">
                 <PhoneAvatar character={to} size={64} />
                 <div className="text-[1rem] font-semibold text-text-primary">{contactName(from, to)}</div>
-                {needsDate ? (
-                  <div className="mt-2 w-full max-w-[17rem] text-left">
-                    <div className="mb-1 text-[0.8125rem] text-text-secondary">
-                      Wann spielt der Chat? <span className="text-accent">*</span>
-                    </div>
-                    <DatePicker value={date} onChange={setDate} />
-                    <p className="mt-2 text-[0.75rem] text-text-tertiary">
-                      Das Inplay-Datum steht als Trenner über der ersten Nachricht. Die Uhrzeit
-                      stellst du unten in der Eingabezeile ein.
-                    </p>
-                  </div>
-                ) : (
+                {existing ? (
                   <p className="text-[0.8125rem] text-text-tertiary">
                     {from.name.split(" ")[0]} hat schon einen Chat mit {contactShortName(from, to)} –
-                    deine Nachricht landet dort.
+                    einen Moment …
                   </p>
+                ) : (
+                  <div className="mt-2 w-full max-w-[17rem] text-left">
+                    <div className="mb-1 text-[0.8125rem] text-text-secondary">
+                      Wann spielt die erste Nachricht? <span className="text-accent">*</span>
+                    </div>
+                    <DatePicker value={date} onChange={setDate} />
+                    <div className="mb-1 mt-3 text-[0.8125rem] text-text-secondary">
+                      Titel der SMS-Szene (optional)
+                    </div>
+                    <input
+                      value={title}
+                      maxLength={80}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder={smsSceneTitle([from, to])}
+                      className="w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/20 sm:text-[0.875rem]"
+                    />
+                    <p className="mt-2 text-[0.75rem] text-text-tertiary">
+                      Mit Titel steht der Austausch als SMS-Szene in Szenenübersicht und Timeline;
+                      ohne bleibt er loses Geplänkel. Die Uhrzeit stellst du unten in der
+                      Eingabezeile ein.
+                    </p>
+                  </div>
                 )}
               </div>
             )}
           </div>
 
-          {to && (!needsDate || date) && (
+          {to && !existing && date && (
             <Composer
               onSend={send}
               media={!resolvePhone(from).burner}

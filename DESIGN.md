@@ -389,6 +389,25 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   „Neue Nachrichten bei A & B", unter „Du bist dran" als „Chat mit …" (nie mit
   Vorschau des Nachrichtentexts – nichts spoilern) samt Knopf
   „Leave on read" (pausiert den Chat, bis wieder jemand schreibt).
+- **Fortlaufender Chat + SMS-Szenen** (`lib/chats.ts`, `components/phone/SmsScenes.tsx`):
+  Je Paar gibt es einen Chat. Jede Nachricht trägt ihren Inplay-Tag, der Verlauf
+  sortiert danach (nicht nach Schreibzeit) – Tagestrenner entstehen beim Anzeigen.
+  Eine **SMS-Szene** ist ein benanntes Set von Nachrichten (Titel, Datum,
+  Zusammenfassung, AU; aktiv/beendet); Nachrichten ohne Szene bleiben lose.
+  - Im Chat: Szenentrenner (Pille mit Titel, aktiv mit Akzentrand; ‹ › springt zur
+    vorigen/nächsten Szene, Tipp öffnet die Optionen), kurzer Strich am Ende.
+  - Über dem Eingabefeld die ein-/ausklappbare `SceneBar`: wohin die nächste
+    Nachricht geht (aktive Szenen als Chips, „lose", „+ Szene") und an welchem Tag.
+  - Tipp auf die Kopfzeile: Verzeichnis (`SceneDirectory`) zum Springen. Beim
+    Scrollen blendet oben kurz ein, wo man ist.
+  - Nachricht antippen → „Markieren": mehrere zu einer Szene zusammenfügen, einer
+    bestehenden zuordnen, lösen oder auf einen anderen Tag legen.
+  - Außerhalb des Handys sind SMS-Szenen Szenen (`smsScenes` im Store, Ort „per
+    SMS"): `SceneCard`/`SceneRow` in Szenenübersicht und Timeline, dort Filter
+    „Art" (Szene · Anruf · SMS). Im Dashboard eine `ChatRow` je Strang (jede
+    aktive Szene mit ihrem Titel, die losen Nachrichten als „Chat mit …").
+  - Chat-Liste: eine Zeile je Person; wurde zuletzt in einer Szene geschrieben,
+    steht ihr Titel statt der Nachrichtenvorschau.
 - **Captic ist optional** (An/Aus-Schalter in `PhoneSettings`); das Profil wird
   in der App auf dem Handy bearbeitet.
 - **Telefon** (`/handy/telefon` Anrufliste, `/handy/kontakte` Kontakte; im Dock, „Neuer
