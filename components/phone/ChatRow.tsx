@@ -7,6 +7,7 @@ import { formatDateTimeShort, formatInplayDateShort } from "@/lib/format";
 import { rememberPhone } from "@/lib/phone";
 import { chatHref, chatName, newestMessage } from "@/lib/chats";
 import { Icon } from "@/components/Icon";
+import { ChatNameText } from "./ChatNameText";
 
 // Chat als kompakte Zeile fürs Dashboard – gleicher Aufbau wie `SceneRow`
 // (Symbol, Titel, Unterzeile; rechts wer zuletzt schrieb und wann). Eine Zeile je
@@ -37,11 +38,12 @@ export function ChatRow({
   const names = chatName(chat, character, forCharacter ? { id: forCharacter } : null);
   const title = scene
     ? scene.title
-    : chat.name?.trim()
-      ? `Gruppe „${names}“`
-      : forCharacter
-        ? `Chat mit ${names}`
-        : `Neue Nachrichten bei ${names}`;
+    : (
+        <>
+          {chat.name?.trim() ? "Gruppe " : forCharacter ? "Chat mit " : "Neue Nachrichten bei "}
+          <ChatNameText chat={chat} owner={forCharacter ? { id: forCharacter } : null} />
+        </>
+      );
   const day = scene?.inplay_date || last?.day;
 
   return (

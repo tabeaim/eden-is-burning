@@ -1157,7 +1157,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const deleteCharacter = useCallback((id: string) => {
     setState((s) => {
       // Posts, Zitate und Nachrichten hängen per „on delete cascade" am Charakter;
-      // aus Szenen und Chats muss er von Hand heraus.
+      // aus Szenen und Chats muss er von Hand heraus (beide bleiben bestehen).
       const scenes = s.scenes.map((sc) => {
         if (!sc.participant_ids.includes(id)) return sc;
         const participant_ids = sc.participant_ids.filter((x) => x !== id);
@@ -1165,20 +1165,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         persist("deleteCharacter/scene", supabase.from("scenes").update(patch).eq("id", sc.id));
         return { ...sc, ...patch };
       });
-      // Chats zu zweit verschwinden; aus Gruppen fällt nur der Charakter heraus
-      const mine = s.chats.filter((c) => c.participant_ids.includes(id));
-      const gone = mine.filter((c) => c.participant_ids.length <= 2).map((c) => c.id);
-      for (const c of mine.filter((c) => c.participant_ids.length > 2)) {
+      // Chats bleiben wie Szenen bestehen (mit den Nachrichten der anderen); der
+      // Charakter fällt nur heraus.
+      for (const c of s.chats.filter((c) => c.participant_ids.includes(id))) {
         persist(
-          "deleteCharacter/group",
+          "deleteCharacter/chat",
           supabase
             .from("chats")
             .update({ participant_ids: c.participant_ids.filter((p) => p !== id) })
             .eq("id", c.id),
         );
-      }
-      if (gone.length) {
-        persist("deleteCharacter/chats", supabase.from("chats").delete().in("id", gone));
       }
       persist("deleteCharacter", supabase.from("characters").delete().eq("id", id));
       return {
@@ -1187,17 +1183,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         characters: s.characters.filter((c) => c.id !== id),
         posts: s.posts.filter((p) => p.character_id !== id),
         quotes: s.quotes.filter((q) => q.character_id !== id),
-        chats: s.chats
-          .filter((c) => !gone.includes(c.id))
-          .map((c) =>
+        chats: s.chats.map((c) =>
             c.participant_ids.includes(id)
               ? { ...c, participant_ids: c.participant_ids.filter((p) => p !== id) }
               : c,
-          ),
-        chatScenes: s.chatScenes.filter((c) => !gone.includes(c.chat_id)),
-        chatMessages: s.chatMessages.filter(
-          (m) => m.character_id !== id && !gone.includes(m.chat_id),
         ),
+        chatMessages: s.chatMessages.filter((m) => m.character_id !== id),
         calls: s.calls.filter((c) => c.caller_id !== id && c.callee_id !== id),
         capticPosts: s.capticPosts.filter((p) => p.character_id !== id),
         capticComments: s.capticComments.filter((c) => c.character_id !== id),

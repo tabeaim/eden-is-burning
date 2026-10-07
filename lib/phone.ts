@@ -1,6 +1,7 @@
 // Look der Charakter-Handys: Modelle, Gehäusefarben, Abnutzung, Hintergründe und
 // die Apps, die der Startbildschirm (nicht anklickbar) andeutet.
 import type { Character, PhoneSettings } from "./types";
+import { tierOf } from "./characters";
 
 // Schlüssel bleiben technisch (island = Kamera-Insel, punch = Kamera-Punkt,
 // classic = Home-Button). Das Burner Phone ist ein altes Tastenhandy: nur SMS.
@@ -86,9 +87,12 @@ export interface ResolvedPhone {
   captic: boolean; // Captic aktiviert (nie auf dem Burner Phone)
 }
 
-// Hat der Charakter überhaupt ein Handy? (abschaltbar in den Handy-Einstellungen)
-export function hasPhone(c: Pick<Character, "phone"> | null | undefined): boolean {
-  return !c?.phone?.disabled;
+// Hat der Charakter überhaupt ein Handy? Statist*innen nie; bei allen anderen
+// abschaltbar in den Handy-Einstellungen.
+export function hasPhone(
+  c: Pick<Character, "phone" | "is_npc" | "npc_tier"> | null | undefined,
+): boolean {
+  return !!c && tierOf(c) !== "extra" && !c.phone?.disabled;
 }
 
 export function wallpaperCss(value: string | null | undefined): string {

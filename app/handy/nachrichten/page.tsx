@@ -11,6 +11,7 @@ import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
 import { chatName, isArchived, isLeftOnRead } from "@/lib/chats";
 import { contactShortName } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
+import { ChatNameText } from "@/components/phone/ChatNameText";
 import {
   PhoneAvatar,
   PhoneFrame,
@@ -231,8 +232,6 @@ export default function MessagesPage() {
         {rows.map(({ chat, people, title, last: m, hit }) => {
           const unread = tab === "mine" && isChatNew(chat.id);
           const shown = hit ?? m;
-          // zuletzt wurde in einer SMS-Szene geschrieben: ihr Titel statt der Vorschau
-          const scene = !hit && m?.scene_id ? chatScenes.find((s) => s.id === m.scene_id) : undefined;
           const paused = tab === "mine" && !!myId && isLeftOnRead(chat, myId, m);
           return (
             <Link
@@ -279,7 +278,7 @@ export default function MessagesPage() {
               <span className="min-w-0 flex-1 border-b border-border-subtle pb-2.5">
                 <span className="flex items-baseline gap-2">
                   <span className={`min-w-0 flex-1 truncate text-[0.9375rem] ${unread ? "font-bold" : "font-semibold"} text-text-primary`}>
-                    {title}
+                    <ChatNameText chat={chat} owner={me} />
                   </span>
                   <span className={`shrink-0 text-[0.75rem] ${unread ? "text-accent" : "text-text-tertiary"}`}>
                     {m?.day ? formatInplayDateShort(m.day) : ""}
@@ -290,9 +289,7 @@ export default function MessagesPage() {
                     {/* nie eine Vorschau des Texts – nichts spoilern */}
                     {hit
                       ? "Treffer in einer Nachricht"
-                      : scene
-                        ? scene.title
-                        : !shown
+                      : !shown
                           ? "Noch keine Nachricht"
                           : unread
                             ? "Neue Nachricht"
@@ -316,7 +313,7 @@ export default function MessagesPage() {
       {menuChat && (
         <Sheet onClose={() => closeMenu()}>
           <div className="mb-2 truncate px-1 text-[0.8125rem] text-text-tertiary">
-            {chatName(menuChat, character, me)}
+            <ChatNameText chat={menuChat} owner={me} />
           </div>
           <SheetList>
             {/* eigener Chat, in dem man dran ist: pausieren, als ungelesen markieren

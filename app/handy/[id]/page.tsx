@@ -23,6 +23,9 @@ import {
   SmsSceneForm,
   type DirectoryEntry,
 } from "@/components/phone/SmsScenes";
+import { ownerGone } from "@/lib/characters";
+import { GONE_CLASS } from "@/lib/gone";
+import { ChatNameText } from "@/components/phone/ChatNameText";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DatePicker } from "@/components/DatePicker";
 import { Composer } from "@/components/phone/Composer";
@@ -90,6 +93,7 @@ function ChatView({ chat }: { chat: Chat }) {
     characters,
     npcs,
     chats,
+    player,
   } = useStore();
   const router = useRouter();
   const messages = messagesOf(chat.id);
@@ -100,7 +104,8 @@ function ChatView({ chat }: { chat: Chat }) {
   // mit: Man bleibt auf dem eigenen Handy und sieht alle Blasen links mit Namen,
   // wie in einem Gruppenchat.
   const { myChars, me, stored, setOwner } = useMyPhone();
-  const writable = parts.filter(canWriteAs);
+  // … mit Handy (Statist*innen haben keins)
+  const writable = parts.filter((pid) => canWriteAs(pid) && hasPhone(character(pid)));
   const reading = writable.length === 0;
   const self = reading ? "" : stored && writable.includes(stored) ? stored : writable[0];
   const canWrite = !reading;
@@ -410,7 +415,7 @@ function ChatView({ chat }: { chat: Chat }) {
           </span>
           <span className="min-w-0">
             <span className="block truncate text-[0.9375rem] font-semibold leading-tight text-text-primary">
-              {chat.name?.trim() || chatTitle(others, viewer)}
+              <ChatNameText chat={chat} owner={reading ? null : viewer} />
             </span>
             <span className="block truncate text-[0.75rem] text-text-tertiary">
               {[
@@ -531,7 +536,11 @@ function ChatView({ chat }: { chat: Chat }) {
               }`}
             >
               {labeled && !mine && first && (
-                <span className="mb-0.5 ml-1 text-[0.6875rem] font-semibold text-text-tertiary">
+                <span
+                  className={`mb-0.5 ml-1 text-[0.6875rem] font-semibold text-text-tertiary ${
+                    sender && ownerGone(sender, player) ? GONE_CLASS : ""
+                  }`}
+                >
                   {contactShortName(viewer, sender)}
                 </span>
               )}

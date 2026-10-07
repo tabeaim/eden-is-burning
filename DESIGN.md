@@ -416,8 +416,11 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
     Empfänger*innen, Name optional (sonst die Vornamen, `chatName`). Fremde
     Blasen tragen Vorname und Avatar wie beim Mitlesen. ⋯ → „Gruppe bearbeiten"
     (Name, Person hinzufügen). Je Zusammensetzung gibt es einen Chat.
-  - Chat-Liste: eine Zeile je Person, nie mit Vorschau des Texts (Spoiler):
-    Titel der zuletzt bespielten Szene, sonst „Neue Nachricht" bzw. „Zuletzt: …".
+  - Chat-Liste: eine Zeile je Person, nie mit Vorschau des Texts (Spoiler) und
+    ohne Szenentitel: „Neue Nachricht" bzw. „Zuletzt: …".
+  - Gelöschte Charaktere: Chats bleiben bestehen, der Name steht durchgestrichen
+    (`ChatNameText`, `GONE_CLASS` – wie in den Szenen). Statist*innen haben kein
+    Handy (`hasPhone`).
 - **Captic ist optional** (An/Aus-Schalter in `PhoneSettings`); das Profil wird
   in der App auf dem Handy bearbeitet.
 - **Telefon** (`/handy/telefon` Anrufliste, `/handy/kontakte` Kontakte; im Dock, „Neuer
