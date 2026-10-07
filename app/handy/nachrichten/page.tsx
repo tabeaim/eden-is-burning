@@ -229,7 +229,7 @@ export default function MessagesPage() {
             )}
           </div>
         )}
-        {rows.map(({ chat, people, title, last: m, hit }) => {
+        {rows.map(({ chat, people, last: m, hit }) => {
           const unread = tab === "mine" && isChatNew(chat.id);
           const shown = hit ?? m;
           const paused = tab === "mine" && !!myId && isLeftOnRead(chat, myId, m);
