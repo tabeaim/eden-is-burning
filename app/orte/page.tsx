@@ -108,7 +108,7 @@ function MapView() {
   const activeScenes = scenesHere.filter((s) => s.status === "active");
   const residents = characters.filter((c) => c.area === selected);
   const playedNames = useMemo(
-    () => new Set(scenesHere.map((s) => s.location_name)),
+    () => new Set(scenesHere.map((s) => s.location_name).filter(Boolean)),
     [scenesHere],
   );
 

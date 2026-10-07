@@ -1,6 +1,7 @@
 // Messenger-Logik, die Handy und Dashboard teilen.
 import type { Character, Chat, ChatMessage, ChatScene, Scene } from "./types";
-import { PHONE_AREA, contactName, contactShortName } from "./phone";
+import { PHONE_AREA, PHONE_LOCATION, contactName, contactShortName } from "./phone";
+import { EDEN_AREA, areaName } from "./world";
 
 // Nachricht mit ihrem Inplay-Tag („" = unbekannt, Altbestand ohne Trenner)
 export type DatedMessage = ChatMessage & { day: string };
@@ -88,6 +89,17 @@ export function sceneKind(s: Pick<Scene, "chat_id" | "location_area">): SceneKin
 }
 export function sceneHref(s: Pick<Scene, "id" | "chat_id">): string {
   return s.chat_id ? chatHref(s.chat_id, s.id) : `/szenen/${s.id}`;
+}
+
+// Ortsangabe einer Szene als Text: der Ortsname; ohne Ortsnamen die Gegend
+// („Eden" statt „Eden (ohne Bezirk)"). Leer, wenn beides fehlt – dann entfällt
+// die Angabe samt Trennpunkt.
+export function scenePlace(s: Pick<Scene, "location_area" | "location_name">): string {
+  const name = (s.location_name ?? "").trim();
+  if (name) return name;
+  if (!s.location_area) return "";
+  if (s.location_area === PHONE_AREA) return PHONE_LOCATION;
+  return s.location_area === EDEN_AREA ? "Eden" : areaName(s.location_area);
 }
 
 export const SMS_LOCATION = "per SMS";

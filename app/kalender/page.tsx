@@ -4,7 +4,7 @@ import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { formatInplayDate } from "@/lib/format";
+import { compareInplay, formatInplayDate } from "@/lib/format";
 import {
   AU_UNNAMED,
   areaFilterOptions,
@@ -23,7 +23,7 @@ import { CharacterPicker } from "@/components/CharacterPicker";
 import { auNames } from "@/components/AuNameField";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import type { Character, OffScene, Plot, Scene } from "@/lib/types";
-import { SCENE_KINDS, sceneHref, sceneKind } from "@/lib/chats";
+import { SCENE_KINDS, sceneHref, sceneKind, scenePlace } from "@/lib/chats";
 
 const MONTHS_DE = [
   "Januar", "Februar", "März", "April", "Mai", "Juni",
@@ -36,6 +36,7 @@ const field =
 type Entry =
   | { kind: "scene"; date: string; scene: Scene }
   | { kind: "off"; date: string; off: OffScene };
+const entryItem = (e: Entry) => (e.kind === "scene" ? e.scene : e.off);
 
 const sameSet = (a: string[], b: string[]) =>
   a.length === b.length && a.every((x) => b.includes(x));
@@ -107,7 +108,8 @@ export default function TimelinePage() {
   const allEntries: Entry[] = [
     ...shownScenes.map((s): Entry => ({ kind: "scene", date: s.inplay_date, scene: s })),
     ...(plot?.off_scenes ?? []).map((o): Entry => ({ kind: "off", date: o.inplay_date, off: o })),
-  ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    // neueste zuerst; am selben Tag nach Tageszeit, Einträge ohne Uhrzeit zuletzt
+  ].sort((a, b) => compareInplay(entryItem(b), entryItem(a)));
 
   // Jahres-Filter (z.B. Rückblenden nach 2014): Auswahl aus den vorhandenen
   // Jahren; nicht mehr vorhandene Jahre in der Auswahl zählen nicht.
@@ -384,7 +386,7 @@ function SceneSearchAdd({ scenes, onAdd }: { scenes: Scene[]; onAdd: (id: string
               >
                 <div className="text-[0.8125rem] text-text-primary">{s.title}</div>
                 <div className="text-[0.75rem] text-text-tertiary">
-                  {s.location_name} · {formatInplayDate(s.inplay_date)}
+                  {[scenePlace(s), formatInplayDate(s.inplay_date)].filter(Boolean).join(" · ")}
                 </div>
               </button>
             ))
@@ -494,7 +496,7 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
             {scene.title}
           </Link>
         </h3>
-        <FactsLine participants={participants} location={scene.location_name}>
+        <FactsLine participants={participants} location={scenePlace(scene) || null}>
           {scene.au && (
             <span>
               · <AuTag scene={scene} />

@@ -25,6 +25,7 @@ export default function NewScenePage() {
     addScene,
     addLocation,
     addPost,
+    saveDraft,
     character,
     characters,
     npcs,
@@ -65,13 +66,23 @@ export default function NewScenePage() {
       ? firstCharId
       : eligibleFirst[0]?.id ?? null;
 
-  const valid = phone
-    ? date && selected.length > 0
-    : title.trim() && locationComplete(area, locationName) && date && selected.length > 0;
+  // Pflicht: Titel, Ort, Datum, Beteiligte und der erste Post (als eigener Charakter)
+  const valid =
+    (phone
+      ? date && selected.length > 0
+      : title.trim() && locationComplete(area, locationName) && date && selected.length > 0) &&
+    !!firstPost.trim() &&
+    !!firstChar;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!valid) return;
+    create(false);
+  }
+
+  // `asDraft`: Der erste Post bleibt Entwurf – und mit ihm die ganze Szene. Sie
+  // ist nur für mich sichtbar, bis ich den Post veröffentliche.
+  function create(asDraft: boolean) {
+    if (!valid || !firstChar) return;
     const loc = phone ? PHONE_LOCATION : locationName.trim();
     // Neuer Ort wird angelegt und ist durch diese Szene direkt "bespielt".
     if (!phone) addLocation(area, loc, locationDescription.trim() || null);
@@ -80,18 +91,17 @@ export default function NewScenePage() {
       location_area: phone ? PHONE_AREA : area,
       location_name: loc,
       inplay_date: date,
-      inplay_time: time,
+      inplay_time: time.trim(),
       status: "active",
       trigger_warning: tw,
       au,
       ...(au && auName.trim() ? { au_name: auName.trim() } : {}),
       participant_ids: selected,
       summary: summary.trim() || null,
+      ...(asDraft ? { draft: true } : {}),
     });
-    // Optionaler erster Post (kann auch später von einer teilnehmenden Person kommen)
-    if (firstPost.trim() && firstChar) {
-      addPost(id, firstChar, firstPost.trim());
-    }
+    if (asDraft) saveDraft(id, firstChar, firstPost.trim());
+    else addPost(id, firstChar, firstPost.trim());
     router.push(`/szenen/${id}`);
   }
 
@@ -154,6 +164,7 @@ export default function NewScenePage() {
               }}
               description={locationDescription}
               onDescription={setLocationDescription}
+              nameRequired
             />
           </div>
         )}
@@ -200,15 +211,19 @@ export default function NewScenePage() {
           />
         </div>
 
-        {/* Optionaler erster Post */}
-        {eligibleFirst.length > 0 && (
+        {/* Erster Post (Pflicht) – braucht einen eigenen Charakter in der Szene */}
+        {eligibleFirst.length === 0 ? (
+          <div className="text-[0.875rem] text-text-secondary">
+            Erster Post <Req />
+            <p className="mt-1 text-text-tertiary">
+              Wähle oben einen eigenen Charakter aus, um den ersten Post zu schreiben.
+            </p>
+          </div>
+        ) : (
           <div>
             <div className="flex items-center justify-between text-[0.875rem] text-text-secondary mb-2">
               <span>
-                Erster Post{" "}
-                <span className="text-text-tertiary">
-                  (optional – kann auch später von einer teilnehmenden Person kommen)
-                </span>
+                Erster Post <Req />
               </span>
               {eligibleFirst.length > 1 && (
                 <select
@@ -234,7 +249,16 @@ export default function NewScenePage() {
           </div>
         )}
 
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => create(true)}
+            disabled={!valid}
+            title="Die Szene bleibt ein Entwurf und ist nur für dich sichtbar, bis du den ersten Post veröffentlichst"
+            className="rounded-md border border-border-subtle px-4 py-2 text-[0.8125rem] text-text-secondary hover:text-text-primary disabled:opacity-40"
+          >
+            Als Entwurf speichern
+          </button>
           <button
             type="submit"
             disabled={!valid}

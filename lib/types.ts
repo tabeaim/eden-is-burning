@@ -248,6 +248,9 @@ export interface Scene {
   au_name?: string | null; // Name des AUs (mehrere Szenen können dasselbe AU teilen)
   next_up?: string | null; // manuelle Zug-Übergabe (Charakter-ID); sonst Reihenfolge
   paused?: boolean; // pausiert -> nicht im Dashboard-Tracker
+  // Entwurf: der erste Post liegt nur als Entwurf vor. Sichtbar nur für die Person
+  // mit diesem Entwurf, bis der erste Post veröffentlicht ist (schema-scene-drafts.sql)
+  draft?: boolean;
   created_at: string;
   participant_ids: string[]; // character ids, in turn order
   // Ein-Satz-Zusammenfassung – bei Erstellung oder beim Schließen ergänzbar

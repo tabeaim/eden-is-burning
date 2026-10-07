@@ -1,6 +1,6 @@
 "use client";
 
-import { capFirst } from "@/lib/format";
+import { capFirst, compareInplay } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { BannerPosition } from "@/components/BannerPosition";
 import { bannerStyle } from "@/lib/headers";
@@ -65,7 +65,7 @@ export default function LocationPage({
     .sort(
       (a, b) =>
         Number(b.status === "active") - Number(a.status === "active") ||
-        b.inplay_date.localeCompare(a.inplay_date),
+        compareInplay(b, a),
     );
   const postCount = scenesHere.reduce((sum, s) => sum + postsOf(s.id).length, 0);
   const visitorIds = new Set(scenesHere.flatMap((s) => s.participant_ids));

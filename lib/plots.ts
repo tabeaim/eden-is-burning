@@ -1,6 +1,7 @@
 // Gemeinsame Plot-/Filter-Logik für Timeline und Szenen-Übersicht.
 import type { Character, Plot, Scene } from "./types";
-import { AREA_ORDER, AREAS, type AreaKey } from "./world";
+import { PLACE_AREAS, REST_AREA, areaName } from "./world";
+import { PHONE_AREA } from "./phone";
 
 // Filterwert für AU-Szenen ohne benanntes AU
 export const AU_UNNAMED = "__unnamed";
@@ -13,18 +14,19 @@ export interface PlotFilters {
 
 type CharacterLookup = (id: string) => Character | undefined;
 
-// Optionen für den Gegend-Filter (alphabetisch, plus „Rest der Welt")
+// Optionen für den Gegend-Filter (alphabetisch): Stadtteile, Industrial District,
+// „Eden (ohne Bezirk)" und „Rest der Welt"
 export function areaFilterOptions(): { value: string; label: string }[] {
-  return [
-    ...AREA_ORDER.map((k) => ({ value: k as string, label: AREAS[k].name })),
-    { value: "rest", label: "Rest der Welt" },
-  ].sort((a, b) => a.label.localeCompare(b.label, "de"));
+  return PLACE_AREAS.map((k) => ({ value: k, label: areaName(k) })).sort((a, b) =>
+    a.label.localeCompare(b.label, "de"),
+  );
 }
 
-// Gegend (Mehrfach): mind. eine muss passen; „rest" = alles außerhalb der Gegenden
+// Gegend (Mehrfach): mind. eine muss passen. Unter „rest" fällt außer dem Bereich
+// selbst nur, was keinen bekannten Bereich hat (Altbestand) – Telefon/SMS nicht.
 export function areaMatches(areas: string[], area: string): boolean {
   if (areas.length === 0 || areas.includes(area)) return true;
-  return areas.includes("rest") && !AREA_ORDER.includes(area as AreaKey);
+  return areas.includes(REST_AREA) && area !== PHONE_AREA && !PLACE_AREAS.includes(area);
 }
 
 export function tokenMatches(

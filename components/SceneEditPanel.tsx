@@ -68,7 +68,7 @@ export function SceneEditPanel({
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
   const myCharIds = new Set(myChars.map((c) => c.id));
   const valid =
-    title.trim() && (phone || locationComplete(area, locationName)) && date && selected.length > 0;
+    title.trim() && (phone || locationComplete(area)) && date && selected.length > 0;
 
   async function onHeaderFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -85,7 +85,7 @@ export function SceneEditPanel({
       location_area: phone ? PHONE_AREA : area,
       location_name: loc,
       inplay_date: date,
-      inplay_time: time,
+      inplay_time: time.trim(),
       trigger_warning: tw,
       au,
       // au_name nur mitschicken, wenn es etwas zu setzen oder zu löschen gibt
@@ -180,7 +180,7 @@ export function SceneEditPanel({
       {!phone && (
         <div className="text-[0.875rem] text-text-secondary">
           <div className="mb-1">
-            Ort <Req />
+            Ort <span className="text-text-tertiary">(Name optional, die Gegend genügt)</span>
           </div>
           <LocationField
             area={area}

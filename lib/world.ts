@@ -160,19 +160,32 @@ export const AREA_ORDER: AreaKey[] = [
   "washington",
 ];
 
-// Karten-Bereiche ohne eigenen Gegend-Steckbrief (nur Name + Kurzbeschreibung)
+// Neutraler Bereich: spielt in Eden, gehört aber zu keinem Stadtteil. Hat auf der
+// Karte keine eigene Fläche und zählt in den Filtern nicht zu „Rest der Welt".
+export const EDEN_AREA = "eden";
+export const REST_AREA = "rest";
+
+// Bereiche ohne eigenen Gegend-Steckbrief (nur Name + Kurzbeschreibung)
 export const EXTRA_AREAS: Record<string, { name: string; character: string }> = {
-  rest: {
-    name: "Rest der Welt",
-    character:
-      "Alles jenseits von Eden und D.C. – Reisen, Rückblenden, ferne Orte. Für Szenen, die nirgendwo sonst hingehören.",
-  },
   industrial: {
     name: "Industrial District & Eden Port",
     character:
       "Hafen und Industriegürtel im Südosten – Lagerhallen, Docks, alte Fabriken. Wo Fracht umgeschlagen wird und die Stadt ihre raue Seite zeigt.",
   },
+  [EDEN_AREA]: {
+    name: "Eden (ohne Bezirk)",
+    character:
+      "Irgendwo in Eden – für Szenen und Orte, die in der Stadt spielen, sich aber keinem Stadtteil zuordnen lassen.",
+  },
+  [REST_AREA]: {
+    name: "Rest der Welt",
+    character:
+      "Alles jenseits von Eden und D.C. – Reisen, Rückblenden, ferne Orte. Für Szenen, die nirgendwo sonst hingehören.",
+  },
 };
+
+// Alle Bereiche, in denen Orte liegen und Szenen spielen können (für Selects)
+export const PLACE_AREAS: string[] = [...AREA_ORDER, ...Object.keys(EXTRA_AREAS)];
 
 export function areaName(key: string): string {
   return AREAS[key as AreaKey]?.name ?? EXTRA_AREAS[key]?.name ?? key;

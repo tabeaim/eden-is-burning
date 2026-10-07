@@ -27,6 +27,40 @@ export function formatInplayDateShort(iso: string): string {
   return `${d}.${m}.${y}`;
 }
 
+// Freitext-Tageszeit („22:10", „Nachmittag", „früher Abend") als Minuten seit
+// Mitternacht – nur zum Sortieren. Ohne (erkennbare) Angabe: -1.
+const DAYTIMES: [string, number][] = [
+  ["vormittag", 10 * 60],
+  ["nachmittag", 15 * 60],
+  ["mitternacht", 24 * 60 - 1],
+  ["mittag", 12 * 60],
+  ["morgen", 7 * 60],
+  ["abend", 19 * 60],
+  ["nacht", 23 * 60],
+];
+export function inplayTimeRank(time: string | null | undefined): number {
+  const t = (time ?? "").trim().toLowerCase();
+  if (!t) return -1;
+  const clock = t.match(/(\d{1,2})[:.](\d{2})/) ?? t.match(/(\d{1,2})()\s*uhr/);
+  if (clock) return Math.min(23, parseInt(clock[1], 10)) * 60 + (parseInt(clock[2], 10) || 0);
+  const hit = DAYTIMES.find(([word]) => t.includes(word));
+  if (!hit) return -1;
+  return hit[1] + (t.includes("früh") ? -90 : t.includes("spät") ? 90 : 0);
+}
+
+// In-Game-Reihenfolge (aufsteigend): Datum, dann Tageszeit. Einträge ohne Uhrzeit
+// stehen am Anfang ihres Tages; bei Gleichstand entscheidet das Anlegen.
+export function compareInplay(
+  a: { inplay_date: string; inplay_time?: string | null; created_at?: string },
+  b: { inplay_date: string; inplay_time?: string | null; created_at?: string },
+): number {
+  return (
+    a.inplay_date.localeCompare(b.inplay_date) ||
+    inplayTimeRank(a.inplay_time) - inplayTimeRank(b.inplay_time) ||
+    (a.created_at ?? "").localeCompare(b.created_at ?? "")
+  );
+}
+
 // Zeitpunkt numerisch, z.B. "22.11.2021, 14:30" (für kompakte Zeilen)
 export function formatDateTimeShort(iso: string): string {
   const dt = new Date(iso);

@@ -661,7 +661,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       const draft: PostDraft = { id: uid("draft"), scene_id: sceneId, player_id: myPlayerId, created_at: now, ...patch };
-      persist("saveDraft", supabase.from("post_drafts").insert(draft));
+      persist("saveDraft", afterScene(sceneId, () => supabase.from("post_drafts").insert(draft)));
       setDrafts((d) => [...d, draft]);
     },
     [myPlayerId],
@@ -946,6 +946,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           scenes = s.scenes.map((x) =>
             x.id === sceneId ? { ...x, next_up: null } : x,
           );
+        }
+        // Der erste veröffentlichte Post macht aus einer Entwurfs-Szene eine echte
+        if (sc?.draft) {
+          persist(
+            "publishScene",
+            afterScene(sceneId, () => supabase.from("scenes").update({ draft: false }).eq("id", sceneId)),
+          );
+          scenes = scenes.map((x) => (x.id === sceneId ? { ...x, draft: false } : x));
         }
         return { ...s, posts: [...s.posts, post], scenes };
       });
@@ -2000,9 +2008,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const activePlayers = useMemo(() => state.players.filter((p) => !p.deleted_at), [state.players]);
   const deletedPlayers = useMemo(() => state.players.filter((p) => p.deleted_at), [state.players]);
+  // Entwurfs-Szenen sieht nur, wer darin einen eigenen Entwurf liegen hat
+  const visibleScenes = useMemo(
+    () => state.scenes.filter((s) => !s.draft || drafts.some((d) => d.scene_id === s.id)),
+    [state.scenes, drafts],
+  );
   const value = useMemo<StoreValue>(
     () => ({
       ...state,
+      scenes: visibleScenes,
       players: activePlayers,
       deletedPlayers,
       characters: playable,
@@ -2121,6 +2135,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       state,
+      visibleScenes,
       activePlayers,
       deletedPlayers,
       ready,

@@ -67,7 +67,12 @@ Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schre
 Status steht links als Streichholz (`SceneMatch`): brennend/orange bei ungelesenem
 neuestem Post, grau ohne Flamme wenn gelesen, abgebrannt mit Rauch bei geschlossener
 Szene. Die Tags „aktiv"/„geschlossen" (`StatusBadge`) gibt es nur in der Szene selbst.
-Szenen-Boxen nennen nur den Ort, nie die Gegend. Genau zwei Varianten:
+Szenen-Boxen nennen nur den Ort, nie die Gegend. Ausnahme: Szenen ohne Ortsnamen
+zeigen stattdessen die Gegend (`scenePlace` in `lib/chats.ts`; „Eden" für den
+neutralen Bereich „Eden (ohne Bezirk)"). Fehlt eine Angabe (Ort, Tageszeit),
+entfällt sie samt Trenner. Sortiert wird In-Game immer mit `compareInplay`
+(`lib/format.ts`): Datum, dann Tageszeit, Einträge ohne Uhrzeit am Tagesanfang.
+Genau zwei Varianten:
 
 Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden").
 
@@ -79,6 +84,16 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
    (Dashboard „letzte 24h", Gegend-Panel der Karte): Ort · Datum numerisch, rechts
    letzter Poster + Zeitpunkt.
 
+## Neue Szene: Pflichtfelder & Entwurf
+
+Beim Erstellen sind Titel, Ort (mit Namen), Datum, Beteiligte und der erste Post
+Pflicht (Telefonate: ohne Ort, Titel optional). „Als Entwurf speichern" legt den
+ersten Post als Entwurf an – dann ist die ganze Szene ein Entwurf (`scene.draft`,
+`supabase/schema-scene-drafts.sql`): Tag „Entwurf", nur für die Person mit dem
+Entwurf sichtbar (der Store filtert `scenes`), bis der erste Post veröffentlicht
+ist. Wer den letzten Entwurf einer Entwurfs-Szene löscht, löscht die Szene mit.
+Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
+
 ## Formulare & Nachfragen
 
 - **An/Aus:** immer `components/Toggle.tsx` (Schalter links, Beschriftung
@@ -86,7 +101,12 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
 - **Vorhandenes wählen oder Neues anlegen** (Ort, AU): `components/SuggestInput.tsx`
   – Vorschläge beim Tippen; gibt es das Getippte noch nicht, bietet die Liste
   „+ Neuen … erstellen" an. Orte: `LocationField` (kein Gegend-Feld; die Gegend
-  kommt vom Ort. Ein neuer Ort fragt Name, Gegend und Beschreibung ab). AUs: `AuNameField`.
+  kommt vom Ort. Ein neuer Ort fragt Name, Gegend und Beschreibung ab; beim
+  Erstellen einer Szene ist der Ortsname Pflicht, beim Bearbeiten darf er leer
+  bleiben – dann wird nur die Gegend abgefragt). AUs: `AuNameField`.
+- **Gegenden wählen und filtern:** Selects für Orte/Szenen nehmen `PLACE_AREAS`
+  (`lib/world.ts`: Stadtteile, Industrial District, „Eden (ohne Bezirk)", „Rest
+  der Welt"), Filter `areaFilterOptions`/`areaMatches` aus `lib/plots.ts`.
 - **Datum:** immer `components/DatePicker.tsx` (kleiner Kalender, öffnet ohne Wert
   im Jahr 2021), nie `<input type="date">`.
 - **Endgültige Aktionen** (löschen): `components/ConfirmDialog.tsx` mit klar

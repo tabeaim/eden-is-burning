@@ -3,15 +3,14 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
-import { AREA_ORDER, AREAS, areaName, type AreaKey } from "@/lib/world";
-import { formatInplayDate } from "@/lib/format";
+import { compareInplay } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { MultiSelect } from "@/components/MultiSelect";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import { SceneCard } from "@/components/SceneCard";
 import { PlotBar, PlotTools } from "@/components/PlotBar";
-import { plotScenes, visiblePlots } from "@/lib/plots";
+import { areaFilterOptions, areaMatches, plotScenes, visiblePlots } from "@/lib/plots";
 import { AU_UNNAMED, auNames } from "@/components/AuNameField";
 import type { Plot, Scene } from "@/lib/types";
 import { SCENE_KINDS, chatHref, newestMessage, sceneKind } from "@/lib/chats";
@@ -102,10 +101,7 @@ export default function ScenesPage() {
   };
 
   // Optionen für die Mehrfach-Dropdowns
-  const areaOptions = [
-    ...AREA_ORDER.map((k) => ({ value: k as string, label: AREAS[k].name })),
-    { value: "rest", label: "Rest der Welt" },
-  ].sort((a, b) => a.label.localeCompare(b.label, "de"));
+  const areaOptions = areaFilterOptions();
   const auOptions = useMemo(() => {
     const opts = auNames(scenes).map((n) => ({ value: n, label: n }));
     if (scenes.some((s) => s.au && !s.au_name))
@@ -207,12 +203,7 @@ export default function ScenesPage() {
     )
       return false;
     // Gegend (Mehrfach): mind. eine muss passen
-    if (!plotIds && areas.length > 0) {
-      const inArea = areas.includes("rest")
-        ? !AREA_ORDER.includes(s.location_area as AreaKey)
-        : false;
-      if (!areas.includes(s.location_area) && !inArea) return false;
-    }
+    if (!plotIds && !areaMatches(areas, s.location_area)) return false;
     // Zeiträume (Mehrfach): mind. einer muss passen
     if (periods.length > 0 && !periods.includes(s.inplay_date.slice(0, 7)))
       return false;
@@ -227,7 +218,7 @@ export default function ScenesPage() {
           new Date(lastActivity(a)).getTime() - new Date(lastActivity(b)).getTime();
         break;
       case "inplay":
-        cmp = a.inplay_date < b.inplay_date ? -1 : a.inplay_date > b.inplay_date ? 1 : 0;
+        cmp = compareInplay(a, b);
         break;
       case "created":
         cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();

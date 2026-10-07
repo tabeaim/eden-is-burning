@@ -12,7 +12,7 @@ import {
   formatInplayDateShort,
 } from "@/lib/format";
 import type { Character, Scene } from "@/lib/types";
-import { chatHref, newestMessage, sceneHref } from "@/lib/chats";
+import { chatHref, newestMessage, sceneHref, scenePlace } from "@/lib/chats";
 import { Icon } from "./Icon";
 import { SceneTurnBar } from "./SceneTurnBar";
 
@@ -97,19 +97,33 @@ function useLastEntry(scene: Scene) {
 }
 
 // Ort in der Faktenzeile: bleibt reiner Text, führt aber aufs Ortsprofil. Orte
-// ohne eigenen Eintrag (Altbestand) sind nicht anklickbar.
+// ohne eigenen Eintrag (Altbestand) sind nicht anklickbar. Ohne Ortsnamen steht
+// die Gegend da; fehlt auch die, entfällt die Angabe samt Trennpunkt.
 function SceneLocation({ scene }: { scene: Scene }) {
   const { locationsOf } = useStore();
-  const loc = locationsOf(scene.location_area).find((l) => l.name === scene.location_name);
-  if (!loc) return <>{scene.location_name}</>;
+  const place = scenePlace(scene);
+  if (!place) return null;
+  const loc = scene.location_name
+    ? locationsOf(scene.location_area).find((l) => l.name === scene.location_name)
+    : undefined;
+  if (!loc)
+    return (
+      <>
+        {place}
+        {" · "}
+      </>
+    );
   return (
-    <Link
-      href={`/orte/${loc.id}`}
-      title="Zum Ortsprofil"
-      className="relative z-10 hover:text-accent hover:underline"
-    >
+    <>
+      <Link
+        href={`/orte/${loc.id}`}
+        title="Zum Ortsprofil"
+        className="relative z-10 hover:text-accent hover:underline"
+      >
       {scene.location_name}
-    </Link>
+      </Link>
+      {" · "}
+    </>
   );
 }
 
@@ -154,6 +168,14 @@ export function SceneCard({
             </Link>
           </h3>
           <div className="flex shrink-0 items-center gap-1.5">
+            {scene.draft && (
+              <span
+                title="Nur für dich sichtbar, bis du den ersten Post veröffentlichst"
+                className="rounded bg-white/[0.06] px-2 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-secondary"
+              >
+                Entwurf
+              </span>
+            )}
             {scene.paused && (
               <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
                 pausiert
@@ -168,7 +190,8 @@ export function SceneCard({
         </div>
 
         <div className="mt-1 text-[0.875rem] text-text-tertiary">
-          <SceneLocation scene={scene} /> · {formatInplayDate(scene.inplay_date)}
+          <SceneLocation scene={scene} />
+          {formatInplayDate(scene.inplay_date)}
           {scene.inplay_time && `, ${scene.inplay_time}`}
           {scene.au && (
             <>
@@ -248,7 +271,8 @@ export function SceneRow({ scene }: { scene: Scene }) {
           </Link>
         </div>
         <div className="text-[0.875rem] text-text-tertiary truncate">
-          <SceneLocation scene={scene} /> · {formatInplayDateShort(scene.inplay_date)}
+          <SceneLocation scene={scene} />
+          {formatInplayDateShort(scene.inplay_date)}
         </div>
       </div>
       {lastPost && (

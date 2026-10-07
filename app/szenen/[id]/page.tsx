@@ -2,6 +2,7 @@
 
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
 import { formatDateTime, formatInplayDate, renderPost } from "@/lib/format";
@@ -14,6 +15,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Icon } from "@/components/Icon";
 import { CharacterBubble, LocationBubble } from "@/components/Bubble";
 import { PHONE_AREA } from "@/lib/phone";
+import { scenePlace } from "@/lib/chats";
 import { tierOf } from "@/lib/characters";
 import { AuTag } from "@/components/SceneCard";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -104,12 +106,20 @@ export default function ScenePage({
   // Sub-Seite: Titel in den Banner-Header, die Daten als Untertitel-Zeile
   // (dort, wo auf anderen Seiten die Tagline/der Untertitel steht), plus das
   // gewählte Header-Bild der Szene.
+  // Ort · Gegend · Datum, Tageszeit – was fehlt (Ortsname, Tageszeit), entfällt
+  // samt Trenner; ohne Ortsnamen steht nur die Gegend da.
   const factsLine = scene
-    ? `${scene.location_name}${
-        scene.location_area === PHONE_AREA ? "" : ` · ${areaName(scene.location_area)}`
-      } · ${formatInplayDate(
-        scene.inplay_date,
-      )}, ${scene.inplay_time}`
+    ? [
+        scene.location_name.trim(),
+        scene.location_area === PHONE_AREA
+          ? scene.location_name.trim()
+            ? ""
+            : scenePlace(scene)
+          : scene.location_area && areaName(scene.location_area),
+        [formatInplayDate(scene.inplay_date), scene.inplay_time.trim()].filter(Boolean).join(", "),
+      ]
+        .filter(Boolean)
+        .join(" · ")
     : undefined;
   useSetPageMeta(
     scene?.title ?? "Szene",
@@ -377,9 +387,9 @@ function SceneHeader({
 }) {
   const { character, updateScene, locationsOf } = useStore();
   // Ortsprofil zum Szenen-Ort (falls ein Eintrag existiert) → Ort anklickbar
-  const loc = locationsOf(scene.location_area).find(
-    (l) => l.name === scene.location_name,
-  );
+  const loc = scene.location_name
+    ? locationsOf(scene.location_area).find((l) => l.name === scene.location_name)
+    : undefined;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -440,6 +450,14 @@ function SceneHeader({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
         <StatusBadge status={scene.status} sceneId={scene.id} />
+        {scene.draft && (
+          <span
+            title="Nur für dich sichtbar, bis du den ersten Post veröffentlichst"
+            className="rounded bg-white/[0.06] px-2 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-secondary"
+          >
+            Entwurf
+          </span>
+        )}
         {scene.paused && (
           <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
             pausiert
@@ -509,13 +527,17 @@ function SceneHeader({
 
       {/* Ort als Bubble · Datum, Tageszeit (+ AU) */}
       <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.875rem] text-text-tertiary">
-        <LocationBubble
-          id={loc?.id}
-          name={scene.location_name}
-          icon={scene.location_area === PHONE_AREA ? "phone" : "map"}
-        />
+        {scenePlace(scene) && (
+          <LocationBubble
+            id={loc?.id}
+            name={scenePlace(scene)}
+            icon={scene.location_area === PHONE_AREA ? "phone" : "map"}
+          />
+        )}
         <span>
-          · {formatInplayDate(scene.inplay_date)}, {scene.inplay_time}
+          {scenePlace(scene) && "· "}
+          {formatInplayDate(scene.inplay_date)}
+          {scene.inplay_time.trim() && `, ${scene.inplay_time.trim()}`}
         </span>
         {scene.au && (
           <span>
@@ -830,9 +852,13 @@ function DraftRow({
   canPublish: boolean; // Szene aktiv
   onEdit: () => void;
 }) {
-  const { character, player, deleteDraft } = useStore();
+  const { character, player, deleteDraft, deleteScene, drafts } = useStore();
+  const router = useRouter();
   const publish = usePublish(scene);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Entwurfs-Szene: mit ihrem letzten Entwurf verschwindet auch die Szene
+  const lastOfDraftScene =
+    !!scene.draft && drafts.filter((d) => d.scene_id === scene.id).length <= 1;
   const c = character(draft.character_id);
   const html = useMemo(() => ({ __html: renderPost(draft.content) }), [draft.content]);
   if (!c) return null;
@@ -843,10 +869,18 @@ function DraftRow({
       {confirmDelete && (
         <ConfirmDialog
           title="Entwurf löschen?"
-          text={`Der Entwurf für ${c.name} wird endgültig gelöscht. Das lässt sich nicht rückgängig machen.`}
-          confirmLabel="Entwurf löschen"
+          text={
+            lastOfDraftScene
+              ? `Der Entwurf für ${c.name} wird endgültig gelöscht – und mit ihm die Szene „${scene.title}“, die noch ein Entwurf ist. Das lässt sich nicht rückgängig machen.`
+              : `Der Entwurf für ${c.name} wird endgültig gelöscht. Das lässt sich nicht rückgängig machen.`
+          }
+          confirmLabel={lastOfDraftScene ? "Entwurf und Szene löschen" : "Entwurf löschen"}
           onCancel={() => setConfirmDelete(false)}
-          onConfirm={() => deleteDraft(draft.id)}
+          onConfirm={() => {
+            if (!lastOfDraftScene) return deleteDraft(draft.id);
+            router.push("/szenen");
+            deleteScene(scene.id);
+          }}
         />
       )}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">

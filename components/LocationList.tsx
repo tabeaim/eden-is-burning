@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { AREA_ORDER, AREAS, areaImage, type AreaKey } from "@/lib/world";
+import { PLACE_AREAS, areaImage, areaName } from "@/lib/world";
+import { areaFilterOptions, areaMatches } from "@/lib/plots";
 import { PHONE_AREA } from "@/lib/phone";
 import { bannerStyle } from "@/lib/headers";
 import { hasAnyWord, norm, relatedWords } from "@/lib/place-words";
@@ -77,10 +78,7 @@ export function LocationList() {
   }, [scenes, postsOf]);
   const statsOf = (l: Location) => stats.get(sceneKey(l.area, l.name)) ?? NO_STATS;
 
-  const areaOptions = [
-    ...AREA_ORDER.map((k) => ({ value: k as string, label: AREAS[k].name })),
-    { value: "rest", label: "Rest der Welt" },
-  ].sort((a, b) => a.label.localeCompare(b.label, "de"));
+  const areaOptions = areaFilterOptions();
 
   const charsByPlayer = players
     .map((p) => ({ player: p, chars: characters.filter((c) => c.player_id === p.id) }))
@@ -115,10 +113,7 @@ export function LocationList() {
     if (tab === "played" && !played) return false;
     if (tab === "unplayed" && played) return false;
     // Gegend (Mehrfach): mind. eine muss passen
-    if (areas.length > 0) {
-      const inRest = areas.includes("rest") && !AREA_ORDER.includes(l.area as AreaKey);
-      if (!areas.includes(l.area) && !inRest) return false;
-    }
+    if (!areaMatches(areas, l.area)) return false;
     // Charaktere/Spieler*innen: der Ort muss zu ALLEN gewählten passen
     if (tokens.length > 0 && !tokens.every((t) => tokenMatches(t, l))) return false;
     return true;
@@ -286,7 +281,7 @@ export function LocationList() {
 
       {adding && (
         <NewLocationForm
-          initialArea={areas.length === 1 && areas[0] !== "rest" ? areas[0] : ""}
+          initialArea={areas.length === 1 ? areas[0] : ""}
           onCancel={() => setAdding(false)}
           onCreate={createLocation}
         />
@@ -406,9 +401,9 @@ function NewLocationForm({
           <option value="" disabled className="bg-bg-surface">
             Gegend wählen
           </option>
-          {AREA_ORDER.map((k) => (
+          {PLACE_AREAS.map((k) => (
             <option key={k} value={k} className="bg-bg-surface">
-              {AREAS[k].name}
+              {areaName(k)}
             </option>
           ))}
         </select>
