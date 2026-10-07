@@ -7,6 +7,7 @@ import { areaName } from "@/lib/world";
 import { formatDateTime, formatInplayDate, renderPost } from "@/lib/format";
 import { copyRich, useProseEditor } from "@/lib/editor";
 import { useSetPageMeta } from "@/lib/page-meta";
+import { SignatureText } from "@/components/SignatureText";
 import { SceneCharacterCard } from "@/components/SceneCharacterCard";
 import { SceneEditPanel } from "@/components/SceneEditPanel";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -718,9 +719,7 @@ function PostRow({
       />
       {/* Signatur des Charakters (Einstellungen → Meine Charaktere): Text und/oder Bild */}
       {character.profile?.signature_text && (
-        <p className="mt-6 select-none whitespace-pre-wrap break-words text-[0.8125rem] leading-relaxed text-text-tertiary">
-          {character.profile.signature_text}
-        </p>
+        <SignatureText html={character.profile.signature_text} className="mt-6 select-none" />
       )}
       {character.profile?.signature_url && (
         // eslint-disable-next-line @next/next/no-img-element

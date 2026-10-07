@@ -176,7 +176,8 @@ export interface CharacterProfile {
   outfit?: ThingItem[];
   // Signatur: Bild, das am Ende jedes Posts des Charakters steht (sonst nirgends)
   signature_url?: string | null;
-  // Text-Signatur: steht ebenfalls am Ende jedes Posts (zusätzlich zum oder statt des Bilds)
+  // Text-Signatur (reiner Text oder HTML, siehe signatureHtml): steht ebenfalls am
+  // Ende jedes Posts (zusätzlich zum oder statt des Bilds)
   signature_text?: string | null;
   // GIF, das in Szenen unter dem Avatar steht (höchstens so breit wie der Avatar,
   // halb so hoch)

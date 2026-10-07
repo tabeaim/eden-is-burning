@@ -27,6 +27,7 @@ import { capFirst, formatInplayDate } from "@/lib/format";
 import { DatePicker } from "./DatePicker";
 import { Icon } from "./Icon";
 import { SuggestInput } from "./SuggestInput";
+import { SignatureText } from "./SignatureText";
 
 const BYRON = "Byron University";
 
@@ -574,18 +575,25 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
           Steht am Ende jedes Posts dieses Charakters – sonst nirgendwo. Text, Bild oder beides.
         </p>
         {F({
-          label: `Text-Signatur (${(p.signature_text ?? "").length}/300)`,
-          hint: "Wird mit den Grunddaten gespeichert.",
+          label: `Text-Signatur (${(p.signature_text ?? "").length}/2000)`,
+          hint: "Reiner Text oder HTML (z. B. <b>, <i>, <span style=\"…\">, <a>, <img>, <center>). Wird mit den Grunddaten gespeichert.",
           children: (
             <textarea
               value={p.signature_text ?? ""}
-              maxLength={300}
-              rows={2}
+              maxLength={2000}
+              rows={3}
+              spellCheck={false}
               onChange={(e) => setProfile({ signature_text: e.target.value || null })}
-              className={`${field} resize-y`}
+              className={`${field} resize-y font-mono text-[0.8125rem]`}
             />
           ),
         })}
+        {p.signature_text?.trim() && (
+          <div className="rounded-md border border-dashed border-border-subtle px-3 py-2">
+            <div className="mb-1 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">Vorschau</div>
+            <SignatureText html={p.signature_text} />
+          </div>
+        )}
         {signature && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={signature} alt="Signatur" className="max-h-40 max-w-full rounded-md" />

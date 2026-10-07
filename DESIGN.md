@@ -224,7 +224,8 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   Hintergrund – `.pinterest-board` in globals.css).
 - **Signatur** (`profile.signature_text` und/oder `profile.signature_url`,
   Einstellungen → Meine Charaktere): Text und/oder Bild am Ende jedes Posts des
-  Charakters, sonst nirgends.
+  Charakters, sonst nirgends. Der Text darf HTML enthalten; angezeigt wird er
+  immer über `SignatureText` (entschärft durch `signatureHtml`, lib/html.ts).
 - **Geburtsdatum nachtragen:** Hat ein (importierter) Charakter nur eine
   Alterszahl (`needsBirthdate`), klappen die Grunddaten „Identität" auf, das
   Feld ist orange markiert und bittet um ein Geburtsdatum; das Alter bleibt bis
