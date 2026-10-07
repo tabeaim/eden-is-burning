@@ -402,10 +402,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, chatScenes, calls, capticPosts, capticComments, capticStories, capticEvents, capticHighlights, as] = await Promise.all([
       supabase.from("players").select("*"),
       supabase.from("characters").select("*"),
-      supabase.from("scenes").select("*"),
-      supabase.from("posts").select("*"),
+      // Szenen, Posts und Zitate seitenweise: seit dem Forum-Import sind es mehr als
+      // die 1000 Zeilen, die eine einzelne Abfrage liefert
+      fetchAll<Scene>("scenes"),
+      fetchAll<Post>("posts"),
       supabase.from("locations").select("*"),
-      supabase.from("quotes").select("*"),
+      fetchAll<SceneQuote>("quotes"),
       supabase.from("plots").select("*"),
       fetchAll<Chat>("chats"),
       fetchAll<ChatMessage>("chat_messages"),
@@ -424,10 +426,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setState({
       players: (pl.data as Player[]) ?? [],
       characters: (ch.data as Character[]) ?? [],
-      scenes: (sc.data as Scene[]) ?? [],
-      posts: (po.data as Post[]) ?? [],
+      scenes: sc,
+      posts: po,
       locations: (lo.data as Location[]) ?? [],
-      quotes: (qu.data as SceneQuote[]) ?? [],
+      quotes: qu,
       plots: (pt.data as Plot[]) ?? [],
       chats,
       chatMessages,
