@@ -10,7 +10,7 @@ import { formatInplayDate, timeAgo, capFirst } from "@/lib/format";
 import { Icon } from "@/components/Icon";
 import { Bubble, LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
-import { SceneCard } from "@/components/SceneCard";
+import { SceneFilterList } from "@/components/SceneFilterList";
 import {
   RELATION_CATEGORIES,
   TIER_NAMES,
@@ -74,6 +74,7 @@ export default function CharacterPage({
     player,
     characters,
     scenes,
+    smsScenes,
     postsOf,
     posts,
     canEditCharacter,
@@ -138,6 +139,8 @@ export default function CharacterPage({
         : null;
   const inScenes = scenes.filter((s) => s.participant_ids.includes(c.id));
   const postCount = posts.filter((x) => x.character_id === c.id).length;
+  // Reiter „Scenes": gespielte Szenen, Anrufe und SMS-Szenen
+  const profileScenes = [...inScenes, ...smsScenes.filter((s) => s.participant_ids.includes(c.id))];
 
   // Mitspieler-Charaktere (für RELATIONS) aus gemeinsamen Szenen
   const coCharIds = new Set<string>();
@@ -150,7 +153,7 @@ export default function CharacterPage({
   // Reiter ohne Inhalt werden nicht angezeigt (noch nichts eingetragen / vorhanden)
   const topTabs: [TopTab, string][] = [
     ["general", "General"],
-    ...(inScenes.length > 0 ? ([["inplay", "Scenes"]] as [TopTab, string][]) : []),
+    ...(profileScenes.length > 0 ? ([["inplay", "Scenes"]] as [TopTab, string][]) : []),
     ...(coChars.length > 0 ? ([["relations", "Relations"]] as [TopTab, string][]) : []),
   ];
   const tabs: [Tab, string][] = [
@@ -218,7 +221,7 @@ export default function CharacterPage({
           </div>
         </div>
       )}
-      {topTab === "inplay" && <InplayTab inScenes={inScenes} />}
+      {topTab === "inplay" && <InplayTab inScenes={profileScenes} />}
       {topTab === "relations" && (
         <RelationsTab c={c} coChars={coChars} canEdit={playsAs(c, store.currentPlayerId)} />
       )}
@@ -514,11 +517,7 @@ function InplayTab({ inScenes }: { inScenes: Scene[] }) {
       {inScenes.length === 0 ? (
         <p className="text-[0.875rem] text-text-tertiary">Noch in keiner Szene.</p>
       ) : (
-        <div className={CARDS}>
-          {inScenes.map((s) => (
-            <SceneCard key={s.id} scene={s} compact />
-          ))}
-        </div>
+        <SceneFilterList scenes={inScenes} className={CARDS} />
       )}
     </section>
   );

@@ -6,7 +6,7 @@ import { useStore } from "@/lib/store";
 import type { Chat, ChatMessageKind, ChatScene } from "@/lib/types";
 import { formatDateTime, formatInplayDate, formatInplayDateShort } from "@/lib/format";
 import { isEmojiOnly, QUICK_REACTIONS } from "@/lib/emoji";
-import { addMinutes, contactShortName, resolvePhone } from "@/lib/phone";
+import { addMinutes, contactShortName, nextDay, resolvePhone } from "@/lib/phone";
 import {
   chatTitle,
   chatUnits,
@@ -153,10 +153,19 @@ function ChatView({ chat }: { chat: Chat }) {
 
   // „Leave on read" gilt je Strang: wer hat dessen neueste Nachricht bewusst
   // unbeantwortet gelassen? (`leftAt`: Nachricht-ID -> diese Charaktere)
+  // Auch in beendeten Szenen – „Leave on read" beendet eine SMS-Szene.
   const leftAt = new Map<string, string[]>();
-  for (const u of units) {
-    const by = parts.filter((pid) => isLeftOnRead(chat, pid, u.last));
-    if (by.length) leftAt.set(u.last.id, by);
+  {
+    const lastOf = new Map<string, DatedMessage>();
+    for (const m of messages) {
+      const key = sceneOf(m)?.id ?? "";
+      const cur = lastOf.get(key);
+      if (!cur || m.created_at > cur.created_at) lastOf.set(key, m);
+    }
+    for (const last of lastOf.values()) {
+      const by = parts.filter((pid) => isLeftOnRead(chat, pid, last));
+      if (by.length) leftAt.set(last.id, by);
+    }
   }
   const lastReal = targetLast;
   const leftBy = lastReal ? (leftAt.get(lastReal.id) ?? []) : [];
@@ -174,14 +183,17 @@ function ChatView({ chat }: { chat: Chat }) {
   // weiter (Tag der letzten Nachricht dort, Uhrzeit eine Minute später) und lassen
   // sich über dem Eingabefeld überschreiben.
   const [dayOverride, setDayOverride] = useState<string | null>(null);
-  const day =
-    dayOverride ??
-    targetLast?.day ??
-    (targetId ? sceneById.get(targetId)?.inplay_date : newestMessage(messages)?.day) ??
-    "";
   const lastTime = newestMessage(targetMsgs.filter((m) => m.inplay_time))?.inplay_time;
   const [timeOverride, setTimeOverride] = useState<string | null>(null);
   const time = timeOverride ?? (lastTime ? addMinutes(lastTime, 1) : "12:00");
+  // Nach Mitternacht beginnt von selbst der nächste Tag: Die letzte Nachricht war
+  // am Abend, die nächste hat eine frühere Uhrzeit am Morgen („23:58" → „00:03").
+  const pastMidnight = !!lastTime && lastTime >= "12:00" && time < "12:00";
+  const day =
+    dayOverride ??
+    (targetLast?.day && pastMidnight ? nextDay(targetLast.day) : targetLast?.day) ??
+    (targetId ? sceneById.get(targetId)?.inplay_date : newestMessage(messages)?.day) ??
+    "";
   const burner = resolvePhone(selfChar).burner;
 
   const [replyTo, setReplyTo] = useState<string | null>(null);
@@ -202,8 +214,27 @@ function ChatView({ chat }: { chat: Chat }) {
   const [sel, setSel] = useState<string[] | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
   const [selDateOpen, setSelDateOpen] = useState(false);
-  const toggleSel = (id: string) =>
-    setSel((cur) => (cur ? (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]) : cur));
+  // Bereich markieren: mit gehaltener Umschalttaste (oder „Bereich" in der Leiste)
+  // die erste und die letzte Nachricht antippen – alles dazwischen ist mit markiert.
+  const selAnchor = useRef<string | null>(null);
+  const [rangeMode, setRangeMode] = useState(false);
+  const tapMessage = (id: string, shift = false) => {
+    if (!sel && !(shift && canEdit)) {
+      if (!hasSelection()) setActiveId(id);
+      return;
+    }
+    if (shift) window.getSelection()?.removeAllRanges();
+    const a = messages.findIndex((m) => m.id === selAnchor.current);
+    const b = messages.findIndex((m) => m.id === id);
+    if ((shift || rangeMode) && sel && a >= 0 && b >= 0 && a !== b) {
+      const ids = messages.slice(Math.min(a, b), Math.max(a, b) + 1).map((m) => m.id);
+      setSel((cur) => [...new Set([...(cur ?? []), ...ids])]);
+    } else {
+      setSel((cur) => (!cur ? [id] : cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+    }
+    setRangeMode(false);
+    selAnchor.current = id;
+  };
   const selMsgs = sel ? messages.filter((m) => sel.includes(m.id)) : [];
 
   // Im Chat-Fenster scrollen (nicht die ganze Seite)
@@ -457,7 +488,11 @@ function ChatView({ chat }: { chat: Chat }) {
                 <span className="h-px flex-1 bg-border-strong" />
                 <button
                   onClick={() => setSceneMenu(sc.id)}
-                  title={sc.summary || "Szenen-Optionen"}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setSceneMenu(sc.id);
+                  }}
+                  title={sc.summary || "Szenen-Optionen (beenden, bearbeiten …)"}
                   className={`flex min-w-0 max-w-[72%] items-center gap-1.5 rounded-full border px-3 py-1 text-[0.75rem] font-semibold ${
                     sc.status === "active"
                       ? "border-accent/50 text-text-primary"
@@ -498,13 +533,14 @@ function ChatView({ chat }: { chat: Chat }) {
               <div
                 role="button"
                 tabIndex={0}
-                onClick={() => (sel ? toggleSel(m.id) : !hasSelection() && setActiveId(m.id))}
-                onKeyDown={(e) => e.key === "Enter" && (sel ? toggleSel(m.id) : setActiveId(m.id))}
+                onClick={(e) => tapMessage(m.id, e.shiftKey)}
+                // Umschalt-Klick markiert einen Bereich, statt Text auszuwählen
+                onMouseDown={(e) => e.shiftKey && canEdit && e.preventDefault()}
+                onKeyDown={(e) => e.key === "Enter" && tapMessage(m.id)}
                 onContextMenu={(e) => {
                   if (hasSelection()) return;
                   e.preventDefault();
-                  if (sel) toggleSel(m.id);
-                  else setActiveId(m.id);
+                  tapMessage(m.id);
                 }}
                 className={`relative max-w-[78%] cursor-pointer text-left ${
                   sel ? "select-none" : "select-text"
@@ -592,7 +628,7 @@ function ChatView({ chat }: { chat: Chat }) {
                   ? "Gelesen"
                   : reading
                     ? `Gelesen · ${chatTitle(left.map((pid) => character(pid)), viewer)} antwortet nicht`
-                    : "Leave on read · pausiert"}
+                    : "Left on read"}
               </div>
             )}
             {sceneEnd && (
@@ -609,8 +645,25 @@ function ChatView({ chat }: { chat: Chat }) {
         <div className="shrink-0 border-t border-border-subtle bg-bg-surface px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))]">
           <div className="flex items-center gap-2 text-[0.8125rem]">
             <span className="min-w-0 flex-1 truncate text-text-secondary">
-              {sel.length === 0 ? "Nachrichten antippen" : `${sel.length} markiert`}
+              {rangeMode
+                ? "Letzte Nachricht des Bereichs antippen"
+                : sel.length === 0
+                  ? "Nachrichten antippen"
+                  : `${sel.length} markiert`}
             </span>
+            <button
+              disabled={sel.length === 0}
+              aria-pressed={rangeMode}
+              onClick={() => setRangeMode((v) => !v)}
+              title="Alles zwischen der zuletzt markierten und der nächsten angetippten Nachricht markieren (am Rechner: Umschalt-Klick)"
+              className={`rounded-md border px-2.5 py-1.5 disabled:opacity-40 ${
+                rangeMode
+                  ? "border-accent bg-accent/20 text-text-primary"
+                  : "border-border-subtle bg-white/[0.04] text-text-primary"
+              }`}
+            >
+              Bereich
+            </button>
             <button
               disabled={sel.length === 0}
               onClick={() => setAssignOpen(true)}
@@ -625,7 +678,13 @@ function ChatView({ chat }: { chat: Chat }) {
             >
               Tag ändern
             </button>
-            <button onClick={() => setSel(null)} className="px-1 text-text-tertiary hover:text-text-primary">
+            <button
+              onClick={() => {
+                setSel(null);
+                setRangeMode(false);
+              }}
+              className="px-1 text-text-tertiary hover:text-text-primary"
+            >
               Fertig
             </button>
           </div>
@@ -743,6 +802,7 @@ function ChatView({ chat }: { chat: Chat }) {
                 <SheetButton
                   onClick={() => {
                     setSel([active.id]);
+                    selAnchor.current = active.id;
                     closeSheet();
                   }}
                 >
@@ -797,9 +857,10 @@ function ChatView({ chat }: { chat: Chat }) {
                     onClick={() => {
                       setMenuOpen(false);
                       leaveOnRead(chat.id, self, lastReal.id);
+                      if (targetId) updateChatScene(targetId, { status: "closed" });
                     }}
                   >
-                    Leave on read – nicht antworten, {targetId ? "Szene" : "Chat"} pausieren
+                    Leave on read – nicht antworten, {targetId ? "Szene beenden" : "Chat pausieren"}
                   </SheetButton>
                   <SheetButton
                     onClick={() => {

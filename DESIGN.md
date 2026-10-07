@@ -401,13 +401,19 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   - Tipp auf die Kopfzeile: Verzeichnis (`SceneDirectory`) zum Springen. Beim
     Scrollen blendet oben kurz ein, wo man ist.
   - Nachricht antippen → „Markieren": mehrere zu einer Szene zusammenfügen, einer
-    bestehenden zuordnen, lösen oder auf einen anderen Tag legen.
+    bestehenden zuordnen, lösen oder auf einen anderen Tag legen. Bereich: am
+    Rechner Umschalt-Klick auf erste und letzte Nachricht, am Handy „Bereich".
+  - „Leave on read" in einer SMS-Szene beendet sie; am Chat steht dann „left on
+    read". Nach Mitternacht (Uhrzeit springt vom Abend auf den Morgen) beginnt
+    von selbst der nächste Inplay-Tag.
   - Außerhalb des Handys sind SMS-Szenen Szenen (`smsScenes` im Store, Ort „per
     SMS"): `SceneCard`/`SceneRow` in Szenenübersicht und Timeline, dort Filter
-    „Art" (Szene · Anruf · SMS). Im Dashboard eine `ChatRow` je Strang (jede
+    „Art" (Szene · Anruf · SMS; die Szenenübersicht zeigt zunächst nur Szenen).
+    In den Profilen (Charakter, Spieler*in) `SceneFilterList` mit Pills für Art
+    und Status. Im Dashboard eine `ChatRow` je Strang (jede
     aktive Szene mit ihrem Titel, die losen Nachrichten als „Chat mit …").
-  - Chat-Liste: eine Zeile je Person; wurde zuletzt in einer Szene geschrieben,
-    steht ihr Titel statt der Nachrichtenvorschau.
+  - Chat-Liste: eine Zeile je Person, nie mit Vorschau des Texts (Spoiler):
+    Titel der zuletzt bespielten Szene, sonst „Neue Nachricht" bzw. „Zuletzt: …".
 - **Captic ist optional** (An/Aus-Schalter in `PhoneSettings`); das Profil wird
   in der App auf dem Handy bearbeitet.
 - **Telefon** (`/handy/telefon` Anrufliste, `/handy/kontakte` Kontakte; im Dock, „Neuer

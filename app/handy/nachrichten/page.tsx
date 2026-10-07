@@ -8,7 +8,7 @@ import type { Chat, ChatMessage } from "@/lib/types";
 import { newestMessage, orderMessages, type DatedMessage } from "@/lib/chats";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
-import { chatTitle, isArchived, isLeftOnRead, messageSnippet } from "@/lib/chats";
+import { chatTitle, isArchived, isLeftOnRead } from "@/lib/chats";
 import { contactShortName } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
 import {
@@ -35,6 +35,7 @@ export default function MessagesPage() {
     deleteChat,
     leaveOnRead,
     markChatUnread,
+    updateChatScene,
   } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
   // „Meine": Chats des Charakters, dessen Handy man in der Hand hat · „Andere":
@@ -286,24 +287,22 @@ export default function MessagesPage() {
                 </span>
                 <span className="mt-0.5 flex items-center gap-2">
                   <span className={`min-w-0 flex-1 truncate text-[0.8125rem] ${unread || hit ? "text-text-primary" : "text-text-tertiary"}`}>
-                    {scene ? (
-                      scene.title
-                    ) : shown ? (
-                      <>
-                        {shown.character_id === myId && tab === "mine"
-                          ? "Du: "
-                          : people.length > 1
-                            ? `${contactShortName(me, character(shown.character_id))}: `
-                            : ""}
-                        {messageSnippet(shown)}
-                      </>
-                    ) : (
-                      "Noch keine Nachricht"
-                    )}
+                    {/* nie eine Vorschau des Texts – nichts spoilern */}
+                    {hit
+                      ? "Treffer in einer Nachricht"
+                      : scene
+                        ? scene.title
+                        : !shown
+                          ? "Noch keine Nachricht"
+                          : unread
+                            ? "Neue Nachricht"
+                            : shown.character_id === myId && tab === "mine"
+                              ? "Zuletzt: du"
+                              : `Zuletzt: ${contactShortName(me, character(shown.character_id))}`}
                   </span>
                   {paused && (
                     <span className="shrink-0 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
-                      leave on read
+                      left on read
                     </span>
                   )}
                   {unread && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-accent" />}
@@ -345,6 +344,10 @@ export default function MessagesPage() {
                   <SheetButton
                     onClick={() => {
                       leaveOnRead(menuChat.id, myId, m.id);
+                      // in einer SMS-Szene beendet das die Szene
+                      if (m.scene_id && chatScenes.some((s) => s.id === m.scene_id)) {
+                        updateChatScene(m.scene_id, { status: "closed" });
+                      }
                       closeMenu();
                     }}
                   >

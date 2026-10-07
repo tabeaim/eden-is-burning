@@ -55,7 +55,9 @@ export default function ScenesPage() {
   const scenes = useMemo(() => [...playedScenes, ...smsScenes], [playedScenes, smsScenes]);
 
   const [tabState, setTab] = useState<Tab>("all");
-  const [kinds, setKinds] = useState<string[]>([]); // Szene | Anruf | SMS (leer = alle)
+  // Art: zunächst nur richtige Szenen; Anrufe und SMS lassen sich dazuwählen (leer = alle)
+  const [kinds, setKinds] = useState<string[]>(["scene"]);
+  const kindsChanged = kinds.length !== 1 || kinds[0] !== "scene";
   const [searchTitle, setSearchTitle] = useState("");
   const [searchPost, setSearchPost] = useState("");
   const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED
@@ -251,7 +253,7 @@ export default function ScenesPage() {
     (qPost ? 1 : 0) +
     aus.length +
     (plot ? 1 : 0) +
-    kinds.length +
+    (kindsChanged ? 1 : 0) +
     tokens.length +
     areas.length +
     periods.length;
@@ -260,7 +262,7 @@ export default function ScenesPage() {
     setSearchTitle("");
     setSearchPost("");
     setAus([]);
-    setKinds([]);
+    setKinds(["scene"]);
     setPlotId(null);
     setBeforePlot(null);
     setTokens([]);
@@ -325,7 +327,7 @@ export default function ScenesPage() {
             options={SCENE_KINDS}
             selected={kinds}
             onToggle={(v) => toggle(kinds, setKinds, v)}
-            onClear={() => setKinds([])}
+            onClear={() => setKinds(["scene"])}
           />
           <MultiSelect
             label="Gegend"

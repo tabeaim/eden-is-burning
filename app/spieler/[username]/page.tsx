@@ -14,7 +14,7 @@ import { useSetPageMeta } from "@/lib/page-meta";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { Facts, FactRow } from "@/components/Facts";
 import { Icon } from "@/components/Icon";
-import { SceneCard } from "@/components/SceneCard";
+import { SceneFilterList } from "@/components/SceneFilterList";
 import {
   ProfileLikes,
   ProfileSkills,
@@ -38,7 +38,7 @@ function since(iso: string): string {
 // Username wird hier im Profil bearbeitet.
 export default function PlayerPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params);
-  const { playerByUsername, charactersOf, npcs, scenes, posts, currentPlayer } = useStore();
+  const { playerByUsername, charactersOf, npcs, scenes, smsScenes, chatMessages, posts, currentPlayer } = useStore();
   const p = playerByUsername(decodeURIComponent(username));
   // Reiter: ohne eigene Wahl „About" (falls gefüllt), sonst „Characters"
   const [chosenTab, setTab] = useState<Tab | null>(null);
@@ -67,8 +67,12 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
   const ids = new Set(all.map((c) => c.id));
   const postCount = posts.filter((x) => ids.has(x.character_id)).length;
   const lastPostAt = (sceneId: string) =>
-    posts.reduce((max, x) => (x.scene_id === sceneId && x.created_at > max ? x.created_at : max), "");
-  const myScenes = scenes
+    posts.reduce(
+      (max, x) => (x.scene_id === sceneId && x.created_at > max ? x.created_at : max),
+      // SMS-Szenen: ihre zuletzt geschriebene Nachricht
+      chatMessages.reduce((max, m) => (m.scene_id === sceneId && m.created_at > max ? m.created_at : max), ""),
+    );
+  const myScenes = [...scenes, ...smsScenes]
     .filter((s) => s.participant_ids.some((id) => ids.has(id)))
     .sort((a, b) => (lastPostAt(b.id) || b.created_at).localeCompare(lastPostAt(a.id) || a.created_at));
   // Bearbeiten kann man nur das eigene Profil – auch Admins nicht das anderer
@@ -195,11 +199,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
 
       {tab === "scenes" && (
         <section>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {myScenes.map((s) => (
-              <SceneCard key={s.id} scene={s} compact />
-            ))}
-          </div>
+          <SceneFilterList scenes={myScenes} className="grid grid-cols-1 gap-3 sm:grid-cols-2" />
         </section>
       )}
         </>

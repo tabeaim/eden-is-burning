@@ -159,6 +159,14 @@ export function contactPhoto(owner: Owner, other: Other): string | null {
 // Übergabe „Nachricht schreiben" aus den Kontakten an „Neue SMS" (sessionStorage)
 export const SMS_TO_KEY = "eden:sms-to";
 
+// „2021-12-31" → „2022-01-01"
+export function nextDay(day: string): string {
+  const d = new Date(`${day}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return day;
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 // --- Telefonszenen ----------------------------------------------------------
 // Eine Telefonszene ist eine normale Szene (Zusammenfassung, Timeline, …) mit
 // festem „Ort": keine Gegend, sondern das Telefon.

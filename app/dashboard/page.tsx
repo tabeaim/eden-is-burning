@@ -456,7 +456,7 @@ function CharacterGroup({
   muted?: boolean;
   canLeaveOnRead?: boolean; // unbeantwortete Chats lassen sich pausieren
 }) {
-  const { leaveOnRead } = useStore();
+  const { leaveOnRead, updateChatScene } = useStore();
   return (
     <div>
       <div className="flex items-center gap-2.5 mb-2.5">
@@ -495,8 +495,15 @@ function CharacterGroup({
             action={
               canLeaveOnRead ? (
                 <button
-                  onClick={() => leaveOnRead(u.chat.id, char.id, u.last.id)}
-                  title="Nachricht unbeantwortet lassen – der Chat pausiert, bis jemand wieder schreibt"
+                  onClick={() => {
+                    leaveOnRead(u.chat.id, char.id, u.last.id);
+                    if (u.scene) updateChatScene(u.scene.id, { status: "closed" });
+                  }}
+                  title={
+                    u.scene
+                      ? "Nachricht unbeantwortet lassen – beendet die SMS-Szene"
+                      : "Nachricht unbeantwortet lassen – der Chat pausiert, bis jemand wieder schreibt"
+                  }
                   className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
                 >
                   Leave on read
