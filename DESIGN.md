@@ -412,6 +412,10 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
     In den Profilen (Charakter, Spieler*in) `SceneFilterList` mit Pills für Art
     und Status. Im Dashboard eine `ChatRow` je Strang (jede
     aktive Szene mit ihrem Titel, die losen Nachrichten als „Chat mit …").
+  - **Gruppenchats** (ab drei Beteiligten): „Neue SMS" mit mehreren
+    Empfänger*innen, Name optional (sonst die Vornamen, `chatName`). Fremde
+    Blasen tragen Vorname und Avatar wie beim Mitlesen. ⋯ → „Gruppe bearbeiten"
+    (Name, Person hinzufügen). Je Zusammensetzung gibt es einen Chat.
   - Chat-Liste: eine Zeile je Person, nie mit Vorschau des Texts (Spoiler):
     Titel der zuletzt bespielten Szene, sonst „Neue Nachricht" bzw. „Zuletzt: …".
 - **Captic ist optional** (An/Aus-Schalter in `PhoneSettings`); das Profil wird

@@ -3,13 +3,14 @@
 import { Fragment, use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
-import type { Chat, ChatMessageKind, ChatScene } from "@/lib/types";
+import type { Character, Chat, ChatMessageKind, ChatScene } from "@/lib/types";
 import { formatDateTime, formatInplayDate, formatInplayDateShort } from "@/lib/format";
 import { isEmojiOnly, QUICK_REACTIONS } from "@/lib/emoji";
-import { addMinutes, contactShortName, nextDay, resolvePhone } from "@/lib/phone";
+import { addMinutes, contactShortName, hasPhone, nextDay, resolvePhone } from "@/lib/phone";
 import {
   chatTitle,
   chatUnits,
+  isGroup,
   isArchived,
   isLeftOnRead,
   messageSnippet,
@@ -85,6 +86,10 @@ function ChatView({ chat }: { chat: Chat }) {
     updateChatScene,
     deleteChatScene,
     patchMessages,
+    updateChat,
+    characters,
+    npcs,
+    chats,
   } = useStore();
   const router = useRouter();
   const messages = messagesOf(chat.id);
@@ -99,6 +104,10 @@ function ChatView({ chat }: { chat: Chat }) {
   const reading = writable.length === 0;
   const self = reading ? "" : stored && writable.includes(stored) ? stored : writable[0];
   const canWrite = !reading;
+  // Gruppe (ab drei): fremde Blasen tragen wie beim Mitlesen Vorname und Avatar
+  const group = isGroup(chat);
+  const labeled = reading || group;
+  const [groupOpen, setGroupOpen] = useState(false);
   const selfChar = reading ? undefined : character(self);
   // Öffnet man den Chat eines anderen eigenen Charakters, hält man ab jetzt dessen
   // Handy in der Hand – sonst landete z.B. „Archivieren" im Archiv dieses
@@ -401,11 +410,12 @@ function ChatView({ chat }: { chat: Chat }) {
           </span>
           <span className="min-w-0">
             <span className="block truncate text-[0.9375rem] font-semibold leading-tight text-text-primary">
-              {chatTitle(others, viewer)}
+              {chat.name?.trim() || chatTitle(others, viewer)}
             </span>
             <span className="block truncate text-[0.75rem] text-text-tertiary">
               {[
                 reading && "du liest mit",
+                group && `${parts.length} Personen`,
                 archived && "archiviert",
                 scenesHere.length > 0 && `${scenesHere.length} ${scenesHere.length === 1 ? "Szene" : "Szenen"} ▾`,
               ]
@@ -516,16 +526,16 @@ function ChatView({ chat }: { chat: Chat }) {
               id={m.id}
               className={`relative flex flex-col rounded-xl transition-colors duration-700 ${
                 mine ? "items-end" : "items-start"
-              } ${first ? "mt-2.5" : "mt-0.5"} ${reading ? "pl-8" : ""} ${
+              } ${first ? "mt-2.5" : "mt-0.5"} ${labeled && !mine ? "pl-8" : ""} ${
                 highlight === m.id ? "bg-accent/20" : picked ? "bg-accent/15" : ""
               }`}
             >
-              {reading && first && (
+              {labeled && !mine && first && (
                 <span className="mb-0.5 ml-1 text-[0.6875rem] font-semibold text-text-tertiary">
                   {contactShortName(viewer, sender)}
                 </span>
               )}
-              {reading && lastOfGroup && sender && (
+              {labeled && !mine && lastOfGroup && sender && (
                 <PhoneAvatar character={sender} size={24} className="absolute bottom-0 left-0" />
               )}
               {/* Text bleibt markier- und kopierbar: Ist etwas markiert, öffnet weder
@@ -621,7 +631,7 @@ function ChatView({ chat }: { chat: Chat }) {
             {left && (
               <div
                 className={`mt-1 px-1 text-[0.6875rem] text-text-tertiary ${
-                  mine ? "text-right" : reading ? "pl-9" : ""
+                  mine ? "text-right" : labeled ? "pl-9" : ""
                 }`}
               >
                 {mine
@@ -886,6 +896,16 @@ function ChatView({ chat }: { chat: Chat }) {
                   Chat wieder aktivieren
                 </SheetButton>
               )}
+              {group && canEdit && (
+                <SheetButton
+                  onClick={() => {
+                    setGroupOpen(true);
+                    setMenuOpen(false);
+                  }}
+                >
+                  Gruppe bearbeiten – Name, Person hinzufügen
+                </SheetButton>
+              )}
               {phoneId && (
                 <SheetButton
                   onClick={() => {
@@ -1076,6 +1096,22 @@ function ChatView({ chat }: { chat: Chat }) {
         </Sheet>
       )}
 
+      {groupOpen && (
+        <GroupSheet
+          chat={chat}
+          everyone={[...characters, ...npcs].filter((c) => !c.deleted_at && hasPhone(c))}
+          taken={(ids) => {
+            const key = [...ids].sort().join("|");
+            return chats.some((c) => c.id !== chat.id && [...c.participant_ids].sort().join("|") === key);
+          }}
+          onCancel={() => setGroupOpen(false)}
+          onSave={(patch) => {
+            updateChat(chat.id, patch);
+            setGroupOpen(false);
+          }}
+        />
+      )}
+
       {dirOpen && (
         <SceneDirectory
           entries={directory}
@@ -1181,6 +1217,105 @@ function DateSheet({
             className="rounded-md bg-accent/90 px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
           >
             Übernehmen
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Gruppe bearbeiten: Name ändern und weitere Personen hinzufügen. (Je
+// Zusammensetzung gibt es nur einen Chat – eine schon bestehende geht nicht.)
+function GroupSheet({
+  chat,
+  everyone,
+  taken,
+  onSave,
+  onCancel,
+}: {
+  chat: Chat;
+  everyone: Character[];
+  taken: (participantIds: string[]) => boolean;
+  onSave: (patch: { name: string | null; participant_ids: string[] }) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState(chat.name ?? "");
+  const [added, setAdded] = useState<string[]>([]);
+  const [q, setQ] = useState("");
+  const ids = [...chat.participant_ids, ...added];
+  const query = q.trim().toLowerCase();
+  const hits = query
+    ? everyone.filter((c) => !ids.includes(c.id) && c.name.toLowerCase().includes(query)).slice(0, 5)
+    : [];
+  const clash = added.length > 0 && taken(ids);
+  const field =
+    "w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/20 sm:text-[0.875rem]";
+  return (
+    <div className="absolute inset-0 z-30 overflow-y-auto bg-black/55 p-3 pt-12" onClick={onCancel}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="rounded-2xl border border-border-subtle bg-bg-surface-2 p-4"
+      >
+        <div className="text-[0.9375rem] font-semibold text-text-primary">Gruppe bearbeiten</div>
+        <input
+          value={name}
+          maxLength={40}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Name der Gruppe (optional)"
+          className={`${field} mt-3`}
+        />
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {ids.map((id) => {
+            const c = everyone.find((x) => x.id === id);
+            const isNew = added.includes(id);
+            return (
+              <button
+                key={id}
+                disabled={!isNew}
+                onClick={() => setAdded((a) => a.filter((x) => x !== id))}
+                className="flex items-center gap-1.5 rounded-full bg-white/[0.08] py-1 pl-1 pr-2.5 text-[0.8125rem] text-text-primary"
+              >
+                {c && <PhoneAvatar character={c} size={22} link={false} />}
+                {c?.name.split(" ")[0] ?? "?"}
+                {isNew && <span className="text-text-tertiary">✕</span>}
+              </button>
+            );
+          })}
+        </div>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Person hinzufügen …"
+          className={`${field} mt-3`}
+        />
+        {hits.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => {
+              setAdded((a) => [...a, c.id]);
+              setQ("");
+            }}
+            className="mt-1 flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-[0.875rem] text-text-primary hover:bg-white/[0.06]"
+          >
+            <PhoneAvatar character={c} size={28} link={false} />
+            {c.name}
+          </button>
+        ))}
+        {clash && (
+          <p className="mt-2 text-[0.8125rem] text-red-300">
+            Einen Chat in genau dieser Zusammensetzung gibt es schon.
+          </p>
+        )}
+        <div className="mt-4 flex items-center justify-end gap-3">
+          <button onClick={onCancel} className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+            Abbrechen
+          </button>
+          <button
+            disabled={clash}
+            onClick={() => onSave({ name: name.trim() || null, participant_ids: ids })}
+            className="rounded-md bg-accent/90 px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
+          >
+            Speichern
           </button>
         </div>
       </div>

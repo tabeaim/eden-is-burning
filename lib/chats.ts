@@ -166,6 +166,23 @@ export function chatTitle(
   return known.map((p) => contactShortName(owner, p)).join(" & ");
 }
 
+// Wie der Chat auf dem Handy von `owner` heißt: der Gruppenname, sonst die anderen
+// Beteiligten (ohne `owner`: alle).
+export function chatName(
+  chat: Pick<Chat, "name" | "participant_ids">,
+  character: (id: string) => Character | undefined,
+  owner?: Pick<Character, "id" | "phone"> | null,
+): string {
+  return (
+    chat.name?.trim() ||
+    chatTitle(
+      chat.participant_ids.filter((id) => id !== owner?.id).map((id) => character(id)),
+      owner,
+    )
+  );
+}
+export const isGroup = (chat: Pick<Chat, "participant_ids">) => chat.participant_ids.length > 2;
+
 // Kurzfassung einer Nachricht (Chat-Liste, Antwort-Zitat)
 export function messageSnippet(m: ChatMessage): string {
   if (m.kind === "gif") return "GIF";

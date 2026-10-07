@@ -1189,6 +1189,9 @@ alter table chat_messages add column if not exists scene_id text references chat
 
 create index if not exists idx_chat_scenes_chat on chat_scenes(chat_id);
 
+-- Gruppenchats: optionaler Name der Gruppe (ohne: die Vornamen der Beteiligten)
+alter table chats add column if not exists name text;
+
 -- Altbestand: Nachrichten bekommen das Datum des Tagestrenners über ihnen
 update chat_messages m
 set inplay_date = (

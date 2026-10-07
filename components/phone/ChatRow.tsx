@@ -5,7 +5,7 @@ import type { Chat, ChatScene } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { formatDateTimeShort, formatInplayDateShort } from "@/lib/format";
 import { rememberPhone } from "@/lib/phone";
-import { chatHref, chatTitle, newestMessage } from "@/lib/chats";
+import { chatHref, chatName, newestMessage } from "@/lib/chats";
 import { Icon } from "@/components/Icon";
 
 // Chat als kompakte Zeile fürs Dashboard – gleicher Aufbau wie `SceneRow`
@@ -33,13 +33,15 @@ export function ChatRow({
   );
   const last = newestMessage(messages);
   const lastChar = last ? character(last.character_id) : undefined;
-  const others = chat.participant_ids.filter((id) => id !== forCharacter).map((id) => character(id));
-  const names = chatTitle(forCharacter ? others : chat.participant_ids.map((id) => character(id)));
+  // Gruppenname, sonst die (anderen) Beteiligten
+  const names = chatName(chat, character, forCharacter ? { id: forCharacter } : null);
   const title = scene
     ? scene.title
-    : forCharacter
-      ? `Chat mit ${names}`
-      : `Neue Nachrichten bei ${names}`;
+    : chat.name?.trim()
+      ? `Gruppe „${names}“`
+      : forCharacter
+        ? `Chat mit ${names}`
+        : `Neue Nachrichten bei ${names}`;
   const day = scene?.inplay_date || last?.day;
 
   return (

@@ -1,6 +1,7 @@
 -- SMS-Szenen: benannte Abschnitte im (einen, fortlaufenden) Chat zweier Charaktere.
 -- Jede Nachricht trägt ihr Inplay-Datum; der Chat sortiert danach statt nach der
--- echten Schreibzeit. Im Supabase SQL-Editor ausführen (Run). Wiederholbar.
+-- echten Schreibzeit. Dazu der Name für Gruppenchats.
+-- Im Supabase SQL-Editor ausführen (Run). Wiederholbar.
 
 create table if not exists chat_scenes (
   id          text primary key,
@@ -19,6 +20,9 @@ alter table chat_messages add column if not exists inplay_date text;
 alter table chat_messages add column if not exists scene_id text references chat_scenes(id) on delete set null;
 
 create index if not exists idx_chat_scenes_chat on chat_scenes(chat_id);
+
+-- Gruppenchats: optionaler Name der Gruppe (ohne: die Vornamen der Beteiligten)
+alter table chats add column if not exists name text;
 
 -- Altbestand: Nachrichten bekommen das Datum des Tagestrenners über ihnen
 update chat_messages m

@@ -8,7 +8,7 @@ import type { Chat, ChatMessage } from "@/lib/types";
 import { newestMessage, orderMessages, type DatedMessage } from "@/lib/chats";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
-import { chatTitle, isArchived, isLeftOnRead } from "@/lib/chats";
+import { chatName, isArchived, isLeftOnRead } from "@/lib/chats";
 import { contactShortName } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
 import {
@@ -122,7 +122,7 @@ export default function MessagesPage() {
       const people = chat.participant_ids
         .filter((id) => id !== myId)
         .map((id) => character(id));
-      return { chat, people, title: chatTitle(people, me), last: last.get(chat.id), hit: hits.get(chat.id) };
+      return { chat, people, title: chatName(chat, character, me), last: last.get(chat.id), hit: hits.get(chat.id) };
     })
     .filter((r) => !query || r.hit || r.title.toLowerCase().includes(query))
     .sort((a, b) =>
@@ -316,7 +316,7 @@ export default function MessagesPage() {
       {menuChat && (
         <Sheet onClose={() => closeMenu()}>
           <div className="mb-2 truncate px-1 text-[0.8125rem] text-text-tertiary">
-            {chatTitle(menuChat.participant_ids.filter((id) => id !== myId).map((id) => character(id)), me)}
+            {chatName(menuChat, character, me)}
           </div>
           <SheetList>
             {/* eigener Chat, in dem man dran ist: pausieren, als ungelesen markieren

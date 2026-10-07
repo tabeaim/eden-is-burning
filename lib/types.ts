@@ -333,10 +333,12 @@ export interface SceneQuote {
 }
 
 // --- Messenger („Handy") -----------------------------------------------------
-// Ein Chat zwischen Charakteren (aktuell zwei; das Modell trägt auch Gruppen).
+// Ein Chat zwischen Charakteren: zu zweit oder als Gruppe (ab drei Beteiligten).
+// Je Zusammensetzung gibt es genau einen Chat.
 export interface Chat {
   id: string;
   participant_ids: string[]; // Charakter-IDs (auch NPCs)
+  name?: string | null; // Gruppenname (optional; sonst die Vornamen)
   created_by?: string | null; // Spieler-ID
   created_at: string;
   // „Left on read": Charakter-ID -> ID der Nachricht, die unbeantwortet stehen

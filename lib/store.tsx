@@ -168,7 +168,9 @@ interface StoreValue extends PersistedState {
   // Darf ich als dieser Charakter schreiben? (eigene Charaktere und eigene NPCs)
   canWriteAs: (characterId: string) => boolean;
   // Findet den Chat dieser Charaktere oder legt ihn an; gibt die ID zurück.
-  openChat: (participantIds: string[]) => string;
+  openChat: (participantIds: string[], name?: string | null) => string;
+  // Gruppe umbenennen oder jemanden hinzufügen
+  updateChat: (id: string, patch: Partial<Pick<Chat, "name" | "participant_ids">>) => void;
   addMessage: (
     chatId: string,
     characterId: string,
@@ -1163,7 +1165,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         persist("deleteCharacter/scene", supabase.from("scenes").update(patch).eq("id", sc.id));
         return { ...sc, ...patch };
       });
-      const gone = s.chats.filter((c) => c.participant_ids.includes(id)).map((c) => c.id);
+      // Chats zu zweit verschwinden; aus Gruppen fällt nur der Charakter heraus
+      const mine = s.chats.filter((c) => c.participant_ids.includes(id));
+      const gone = mine.filter((c) => c.participant_ids.length <= 2).map((c) => c.id);
+      for (const c of mine.filter((c) => c.participant_ids.length > 2)) {
+        persist(
+          "deleteCharacter/group",
+          supabase
+            .from("chats")
+            .update({ participant_ids: c.participant_ids.filter((p) => p !== id) })
+            .eq("id", c.id),
+        );
+      }
       if (gone.length) {
         persist("deleteCharacter/chats", supabase.from("chats").delete().in("id", gone));
       }
@@ -1174,7 +1187,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         characters: s.characters.filter((c) => c.id !== id),
         posts: s.posts.filter((p) => p.character_id !== id),
         quotes: s.quotes.filter((q) => q.character_id !== id),
-        chats: s.chats.filter((c) => !gone.includes(c.id)),
+        chats: s.chats
+          .filter((c) => !gone.includes(c.id))
+          .map((c) =>
+            c.participant_ids.includes(id)
+              ? { ...c, participant_ids: c.participant_ids.filter((p) => p !== id) }
+              : c,
+          ),
         chatScenes: s.chatScenes.filter((c) => !gone.includes(c.chat_id)),
         chatMessages: s.chatMessages.filter(
           (m) => m.character_id !== id && !gone.includes(m.chat_id),
@@ -1439,7 +1458,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const openChat = useCallback(
-    (participantIds: string[]) => {
+    (participantIds: string[], name?: string | null) => {
       const key = [...participantIds].sort().join("|");
       const existing = state.chats.find(
         (c) => [...c.participant_ids].sort().join("|") === key,
@@ -1448,6 +1467,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const chat: Chat = {
         id: uid("chat"),
         participant_ids: participantIds,
+        // nur mitschicken, wenn gesetzt – die Spalte gibt es erst mit schema-sms-scenes.sql
+        ...(name?.trim() ? { name: name.trim() } : {}),
         created_by: currentPlayer?.id ?? null,
         created_at: new Date().toISOString(),
       };
@@ -1459,6 +1480,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return chat.id;
     },
     [state.chats, currentPlayer?.id],
+  );
+
+  const updateChat = useCallback(
+    (id: string, patch: Partial<Pick<Chat, "name" | "participant_ids">>) => {
+      persist("updateChat", supabase.from("chats").update(patch).eq("id", id));
+      setState((s) => ({ ...s, chats: s.chats.map((c) => (c.id === id ? { ...c, ...patch } : c)) }));
+    },
+    [],
   );
 
   const markChatSeen = useCallback(
@@ -2050,6 +2079,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       patchMessages,
       canWriteAs,
       openChat,
+      updateChat,
       addMessage,
       deleteMessage,
       updateMessage,
@@ -2163,6 +2193,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       patchMessages,
       canWriteAs,
       openChat,
+      updateChat,
       addMessage,
       deleteMessage,
       updateMessage,
