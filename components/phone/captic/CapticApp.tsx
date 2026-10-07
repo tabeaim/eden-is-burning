@@ -560,7 +560,7 @@ function Profile({
   const following = profile.following ?? follows(who).length;
 
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState({ handle: "", bio: "", followers: "", following: "", private: false });
+  const [draft, setDraft] = useState({ handle: "", name: "", bio: "", followers: "", following: "", private: false });
   // Captic-Profilbild im Bearbeiten-Formular: null = entfernen (zurück zum Handy-/Charakterbild)
   const [avatar, setAvatar] = useState<string | null>(null);
   const [cropping, setCropping] = useState<{ file: File; src: string } | null>(null);
@@ -586,6 +586,7 @@ function Profile({
   function startEdit() {
     setDraft({
       handle,
+      name: profile.display_name ?? "",
       bio,
       followers: profile.followers != null ? String(profile.followers) : "",
       following: profile.following != null ? String(profile.following) : "",
@@ -605,6 +606,7 @@ function Profile({
           ...profile,
           enabled: true,
           handle: next || undefined,
+          display_name: draft.name.trim() || null,
           bio: draft.bio.trim(),
           avatar,
           followers: parseCount(draft.followers),
@@ -685,6 +687,16 @@ function Profile({
             />
           </label>
           <label className={label}>
+            Anzeigename
+            <input
+              value={draft.name}
+              maxLength={40}
+              placeholder={who.name}
+              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              className={`mt-1 ${capticField}`}
+            />
+          </label>
+          <label className={label}>
             Bio ({draft.bio.length}/150)
             <textarea
               value={draft.bio}
@@ -739,7 +751,7 @@ function Profile({
         </div>
       ) : (
         <div className="px-4 pt-3">
-          <div className="text-[0.875rem] font-semibold text-text-primary">{who.name}</div>
+          <div className="text-[0.875rem] font-semibold text-text-primary">{profile.display_name || who.name}</div>
           <div className="text-[0.8125rem] text-text-tertiary">
             @{handle}
             {isPrivate(who) && " · privat"}

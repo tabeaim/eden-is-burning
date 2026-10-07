@@ -26,6 +26,9 @@
  *
  * GESCHÜTZT: Charaktere aus PROTECTED_CHARACTER_IDS (env.ts, derzeit c_irina) werden
  * nie geschrieben – ihr in der App neu ausgefülltes Profil bleibt, wie es ist.
+ * Einzige Ausnahme: Ihre Relationen aus dem Forum werden in `relationships` ergänzt
+ * (vorhandene Einträge des neuen Profils gehen vor), ebenso der Captic-Anzeigename,
+ * sofern dort noch keiner steht.
  * Szenen, Posts, Chats und Relationen anderer verweisen trotzdem auf sie.
  */
 import fs from "node:fs/promises";
@@ -322,6 +325,7 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
   }
   const characters: Row[] = [];
   const protectedSkipped: string[] = [];
+  const protectedDisplayNames = new Map<string, string>(); // Captic-Anzeigename aus dem Forum
   const playerArea = new Map<string, string>();
   for (const u of users) {
     const f = fields.get(u.uid) ?? {};
@@ -383,6 +387,7 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
       ? {
           enabled: true,
           handle: str(f.fid4) || slug(u.username ?? ""),
+          display_name: orNull(f.fid38),
           bio: [toText(f.fid39), link].filter(Boolean).join("\n"),
           avatar: /^https?:\/\//.test(str(f.fid37)) ? str(f.fid37) : null,
           private: str(f.fid41).toLowerCase() === "ja",
@@ -426,6 +431,7 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
     };
     if (PROTECTED_CHARACTER_IDS.includes(id)) {
       protectedSkipped.push(`${u.username} [${id}]`);
+      if (captic?.display_name) protectedDisplayNames.set(id, captic.display_name);
       if (!existing.characters.some((c) => c.id === id)) {
         warn(`Geschützter Charakter ${id} fehlt in der Datenbank – er wird trotzdem NICHT importiert; Verweise auf ihn würden scheitern.`);
       }
@@ -464,12 +470,21 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
 
   // --- Relationen -------------------------------------------------------------
   let npcCount = 0;
+  const protectedRelations = new Map<string, Row>();
   for (const r of dump.relationen) {
     if (r.ok !== "1") continue;
     const from = charId.get(r.anfrager ?? "");
     if (!from) continue;
-    const owner = charRow.get(from);
-    if (!owner) continue; // geschützter Charakter: Profil bleibt unangetastet
+    // Geschützte Charaktere: Ihre Zeile wird nicht geschrieben, die Relationen aus dem
+    // Forum kommen aber dazu (nur die Spalte relationships, siehe unten beim Schreiben).
+    let owner = charRow.get(from);
+    if (!owner && PROTECTED_CHARACTER_IDS.includes(from)) {
+      const live = existing.characters.find((c) => c.id === from);
+      if (!live) continue;
+      owner = protectedRelations.get(from) ?? { id: from, player_id: live.player_id, area: live.area, created_at: live.created_at, relationships: {} };
+      protectedRelations.set(from, owner);
+    }
+    if (!owner) continue;
     let target = charId.get(r.angefragte ?? "");
     // als NPC eingetragen, aber inzwischen ein eigenes Konto
     if (!target) target = charId.get(users.find((u) => str(u.username).toLowerCase() === str(r.username).toLowerCase())?.uid ?? "");
@@ -792,6 +807,9 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
     captic_posts: capticPosts,
     captic_comments: capticComments,
     captic_highlights: capticHighlights,
+    // Relationen geschützter Charaktere: id -> relationships aus dem Forum
+    protectedRelations: [...protectedRelations.values()].map((r) => ({ id: r.id as string, relationships: r.relationships as Record<string, unknown> })),
+    protectedDisplayNames: [...protectedDisplayNames.entries()],
     info: { protectedSkipped, skippedThreads, noDate, npcCount },
   };
 }
@@ -856,6 +874,11 @@ async function main() {
     console.log(`  ${String(p.username).padEnd(8)} ${String(p.email).padEnd(32)} ${mine} Charaktere (${state})`);
   }
   console.log(`\nGeschützt, nicht geschrieben: ${out.info.protectedSkipped.join(", ") || "–"}`);
+  for (const r of out.protectedRelations) {
+    const live = (existing.characters.find((c) => c.id === r.id)?.relationships as Record<string, unknown> | null) ?? {};
+    const kept = Object.keys(r.relationships).filter((k) => k in live);
+    console.log(`  ${r.id}: ${Object.keys(r.relationships).length} Relationen aus dem Forum kommen dazu${kept.length ? ` (schon im neuen Profil, bleibt wie es ist: ${kept.join(", ")})` : ""}`);
+  }
   console.log(`Statist*innen aus Relationen: ${out.info.npcCount}`);
   console.log(`Neue bzw. umgezogene Orte: ${out.locations.map((l) => `${l.name} (${l.area})`).join(", ") || "–"}`);
   console.log(`\nNicht übernommene Threads (${out.info.skippedThreads.length}):`);
@@ -921,6 +944,23 @@ async function main() {
   // einheitliche Spalten je Stapel (PostgREST verlangt gleiche Schlüssel)
   const charKeys = [...new Set(out.characters.flatMap((c) => Object.keys(c)))];
   await upsert("characters", out.characters.map((c) => Object.fromEntries(charKeys.map((k) => [k, c[k] ?? (k === "relationships" ? {} : k === "co_owner_ids" ? [] : null)]))));
+  // Geschützte Charaktere: nur die Relationen aus dem Forum ergänzen. Was im neuen
+  // Profil schon zu einem Charakter eingetragen ist, bleibt und geht vor.
+  for (const r of out.protectedRelations) {
+    const live = existing.characters.find((c) => c.id === r.id);
+    const merged = { ...r.relationships, ...((live?.relationships as Record<string, unknown> | null) ?? {}) };
+    const { error } = await db.from("characters").update({ relationships: merged }).eq("id", r.id);
+    if (error) throw new Error(`characters (${r.id}, Relationen): ${error.message}`);
+    console.log(`✓ ${r.id}: ${Object.keys(r.relationships).length} Relationen aus dem Forum ergänzt (sonst unverändert)`);
+  }
+  // … und den Captic-Anzeigenamen, falls das neue Profil Captic nutzt und keinen hat
+  for (const [id, name] of out.protectedDisplayNames) {
+    const phone = existing.characters.find((c) => c.id === id)?.phone as { captic?: { enabled?: boolean; display_name?: string | null } } | null;
+    if (!phone?.captic?.enabled || phone.captic.display_name) continue;
+    const { error } = await db.from("characters").update({ phone: { ...phone, captic: { ...phone.captic, display_name: name } } }).eq("id", id);
+    if (error) throw new Error(`characters (${id}, Captic-Anzeigename): ${error.message}`);
+    console.log(`✓ ${id}: Captic-Anzeigename „${name}" ergänzt`);
+  }
   await upsert("scenes", out.scenes);
   await upsert("posts", out.posts, 100);
   await upsert("quotes", out.quotes);

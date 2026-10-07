@@ -220,6 +220,7 @@ export interface PhoneSettings {
 export interface CapticProfile {
   enabled?: boolean;
   handle?: string;
+  display_name?: string | null; // Anzeigename im Profil (sonst der Charaktername)
   bio?: string;
   avatar?: string | null; // eigenes Profilbild nur für Captic
   followers?: number | null;
