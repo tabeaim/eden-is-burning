@@ -741,7 +741,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // (schema-signup-username.sql).
   const signUp = useCallback(async (email: string, password: string, username: string) => {
     const name = username.trim();
-    const free = await supabase.rpc("username_available", { name });
+    // for_email: Der Name der eigenen, vorab importierten Zeile gilt als frei
+    // (schema-import-players.sql); der Trigger behält dort ohnehin den alten Namen.
+    const free = await supabase.rpc("username_available", { name, for_email: email.trim() });
     if (!free.error && free.data === false) return { error: "username taken" };
     const { error } = await supabase.auth.signUp({
       email: email.trim(),

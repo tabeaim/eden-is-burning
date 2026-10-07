@@ -6,15 +6,15 @@ import { useStore } from "@/lib/store";
 type Mode = "signin" | "signup";
 
 // Username: kein @ (sonst nicht von einer E-Mail zu unterscheiden), keine Leerzeichen
-const USERNAME_OK = /^[\p{L}\p{N}._-]{2,24}$/u;
+const USERNAME_OK = /^[\p{L}\p{N}._-]{1,24}$/u;
 
 // Vorübergehender Testzugang: bestehende Spieler*innen können ohne Registrierung
 // per Klick rein (alle mit demselben Test-Passwort). Später entfernen.
 const TEST_PASSWORD = "Eden1234!";
 const TEST_PLAYERS: { label: string; email: string }[] = [
   { label: "tabs", email: "tabeaim@gmail.com" },
-  { label: "vera", email: "vera@example.com" },
-  { label: "liz", email: "liz@example.com" },
+  { label: "V", email: "vera@example.com" },
+  { label: "envy", email: "liz@example.com" },
   { label: "abby", email: "abby@example.com" },
   { label: "jule", email: "jule@example.com" },
   { label: "kat", email: "kat@example.com" },
@@ -44,7 +44,7 @@ export function LoginScreen() {
     }
     const name = username.trim();
     if (mode === "signup" && !USERNAME_OK.test(name)) {
-      setError("Bitte einen Username wählen: 2–24 Zeichen, nur Buchstaben, Ziffern, Punkt, Binde- und Unterstrich.");
+      setError("Bitte einen Username wählen: 1–24 Zeichen, nur Buchstaben, Ziffern, Punkt, Binde- und Unterstrich.");
       return;
     }
     setBusy(true);
@@ -136,7 +136,7 @@ export function LoginScreen() {
               type={mode === "signup" ? "email" : "text"}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={mode === "signup" ? "du@beispiel.de" : "z.B. Vera oder du@beispiel.de"}
+              placeholder={mode === "signup" ? "du@beispiel.de" : "z.B. envy oder du@beispiel.de"}
               autoComplete={mode === "signup" ? "email" : "username"}
               name={mode === "signup" ? "email" : "username"}
               className="mt-1 w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20"

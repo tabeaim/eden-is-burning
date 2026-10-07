@@ -35,7 +35,7 @@ export function seedPlayers(): Player[] {
     },
     {
       id: "p_vera",
-      username: "Vera",
+      username: "V",
       email: "vera@example.com",
       avatar_url: "https://picsum.photos/seed/veraavatar/200/200",
       bio: "Spielt Julius und Alexander.",
@@ -49,7 +49,7 @@ export function seedPlayers(): Player[] {
     },
     {
       id: "p_liz",
-      username: "liz",
+      username: "envy",
       email: "liz@example.com",
       avatar_url: "https://picsum.photos/seed/lizavatar/200/200",
       bio: "Spielt Riley und Roach. Neu in Eden.",
@@ -599,12 +599,12 @@ export function seedScenes(): Scene[] {
       status: "active",
       trigger_warning: false,
       created_at: hoursAgo(34),
-      // Nigel (tabs) ist hier zuletzt dran gewesen -> es wartet auf Alexander (Vera)
+      // Nigel (tabs) ist hier zuletzt dran gewesen -> es wartet auf Alexander (V)
       participant_ids: ["c_nigel", "c_alexander"],
       summary: "Ein anonymer Umschlag zwingt zwei Fremde zu einem heiklen Deal.",
     },
     {
-      // Mockup-Szene für Riley (liz) — mit Elliot (tabs) und Julius (vera)
+      // Mockup-Szene für Riley (envy) — mit Elliot (tabs) und Julius (V)
       id: "s_riley",
       title: "Vinyl und andere Fehler",
       location_area: "rivers_edge",
@@ -618,7 +618,7 @@ export function seedScenes(): Scene[] {
       summary: "Riley schließt den Laden ab — und zwei ungebetene Gäste machen daraus eine lange Nacht.",
     },
     {
-      // Mockup-Szene für Roach (liz) — mit Nigel (tabs) und Alexander (vera)
+      // Mockup-Szene für Roach (envy) — mit Nigel (tabs) und Alexander (V)
       id: "s_roach",
       title: "Kein guter Ort für Fragen",
       location_area: "westridge",
@@ -677,7 +677,7 @@ export function seedScenes(): Scene[] {
         "Weg vom Tresen sucht Nigel bei Lou nach einer Quelle — und stößt auf eine Wand aus höflichem Schweigen.",
     },
     {
-      // Nila (Abby) mit Elliot (tabs) & Julius (vera)
+      // Nila (Abby) mit Elliot (tabs) & Julius (V)
       id: "s_gallery",
       title: "Vernissage ohne Publikum",
       location_area: "washington",
@@ -692,7 +692,7 @@ export function seedScenes(): Scene[] {
         "Am Abend vor der Eröffnung tauchen ein Sammler mit zu viel Geld und ein Musiker mit zu vielen Fragen in Nilas Galerie auf.",
     },
     {
-      // Nila (Abby) & Riley (liz)
+      // Nila (Abby) & Riley (envy)
       id: "s_nila2",
       title: "Zwei Milchkaffee, ein Porträt",
       location_area: "belle_view",
@@ -706,7 +706,7 @@ export function seedScenes(): Scene[] {
       summary: "Nila will Riley malen. Riley kann nur eine Sache nicht: still sitzen.",
     },
     {
-      // Cassandra (Jule) mit Alexander (vera) & Elliot (tabs)
+      // Cassandra (Jule) mit Alexander (V) & Elliot (tabs)
       id: "s_hale",
       title: "Ein Bild, das niemand kaufen soll",
       location_area: "belle_view",

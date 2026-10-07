@@ -27,7 +27,7 @@ from jsonb_populate_recordset(null::players, $seed$[
  },
  {
   "id": "p_vera",
-  "username": "Vera",
+  "username": "V",
   "email": "vera@example.com",
   "avatar_url": "https://picsum.photos/seed/veraavatar/200/200",
   "bio": "Spielt Julius und Alexander.",
@@ -41,7 +41,7 @@ from jsonb_populate_recordset(null::players, $seed$[
  },
  {
   "id": "p_liz",
-  "username": "liz",
+  "username": "envy",
   "email": "liz@example.com",
   "avatar_url": "https://picsum.photos/seed/lizavatar/200/200",
   "bio": "Spielt Riley und Roach. Neu in Eden.",

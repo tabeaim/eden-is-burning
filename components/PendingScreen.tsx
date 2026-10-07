@@ -27,7 +27,8 @@ export function PendingScreen() {
           <p className="text-[0.875rem] text-text-secondary mt-2 leading-relaxed">
             Dein Zugang wartet auf die Freischaltung durch einen Admin. Sobald das
             passiert ist, kannst du loslegen – anmelden kannst du dich dann mit
-            deinem Username und Passwort.
+            deinem Username
+            {currentPlayer?.username ? ` „${currentPlayer.username}“` : ""} und Passwort.
           </p>
           <div className="flex gap-2 mt-5">
             <button
