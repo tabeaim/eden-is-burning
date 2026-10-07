@@ -96,8 +96,24 @@ export function isHidden(c: Pick<Character, "profile">, key: string): boolean {
 export const RELATION_CATEGORIES: [RelationCategory, string][] = [
   ["love", "love life."],
   ["family", "family."],
+  ["friends", "friends."],
   ["acquainted", "acquainted."],
+  ["foes", "foes."],
+  ["past", "past."],
 ];
+
+// Importierte Charaktere haben nur eine Alterszahl, aber kein Geburtsdatum – dann
+// bitten die Charakter-Einstellungen darum (das Alter bleibt bis dahin stehen).
+export function needsBirthdate(c: Pick<Character, "age" | "profile">): boolean {
+  return !c.profile?.birthdate && c.age != null;
+}
+
+// Eingetippter Link als vollständige Web-Adresse (ohne Angabe: https://)
+export function webUrl(input: string | null | undefined): string | null {
+  const raw = (input ?? "").trim();
+  if (!raw) return null;
+  return /^https?:\/\//i.test(raw) ? raw : `https://${raw.replace(/^[a-z]+:\/*/i, "")}`;
+}
 
 // Student*in / arbeitstätig – beides zugleich möglich (liest auch den Altbestand)
 export function isStudent(c: Pick<Character, "profile">): boolean {

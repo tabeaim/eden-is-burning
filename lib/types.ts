@@ -153,6 +153,8 @@ export interface CharacterProfile {
   major?: string | null; // Studiengang
   degree?: "undergraduate" | "graduate" | "phd" | "mba" | null;
   study_start?: string | null; // ISO-Datum; daraus das Studienjahr
+  gpa?: string | null; // Notenschnitt, nur bei Student*innen
+  spotify_url?: string | null; // Link zu Playlist/Profil, steht bei den Facts
   employer?: string | null; // Arbeitgeber (freier Text oder Name eines Orts)
   employer_location_id?: string | null; // … falls ein Ort gewählt wurde („works here")
   // --- Beschreibung ---
@@ -171,6 +173,8 @@ export interface CharacterProfile {
   outfit?: ThingItem[];
   // Signatur: Bild, das am Ende jedes Posts des Charakters steht (sonst nirgends)
   signature_url?: string | null;
+  // Text-Signatur: steht ebenfalls am Ende jedes Posts (zusätzlich zum oder statt des Bilds)
+  signature_text?: string | null;
   // GIF, das in Szenen unter dem Avatar steht (höchstens so breit wie der Avatar,
   // halb so hoch)
   scene_gif_url?: string | null;
@@ -225,7 +229,7 @@ export interface CustomPhoneApp {
   icon: string; // Bild-Adresse
 }
 
-export type RelationCategory = "love" | "family" | "acquainted";
+export type RelationCategory = "love" | "family" | "friends" | "acquainted" | "foes" | "past";
 
 export interface Scene {
   id: string;

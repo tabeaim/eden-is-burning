@@ -12,6 +12,7 @@ import {
   normalizeHeight,
   studyYearAt,
   tierOf,
+  webUrl,
   zodiacOf,
 } from "@/lib/characters";
 import { AREA_ORDER, AREAS, areaName } from "@/lib/world";
@@ -105,6 +106,18 @@ export function ProfileFacts({ c }: { c: Character }) {
           .filter(Boolean)
           .join(" · ")
       : null;
+  const gpa = full && isStudent(c) ? shown(c, "gpa", p.gpa) : null;
+  const spotifyUrl = webUrl(shown(c, "spotify", p.spotify_url));
+  const spotify = spotifyUrl ? (
+    <a
+      href={spotifyUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-1.5 align-bottom text-olive hover:text-accent"
+    >
+      <Icon name="spotify" size={16} /> Listen
+    </a>
+  ) : null;
   // Supporting Characters und Statist*innen tragen ihre Art als „Role"
   const tier = tierOf(c);
   const groups: [string, [string, React.ReactNode][]][] = [
@@ -125,6 +138,7 @@ export function ProfileFacts({ c }: { c: Character }) {
         ["Origin", shown(c, "origin", c.origin)],
         ["Status", shown(c, "status", c.status)],
         ["Sexuality", shown(c, "sexuality", c.sexuality)],
+        ["Spotify", spotify],
       ],
     ],
     [
@@ -134,6 +148,7 @@ export function ProfileFacts({ c }: { c: Character }) {
         ["Workplace", workplace],
         ["University", university],
         ["Studies", studies],
+        ["GPA", gpa],
       ],
     ],
   ];

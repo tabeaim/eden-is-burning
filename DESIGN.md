@@ -147,7 +147,7 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   zum 1.1.2022 bzw. für den Herbst 2021, in einer Szene zum Datum der Szene.
 - **Profil-Aufbau** (zwei Bereiche untereinander, beide mit eigenen Reitern):
   oben General (Kurzbeschreibung, daneben die Facts in Gruppen) · Scenes ·
-  Relations (nach Kategorie: love life, family, acquainted). Kein Avatar und
+  Relations (nach Kategorie: love life, family, friends, acquainted, foes, past). Kein Avatar und
   kein Usertag im Profil; dafür hat jeder Charakter ein eigenes Header-Bild
   (`banner_url`, über „Bearbeiten"), das oben über dem Namen steht.
 - **Profil-Reiter unten** (englisch, wie die Facts-Labels):
@@ -160,8 +160,8 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
 - **Facts:** drei kleine Boxen – identity (Name, Age, Zodiac, Gender, bei
   Supporting Characters und Statist*innen „Role"), life (Residence, Origin,
-  Status = Beziehungsstatus, Sexuality), occupation (Occupation, Workplace, University,
-  Studies – je eine Zeile). Arbeitsplatz und Uni als Pilltag, wenn es den Ort
+  Status = Beziehungsstatus, Sexuality, Spotify als Link), occupation (Occupation,
+  Workplace, University, Studies, GPA – je eine Zeile; GPA nur bei Student*innen). Arbeitsplatz und Uni als Pilltag, wenn es den Ort
   oder die Gegend gibt (Gegend → `/orte?area=…`).
 - **Profil-Raster** (Konstanten oben in `app/charaktere/[id]/page.tsx`; neue
   Reiter nutzen eines davon, statt eigene Spalten und Abstände zu erfinden):
@@ -222,8 +222,13 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
   „Moodboard" es direkt ein (`PinterestBoard`, Pinterests Einbett-Skript, erst
   beim Öffnen des Reiters geladen; ohne Kopf mit Nutzer*in und mit durchsichtigem
   Hintergrund – `.pinterest-board` in globals.css).
-- **Signatur** (`profile.signature_url`, Einstellungen → Meine Charaktere):
-  ein Bild am Ende jedes Posts des Charakters, sonst nirgends.
+- **Signatur** (`profile.signature_text` und/oder `profile.signature_url`,
+  Einstellungen → Meine Charaktere): Text und/oder Bild am Ende jedes Posts des
+  Charakters, sonst nirgends.
+- **Geburtsdatum nachtragen:** Hat ein (importierter) Charakter nur eine
+  Alterszahl (`needsBirthdate`), klappen die Grunddaten „Identität" auf, das
+  Feld ist orange markiert und bittet um ein Geburtsdatum; das Alter bleibt bis
+  dahin stehen.
 - **GIF in Szenen** (`profile.scene_gif_url`, ebenda): steht in der Szene unter
   dem Avatar (`SceneCharacterCard`), höchstens so breit wie der Avatar und halb
   so hoch. Hochladen (unverändert, `uploadAnimation`) oder per GIPHY/Link.

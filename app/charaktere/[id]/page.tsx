@@ -708,8 +708,17 @@ function RelationRow({
             <option value="family" className="bg-bg-surface">
               Family
             </option>
+            <option value="friends" className="bg-bg-surface">
+              Friends
+            </option>
             <option value="acquainted" className="bg-bg-surface">
               Acquainted
+            </option>
+            <option value="foes" className="bg-bg-surface">
+              Foes
+            </option>
+            <option value="past" className="bg-bg-surface">
+              Past
             </option>
           </select>
           <input

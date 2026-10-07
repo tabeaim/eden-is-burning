@@ -716,7 +716,12 @@ function PostRow({
         className="prose-serif text-text-primary"
         dangerouslySetInnerHTML={html}
       />
-      {/* Signatur des Charakters (Einstellungen → Meine Charaktere) */}
+      {/* Signatur des Charakters (Einstellungen → Meine Charaktere): Text und/oder Bild */}
+      {character.profile?.signature_text && (
+        <p className="mt-6 select-none whitespace-pre-wrap break-words text-[0.8125rem] leading-relaxed text-text-tertiary">
+          {character.profile.signature_text}
+        </p>
+      )}
       {character.profile?.signature_url && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -724,7 +729,7 @@ function PostRow({
           alt=""
           loading="lazy"
           draggable={false}
-          className="mt-6 block max-h-40 max-w-full select-none"
+          className={`${character.profile.signature_text ? "mt-2" : "mt-6"} block max-h-40 max-w-full select-none`}
         />
       )}
       {quoteBtn && (

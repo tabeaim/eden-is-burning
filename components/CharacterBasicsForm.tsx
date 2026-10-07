@@ -9,9 +9,11 @@ import {
   ageAt,
   isStudent,
   isWorking,
+  needsBirthdate,
   normalizeHeight,
   studyYearAt,
   tierOf,
+  webUrl,
   zodiacOf,
 } from "@/lib/characters";
 import { Toggle } from "./Toggle";
@@ -79,6 +81,8 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
     role: main && !(d.role ?? "").trim(),
   };
   const invalid = Object.values(missing).some(Boolean);
+  // Importiert: nur eine Alterszahl, kein Geburtsdatum – Feld markieren und darum bitten
+  const askBirthdate = needsBirthdate({ age: d.age, profile: p });
 
   async function onPhoto(f: File | undefined) {
     if (!f) return;
@@ -134,7 +138,10 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
     const profile: CharacterProfile = {
       ...(character.profile ?? {}),
       signature_url: signature,
+      signature_text: p.signature_text?.trim() || null,
       scene_gif_url: gif,
+      spotify_url: webUrl(p.spotify_url),
+      gpa: p.gpa?.trim() || null,
       birthdate: p.birthdate ?? null,
       gender: p.gender ?? null,
       hidden,
@@ -214,6 +221,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
     hideKey,
     error,
     hint,
+    notice,
     className = "",
     children,
   }: {
@@ -222,6 +230,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
     hideKey?: string;
     error?: boolean;
     hint?: string | null; // klein unter dem Feld (z.B. berechnetes Alter)
+    notice?: string | null; // Bitte um eine Angabe, in Akzentfarbe unter dem Feld
     className?: string;
     children: React.ReactNode;
   }) => (
@@ -249,6 +258,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       </div>
       {children}
       {hint && <span className="mt-1 block text-[0.75rem] text-text-tertiary">{hint}</span>}
+      {notice && <span className="mt-1 block text-[0.8125rem] text-accent">{notice}</span>}
       {error && <span className="mt-1 block text-[0.8125rem] text-red-300">Pflichtangabe</span>}
     </div>
   );
@@ -257,7 +267,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
   return (
     <div className="flex flex-col gap-4 pt-4">
       {/* --- Wer --- */}
-      <Collapsible title="Identität" forceOpen={missing.name || missing.age || missing.faceclaim}>
+      <Collapsible title="Identität" forceOpen={missing.name || missing.age || missing.faceclaim || askBirthdate}>
       <div className="flex items-start gap-4">
         <div className="w-[110px] shrink-0">
           <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-border-subtle bg-bg-primary">
@@ -291,8 +301,13 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
             hideKey: "age",
             error: missing.age,
             hint: [age != null ? `${age} Jahre` : null, zodiac?.de].filter(Boolean).join(" · ") || null,
+            notice: askBirthdate
+              ? "Bisher ist nur das Alter hinterlegt – bitte trag ein Geburtsdatum ein."
+              : null,
             children: (
-              <DatePicker value={p.birthdate ?? ""} onChange={(iso) => setProfile({ birthdate: iso || null })} />
+              <div className={askBirthdate ? "rounded-md ring-2 ring-accent/70" : ""}>
+                <DatePicker value={p.birthdate ?? ""} onChange={(iso) => setProfile({ birthdate: iso || null })} />
+              </div>
             ),
           })}
           {F({
@@ -363,6 +378,18 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         {full && F({ label: "Beziehungsstatus", hideKey: "status", children: <input {...text("status")} /> })}
         {full &&
           F({ label: "Sexuelle Orientierung", hideKey: "sexuality", children: <input {...text("sexuality")} /> })}
+        {F({
+          label: "Spotify-Link",
+          hideKey: "spotify",
+          children: (
+            <input
+              value={p.spotify_url ?? ""}
+              onChange={(e) => setProfile({ spotify_url: e.target.value || null })}
+              placeholder="https://open.spotify.com/…"
+              className={field}
+            />
+          ),
+        })}
       </div>
 
       </Collapsible>
@@ -456,6 +483,18 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
                   <DatePicker value={p.study_start ?? ""} onChange={(iso) => setProfile({ study_start: iso || null })} />
                 ),
               })}
+              {F({
+                label: "GPA",
+                hideKey: "gpa",
+                children: (
+                  <input
+                    value={p.gpa ?? ""}
+                    onChange={(e) => setProfile({ gpa: e.target.value || null })}
+                    placeholder="z. B. 3.7"
+                    className={field}
+                  />
+                ),
+              })}
               <p className="text-[0.8125rem] text-text-tertiary sm:col-span-2">
                 Das Studienjahr wird aus dem Studienbeginn berechnet: im Profil für den Herbst 2021,
                 in einer Szene zum Datum der Szene.
@@ -532,8 +571,21 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       {/* --- Signatur --- */}
       <Collapsible title="Signatur">
         <p className="text-[0.8125rem] text-text-tertiary">
-          Ein Bild, das am Ende jedes Posts dieses Charakters steht – sonst nirgendwo.
+          Steht am Ende jedes Posts dieses Charakters – sonst nirgendwo. Text, Bild oder beides.
         </p>
+        {F({
+          label: `Text-Signatur (${(p.signature_text ?? "").length}/300)`,
+          hint: "Wird mit den Grunddaten gespeichert.",
+          children: (
+            <textarea
+              value={p.signature_text ?? ""}
+              maxLength={300}
+              rows={2}
+              onChange={(e) => setProfile({ signature_text: e.target.value || null })}
+              className={`${field} resize-y`}
+            />
+          ),
+        })}
         {signature && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={signature} alt="Signatur" className="max-h-40 max-w-full rounded-md" />
