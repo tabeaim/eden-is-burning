@@ -57,11 +57,12 @@ export function CapticCompose({
   onDone: (postId: string) => void;
   onCancel: () => void;
 }) {
-  const { addCapticPost, updateCapticPost, addCapticStory } = useStore();
+  const { addCapticPost, updateCapticPost, addCapticStory, locations } = useStore();
   const [media, setMedia] = useState<Media | null>(post ?? null);
   const [caption, setCaption] = useState(post?.caption ?? "");
   const [likes, setLikes] = useState(post ? String(post.likes) : "");
   const [date, setDate] = useState(post?.inplay_date ?? "");
+  const [place, setPlace] = useState(post?.location ?? "");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [panel, setPanel] = useState<null | "gif" | "emoji">(null);
@@ -177,11 +178,13 @@ export function CapticCompose({
       likes: parseCount(likes) ?? 0,
       inplay_date: date || null,
     };
+    // nur mitschicken, wenn es etwas zu speichern gibt
+    const location = place.trim() || null;
     if (post) {
-      updateCapticPost(post.id, fields);
+      updateCapticPost(post.id, location === (post.location ?? null) ? fields : { ...fields, location });
       onDone(post.id);
     } else {
-      onDone(addCapticPost({ character_id: me.id, ...media, ...fields }));
+      onDone(addCapticPost({ character_id: me.id, ...media, ...fields, ...(location ? { location } : {}) }));
     }
   }
 
@@ -302,6 +305,21 @@ export function CapticCompose({
         {panel === "emoji" && <EmojiPicker onPick={insertEmoji} />}
         {!story && (
           <>
+            <label className={label}>
+              Ort (optional)
+              <input
+                value={place}
+                onChange={(e) => setPlace(e.target.value)}
+                maxLength={60}
+                list="captic-places"
+                className={`mt-1 ${capticField}`}
+              />
+              <datalist id="captic-places">
+                {locations.map((l) => (
+                  <option key={l.id} value={l.name} />
+                ))}
+              </datalist>
+            </label>
             <label className={label}>
               Likes
               <input

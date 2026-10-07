@@ -32,6 +32,7 @@ const MAX_BACKUP_AGE_H = 24;
 // ist eine Pflichtspalte, über die sich „alle Zeilen" ansprechen lassen.
 const CONTENT_TABLES: [string, string][] = [
   ["captic_events", "id"],
+  ["captic_highlights", "id"],
   ["captic_comments", "id"],
   ["captic_stories", "id"],
   ["captic_posts", "id"],

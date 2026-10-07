@@ -56,6 +56,7 @@ export const TABLES: Record<string, string[]> = {
   captic_comments: ["id"],
   captic_stories: ["id"],
   captic_events: ["id"],
+  captic_highlights: ["id"],
 };
 
 // Fehlt eine Tabelle in dieser Datenbank (Migration noch nicht eingespielt)?

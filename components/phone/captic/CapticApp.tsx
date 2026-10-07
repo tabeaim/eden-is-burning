@@ -7,18 +7,23 @@ import { useStore } from "@/lib/store";
 import { resolvePhone } from "@/lib/phone";
 import {
   CAPTIC_PINK,
+  canSeeCaptic,
   capticHandle,
   cleanHandle,
   defaultHandle,
   follows,
   formatCount,
+  isPrivate,
   parseCount,
+  requestId,
   sortPosts,
 } from "@/lib/captic";
+import { Toggle } from "@/components/Toggle";
 import { Icon } from "@/components/Icon";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { CropDialog } from "@/components/CropDialog";
-import { CapticAvatar, CapticStoryContext } from "./CapticAvatar";
+import { CapticAvatar, CapticStoryContext, CapticViewerContext } from "./CapticAvatar";
+import { CapticHighlightEditor, HighlightRow } from "./CapticHighlights";
 import { CapticPostCard } from "./CapticPost";
 import { CapticCompose, capticField } from "./CapticCompose";
 import { OwnStoryAvatar, StoryAvatar, StoryRow, StoryViewer } from "./CapticStories";
@@ -32,6 +37,7 @@ type View =
   | { t: "new" }
   | { t: "story" }
   | { t: "activity" }
+  | { t: "highlight"; id?: string } // ohne ID: neues Highlight
   | { t: "profile"; id: string }
   | { t: "post"; id: string }
   | { t: "edit"; id: string };
@@ -40,7 +46,7 @@ type View =
 // Story-Zeile, Suche, neuer Beitrag, Profile, Aktivitäten (Glocke). Die Ansichten liegen als Stapel übereinander –
 // der Pfeil oben links geht eine zurück, die Leiste unten beginnt neu.
 export function CapticApp({ me }: { me: Character }) {
-  const { capticPosts, character, capticNews } = useStore();
+  const { capticPosts, capticHighlights, character, capticNews, canWriteAs } = useStore();
   const [stack, setStack] = useState<View[]>(() => {
     try {
       if (sessionStorage.getItem(CAPTIC_OPEN_KEY) === "activity") {
@@ -59,7 +65,7 @@ export function CapticApp({ me }: { me: Character }) {
       /* ignore */
     }
   }, []);
-  const [story, setStory] = useState<{ ids: string[]; start: string } | null>(null);
+  const [story, setStory] = useState<{ ids: string[]; start: string; highlight?: string } | null>(null);
   const openStory = useCallback((id: string) => setStory({ ids: [id], start: id }), []);
   const news = capticNews(me.id).length;
   const view = stack[stack.length - 1];
@@ -75,6 +81,10 @@ export function CapticApp({ me }: { me: Character }) {
 
   const post = view.t === "post" || view.t === "edit" ? capticPosts.find((p) => p.id === view.id) : undefined;
   const profileOf = view.t === "profile" ? character(view.id) : undefined;
+  const postAuthor = post ? character(post.character_id) : undefined;
+  const postVisible = !postAuthor || canSeeCaptic(me, postAuthor, canWriteAs(postAuthor.id));
+  const highlight = view.t === "highlight" && view.id ? capticHighlights.find((h) => h.id === view.id) : undefined;
+  const highlightOwner = highlight ? character(highlight.character_id) : me;
 
   const title =
     view.t === "new"
@@ -83,6 +93,8 @@ export function CapticApp({ me }: { me: Character }) {
         ? "Neue Story"
         : view.t === "activity"
           ? "Aktivitäten"
+        : view.t === "highlight"
+          ? view.id ? "Highlight bearbeiten" : "Neues Highlight"
       : view.t === "edit"
         ? "Beitrag bearbeiten"
         : view.t === "post"
@@ -99,6 +111,7 @@ export function CapticApp({ me }: { me: Character }) {
   const onMine = view.t === "profile" && view.id === me.id;
 
   return (
+    <CapticViewerContext.Provider value={me}>
     <CapticStoryContext.Provider value={openStory}>
       <div className="flex min-h-[52px] shrink-0 items-center gap-1 border-b border-border-subtle bg-bg-surface px-2">
         {stack.length > 1 ? (
@@ -152,8 +165,22 @@ export function CapticApp({ me }: { me: Character }) {
       )}
       {view.t === "edit" &&
         (post ? <CapticCompose me={me} post={post} onCancel={back} onDone={back} /> : <Gone />)}
+      {view.t === "highlight" &&
+        (highlightOwner && (!view.id || highlight) ? (
+          <CapticHighlightEditor
+            key={view.id ?? "new"}
+            owner={highlightOwner}
+            highlight={highlight}
+            onCancel={back}
+            onDone={back}
+          />
+        ) : (
+          <Gone />
+        ))}
       {view.t === "post" &&
-        (post ? (
+        (post && postAuthor && !postVisible ? (
+          <PrivateHint who={postAuthor} />
+        ) : post ? (
           <div className="min-h-0 flex-1 overflow-y-auto">
             <CapticPostCard post={post} me={me} full {...nav} onDeleted={back} />
           </div>
@@ -169,6 +196,8 @@ export function CapticApp({ me }: { me: Character }) {
             onOpen={nav.onOpen}
             onAddStory={() => push({ t: "story" })}
             onStory={() => setStory({ ids: [profileOf.id], start: profileOf.id })}
+            onHighlight={(id) => setStory({ ids: [profileOf.id], start: profileOf.id, highlight: id })}
+            onEditHighlight={(id) => push({ t: "highlight", id })}
           />
         ) : (
           <Gone />
@@ -209,16 +238,31 @@ export function CapticApp({ me }: { me: Character }) {
           characterIds={story.ids}
           start={story.start}
           me={me}
+          highlightId={story.highlight}
           onProfile={nav.onProfile}
+          onEditHighlight={(id) => push({ t: "highlight", id })}
           onClose={() => setStory(null)}
         />
       )}
     </CapticStoryContext.Provider>
+    </CapticViewerContext.Provider>
   );
 }
 
 function Gone() {
   return <p className="flex-1 p-8 text-center text-[0.875rem] text-text-tertiary">Das gibt es nicht mehr.</p>;
+}
+
+// Hinweis statt Beiträgen, Stories und Highlights eines privaten Profils
+function PrivateHint({ who }: { who: Character }) {
+  return (
+    <div className="flex-1 px-8 py-10 text-center">
+      <div className="text-[0.9375rem] font-semibold text-text-primary">Dieses Profil ist privat</div>
+      <p className="mt-1 text-[0.8125rem] text-text-tertiary">
+        Beiträge und Stories von {capticHandle(who)} sehen nur bestätigte Follower.
+      </p>
+    </div>
+  );
 }
 
 // Feed: oben die Stories, darunter die eigenen Beiträge und die der Profile,
@@ -282,13 +326,18 @@ function Activity({
     markCapticEventRead,
     markCapticAllRead,
     markCapticNoticed,
+    answerCapticRequest,
   } = useStore();
   const unread = new Set(capticNews(me.id).map((e) => e.id));
-  const events = capticEvents
+  const all = capticEvents
     .filter((e) => e.target_id === me.id && e.actor_id !== me.id)
-    .sort((a, b) => b.created_at.localeCompare(a.created_at))
-    .slice(0, 60);
-  const newest = events[0]?.created_at;
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  // offene Folgeanfragen stehen oben, bis sie beantwortet sind
+  const requests = all.filter((e) => e.kind === "request");
+  const events = all.filter((e) => e.kind !== "request").slice(0, 60);
+  const newest = all[0]?.created_at;
+  const answer =
+    "shrink-0 rounded-lg px-3 py-1.5 text-[0.8125rem] font-semibold";
   useEffect(() => {
     markCapticNoticed(me.id);
     // bei jeder neu eintreffenden Aktivität wieder – man sieht sie ja gerade
@@ -307,6 +356,37 @@ function Activity({
           </button>
         </div>
       )}
+      {requests.map((e) => {
+        const actor = character(e.actor_id);
+        if (!actor) return null;
+        return (
+          <div key={e.id} className="flex items-center gap-2 px-3 py-2.5">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${isNew(e) ? "bg-accent" : ""}`} />
+            <CapticAvatar character={actor} size={40} />
+            <button
+              onClick={() => {
+                markCapticEventRead(e);
+                onProfile(actor.id);
+              }}
+              className="min-w-0 flex-1 text-left text-[0.8125rem] leading-snug text-text-secondary"
+            >
+              <span className="font-semibold text-text-primary">{capticHandle(actor)}</span> möchte dir folgen.
+            </button>
+            <button
+              onClick={() => answerCapticRequest(e, true)}
+              className={`${answer} bg-accent/90 text-black hover:bg-accent`}
+            >
+              Annehmen
+            </button>
+            <button
+              onClick={() => answerCapticRequest(e, false)}
+              className={`${answer} bg-white/[0.08] text-text-primary hover:bg-white/[0.14]`}
+            >
+              Ablehnen
+            </button>
+          </div>
+        );
+      })}
       {events.map((e) => {
         const actor = character(e.actor_id);
         const post = e.post_id ? capticPosts.find((p) => p.id === e.post_id) : undefined;
@@ -328,6 +408,7 @@ function Activity({
               <span className="font-semibold text-text-primary">{capticHandle(actor)}</span>{" "}
               {e.kind === "like" && "gefällt dein Beitrag."}
               {e.kind === "follow" && "folgt dir jetzt."}
+              {e.kind === "accept" && "hat deine Folgeanfrage angenommen."}
               {e.kind === "comment" && (
                 <>
                   hat kommentiert{comment ? ": " : "."}
@@ -353,7 +434,7 @@ function Activity({
           </div>
         );
       })}
-      {events.length === 0 && (
+      {all.length === 0 && (
         <p className="px-8 py-10 text-center text-[0.875rem] text-text-tertiary">
           Noch keine Aktivität. Hier steht, wer {me.name.split(" ")[0]} folgt, Beiträge liket oder
           kommentiert.
@@ -415,8 +496,11 @@ function Search({ me, onProfile }: { me: Character; onProfile: (id: string) => v
 }
 
 function FollowButton({ me, other, wide = false }: { me: Character; other: Character; wide?: boolean }) {
-  const { toggleCapticFollow } = useStore();
-  const on = follows(me).includes(other.id);
+  const { toggleCapticFollow, capticEvents } = useStore();
+  const following = follows(me).includes(other.id);
+  // privates Profil: erst anfragen; nochmal drücken zieht die Anfrage zurück
+  const asked = !following && isPrivate(other) && capticEvents.some((e) => e.id === requestId(other.id, me.id));
+  const on = following || asked;
   const toggle = () => toggleCapticFollow(me.id, other.id);
   return (
     <button
@@ -427,7 +511,7 @@ function FollowButton({ me, other, wide = false }: { me: Character; other: Chara
         on ? "bg-white/[0.08] text-text-primary hover:bg-white/[0.14]" : "text-white"
       }`}
     >
-      {on ? "Gefolgt" : "Folgen"}
+      {following ? "Gefolgt" : asked ? "Angefragt" : "Folgen"}
     </button>
   );
 }
@@ -439,16 +523,30 @@ function Profile({
   onOpen,
   onAddStory,
   onStory,
+  onHighlight,
+  onEditHighlight,
 }: {
   who: Character;
   me: Character;
   onOpen: (postId: string) => void;
   onAddStory: () => void;
   onStory: () => void;
+  onHighlight: (highlightId: string) => void;
+  onEditHighlight: (highlightId?: string) => void;
 }) {
-  const { capticPosts, capticStories, characters, npcs, updateCharacter, renameCapticHandle } = useStore();
-  const hasStory = capticStories.some((s) => s.character_id === who.id);
+  const {
+    capticPosts,
+    capticStories,
+    characters,
+    npcs,
+    updateCharacter,
+    renameCapticHandle,
+    canWriteAs,
+    acceptCapticRequests,
+  } = useStore();
   const own = who.id === me.id;
+  const visible = canSeeCaptic(me, who, canWriteAs(who.id));
+  const hasStory = visible && capticStories.some((s) => s.character_id === who.id);
   const profile = who.phone?.captic ?? {};
   const handle = capticHandle(who);
   const bio = profile.bio ?? who.tagline?.toUpperCase() ?? "";
@@ -462,7 +560,7 @@ function Profile({
   const following = profile.following ?? follows(who).length;
 
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState({ handle: "", bio: "", followers: "", following: "" });
+  const [draft, setDraft] = useState({ handle: "", bio: "", followers: "", following: "", private: false });
   // Captic-Profilbild im Bearbeiten-Formular: null = entfernen (zurück zum Handy-/Charakterbild)
   const [avatar, setAvatar] = useState<string | null>(null);
   const [cropping, setCropping] = useState<{ file: File; src: string } | null>(null);
@@ -491,6 +589,7 @@ function Profile({
       bio,
       followers: profile.followers != null ? String(profile.followers) : "",
       following: profile.following != null ? String(profile.following) : "",
+      private: !!profile.private,
     });
     setAvatar(profile.avatar ?? null);
     setEditing(true);
@@ -510,9 +609,12 @@ function Profile({
           avatar,
           followers: parseCount(draft.followers),
           following: parseCount(draft.following),
+          private: draft.private,
         },
       },
     });
+    // wieder öffentlich: wer angefragt hatte, folgt jetzt
+    if (profile.private && !draft.private) acceptCapticRequests(who.id);
     setEditing(false);
   }
 
@@ -614,6 +716,18 @@ function Profile({
               />
             </label>
           </div>
+          <Toggle
+            checked={draft.private}
+            onChange={(on) => setDraft({ ...draft, private: on })}
+            className="py-1 !text-[0.8125rem]"
+          >
+            <span>
+              Privates Profil{" "}
+              <span className="text-text-tertiary">
+                (Beiträge und Stories sehen nur Follower; neue müssen anfragen)
+              </span>
+            </span>
+          </Toggle>
           <div className="flex gap-2">
             <button onClick={() => setEditing(false)} className={button}>
               Abbrechen
@@ -626,7 +740,10 @@ function Profile({
       ) : (
         <div className="px-4 pt-3">
           <div className="text-[0.875rem] font-semibold text-text-primary">{who.name}</div>
-          <div className="text-[0.8125rem] text-text-tertiary">@{handle}</div>
+          <div className="text-[0.8125rem] text-text-tertiary">
+            @{handle}
+            {isPrivate(who) && " · privat"}
+          </div>
           {bio && (
             <p className="mt-1 whitespace-pre-wrap break-words text-[0.8125rem] text-text-secondary">{bio}</p>
           )}
@@ -647,12 +764,23 @@ function Profile({
         </div>
       )}
 
-      <div className="mt-4 grid grid-cols-3 gap-0.5 border-t border-border-subtle pt-0.5">
-        {posts.map((p) => (
-          <GridTile key={p.id} post={p} onOpen={onOpen} />
-        ))}
-      </div>
-      {posts.length === 0 && (
+      {visible && !editing && (
+        <HighlightRow who={who} own={own} onOpen={onHighlight} onNew={() => onEditHighlight()} />
+      )}
+
+      {!visible && (
+        <div className="mt-4 border-t border-border-subtle">
+          <PrivateHint who={who} />
+        </div>
+      )}
+      {visible && (
+        <div className="mt-4 grid grid-cols-3 gap-0.5 border-t border-border-subtle pt-0.5">
+          {posts.map((p) => (
+            <GridTile key={p.id} post={p} onOpen={onOpen} />
+          ))}
+        </div>
+      )}
+      {visible && posts.length === 0 && (
         <div className="px-8 py-8 text-center">
           <div className="text-[0.9375rem] font-semibold text-text-primary">Noch keine Beiträge</div>
           {own && (

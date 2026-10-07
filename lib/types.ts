@@ -225,6 +225,9 @@ export interface CapticProfile {
   followers?: number | null;
   following?: number | null;
   follows?: string[] | null; // Charakter-IDs
+  // Privates Profil: Beiträge, Stories und Highlights sehen nur, wer folgt (und die
+  // eigene Spielerin); folgen geht dann nur über eine Anfrage (`captic_events`).
+  private?: boolean;
 }
 
 export interface CustomPhoneApp {
@@ -421,6 +424,7 @@ export interface CapticPost {
   likes: number; // von Hand gesetzte Like-Zahl
   liked_by?: string[] | null; // Charaktere, die zusätzlich geliket haben
   inplay_date?: string | null; // ISO-Datum (optional)
+  location?: string | null; // Ortsangabe über dem Bild (optional)
   created_at: string; // echte Zeit – bestimmt nur die Reihenfolge
 }
 
@@ -435,10 +439,31 @@ export interface CapticStory {
   created_at: string;
 }
 
-// Aktivität für `target_id`: jemand hat geliket, kommentiert oder folgt jetzt.
+// Story-Highlight: Kreis unter der Bio mit dauerhaft abgelegten Stories. Die
+// Stories liegen als Kopie darin – sie bleiben, auch wenn die Story gelöscht wird.
+export interface CapticHighlightItem {
+  id: string; // ID der Story, aus der das Bild stammt
+  kind: CapticKind;
+  url: string;
+  ar?: number | null;
+  caption: string;
+  inplay_date?: string | null; // ISO-Datum (optional)
+}
+
+export interface CapticHighlight {
+  id: string;
+  character_id: string;
+  name: string;
+  cover_url?: string | null; // Titelbild (sonst das erste Bild)
+  items: CapticHighlightItem[];
+  created_at: string;
+}
+
+// Aktivität für `target_id`: jemand hat geliket, kommentiert, folgt jetzt, möchte
+// folgen (`request`, privates Profil) oder hat die Anfrage angenommen (`accept`).
 export interface CapticEvent {
   id: string;
-  kind: "like" | "comment" | "follow";
+  kind: "like" | "comment" | "follow" | "request" | "accept";
   actor_id: string;
   target_id: string;
   post_id?: string | null;

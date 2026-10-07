@@ -43,6 +43,7 @@ const SCAN_TABLES = [
   "chat_messages",
   "captic_posts",
   "captic_stories",
+  "captic_highlights",
   "captic_comments",
   "app_settings",
 ];

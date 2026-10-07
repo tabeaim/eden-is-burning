@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { capticHandle, follows } from "@/lib/captic";
+import { formatInplayDate } from "@/lib/format";
 import { Icon } from "@/components/Icon";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { CapticAvatar } from "./CapticAvatar";
@@ -105,28 +106,45 @@ export function StoryRow({
 
 // Story bildschirmfüllend im Display: Balken oben, links antippen = zurück,
 // sonst weiter. Nach der letzten Story eines Profils kommt das nächste aus
-// `characterIds`, danach schließt sich die Ansicht.
+// `characterIds`, danach schließt sich die Ansicht. Mit `highlightId` zeigt sie
+// stattdessen die Bilder dieses Highlights (bearbeiten statt löschen).
 export function StoryViewer({
   characterIds,
   start,
   me,
+  highlightId,
   onProfile,
+  onEditHighlight,
   onClose,
 }: {
   characterIds: string[];
   start: string;
   me: Character;
+  highlightId?: string;
   onProfile: (characterId: string) => void;
+  onEditHighlight?: (highlightId: string) => void;
   onClose: () => void;
 }) {
-  const { capticStories, character, canWriteAs, isAdmin, deleteCapticStory, markCapticStorySeen } = useStore();
+  const {
+    capticStories,
+    capticHighlights,
+    character,
+    canWriteAs,
+    isAdmin,
+    deleteCapticStory,
+    markCapticStorySeen,
+  } = useStore();
   const [who, setWho] = useState(start);
   const [index, setIndex] = useState(0);
   const [confirm, setConfirm] = useState(false);
 
-  const stories = capticStories
-    .filter((s) => s.character_id === who)
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const highlight = highlightId ? capticHighlights.find((h) => h.id === highlightId) : undefined;
+  const stories: { id: string; kind: string; url: string; caption: string; inplay_date?: string | null }[] =
+    highlightId
+      ? (highlight?.items ?? [])
+      : capticStories
+          .filter((s) => s.character_id === who)
+          .sort((a, b) => a.created_at.localeCompare(b.created_at));
   const story = stories[Math.min(index, stories.length - 1)];
   const author = character(who);
 
@@ -147,7 +165,8 @@ export function StoryViewer({
 
   // gezeigt = angesehen (der Ring wird grau, sobald das neueste Bild dran war)
   useEffect(() => {
-    if (story) markCapticStorySeen(story);
+    const shown = highlightId ? undefined : capticStories.find((s) => s.id === story?.id);
+    if (shown) markCapticStorySeen(shown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [story?.id]);
 
@@ -170,7 +189,8 @@ export function StoryViewer({
   }, [gone]);
 
   if (!story || !author) return null;
-  const canDelete = canWriteAs(who) || isAdmin;
+  const canManage = canWriteAs(who) || isAdmin;
+  const canDelete = canManage && !highlightId;
   const shadow = "[text-shadow:0_1px_4px_rgba(0,0,0,0.8)]";
 
   return (
@@ -212,10 +232,29 @@ export function StoryViewer({
               onClose();
               onProfile(author.id);
             }}
-            className={`min-w-0 flex-1 truncate text-left text-[0.8125rem] font-semibold ${shadow}`}
+            className={`min-w-0 flex-1 text-left text-[0.8125rem] leading-tight ${shadow}`}
           >
-            {capticHandle(author)}
+            <span className="block truncate font-semibold">{capticHandle(author)}</span>
+            {highlight && (
+              <span className="block truncate text-[0.75rem] text-white/80">
+                {highlight.name}
+                {story.inplay_date ? ` · ${formatInplayDate(story.inplay_date)}` : ""}
+              </span>
+            )}
           </button>
+          {highlight && canManage && onEditHighlight && (
+            <button
+              onClick={() => {
+                onClose();
+                onEditHighlight(highlight.id);
+              }}
+              aria-label="Highlight bearbeiten"
+              title="Highlight bearbeiten"
+              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/15"
+            >
+              <Icon name="edit" size={18} />
+            </button>
+          )}
           {canDelete && (
             <button
               onClick={() => setConfirm(true)}

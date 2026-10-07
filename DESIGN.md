@@ -555,6 +555,20 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
     zugeschnitten (Formate Quadrat/4:5/Quer) und nur der Ausschnitt hochgeladen;
     GIFs per Datei oder GIF-Suche. Video-Upload ist wegen des Speicherplatzes
     abgeschaltet (`VIDEO_UPLOAD` in `CapticCompose`).
+  - **Ortsangabe:** optionales Feld „Ort" beim Beitrag (frei, mit Vorschlägen aus
+    den Orten der Welt); steht klein unter dem Nutzernamen über dem Bild.
+  - **Privates Profil:** Schalter unter „Profil bearbeiten". Beiträge, Stories
+    und Highlights sehen dann nur Follower und die eigene Spielerin
+    (`canSeeCaptic`); alle anderen sehen Kopf und Hinweis „Dieses Profil ist
+    privat", am Avatar liegt kein Story-Ring. „Folgen" wird zu „Angefragt"
+    (nochmal drücken zieht zurück); die Anfrage steht oben in den Aktivitäten mit
+    „Annehmen" (Akzentfarbe) / „Ablehnen" (grau). Wer schon folgt, bleibt Follower;
+    wird das Profil wieder öffentlich, gelten offene Anfragen als angenommen.
+  - **Story-Highlights** (`CapticHighlights.tsx`, Tabelle `captic_highlights`):
+    Kreise unter der Bio (im eigenen Profil mit „Neu" davor), öffnen den
+    Story-Viewer; dort führt der Stift ins Bearbeiten (Name, Titelbild, Stories
+    mit optionalem Inplay-Datum, Löschen). Die Stories liegen als Kopie im
+    Highlight und bleiben, auch wenn die Story gelöscht wird.
   - Captic-Pink (`CAPTIC_PINK`) nur für Herz, „Folgen" und „Posten".
 - **Sprechblasen:** eigene rechts in `bg-accent text-black`, fremde links in
   `bg-bg-surface-2`; nur die letzte Blase einer Folge hat die spitze Ecke. Bis zu

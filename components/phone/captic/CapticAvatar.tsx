@@ -4,6 +4,7 @@ import { createContext, useContext } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
+import { canSeeCaptic } from "@/lib/captic";
 
 // Profilbild in Captic: das eigene Captic-Bild, sonst das Handy-Profilbild, sonst
 // das Charakterbild.
@@ -14,6 +15,10 @@ export function capticAvatarUrl(c: Pick<Character, "faceclaim_image_url" | "phon
 // Öffnet die Story eines Charakters (stellt `CapticApp` bereit) – damit führt
 // jedes Profilbild mit Ring auf die Story, egal wo es steht.
 export const CapticStoryContext = createContext<((characterId: string) => void) | null>(null);
+
+// Aus wessen Sicht man gerade in Captic ist (stellt `CapticApp` bereit): Stories
+// privater Profile zeigen sich nur, wenn dieser Charakter sie sehen darf.
+export const CapticViewerContext = createContext<Pick<Character, "id" | "phone"> | null>(null);
 
 // Avatar überall in Captic. Hat der Charakter eine Story, liegt ein Ring darum:
 // orange und langsam pulsierend, solange man sie nicht angesehen hat, danach grau.
@@ -34,9 +39,11 @@ export function CapticAvatar({
   onOpen?: () => void;
   label?: string;
 }) {
-  const { capticStoryState } = useStore();
+  const { capticStoryState, canWriteAs } = useStore();
   const openStory = useContext(CapticStoryContext);
-  const state = ring ? capticStoryState(character.id) : "none";
+  const viewer = useContext(CapticViewerContext);
+  const visible = !viewer || canSeeCaptic(viewer, character, canWriteAs(character.id));
+  const state = ring && visible ? capticStoryState(character.id) : "none";
   const story = state !== "none" && openStory ? () => openStory(character.id) : undefined;
   const action = onOpen ?? story;
   const hint = label ?? (action ? "Story ansehen" : undefined);

@@ -157,12 +157,15 @@ export function CapticPostCard({
     <article className="border-b border-border-subtle pb-3">
       <div className="flex items-center gap-2.5 px-3 py-2">
         {author && <CapticAvatar character={author} size={32} />}
-        <button
-          onClick={() => author && onProfile(author.id)}
-          className="min-w-0 flex-1 truncate text-left text-[0.8125rem] font-semibold text-text-primary"
-        >
-          {author ? capticHandle(author) : "unbekannt"}
-        </button>
+        <div className="min-w-0 flex-1 leading-tight">
+          <button
+            onClick={() => author && onProfile(author.id)}
+            className="block max-w-full truncate text-left text-[0.8125rem] font-semibold text-text-primary"
+          >
+            {author ? capticHandle(author) : "unbekannt"}
+          </button>
+          {post.location && <div className="truncate text-[0.75rem] text-text-secondary">{post.location}</div>}
+        </div>
         {canManage && (
           <button
             onClick={() => setMenu(true)}

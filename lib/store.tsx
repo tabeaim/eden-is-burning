@@ -18,6 +18,7 @@ import type {
   ChatScene,
   CapticComment,
   CapticEvent,
+  CapticHighlight,
   CapticPost,
   CapticStory,
   Location,
@@ -31,7 +32,7 @@ import type {
 } from "./types";
 import { supabase, supabaseConfigured } from "./supabase";
 import { rememberPhone } from "./phone";
-import { replaceHandle } from "./captic";
+import { replaceHandle, requestId } from "./captic";
 import { orderMessages, smsAsScene, type DatedMessage } from "./chats";
 import { playsAs, tierOf } from "./characters";
 
@@ -51,6 +52,7 @@ interface PersistedState {
   capticComments: CapticComment[];
   capticStories: CapticStory[];
   capticEvents: CapticEvent[];
+  capticHighlights: CapticHighlight[];
 }
 
 // `characters` enthält nach außen nur spielbare Charaktere; NPCs (Charaktere mit
@@ -216,8 +218,16 @@ interface StoreValue extends PersistedState {
   renameCapticHandle: (from: string, to: string) => void;
   addCapticStory: (story: Omit<CapticStory, "id" | "created_at">) => string;
   deleteCapticStory: (id: string) => void;
-  // `characterId` folgt `otherId` (oder nicht mehr)
+  addCapticHighlight: (highlight: Omit<CapticHighlight, "id" | "created_at">) => string;
+  updateCapticHighlight: (id: string, patch: Partial<CapticHighlight>) => void;
+  deleteCapticHighlight: (id: string) => void;
+  // `characterId` folgt `otherId` (oder nicht mehr). Ist das Profil von `otherId`
+  // privat, wird daraus eine Folgeanfrage (bzw. sie wird zurückgezogen).
   toggleCapticFollow: (characterId: string, otherId: string) => void;
+  // Folgeanfrage annehmen oder ablehnen
+  answerCapticRequest: (request: CapticEvent, accept: boolean) => void;
+  // Alle offenen Anfragen an diesen Charakter annehmen (Profil wird öffentlich)
+  acceptCapticRequests: (characterId: string) => void;
   // Ungelesene Aktivität (Likes, Kommentare, Follower) für diesen Charakter –
   // ohne das, was ich selbst ausgelöst habe. Ungelesen bleibt sie, bis sie
   // angeklickt wurde (`markCapticEventRead`) oder „Alle gelesen" gedrückt ist.
@@ -253,6 +263,7 @@ const EMPTY: PersistedState = {
   capticComments: [],
   capticStories: [],
   capticEvents: [],
+  capticHighlights: [],
 };
 
 // Supabase liefert höchstens 1000 Zeilen pro Abfrage – Nachrichten werden schnell
@@ -289,6 +300,36 @@ const pendingChatScenes = new Map<string, Promise<unknown>>();
 
 let lastMessageAt = 0;
 const NO_EVENTS: CapticEvent[] = [];
+
+// Angenommene Folgeanfragen: die Anfragenden folgen jetzt (`follows` in ihrem
+// Profil), aus der Anfrage wird „folgt dir jetzt", und sie erfahren es („accept").
+function grantCapticFollows<S extends { characters: Character[]; capticEvents: CapticEvent[] }>(
+  s: S,
+  requests: CapticEvent[],
+): S {
+  if (requests.length === 0) return s;
+  const now = new Date().toISOString();
+  let characters = s.characters;
+  const added: CapticEvent[] = [];
+  for (const r of requests) {
+    const asker = characters.find((c) => c.id === r.actor_id);
+    if (!asker) continue;
+    const before = asker.phone?.captic?.follows ?? [];
+    if (!before.includes(r.target_id)) {
+      const phone = { ...asker.phone, captic: { ...asker.phone?.captic, follows: [...before, r.target_id] } };
+      persist("answerCapticRequest", supabase.from("characters").update({ phone }).eq("id", asker.id));
+      characters = characters.map((c) => (c.id === asker.id ? { ...c, phone } : c));
+    }
+    added.push(
+      { id: `cape_follow_${r.target_id}_${r.actor_id}`, kind: "follow", actor_id: r.actor_id, target_id: r.target_id, created_at: now },
+      { id: `cape_accept_${r.actor_id}_${r.target_id}`, kind: "accept", actor_id: r.target_id, target_id: r.actor_id, created_at: now },
+    );
+  }
+  const gone = new Set([...requests.map((r) => r.id), ...added.map((e) => e.id)]);
+  persist("capticEvent", supabase.from("captic_events").delete().in("id", requests.map((r) => r.id)));
+  if (added.length) persist("capticEvent", supabase.from("captic_events").upsert(added));
+  return { ...s, characters, capticEvents: [...s.capticEvents.filter((e) => !gone.has(e.id)), ...added] };
+}
 
 function uid(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
@@ -358,7 +399,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Lädt alle Welt-Daten (nur für freigeschaltete Nutzer*innen sichtbar; RLS).
   const loadWorld = useCallback(async () => {
-    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, chatScenes, calls, capticPosts, capticComments, capticStories, capticEvents, as] = await Promise.all([
+    const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, chatScenes, calls, capticPosts, capticComments, capticStories, capticEvents, capticHighlights, as] = await Promise.all([
       supabase.from("players").select("*"),
       supabase.from("characters").select("*"),
       supabase.from("scenes").select("*"),
@@ -374,6 +415,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       fetchAll<CapticComment>("captic_comments"),
       fetchAll<CapticStory>("captic_stories"),
       fetchAll<CapticEvent>("captic_events"),
+      fetchAll<CapticHighlight>("captic_highlights"),
       // Tabelle evtl. noch nicht angelegt (schema-app-settings.sql) – dann Standard
       supabase.from("app_settings").select("*"),
     ]);
@@ -395,6 +437,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       capticComments,
       capticStories,
       capticEvents,
+      capticHighlights,
     });
   }, []);
 
@@ -528,6 +571,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       )
       .subscribe();
 
+    // … und noch einer für die später ergänzten Highlights
+    const highlights = supabase
+      .channel("eden-captic-highlights")
+      .on("postgres_changes", { event: "*", schema: "public", table: "captic_highlights" }, (p) =>
+        setState((s) => ({ ...s, capticHighlights: applyChange(s.capticHighlights, p) })),
+      )
+      .subscribe();
+
     const presence = supabase.channel("eden-online", {
       config: { presence: { key: approvedId } },
     });
@@ -603,6 +654,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       void supabase.removeChannel(smsScenesChannel);
       void supabase.removeChannel(phoneCalls);
       void supabase.removeChannel(captic);
+      void supabase.removeChannel(highlights);
       void supabase.removeChannel(presence);
     };
   }, [approvedId, loadWorld]);
@@ -1217,6 +1269,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         capticComments: s.capticComments.filter((c) => c.character_id !== id),
         capticStories: s.capticStories.filter((c) => c.character_id !== id),
         capticEvents: s.capticEvents.filter((e) => e.actor_id !== id && e.target_id !== id),
+        capticHighlights: s.capticHighlights.filter((h) => h.character_id !== id),
       };
     });
   }, []);
@@ -1880,12 +1933,51 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({ ...s, capticStories: s.capticStories.filter((x) => x.id !== id) }));
   }, []);
 
+  const addCapticHighlight = useCallback((highlight: Omit<CapticHighlight, "id" | "created_at">) => {
+    const row: CapticHighlight = { ...highlight, id: uid("caph"), created_at: new Date().toISOString() };
+    persist("addCapticHighlight", supabase.from("captic_highlights").insert(row));
+    setState((s) => ({ ...s, capticHighlights: [...s.capticHighlights, row] }));
+    return row.id;
+  }, []);
+
+  const updateCapticHighlight = useCallback((id: string, patch: Partial<CapticHighlight>) => {
+    persist("updateCapticHighlight", supabase.from("captic_highlights").update(patch).eq("id", id));
+    setState((s) => ({
+      ...s,
+      capticHighlights: s.capticHighlights.map((h) => (h.id === id ? { ...h, ...patch } : h)),
+    }));
+  }, []);
+
+  const deleteCapticHighlight = useCallback((id: string) => {
+    persist("deleteCapticHighlight", supabase.from("captic_highlights").delete().eq("id", id));
+    setState((s) => ({ ...s, capticHighlights: s.capticHighlights.filter((h) => h.id !== id) }));
+  }, []);
+
   const toggleCapticFollow = useCallback((characterId: string, otherId: string) => {
     setState((s) => {
       const me = s.characters.find((c) => c.id === characterId);
       if (!me || characterId === otherId) return s;
       const before = me.phone?.captic?.follows ?? [];
       const had = before.includes(otherId);
+      const request: CapticEvent = {
+        id: requestId(otherId, characterId),
+        kind: "request",
+        actor_id: characterId,
+        target_id: otherId,
+        created_at: new Date().toISOString(),
+      };
+      const asked = s.capticEvents.some((e) => e.id === request.id);
+      // privates Profil: nur anfragen bzw. die Anfrage zurückziehen
+      if (!had && s.characters.find((c) => c.id === otherId)?.phone?.captic?.private) {
+        persist(
+          "capticEvent",
+          asked
+            ? supabase.from("captic_events").delete().eq("id", request.id)
+            : supabase.from("captic_events").upsert(request),
+        );
+        const others = s.capticEvents.filter((e) => e.id !== request.id);
+        return { ...s, capticEvents: asked ? others : [...others, request] };
+      }
       const phone = {
         ...me.phone,
         captic: {
@@ -1901,19 +1993,40 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         target_id: otherId,
         created_at: new Date().toISOString(),
       };
+      // entfolgt: auch „hat deine Anfrage angenommen" verschwindet; gefolgt: eine
+      // alte Anfrage (Profil war damals privat) ist erledigt
+      const stale = had ? `cape_accept_${characterId}_${otherId}` : request.id;
       persist(
         "capticEvent",
         had
-          ? supabase.from("captic_events").delete().eq("id", event.id)
+          ? supabase.from("captic_events").delete().in("id", [event.id, stale])
           : supabase.from("captic_events").upsert(event),
       );
-      const rest = s.capticEvents.filter((e) => e.id !== event.id);
+      if (!had && asked) persist("capticEvent", supabase.from("captic_events").delete().eq("id", stale));
+      const rest = s.capticEvents.filter((e) => e.id !== event.id && e.id !== stale);
       return {
         ...s,
         characters: s.characters.map((c) => (c.id === characterId ? { ...c, phone } : c)),
         capticEvents: had ? rest : [...rest, event],
       };
     });
+  }, []);
+
+  const answerCapticRequest = useCallback((request: CapticEvent, accept: boolean) => {
+    setState((s) => {
+      if (accept) return grantCapticFollows(s, [request]);
+      persist("capticEvent", supabase.from("captic_events").delete().eq("id", request.id));
+      return { ...s, capticEvents: s.capticEvents.filter((e) => e.id !== request.id) };
+    });
+  }, []);
+
+  const acceptCapticRequests = useCallback((characterId: string) => {
+    setState((s) =>
+      grantCapticFollows(
+        s,
+        s.capticEvents.filter((e) => e.kind === "request" && e.target_id === characterId),
+      ),
+    );
   }, []);
 
   // Neue Aktivität je eigenem Charakter. Was ich selbst (mit einem anderen meiner
@@ -2125,7 +2238,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       renameCapticHandle,
       addCapticStory,
       deleteCapticStory,
+      addCapticHighlight,
+      updateCapticHighlight,
+      deleteCapticHighlight,
       toggleCapticFollow,
+      answerCapticRequest,
+      acceptCapticRequests,
       capticNews,
       capticUnread,
       capticAlerts,
@@ -2241,7 +2359,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       renameCapticHandle,
       addCapticStory,
       deleteCapticStory,
+      addCapticHighlight,
+      updateCapticHighlight,
+      deleteCapticHighlight,
       toggleCapticFollow,
+      answerCapticRequest,
+      acceptCapticRequests,
       capticNews,
       capticUnread,
       capticAlerts,

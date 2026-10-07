@@ -38,6 +38,22 @@ export function follows(c: Pick<Character, "phone"> | null | undefined): string[
   return c?.phone?.captic?.follows ?? [];
 }
 
+export function isPrivate(c: Pick<Character, "phone"> | null | undefined): boolean {
+  return !!c?.phone?.captic?.private;
+}
+
+// Darf `viewer` Beiträge, Stories und Highlights von `owner` sehen? Bei privaten
+// Profilen nur, wer folgt – und die eigene Spielerin (`ownPlayer`).
+export function canSeeCaptic(
+  viewer: Pick<Character, "id" | "phone">,
+  owner: Pick<Character, "id" | "phone">,
+  ownPlayer: boolean,
+): boolean {
+  return !isPrivate(owner) || viewer.id === owner.id || ownPlayer || follows(viewer).includes(owner.id);
+}
+
+export const requestId = (targetId: string, actorId: string) => `cape_request_${targetId}_${actorId}`;
+
 // 1234 → „1.234" · 12400 → „12,4 Tsd." · 1250000 → „1,3 Mio."
 export function formatCount(n: number): string {
   const short = (v: number) => (Math.round(v * 10) / 10).toLocaleString("de-DE");
