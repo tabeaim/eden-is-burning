@@ -385,8 +385,37 @@ function PlotList() {
 
 // --- Papierkorb --------------------------------------------------------------
 export function AdminTrash() {
-  const { trashedCharacters, restoreCharacter, deleteCharacter, posts } = useStore();
-  const [ask, setAsk] = useState<Ask | null>(null);
+  const {
+    trashedCharacters,
+    restoreCharacter,
+    deleteCharacter,
+    retireCharacter,
+    posts,
+    quotes,
+    chatMessages,
+    calls,
+    capticPosts,
+    capticComments,
+    capticStories,
+  } = useStore();
+  const [purge, setPurge] = useState<Character | null>(null);
+  // Was an einem Charakter hängt (und beim Mitlöschen verschwände)
+  const traces = (c: Character): [number, string, string][] =>
+    (
+      [
+        [posts.filter((p) => p.character_id === c.id).length, "Post", "Posts"],
+        [quotes.filter((q) => q.character_id === c.id).length, "Zitat", "Zitate"],
+        [chatMessages.filter((m) => m.character_id === c.id && m.kind !== "date").length, "SMS", "SMS"],
+        [calls.filter((x) => x.caller_id === c.id || x.callee_id === c.id).length, "Anruf", "Anrufe"],
+        [
+          capticPosts.filter((p) => p.character_id === c.id).length +
+            capticStories.filter((p) => p.character_id === c.id).length,
+          "Captic-Beitrag",
+          "Captic-Beiträge",
+        ],
+        [capticComments.filter((p) => p.character_id === c.id).length, "Captic-Kommentar", "Captic-Kommentare"],
+      ] as [number, string, string][]
+    ).filter(([n]) => n > 0);
   if (trashedCharacters.length === 0) return <p className={hint}>Der Papierkorb ist leer.</p>;
   const postCount = (c: Character) => posts.filter((p) => p.character_id === c.id).length;
   return (
@@ -405,21 +434,102 @@ export function AdminTrash() {
             Wiederherstellen
           </button>
           <button
-            onClick={() =>
-              setAsk({
-                title: `${c.name} endgültig löschen?`,
-                warning: `Das lässt sich NICHT rückgängig machen. Mit ${c.name} werden ${postCount(c)} Posts, alle Zitate, Chats und Anrufe gelöscht – auch in Szenen anderer Spieler*innen.`,
-                label: "Endgültig löschen",
-                run: () => deleteCharacter(c.id),
-              })
-            }
+            onClick={() => setPurge(c)}
             className={btnDanger}
           >
             Endgültig löschen
           </button>
         </div>
       ))}
-      <Ask ask={ask} onClose={() => setAsk(null)} />
+      {purge && (
+        <PurgeDialog
+          character={purge}
+          traces={traces(purge)}
+          onCancel={() => setPurge(null)}
+          onKeep={() => {
+            retireCharacter(purge.id);
+            setPurge(null);
+          }}
+          onDeleteAll={() => {
+            deleteCharacter(purge.id);
+            setPurge(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Endgültig löschen: zeigt, was am Charakter hängt, und lässt wählen – Inhalte
+// behalten (er bleibt als durchgestrichene Hülle an Posts, SMS usw.) oder alles
+// mitlöschen. Aufbau wie `ConfirmDialog`.
+function PurgeDialog({
+  character: c,
+  traces,
+  onKeep,
+  onDeleteAll,
+  onCancel,
+}: {
+  character: Character;
+  traces: [number, string, string][];
+  onKeep: () => void;
+  onDeleteAll: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div onClick={onCancel} className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4">
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-label={`${c.name} endgültig löschen?`}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-xl border border-border-subtle bg-bg-surface p-5 shadow-2xl shadow-black/70"
+      >
+        <div className="font-serif text-[1rem] text-text-primary">{c.name} endgültig löschen?</div>
+        <p className="mt-2 rounded-md border border-red-400/50 bg-red-500/15 px-3 py-2 text-[0.875rem] font-bold leading-snug text-red-200">
+          Das lässt sich NICHT rückgängig machen – {c.name} kann danach nicht wiederhergestellt werden.
+        </p>
+        {traces.length > 0 ? (
+          <>
+            <p className="mt-3 text-[0.875rem] text-text-secondary">Von {c.name} gibt es:</p>
+            <ul className="mt-1.5 flex flex-wrap gap-1.5">
+              {traces.map(([n, one, many]) => (
+                <li
+                  key={many}
+                  className="rounded-md bg-white/[0.06] px-2.5 py-1 text-[0.8125rem] text-text-primary"
+                >
+                  {n} {n === 1 ? one : many}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-[0.875rem] leading-relaxed text-text-secondary">
+              Sollen sie mitgelöscht werden? Wenn nicht, bleibt alles stehen – auch in Szenen und Chats
+              anderer Spieler*innen – und der Name erscheint dort durchgestrichen.
+            </p>
+          </>
+        ) : (
+          <p className="mt-3 text-[0.875rem] text-text-secondary">
+            Von {c.name} gibt es keine Posts, SMS oder andere Beiträge.
+          </p>
+        )}
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+          <button
+            onClick={onCancel}
+            autoFocus
+            className="mr-auto px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+          >
+            Abbrechen
+          </button>
+          {traces.length > 0 && (
+            <button onClick={onKeep} className={btn}>
+              Löschen, Inhalte behalten
+            </button>
+          )}
+          <button onClick={onDeleteAll} className={btnDanger}>
+            {traces.length > 0 ? "Alles mitlöschen" : "Endgültig löschen"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

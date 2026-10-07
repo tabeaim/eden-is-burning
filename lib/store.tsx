@@ -130,8 +130,11 @@ interface StoreValue extends PersistedState {
   trashCharacter: (id: string) => void;
   restoreCharacter: (id: string) => void;
   trashedCharacters: Character[];
-  // Löscht den Charakter ENDGÜLTIG samt seiner Posts, Zitate und Chats
+  // Löscht den Charakter ENDGÜLTIG samt seiner Posts, Zitate, SMS, Anrufe …
   deleteCharacter: (id: string) => void;
+  // Endgültig löschen, Inhalte behalten: Der Charakter verlässt den Papierkorb und
+  // bleibt nur als Hülle (durchgestrichener Name an Posts, SMS usw.)
+  retireCharacter: (id: string) => void;
   // Löscht die Szene samt aller Posts und Zitate
   deleteScene: (id: string) => void;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
@@ -784,7 +787,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [state.characters],
   );
   const trashedCharacters = useMemo(
-    () => state.characters.filter((c) => !!c.deleted_at),
+    () => state.characters.filter((c) => !!c.deleted_at && !c.purged_at),
     [state.characters],
   );
   const charactersOf = useCallback(
@@ -1145,6 +1148,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ...s,
       characters: s.characters.map((c) => (c.id === id ? { ...c, deleted_at } : c)),
     }));
+  }, []);
+  const retireCharacter = useCallback((id: string) => {
+    const now = new Date().toISOString();
+    setState((s) => {
+      const c = s.characters.find((x) => x.id === id);
+      if (!c) return s;
+      const patch = { purged_at: now, deleted_at: c.deleted_at ?? now };
+      persist("retireCharacter", supabase.from("characters").update(patch).eq("id", id));
+      return { ...s, characters: s.characters.map((x) => (x.id === id ? { ...x, ...patch } : x)) };
+    });
   }, []);
   const restoreCharacter = useCallback((id: string) => {
     persist("restoreCharacter", supabase.from("characters").update({ deleted_at: null }).eq("id", id));
@@ -2050,6 +2063,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updateCharacter,
       addCharacter,
       deleteCharacter,
+      retireCharacter,
       trashCharacter,
       restoreCharacter,
       trashedCharacters,
@@ -2164,6 +2178,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updateCharacter,
       addCharacter,
       deleteCharacter,
+      retireCharacter,
       trashCharacter,
       restoreCharacter,
       trashedCharacters,

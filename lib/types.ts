@@ -92,6 +92,9 @@ export interface Character {
   profile?: CharacterProfile | null;
   // Im Papierkorb seit … (aus allen Listen verschwunden, aber wiederherstellbar)
   deleted_at?: string | null;
+  // Endgültig gelöscht, Inhalte behalten: nur noch eine Hülle, damit Posts, SMS
+  // usw. bestehen bleiben (durchgestrichener Name). Nicht wiederherstellbar.
+  purged_at?: string | null;
   // Look des Handys im Messenger (Modell, Abnutzung, Hintergrund, Apps)
   phone?: PhoneSettings | null;
 }
