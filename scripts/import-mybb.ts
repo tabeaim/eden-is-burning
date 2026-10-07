@@ -940,10 +940,25 @@ async function main() {
   const forbidden = out.characters.filter((c) => PROTECTED_CHARACTER_IDS.includes(String(c.id)));
   if (forbidden.length) throw new Error(`Geschützte Charaktere in der Schreibliste: ${forbidden.map((c) => c.id).join(", ")} – Abbruch.`);
 
-  await upsert("locations", out.locations);
-  // einheitliche Spalten je Stapel (PostgREST verlangt gleiche Schlüssel)
-  const charKeys = [...new Set(out.characters.flatMap((c) => Object.keys(c)))];
-  await upsert("characters", out.characters.map((c) => Object.fromEntries(charKeys.map((k) => [k, c[k] ?? (k === "relationships" ? {} : k === "co_owner_ids" ? [] : null)]))));
+  // Orte: vorhandene ziehen nur in die neue Gegend um, neue werden angelegt
+  const knownLocs = new Set(existing.locations.map((l) => l.id));
+  for (const l of out.locations.filter((x) => knownLocs.has(x.id))) {
+    const { error } = await db.from("locations").update({ area: l.area }).eq("id", l.id);
+    if (error) throw new Error(`locations (${l.name}): ${error.message}`);
+  }
+  await upsert(
+    "locations",
+    out.locations.filter((x) => !knownLocs.has(x.id)).map((l) => ({ id: l.id, area: l.area, name: l.name, description: null, created_at: l.created_at, created_by: null })),
+  );
+  // PostgREST verlangt je Stapel gleiche Schlüssel und füllt fehlende sonst mit null
+  // (was an Spalten mit Vorgabewert scheitert) – daher nach Spaltensatz gruppiert.
+  const groups = new Map<string, Row[]>();
+  for (const c of out.characters) {
+    const clean = Object.fromEntries(Object.entries(c).filter(([k, v]) => v !== null || !["profile", "phone"].includes(k)));
+    const sig = Object.keys(clean).sort().join(",");
+    (groups.get(sig) ?? groups.set(sig, []).get(sig)!).push(clean);
+  }
+  for (const rows of groups.values()) await upsert("characters", rows);
   // Geschützte Charaktere: nur die Relationen aus dem Forum ergänzen. Was im neuen
   // Profil schon zu einem Charakter eingetragen ist, bleibt und geht vor.
   for (const r of out.protectedRelations) {
