@@ -258,6 +258,9 @@ export interface Scene {
   // Entwurf: der erste Post liegt nur als Entwurf vor. Sichtbar nur für die Person
   // mit diesem Entwurf, bis der erste Post veröffentlicht ist (schema-scene-drafts.sql)
   draft?: boolean;
+  // Darstellung der Posts: "script" = Drehbuch-Format (Regie + Dialog, siehe
+  // lib/script.ts); sonst normaler Fließtext. Umstellbar, solange kein Post existiert.
+  format?: "script" | null;
   created_at: string;
   participant_ids: string[]; // character ids, in turn order
   // Ein-Satz-Zusammenfassung – bei Erstellung oder beim Schließen ergänzbar

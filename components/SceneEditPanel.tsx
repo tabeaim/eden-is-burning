@@ -62,6 +62,7 @@ export function SceneEditPanel({
   const [au, setAu] = useState(Boolean(scene.au));
   const [auName, setAuName] = useState(scene.au_name ?? "");
   const [headerUrl, setHeaderUrl] = useState(scene.header_url ?? "");
+  const [script, setScript] = useState(scene.format === "script");
   const [selected, setSelected] = useState<string[]>(scene.participant_ids);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -95,6 +96,8 @@ export function SceneEditPanel({
           ? { au_name: null }
           : {}),
       header_url: headerUrl || null,
+      // Format nur anfassen, wenn es sich ändert (Spalte: schema-scene-format.sql)
+      ...(postCount === 0 && script !== (scene.format === "script") ? { format: script ? ("script" as const) : null } : {}),
       participant_ids: selected,
       summary: summary.trim() || null,
     });
@@ -213,6 +216,19 @@ export function SceneEditPanel({
       <Toggle checked={tw} onChange={setTw}>
         Triggerwarnung anzeigen
       </Toggle>
+
+      {/* Format: nur umstellbar, solange noch nichts geschrieben wurde */}
+      {postCount === 0 ? (
+        <Toggle checked={script} onChange={setScript}>
+          Drehbuch-Format <span className="text-text-tertiary">(Regieanweisungen und „Name: Text“)</span>
+        </Toggle>
+      ) : (
+        scene.format === "script" && (
+          <p className="text-[0.8125rem] text-text-tertiary">
+            Drehbuch-Format – lässt sich nicht mehr umstellen, weil schon Posts da sind.
+          </p>
+        )
+      )}
 
       <Toggle checked={au} onChange={setAu}>
         <span className="italic">AU</span> – Alternate Universe

@@ -14,7 +14,7 @@ type CallData = Pick<PhoneCall, "caller_id" | "callee_id" | "inplay_date" | "inp
 // Datum und Uhrzeit des Anrufs. Ohne Titel heißt sie „A & B on the phone".
 export function useCreatePhoneScene() {
   const { addScene, character } = useStore();
-  return (call: CallData, title: string) => {
+  return (call: CallData, title: string, script = false) => {
     const people = [call.caller_id, call.callee_id]
       .map((id) => character(id))
       .filter((c): c is NonNullable<typeof c> => !!c);
@@ -28,8 +28,27 @@ export function useCreatePhoneScene() {
       trigger_warning: false,
       participant_ids: [call.caller_id, call.callee_id],
       summary: null,
+      // Drehbuch-Format (Spalte: schema-scene-format.sql) – nur mitschicken, wenn gewählt
+      ...(script ? { format: "script" as const } : {}),
     });
   };
+}
+
+// „Im Drehbuch-Format": Häkchen in den Dialogen, die eine Telefonszene anlegen
+export function ScriptToggle({ checked, onChange }: { checked: boolean; onChange: (on: boolean) => void }) {
+  return (
+    <label className="mt-3 flex items-start gap-2 text-[0.8125rem] text-text-secondary">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 accent-[var(--accent)]"
+      />
+      <span>
+        Im Drehbuch-Format <span className="text-text-tertiary">(Regie und „Name: Text“)</span>
+      </span>
+    </label>
+  );
 }
 
 // Nach dem Annehmen (oder später aus der Anrufliste): Soll aus dem Anruf eine
@@ -39,6 +58,7 @@ export function PhoneSceneDialog({ call, onClose }: { call: PhoneCall; onClose: 
   const { character, updateCall } = useStore();
   const createScene = useCreatePhoneScene();
   const [title, setTitle] = useState("");
+  const [script, setScript] = useState(false);
   const placeholder = phoneSceneTitle(
     [call.caller_id, call.callee_id]
       .map((id) => character(id))
@@ -57,13 +77,14 @@ export function PhoneSceneDialog({ call, onClose }: { call: PhoneCall; onClose: 
           placeholder={`Titel (optional): ${placeholder}`}
           className="mt-3 w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/20 sm:text-[0.875rem]"
         />
+        <ScriptToggle checked={script} onChange={setScript} />
         <div className="mt-4 flex items-center justify-end gap-3">
           <button onClick={onClose} className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
             Nein, nicht jetzt
           </button>
           <button
             onClick={() => {
-              const sceneId = createScene(call, title);
+              const sceneId = createScene(call, title, script);
               updateCall(call.id, { scene_id: sceneId });
               router.push(`/szenen/${sceneId}`);
             }}

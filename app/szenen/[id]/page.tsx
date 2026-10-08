@@ -1,5 +1,7 @@
 "use client";
 
+import { ScriptEditor, ScriptView, useScriptViewer, useSpeaker } from "@/components/Script";
+import { isScript, parseScript, scriptPlain, serializeScript, type ScriptLine } from "@/lib/script";
 import { useOpenPlace } from "@/components/LocationCategoryPicker";
 import { useMyPhone } from "@/components/phone/PhoneFrame";
 import { use, useEffect, useMemo, useRef, useState } from "react";
@@ -7,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
-import { formatDateTime, formatInplayDate, renderPost } from "@/lib/format";
+import { escapeHtml, formatDateTime, formatInplayDate, renderPost } from "@/lib/format";
 import { copyRich, useProseEditor } from "@/lib/editor";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { SignatureText } from "@/components/SignatureText";
@@ -655,7 +657,12 @@ function PostRow({
   term?: string;
   at?: string; // Inplay-Datum der Szene (Alter der Charaktere zu diesem Zeitpunkt)
 }) {
-  const { addQuote, currentPlayer, isAdmin, updatePost, deletePost, canWriteAs } = useStore();
+  const { addQuote, currentPlayer, isAdmin, updatePost, deletePost, canWriteAs, charactersOf, myNpcs } = useStore();
+  // Drehbuch-Format: der Post besteht aus Regie- und Dialogzeilen (siehe lib/script.ts)
+  const script = useMemo(() => parseScript(post.content), [post.content]);
+  const viewer = useScriptViewer(post.scene_id);
+  const speaker = useSpeaker(viewer);
+  const [editLines, setEditLines] = useState<ScriptLine[]>([]);
   // Eigene Posts – oder als Admin alle – dürfen bearbeitet/gelöscht werden.
   const canModify = !!currentPlayer && (canWriteAs(character.id) || isAdmin);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -670,7 +677,10 @@ function PostRow({
 
   // Ganzen Post samt Formatierung kopieren – so, wie er im Editor steht
   async function copy() {
-    const ok = await copyRich(renderPost(post.content), proseRef.current?.innerText ?? "");
+    const plain = script ? scriptPlain(script, (l) => speaker(l).name) : "";
+    const ok = script
+      ? await copyRich(plain.split("\n").map((l) => `<p>${escapeHtml(l)}</p>`).join(""), plain)
+      : await copyRich(renderPost(post.content), proseRef.current?.innerText ?? "");
     if (!ok) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
@@ -710,6 +720,7 @@ function PostRow({
   function startEdit() {
     setQuoteBtn(null);
     setEditing(true);
+    if (script) return setEditLines(script);
     setTimeout(() => {
       if (editRef.current) {
         editRef.current.innerHTML = post.content;
@@ -719,7 +730,10 @@ function PostRow({
   }
 
   function saveEdit() {
-    updatePost(post.id, editRef.current?.innerHTML ?? post.content);
+    updatePost(
+      post.id,
+      script ? serializeScript(editLines) || post.content : (editRef.current?.innerHTML ?? post.content),
+    );
     setEditing(false);
   }
 
@@ -737,14 +751,23 @@ function PostRow({
   const card = <SceneCharacterCard character={character} player={player} at={at} />;
   const prose = editing ? (
     <div className="flex-1 min-w-0">
-      <div
-        ref={editRef}
-        contentEditable
-        suppressContentEditableWarning
-        lang="de"
-        spellCheck
-        className="reply-editor prose-serif w-full min-h-[120px] rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-text-primary outline-none focus:border-white/20"
-      />
+      {script ? (
+        <ScriptEditor
+          lines={editLines}
+          onChange={setEditLines}
+          self={character}
+          mine={currentPlayer ? [...charactersOf(currentPlayer.id), ...myNpcs] : []}
+        />
+      ) : (
+        <div
+          ref={editRef}
+          contentEditable
+          suppressContentEditableWarning
+          lang="de"
+          spellCheck
+          className="reply-editor prose-serif w-full min-h-[120px] rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-text-primary outline-none focus:border-white/20"
+        />
+      )}
       <div className="mt-2 flex justify-end gap-2">
         <button
           onClick={() => setEditing(false)}
@@ -766,11 +789,17 @@ function PostRow({
       className="post-box relative flex-1 min-w-0 select-text"
       onMouseUp={onMouseUp}
     >
-      <div
-        ref={proseRef}
-        className="prose-serif text-text-primary"
-        dangerouslySetInnerHTML={html}
-      />
+      {script ? (
+        <div ref={proseRef}>
+          <ScriptView lines={script} viewer={viewer} />
+        </div>
+      ) : (
+        <div
+          ref={proseRef}
+          className="prose-serif text-text-primary"
+          dangerouslySetInnerHTML={html}
+        />
+      )}
       {/* Signatur des Charakters (Einstellungen → Meine Charaktere): Text und/oder Bild */}
       {character.profile?.signature_text && (
         <SignatureText html={character.profile.signature_text} className="mt-6 select-none" />
@@ -893,6 +922,8 @@ function DraftRow({
     !!scene.draft && drafts.filter((d) => d.scene_id === scene.id).length <= 1;
   const c = character(draft.character_id);
   const html = useMemo(() => ({ __html: renderPost(draft.content) }), [draft.content]);
+  const script = useMemo(() => parseScript(draft.content), [draft.content]);
+  const viewer = useScriptViewer(scene.id);
   if (!c) return null;
   const btn =
     "flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
@@ -949,7 +980,13 @@ function DraftRow({
       </div>
       <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start">
         <SceneCharacterCard character={c} player={player(c.player_id)} at={scene.inplay_date} />
-        <div className="prose-serif min-w-0 flex-1 text-text-primary" dangerouslySetInnerHTML={html} />
+        {script ? (
+          <div className="post-box min-w-0 flex-1">
+            <ScriptView lines={script} viewer={viewer} />
+          </div>
+        ) : (
+          <div className="prose-serif min-w-0 flex-1 text-text-primary" dangerouslySetInnerHTML={html} />
+        )}
       </div>
     </div>
   );
@@ -976,6 +1013,12 @@ function ReplyBox({
   const [preview, setPreview] = useState<string | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   useProseEditor(editorRef);
+  // Drehbuch-Format: Zeilen-Editor statt Fließtext
+  const script = isScript(scene);
+  const viewer = useScriptViewer(scene.id);
+  const [lines, setLines] = useState<ScriptLine[]>(
+    () => parseScript(draft?.content) ?? [{ k: "line", who: draft?.character_id ?? suggestedCharId, text: "" }],
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -988,7 +1031,7 @@ function ReplyBox({
   }, []);
 
   function togglePreview() {
-    setPreview((p) => (p === null ? editorRef.current?.innerHTML ?? "" : null));
+    setPreview((p) => (p === null ? (script ? serializeScript(lines) : (editorRef.current?.innerHTML ?? "")) : null));
   }
 
   const activeChar = activeCharId ? character(activeCharId) : myChars[0];
@@ -999,8 +1042,8 @@ function ReplyBox({
   }
 
   function send() {
-    const html = editorRef.current?.innerHTML ?? "";
-    const text = editorRef.current?.textContent?.trim() ?? "";
+    const html = script ? serializeScript(lines) : (editorRef.current?.innerHTML ?? "");
+    const text = script ? html : (editorRef.current?.textContent?.trim() ?? "");
     if (!activeChar || !text) return;
     publish(activeChar, html);
     if (draft) deleteDraft(draft.id);
@@ -1010,8 +1053,8 @@ function ReplyBox({
 
   // Als Entwurf speichern: hängt unter der Szene, nur für mich sichtbar
   function keepDraft() {
-    const html = editorRef.current?.innerHTML ?? "";
-    const text = editorRef.current?.textContent?.trim() ?? "";
+    const html = script ? serializeScript(lines) : (editorRef.current?.innerHTML ?? "");
+    const text = script ? html : (editorRef.current?.textContent?.trim() ?? "");
     if (!activeChar || !text) return;
     saveDraft(scene.id, activeChar.id, html, draft?.id);
     onClose();
@@ -1033,14 +1076,20 @@ function ReplyBox({
               character={activeChar}
               player={player(activeChar.player_id)}
             />
-            <div
-              className="prose-serif min-w-0 flex-1 text-text-primary"
-              dangerouslySetInnerHTML={{
-                __html:
-                  renderPost(preview) ||
-                  "<span style='opacity:.5'>(noch nichts geschrieben)</span>",
-              }}
-            />
+            {script ? (
+              <div className="min-w-0 flex-1">
+                <ScriptView lines={parseScript(preview) ?? []} viewer={viewer} />
+              </div>
+            ) : (
+              <div
+                className="prose-serif min-w-0 flex-1 text-text-primary"
+                dangerouslySetInnerHTML={{
+                  __html:
+                    renderPost(preview) ||
+                    "<span style='opacity:.5'>(noch nichts geschrieben)</span>",
+                }}
+              />
+            )}
           </div>
         </div>
       )}
@@ -1057,7 +1106,13 @@ function ReplyBox({
                   // In der Liste nur die Main Characters; Nebenfiguren über die Suche darunter
                   characters={myChars.filter((c) => !c.is_npc)}
                   value={activeChar?.id ?? null}
-                  onChange={setActiveCharId}
+                  onChange={(id) => {
+                    // Dialogzeilen des bisherigen Charakters wechseln mit
+                    setLines((ls) =>
+                      ls.map((l) => (l.k === "line" && l.who === activeChar?.id ? { ...l, who: id } : l)),
+                    );
+                    setActiveCharId(id);
+                  }}
                   hint={(c) => (scene.participant_ids.includes(c.id) ? null : "steigt neu ein")}
                   // Suche: Supporting Characters, denen ich zugeordnet bin, und alle Statist*innen
                   search={{ placeholder: "SC oder Statist*in …", characters: [...myChars.filter((c) => c.is_npc), ...extras] }}
@@ -1073,40 +1128,51 @@ function ReplyBox({
         </div>
       </div>
 
-      {/* Formatierungs-Toolbar */}
-      <div className="mb-2 flex items-center gap-0.5 rounded-md border border-border-subtle bg-bg-primary px-1.5 py-1">
-        <button onClick={() => exec("bold")} className={`${toolBtn} font-bold`} title="Fett">
-          B
-        </button>
-        <button onClick={() => exec("italic")} className={`${toolBtn} italic`} title="Kursiv">
-          I
-        </button>
-        <button onClick={() => exec("underline")} className={`${toolBtn} underline`} title="Unterstrichen">
-          U
-        </button>
-        <span className="mx-1 h-4 w-px bg-border-subtle" />
-        <button onClick={() => exec("fontSize", "5")} className={toolBtn} title="Größer">
-          A+
-        </button>
-        <button onClick={() => exec("fontSize", "2")} className={toolBtn} title="Kleiner">
-          A−
-        </button>
-      </div>
+      {script ? (
+        // Drehbuch-Format: Regie- und Dialogzeilen statt Fließtext
+        <ScriptEditor lines={lines} onChange={setLines} self={activeChar} mine={myChars} />
+      ) : (
+        <>
+        {/* Formatierungs-Toolbar */}
+        <div className="mb-2 flex items-center gap-0.5 rounded-md border border-border-subtle bg-bg-primary px-1.5 py-1">
+          <button onClick={() => exec("bold")} className={`${toolBtn} font-bold`} title="Fett">
+            B
+          </button>
+          <button onClick={() => exec("italic")} className={`${toolBtn} italic`} title="Kursiv">
+            I
+          </button>
+          <button onClick={() => exec("underline")} className={`${toolBtn} underline`} title="Unterstrichen">
+            U
+          </button>
+          <span className="mx-1 h-4 w-px bg-border-subtle" />
+          <button onClick={() => exec("fontSize", "5")} className={toolBtn} title="Größer">
+            A+
+          </button>
+          <button onClick={() => exec("fontSize", "2")} className={toolBtn} title="Kleiner">
+            A−
+          </button>
+        </div>
 
-      <div
-        id="reply-editor"
-        ref={editorRef}
-        contentEditable
-        suppressContentEditableWarning
-        lang="de"
-        spellCheck
-        data-placeholder={`Schreibe als ${activeChar?.name}…`}
-        className="reply-editor prose-serif min-h-[160px] w-full rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-[0.875rem] leading-[1.8] text-text-primary outline-none focus:border-white/20"
-      />
+        <div
+          id="reply-editor"
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          lang="de"
+          spellCheck
+          data-placeholder={`Schreibe als ${activeChar?.name}…`}
+          className="reply-editor prose-serif min-h-[160px] w-full rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-[0.875rem] leading-[1.8] text-text-primary outline-none focus:border-white/20"
+        />
+        </>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
         <span className="mr-auto text-[0.875rem] text-text-tertiary">
-          {draft ? "Entwurf – nur für dich sichtbar" : "Formatierung wird beim Einfügen übernommen"}
+          {draft
+            ? "Entwurf – nur für dich sichtbar"
+            : script
+              ? "Drehbuch-Format: Regie und Dialog, Zeile für Zeile"
+              : "Formatierung wird beim Einfügen übernommen"}
         </span>
         <button
           onClick={onClose}

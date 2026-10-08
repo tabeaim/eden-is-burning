@@ -11,6 +11,7 @@ import { Icon } from "@/components/Icon";
 import {
   IncomingCall,
   PhoneSceneDialog,
+  ScriptToggle,
   useCreatePhoneScene,
 } from "@/components/phone/IncomingCall";
 import { contactName, contactShortName, hasPhone } from "@/lib/phone";
@@ -246,9 +247,9 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
             setContact(null);
             setView("log");
           }}
-          onScene={(date, time, title) => {
+          onScene={(date, time, title, script) => {
             const call = { caller_id: me.id, callee_id: contact.id, inplay_date: date, inplay_time: time };
-            const sceneId = createScene(call, title);
+            const sceneId = createScene(call, title, script);
             addCall({ ...call, status: "accepted", scene_id: sceneId });
             router.push(`/szenen/${sceneId}`);
           }}
@@ -451,12 +452,13 @@ function CallDialog({
   me: Character;
   contact: Character;
   onRing: (date: string, time: string) => void;
-  onScene: (date: string, time: string, title: string) => void;
+  onScene: (date: string, time: string, title: string, script: boolean) => void;
   onCancel: () => void;
 }) {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("20:00");
   const [title, setTitle] = useState("");
+  const [script, setScript] = useState(false);
   const ok = !!date && !!time;
   const button =
     "w-full rounded-md border px-3 py-2 text-[0.8125rem] font-medium disabled:opacity-40";
@@ -503,9 +505,10 @@ function CallDialog({
             placeholder={`Titel (optional): ${first(me)} & ${first(contact)} on the phone`}
             className="w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/20 sm:text-[0.875rem]"
           />
+          <ScriptToggle checked={script} onChange={setScript} />
           <button
             disabled={!ok}
-            onClick={() => onScene(date, time, title)}
+            onClick={() => onScene(date, time, title, script)}
             className={`${button} mt-2 border-border-subtle bg-white/[0.04] text-text-primary hover:bg-white/[0.08]`}
           >
             Telefonszene erstellen

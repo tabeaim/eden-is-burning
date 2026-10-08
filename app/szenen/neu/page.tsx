@@ -1,5 +1,7 @@
 "use client";
 
+import { ScriptEditor } from "@/components/Script";
+import { serializeScript, type ScriptLine } from "@/lib/script";
 import { useTheme } from "@/lib/theme";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -55,6 +57,10 @@ export default function NewScenePage() {
   );
   const [firstPost, setFirstPost] = useState("");
   const [firstCharId, setFirstCharId] = useState<string | null>(null);
+  // Drehbuch-Format: Posts aus Regie- und Dialogzeilen statt Fließtext
+  const [script, setScript] = useState(false);
+  const [firstLines, setFirstLines] = useState<ScriptLine[]>([]);
+  const firstContent = script ? serializeScript(firstLines) : firstPost.trim();
 
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
   const myCharIds = new Set(myChars.map((c) => c.id));
@@ -71,7 +77,7 @@ export default function NewScenePage() {
     (phone
       ? date && selected.length > 0
       : title.trim() && locationComplete(area, locationName) && date && selected.length > 0) &&
-    !!firstPost.trim() &&
+    !!firstContent &&
     !!firstChar;
 
   function submit(e: React.FormEvent) {
@@ -99,9 +105,11 @@ export default function NewScenePage() {
       participant_ids: selected,
       summary: summary.trim() || null,
       ...(asDraft ? { draft: true } : {}),
+      // nur mitschicken, wenn gewählt – die Spalte kommt mit schema-scene-format.sql
+      ...(script ? { format: "script" as const } : {}),
     });
-    if (asDraft) saveDraft(id, firstChar, firstPost.trim());
-    else addPost(id, firstChar, firstPost.trim());
+    if (asDraft) saveDraft(id, firstChar, firstContent);
+    else addPost(id, firstChar, firstContent);
     router.push(`/szenen/${id}`);
   }
 
@@ -148,6 +156,13 @@ export default function NewScenePage() {
 
         <Toggle checked={phone} onChange={setPhone}>
           Telefonat – die Szene spielt am Telefon (kein Ort)
+        </Toggle>
+
+        <Toggle checked={script} onChange={setScript}>
+          Drehbuch-Format{" "}
+          <span className="text-text-tertiary">
+            (reduziert: Regieanweisungen und „Name: Text“ – umstellbar, solange noch kein Post da ist)
+          </span>
         </Toggle>
 
         {!phone && (
@@ -228,7 +243,13 @@ export default function NewScenePage() {
               {eligibleFirst.length > 1 && (
                 <select
                   value={firstChar ?? ""}
-                  onChange={(e) => setFirstCharId(e.target.value)}
+                  onChange={(e) => {
+                    // Dialogzeilen des bisherigen Charakters wechseln mit
+                    setFirstLines((ls) =>
+                      ls.map((l) => (l.k === "line" && l.who === firstChar ? { ...l, who: e.target.value } : l)),
+                    );
+                    setFirstCharId(e.target.value);
+                  }}
                   className="bg-bg-primary border border-border-subtle rounded-md px-2 py-1 text-[0.8125rem] text-text-primary outline-none focus:border-white/20"
                 >
                   {eligibleFirst.map((c) => (
@@ -239,13 +260,22 @@ export default function NewScenePage() {
                 </select>
               )}
             </div>
-            <textarea
-              value={firstPost}
-              onChange={(e) => setFirstPost(e.target.value)}
-              rows={4}
-              placeholder="Schreibe den ersten Post… (*Sternchen* für kursiv)"
-              className={`${field} resize-y`}
-            />
+            {script ? (
+              <ScriptEditor
+                lines={firstLines}
+                onChange={setFirstLines}
+                self={firstChar ? character(firstChar) : undefined}
+                mine={myChars}
+              />
+            ) : (
+              <textarea
+                value={firstPost}
+                onChange={(e) => setFirstPost(e.target.value)}
+                rows={4}
+                placeholder="Schreibe den ersten Post… (*Sternchen* für kursiv)"
+                className={`${field} resize-y`}
+              />
+            )}
           </div>
         )}
 
