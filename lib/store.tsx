@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { Session } from "@supabase/supabase-js";
@@ -88,6 +89,9 @@ interface StoreValue extends PersistedState {
   // selectors
   charactersOf: (playerId: string) => Character[];
   postsOf: (sceneId: string) => Post[];
+  loadScenePosts: (sceneId: string) => Promise<void>;
+  postsEpoch: number;
+  searchPosts: (term: string) => Promise<Map<string, string>>;
   character: (id: string) => Character | undefined;
   player: (id: string) => Player | undefined;
   playerByUsername: (username: string) => Player | undefined;
@@ -271,22 +275,29 @@ const EMPTY: PersistedState = {
 
 // Supabase liefert höchstens 1000 Zeilen pro Abfrage – Nachrichten werden schnell
 // mehr, daher seitenweise laden. Fehlt die Tabelle noch, bleibt die Liste leer.
-async function fetchAll<T>(table: string): Promise<T[]> {
+// Die erste Seite liefert die Gesamtzahl mit, die übrigen Seiten laden gleichzeitig.
+async function fetchAll<T>(table: string, columns = "*"): Promise<T[]> {
   const PAGE = 1000;
-  const rows: T[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await supabase
+  const page = (from: number, count?: "exact") =>
+    supabase
       .from(table)
-      .select("*")
+      .select(columns, count ? { count } : undefined)
       .order("created_at", { ascending: true })
       .order("id", { ascending: true })
       .range(from, from + PAGE - 1);
-    if (error || !data) break;
-    rows.push(...(data as T[]));
-    if (data.length < PAGE) break;
-  }
+  const first = await page(0, "exact");
+  if (first.error || !first.data) return [];
+  const rows = [...(first.data as unknown as T[])];
+  const total = first.count ?? rows.length;
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(0, Math.ceil(total / PAGE) - 1) }, (_, i) => page((i + 1) * PAGE)),
+  );
+  for (const r of rest) if (!r.error && r.data) rows.push(...(r.data as unknown as T[]));
   return rows;
 }
+
+// Posts ohne Text: genug für Zähler, „wer ist dran" und „zuletzt aktiv"
+const POST_HEAD = "id,scene_id,character_id,post_number,created_at";
 
 // Gerade angelegte Chats, deren Zeile noch unterwegs ist – die erste Nachricht
 // wartet darauf, sonst käme sie vor ihrem Chat an (Fremdschlüssel).
@@ -400,6 +411,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const isApproved = Boolean(currentPlayer?.approved);
   const isAdmin = Boolean(currentPlayer?.is_admin);
 
+  // Szenen, deren Post-Texte schon geladen sind; `postsEpoch` zählt hoch, wenn die
+  // Welt neu geladen wurde (offene Szenen laden ihre Texte dann frisch nach)
+  const loadedScenes = useRef(new Set<string>());
+  const [postsEpoch, setPostsEpoch] = useState(0);
+
   // Lädt alle Welt-Daten (nur für freigeschaltete Nutzer*innen sichtbar; RLS).
   const loadWorld = useCallback(async () => {
     const [pl, ch, sc, po, lo, qu, pt, chats, chatMessages, chatScenes, calls, capticPosts, capticComments, capticStories, capticEvents, capticHighlights, as] = await Promise.all([
@@ -408,7 +424,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       // Szenen, Posts und Zitate seitenweise: seit dem Forum-Import sind es mehr als
       // die 1000 Zeilen, die eine einzelne Abfrage liefert
       fetchAll<Scene>("scenes"),
-      fetchAll<Post>("posts"),
+      // Posts zunächst ohne Text (seit dem Forum-Import wären das rund 16 MB) – den
+      // Text holt loadScenePosts beim Öffnen der Szene
+      fetchAll<Omit<Post, "content">>("posts", POST_HEAD),
       supabase.from("locations").select("*"),
       fetchAll<SceneQuote>("quotes"),
       supabase.from("plots").select("*"),
@@ -426,11 +444,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     ]);
     const appRow = (as.data as { key: string; value: AppSettings }[] | null)?.find((r) => r.key === "app");
     if (!as.error) setAppSettings(appRow?.value ?? {});
-    setState({
+    loadedScenes.current.clear();
+    setPostsEpoch((e) => e + 1);
+    setState((prev) => {
+      // schon geladene Texte bleiben stehen, bis die Szene sie frisch nachlädt
+      const full = new Map(prev.posts.filter((p) => !p.partial).map((p) => [p.id, p]));
+      return {
       players: (pl.data as Player[]) ?? [],
       characters: (ch.data as Character[]) ?? [],
       scenes: sc,
-      posts: po,
+      posts: po.map((p) => full.get(p.id) ?? { ...p, content: "", partial: true }),
       locations: (lo.data as Location[]) ?? [],
       quotes: qu,
       plots: (pt.data as Plot[]) ?? [],
@@ -443,7 +466,45 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       capticStories,
       capticEvents,
       capticHighlights,
+      };
     });
+  }, []);
+
+  // Text der Posts einer Szene nachladen (einmal je Szene und Weltstand)
+  const loadScenePosts = useCallback(async (sceneId: string) => {
+    if (loadedScenes.current.has(sceneId)) return;
+    loadedScenes.current.add(sceneId);
+    const { data, error } = await supabase.from("posts").select("*").eq("scene_id", sceneId).order("post_number").range(0, 1999);
+    if (error || !data) {
+      loadedScenes.current.delete(sceneId);
+      return;
+    }
+    const fresh = new Map((data as Post[]).map((p) => [p.id, p]));
+    setState((s) => ({
+      ...s,
+      posts: [
+        ...s.posts.filter((p) => !fresh.has(p.id)),
+        ...fresh.values(),
+      ],
+    }));
+  }, []);
+
+  // Volltextsuche in Posts (läuft in der Datenbank, weil die Texte nicht alle im
+  // Browser liegen): Szenen-ID -> erster passender Post
+  const searchPosts = useCallback(async (term: string) => {
+    const hits = new Map<string, string>();
+    const q = term.trim().replace(/[\\%_]/g, (c) => `\\${c}`);
+    if (!q) return hits;
+    const { data } = await supabase
+      .from("posts")
+      .select("id,scene_id,post_number")
+      .ilike("content", `%${q}%`)
+      .order("post_number", { ascending: true })
+      .range(0, 4999);
+    for (const p of (data as { id: string; scene_id: string }[] | null) ?? []) {
+      if (!hits.has(p.scene_id)) hits.set(p.scene_id, p.id);
+    }
+    return hits;
   }, []);
 
   // Reagiert auf eine (geänderte) Auth-Session: eigenen Spieler laden,
@@ -495,10 +556,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setReady(true);
       return;
     }
-    supabase.auth.getSession().then(({ data }) => loadForSession(data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      loadForSession(session);
-    });
+    // Supabase meldet auch beim Erneuern des Tokens und bei jedem Zurückkehren in
+    // den Tab eine „Anmeldung" – neu geladen wird nur, wenn die Person wechselt.
+    let sessionUser: string | null | undefined;
+    const onSession = (session: Session | null) => {
+      const uid = session?.user.id ?? null;
+      if (uid === sessionUser) return;
+      sessionUser = uid;
+      void loadForSession(session);
+    };
+    supabase.auth.getSession().then(({ data }) => onSession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => onSession(session));
     return () => sub.subscription.unsubscribe();
   }, [loadForSession]);
 
@@ -2170,6 +2238,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       deleteLocation,
       charactersOf,
       postsOf,
+      loadScenePosts,
+      postsEpoch,
+      searchPosts,
       character,
       player,
       playerByUsername,
@@ -2283,6 +2354,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       deleteLocation,
       charactersOf,
       postsOf,
+      loadScenePosts,
+      postsEpoch,
+      searchPosts,
       character,
       player,
       playerByUsername,

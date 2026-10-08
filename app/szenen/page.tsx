@@ -129,7 +129,23 @@ export default function ScenesPage() {
   // Suche: getrennt nach Titel und nach Post-Text (eins von beiden oder beide)
   const qTitle = searchTitle.trim().toLowerCase();
   const qPost = searchPost.trim().toLowerCase();
-  const stripHtml = (h: string) => h.replace(/<[^>]*>/g, " ");
+  // Post-Texte liegen nicht alle im Browser – die Suche darin läuft in der Datenbank
+  // (kurz verzögert, damit nicht jeder Tastendruck eine Abfrage auslöst)
+  const { searchPosts } = store;
+  const [postHits, setPostHits] = useState<{ term: string; hits: Map<string, string> } | null>(null);
+  useEffect(() => {
+    if (!qPost) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void searchPosts(qPost).then((hits) => {
+        if (!cancelled) setPostHits({ term: qPost, hits });
+      });
+    }, 300);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [qPost, searchPosts]);
   const postMatchId = (scene: Scene): string | null => {
     if (!qPost) return null;
     if (scene.chat_id) {
@@ -138,10 +154,7 @@ export default function ScenesPage() {
       );
       return hit?.id ?? null;
     }
-    for (const p of postsOf(scene.id)) {
-      if (stripHtml(p.content).toLowerCase().includes(qPost)) return p.id;
-    }
-    return null;
+    return (postHits?.term === qPost ? postHits.hits.get(scene.id) : null) ?? null;
   };
 
   // Geöffneter Plot: seine Szenen (aktuelle Filter für Charaktere/AU/Gegend plus

@@ -276,6 +276,9 @@ export interface Post {
   content: string;
   post_number: number;
   created_at: string;
+  // Nur im Browser: Der Text ist noch nicht geladen (`content` ist leer). Beim Start
+  // kommen von allen Posts nur die Eckdaten, der Text erst beim Öffnen der Szene.
+  partial?: boolean;
 }
 
 // Entwurf einer Antwort in einer Szene: hängt unter der Szene, ist aber nur für

@@ -101,6 +101,12 @@ export default function ScenePage({
 
   const scene = scenes.find((s) => s.id === id);
   const posts = scene ? postsOf(scene.id) : [];
+  // Die Texte der Posts kommen erst beim Öffnen der Szene (siehe loadScenePosts)
+  const { loadScenePosts, postsEpoch } = store;
+  useEffect(() => {
+    if (scene?.id) void loadScenePosts(scene.id);
+  }, [scene?.id, postsEpoch, loadScenePosts]);
+  const postsLoading = posts.some((p) => p.partial);
   const turnId = scene ? whoseTurn(scene, posts) : null;
 
   // Sub-Seite: Titel in den Banner-Header, die Daten als Untertitel-Zeile
@@ -132,7 +138,7 @@ export default function ScenePage({
   // Szene als gesehen markieren (setzt das "neu"-Tag zurück) und – falls aus der
   // Post-Suche verlinkt (#post-<id>) – zum passenden Post springen und hervorheben.
   useEffect(() => {
-    if (!scene) return;
+    if (!scene || postsLoading) return;
     store.markSceneSeen(scene.id);
     const params = new URLSearchParams(window.location.search);
     setSearchTerm(params.get("q") ?? "");
@@ -162,7 +168,7 @@ export default function ScenePage({
       }, 320);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scene?.id, posts.length]);
+  }, [scene?.id, posts.length, postsLoading]);
 
   if (!scene) {
     return (
@@ -190,7 +196,7 @@ export default function ScenePage({
   const sceneId = scene.id;
   const participantIds = scene.participant_ids;
 
-  const pages = paginate(posts);
+  const pages = paginate(postsLoading ? [] : posts);
   const safePage = Math.min(page, pages.length - 1);
   const pagePosts = pages[safePage] ?? [];
 
@@ -263,6 +269,8 @@ export default function ScenePage({
           );
         })}
       </div>
+
+      {postsLoading && <p className="py-10 text-center text-[0.875rem] text-text-tertiary">Posts werden geladen …</p>}
 
       {/* Seitennavigation bei langen Szenen */}
       {pages.length > 1 && (
