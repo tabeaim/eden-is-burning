@@ -411,7 +411,7 @@ function SceneHeader({
   closing: boolean;
   setClosing: (v: boolean) => void;
 }) {
-  const { character, updateScene, locationsOf } = useStore();
+  const { character, updateScene, locationsOf, isAdmin } = useStore();
   // Ortsprofil zum Szenen-Ort (falls ein Eintrag existiert) → Ort anklickbar
   const loc = scene.location_name
     ? locationsOf(scene.location_area).find((l) => l.name === scene.location_name)
@@ -509,7 +509,7 @@ function SceneHeader({
         })}
         </div>
 
-        {(isParticipant || canReply) && (
+        {(isParticipant || canReply || isAdmin) && (
           <div className="flex flex-wrap items-center gap-2">
             {/* Antworten, Weitergeben, Beenden: auf dem Handy nur unter den Posts */}
             {canReply && (
@@ -535,7 +535,7 @@ function SceneHeader({
                 <Icon name="check" size={14} /> Beenden
               </button>
             )}
-            {scene.status === "closed" && isParticipant && (
+            {scene.status === "closed" && (isParticipant || isAdmin) && (
               <button
                 onClick={() => updateScene(scene.id, { status: "active" })}
                 className={btn}
@@ -543,7 +543,8 @@ function SceneHeader({
                 <Icon name="flame" size={14} /> Wieder eröffnen
               </button>
             )}
-            {isParticipant && (
+            {/* Bearbeiten: Beteiligte und Admins – auch bei geschlossenen Szenen */}
+            {(isParticipant || isAdmin) && (
               <button onClick={() => setEditing(true)} className={btn}>
                 <Icon name="edit" size={14} /> Bearbeiten
               </button>
@@ -846,7 +847,9 @@ function PostRow({
         />
       )}
       {!editing && (
-        <div className="mb-1 flex justify-end gap-0.5 transition-opacity focus-within:opacity-100 group-hover/post:opacity-100 [@media(hover:hover)]:opacity-0">
+        <div className="mb-1 flex items-center justify-end gap-0.5 transition-opacity focus-within:opacity-100 group-hover/post:opacity-100 [@media(hover:hover)]:opacity-0">
+          {/* wann der Post wirklich geschrieben wurde (nicht das Inplay-Datum) */}
+          <span className="mr-1.5 text-[0.75rem] text-text-tertiary">gepostet {formatDateTime(post.created_at)}</span>
           <button
             onClick={copy}
             title={copied ? "Kopiert" : "Post kopieren (mit Formatierung)"}
