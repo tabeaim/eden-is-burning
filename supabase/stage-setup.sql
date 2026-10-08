@@ -1374,3 +1374,27 @@ update players set username = 'V'
 update players set username = 'envy'
  where lower(username) = 'liz'
    and not exists (select 1 from players where lower(username) = 'envy');
+
+
+-- ## schema-voicemail.sql
+-- Mailbox: nach einem abgelehnten Anruf kann der/die Anrufende eine Nachricht
+-- hinterlassen (textbasiert). Im Supabase SQL-Editor ausführen (Run). Wiederholbar.
+
+alter table calls add column if not exists voicemail text;
+
+
+-- ## schema-location-category.sql
+-- Orte: Kategorie je Ort (home | food | nightlife | outdoor | business | education |
+-- culture | infrastructure | lodging | other – siehe lib/places.ts). Leer heißt:
+-- die App errät die Kategorie aus dem Namen.
+-- Im Supabase SQL-Editor ausführen (Run). Wiederholbar.
+
+alter table locations add column if not exists category text;
+
+
+-- ## schema-scene-format.sql
+-- Szenen: Darstellung der Posts. 'script' = Drehbuch-Format (Regieanweisungen und
+-- Dialog, siehe lib/script.ts); leer = normaler Fließtext.
+-- Im Supabase SQL-Editor ausführen (Run). Wiederholbar.
+
+alter table scenes add column if not exists format text;
