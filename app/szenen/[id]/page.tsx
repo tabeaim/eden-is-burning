@@ -1,5 +1,6 @@
 "use client";
 
+import { useOpenPlace } from "@/components/LocationCategoryPicker";
 import { useMyPhone } from "@/components/phone/PhoneFrame";
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -413,6 +414,7 @@ function SceneHeader({
   const loc = scene.location_name
     ? locationsOf(scene.location_area).find((l) => l.name === scene.location_name)
     : undefined;
+  const openPlace = useOpenPlace();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -554,7 +556,14 @@ function SceneHeader({
           <LocationBubble
             id={loc?.id}
             name={scenePlace(scene)}
-            icon={scene.location_area === PHONE_AREA ? "phone" : "map"}
+            category={loc?.category}
+            icon={scene.location_area === PHONE_AREA ? "phone" : scene.location_name.trim() ? undefined : "map"}
+            // Ort ohne Eintrag (Import): Ortsseite beim Anklicken anlegen
+            onClick={
+              scene.location_area !== PHONE_AREA && scene.location_name.trim()
+                ? () => openPlace(scene.location_area, scene.location_name.trim())
+                : undefined
+            }
           />
         )}
         <span>

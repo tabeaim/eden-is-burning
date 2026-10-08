@@ -301,6 +301,7 @@ export interface Location {
   name: string;
   description: string | null;
   created_at: string;
+  category?: string | null; // Orts-Kategorie (siehe lib/places.ts); leer = aus dem Namen erraten
   // --- Ortsprofil ---
   created_by?: string | null; // Spieler-ID; darf den Ort (neben Admins) bearbeiten
   image_url?: string | null; // eigener Banner (sonst der der Karte)

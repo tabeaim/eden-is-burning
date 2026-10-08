@@ -377,6 +377,7 @@ function NpcFacts({ c }: { c: Character }) {
                   key={l.id}
                   id={l.id}
                   name={l.name}
+                  category={l.category}
                   played={scenes.some(
                     (s) => s.location_area === l.area && s.location_name === l.name,
                   )}

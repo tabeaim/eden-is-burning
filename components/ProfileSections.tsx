@@ -68,7 +68,7 @@ export function ProfileFacts({ c }: { c: Character }) {
       (id ? locations.find((l) => l.id === id) : undefined) ?? locations.find((l) => l.name.toLowerCase() === q);
     if (loc) {
       const played = scenes.some((s) => s.location_area === loc.area && s.location_name === loc.name);
-      return <LocationBubble key={loc.id} id={loc.id} name={loc.name} played={played} />;
+      return <LocationBubble key={loc.id} id={loc.id} name={loc.name} category={loc.category} played={played} />;
     }
     const area = AREA_ORDER.find((k) => AREAS[k].name.toLowerCase() === q);
     if (area) {

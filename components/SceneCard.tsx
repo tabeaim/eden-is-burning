@@ -1,5 +1,7 @@
 "use client";
 
+import { useOpenPlace } from "./LocationCategoryPicker";
+import { PHONE_AREA } from "@/lib/phone";
 import Link from "next/link";
 import { useContextMenu } from "./ContextMenu";
 import { characterImage } from "@/lib/avatar";
@@ -97,15 +99,30 @@ function useLastEntry(scene: Scene) {
 }
 
 // Ort in der Faktenzeile: bleibt reiner Text, führt aber aufs Ortsprofil. Orte
-// ohne eigenen Eintrag (Altbestand) sind nicht anklickbar. Ohne Ortsnamen steht
+// ohne eigenen Eintrag (Altbestand, Import) bekommen ihn beim Anklicken. Ohne Ortsnamen steht
 // die Gegend da; fehlt auch die, entfällt die Angabe samt Trennpunkt.
 function SceneLocation({ scene }: { scene: Scene }) {
   const { locationsOf } = useStore();
+  const openPlace = useOpenPlace();
   const place = scenePlace(scene);
   if (!place) return null;
   const loc = scene.location_name
     ? locationsOf(scene.location_area).find((l) => l.name === scene.location_name)
     : undefined;
+  if (!loc && scene.location_name.trim() && scene.location_area !== PHONE_AREA)
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => openPlace(scene.location_area, scene.location_name.trim())}
+          title="Ortsseite anlegen und öffnen"
+          className="relative z-10 hover:text-accent hover:underline"
+        >
+          {place}
+        </button>
+        {" · "}
+      </>
+    );
   if (!loc)
     return (
       <>

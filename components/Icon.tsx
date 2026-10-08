@@ -43,7 +43,17 @@ type IconName =
   | "more"
   | "bell"
   | "send"
-  | "grid";
+  | "grid"
+  // Orts-Kategorien (siehe lib/places.ts)
+  | "utensils"
+  | "cocktail"
+  | "tree"
+  | "briefcase"
+  | "graduation"
+  | "ticket"
+  | "bus"
+  | "bed"
+  | "pin";
 
 const paths: Record<IconName, React.ReactNode> = {
   dashboard: (
@@ -276,6 +286,62 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16z" />
       <path d="M10 20.5a2 2 0 0 0 4 0" />
+    </>
+  ),
+  utensils: (
+    <>
+      <path d="M7 3v7a2 2 0 0 1-4 0V3M5 3v18" />
+      <path d="M17 21V3c-2.5 1-4 4-4 8h4" />
+    </>
+  ),
+  cocktail: (
+    <>
+      <path d="M4 4h16l-8 9-8-9z" />
+      <path d="M12 13v7M8 20h8" />
+    </>
+  ),
+  tree: (
+    <>
+      <path d="M12 3 6 11h3l-4 6h14l-4-6h3L12 3z" />
+      <path d="M12 17v4" />
+    </>
+  ),
+  briefcase: (
+    <>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18" />
+    </>
+  ),
+  graduation: (
+    <>
+      <path d="m2 9 10-5 10 5-10 5L2 9z" />
+      <path d="M6 11.5V16c1.5 1.5 3.5 2.2 6 2.2s4.5-.7 6-2.2v-4.5M22 9v5" />
+    </>
+  ),
+  ticket: (
+    <>
+      <path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8z" />
+      <path d="M14 6v2.5M14 11v2M14 15.5V18" />
+    </>
+  ),
+  bus: (
+    <>
+      <rect x="4" y="4" width="16" height="13" rx="2.5" />
+      <path d="M4 11h16M7 17v2.5M17 17v2.5" />
+      <circle cx="8" cy="14" r="0.6" />
+      <circle cx="16" cy="14" r="0.6" />
+    </>
+  ),
+  bed: (
+    <>
+      <path d="M3 6v13M3 16h18v3M21 16v-3a3 3 0 0 0-3-3h-7v6" />
+      <circle cx="7" cy="12" r="1.8" />
+    </>
+  ),
+  pin: (
+    <>
+      <path d="M12 21s-6.5-5.6-6.5-10.5a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z" />
+      <circle cx="12" cy="10.5" r="2.2" />
     </>
   ),
   more: (

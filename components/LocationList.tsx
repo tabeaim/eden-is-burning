@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { LocationCategoryPicker } from "./LocationCategoryPicker";
+import { categoryIcon, categoryLabel, categoryOf } from "@/lib/places";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
@@ -166,8 +168,8 @@ export function LocationList() {
     setAreas(areas.includes(v) ? areas.filter((x) => x !== v) : [...areas, v]);
 
   // Neuer Ort → direkt aufs Ortsprofil zum Ausbauen
-  function createLocation(area: string, name: string, description: string) {
-    const id = addLocation(area, name, description || null);
+  function createLocation(area: string, name: string, description: string, category: string | null) {
+    const id = addLocation(area, name, description || null, category);
     setAdding(false);
     if (id) router.push(`/orte/${id}`);
   }
@@ -340,6 +342,12 @@ function LocationCard({ loc, stats }: { loc: Location; stats: Stats }) {
             href={`/orte/${loc.id}`}
             className="after:absolute after:inset-0 after:content-['']"
           >
+            <Icon
+              name={categoryIcon(categoryOf(loc))}
+              size={15}
+              className="mr-1.5 inline-block align-[-2px] text-accent"
+              aria-label={categoryLabel(categoryOf(loc))}
+            />
             {loc.name}
           </Link>
         </h3>
@@ -374,11 +382,12 @@ function NewLocationForm({
 }: {
   initialArea: string;
   onCancel: () => void;
-  onCreate: (area: string, name: string, description: string) => void;
+  onCreate: (area: string, name: string, description: string, category: string | null) => void;
 }) {
   const [name, setName] = useState("");
   const [area, setArea] = useState(initialArea);
   const [desc, setDesc] = useState("");
+  const [category, setCategory] = useState<string | null>(null);
   const ready = !!name.trim() && !!area;
 
   return (
@@ -408,6 +417,12 @@ function NewLocationForm({
           ))}
         </select>
       </label>
+      <div className="text-[0.8125rem] text-text-secondary">
+        Kategorie
+        <div className="mt-1">
+          <LocationCategoryPicker value={category} name={name} onChange={setCategory} />
+        </div>
+      </div>
       <label className="text-[0.8125rem] text-text-secondary">
         Beschreibung <span className="text-text-tertiary">(optional)</span>
         <textarea
@@ -426,7 +441,7 @@ function NewLocationForm({
           Abbrechen
         </button>
         <button
-          onClick={() => ready && onCreate(area, name, desc)}
+          onClick={() => ready && onCreate(area, name, desc, category)}
           disabled={!ready}
           className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-3 py-1.5 disabled:opacity-40"
         >

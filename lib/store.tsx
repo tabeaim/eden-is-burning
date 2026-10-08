@@ -31,6 +31,7 @@ import type {
   Scene,
   SceneQuote,
 } from "./types";
+import { withinHours } from "./format";
 import { supabase, supabaseConfigured } from "./supabase";
 import { rememberPhone } from "./phone";
 import { replaceHandle, requestId } from "./captic";
@@ -118,7 +119,7 @@ interface StoreValue extends PersistedState {
   touchPresence: (playerId: string) => void;
   setLocation: (playerId: string, path: string, label: string) => void;
   // Legt den Ort an (oder findet den bestehenden) und gibt seine ID zurück.
-  addLocation: (area: string, name: string, description?: string | null) => string | null;
+  addLocation: (area: string, name: string, description?: string | null, category?: string | null) => string | null;
   updateLocation: (id: string, patch: Partial<Location>) => void;
   // Löscht den Ort (Szenen behalten ihren Ortsnamen als Text)
   deleteLocation: (id: string) => void;
@@ -1113,7 +1114,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addLocation = useCallback(
-    (area: string, name: string, description: string | null = null) => {
+    (area: string, name: string, description: string | null = null, category: string | null = null) => {
       const trimmed = name.trim();
       if (!trimmed) return null;
       const existing = state.locations.find(
@@ -1141,9 +1142,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         description: description ?? null,
         created_at: new Date().toISOString(),
       };
-      const loc: Location = { ...base, created_by: currentPlayer?.id ?? null };
-      // Fallback ohne created_by, falls schema-locations-profile.sql noch nicht
-      // eingespielt ist – sonst ließen sich keine Orte/Szenen mehr anlegen.
+      const loc: Location = {
+        ...base,
+        created_by: currentPlayer?.id ?? null,
+        ...(category ? { category } : {}),
+      };
+      // Fallback ohne created_by/category, falls schema-locations-profile.sql bzw.
+      // schema-location-category.sql noch nicht eingespielt ist – sonst ließen sich
+      // keine Orte/Szenen mehr anlegen.
       persist(
         "addLocation",
         supabase
@@ -1876,10 +1882,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const mine = new Set(
       state.characters.filter((c) => !c.deleted_at && playsAs(c, currentPlayer.id)).map((c) => c.id),
     );
-    const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const out: { kind: "leave" | "new"; call: PhoneCall }[] = [];
     for (const call of state.calls) {
-      if (call.status !== "declined" || new Date(call.created_at).getTime() < since) continue;
+      if (call.status !== "declined" || !withinHours(call.created_at, 7 * 24)) continue;
       if (!call.voicemail && mine.has(call.caller_id) && !reads[`vm-out:${call.id}`])
         out.push({ kind: "leave", call });
       if (call.voicemail && mine.has(call.callee_id) && !reads[`vm-in:${call.id}`])

@@ -1,5 +1,8 @@
 "use client";
 
+import { LocationCategoryPicker } from "@/components/LocationCategoryPicker";
+import { guessCategory } from "@/lib/places";
+import { PHONE_AREA } from "@/lib/phone";
 import { useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
@@ -80,6 +83,21 @@ export function AdminLocations() {
     .sort((a, b) => areaName(a.area).localeCompare(areaName(b.area), "de") || a.name.localeCompare(b.name, "de"));
   const sceneCount = (l: Location) => scenes.filter((s) => s.location_area === l.area && s.location_name === l.name).length;
 
+  // Szenen-Orte ohne Ortsseite (Import, Altbestand) und Orte ohne feste Kategorie
+  const orphans = [
+    ...new Map(
+      scenes
+        .filter(
+          (s) =>
+            s.location_name.trim() &&
+            s.location_area !== PHONE_AREA &&
+            !locations.some((l) => l.area === s.location_area && l.name === s.location_name),
+        )
+        .map((s) => [`${s.location_area}/${s.location_name}`, s] as const),
+    ).values(),
+  ];
+  const uncategorized = locations.filter((l) => !l.category);
+
   // Gegend wechseln: Szenen an diesem Ort ziehen mit
   function moveTo(l: Location, to: string) {
     for (const s of scenes) if (s.location_area === l.area && s.location_name === l.name) updateScene(s.id, { location_area: to });
@@ -102,6 +120,28 @@ export function AdminLocations() {
         </select>
         <span className={hint}>{list.length} Orte</span>
       </div>
+      {(orphans.length > 0 || uncategorized.length > 0) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {orphans.length > 0 && (
+            <button
+              onClick={() => orphans.forEach((s) => addLocation(s.location_area, s.location_name))}
+              title="Legt für jeden Ort, der nur als Name an einer Szene hängt, eine (leere) Ortsseite an"
+              className={btn}
+            >
+              {orphans.length} fehlende Ortsseiten anlegen
+            </button>
+          )}
+          {uncategorized.length > 0 && (
+            <button
+              onClick={() => uncategorized.forEach((l) => updateLocation(l.id, { category: guessCategory(l.name) }))}
+              title="Trägt bei allen Orten ohne Kategorie die aus dem Namen erratene fest ein (braucht schema-location-category.sql)"
+              className={btn}
+            >
+              {uncategorized.length} Orte nach Namen kategorisieren
+            </button>
+          )}
+        </div>
+      )}
 
       {list.map((l) => (
         <div key={l.id} className={row}>
@@ -140,6 +180,16 @@ export function AdminLocations() {
           </div>
           {details === l.id && (
             <div className="grid gap-3 border-t border-border-subtle p-3 text-[0.8125rem] text-text-secondary">
+              <div>
+                Kategorie
+                <div className="mt-1">
+                  <LocationCategoryPicker
+                    value={l.category ?? null}
+                    name={l.name}
+                    onChange={(category) => updateLocation(l.id, { category })}
+                  />
+                </div>
+              </div>
               <label>
                 Beschreibung
                 <textarea

@@ -11,6 +11,7 @@ import { EdenMap } from "@/components/EdenMap";
 import { LocationList } from "@/components/LocationList";
 import { Icon } from "@/components/Icon";
 import { CharacterBubble, LocationBubble } from "@/components/Bubble";
+import { LocationCategoryPicker, useOpenPlace } from "@/components/LocationCategoryPicker";
 import { SceneRow } from "@/components/SceneCard";
 import { Facts, FactRow } from "@/components/Facts";
 import type { Location } from "@/lib/types";
@@ -124,8 +125,8 @@ function MapView() {
   const extra = EXTRA_AREAS[selected];
 
   // Neuer Ort (unabhängig von einer Szene) → direkt aufs Ortsprofil zum Ausbauen
-  function createLocation(name: string, description: string) {
-    const id = addLocation(selected, name, description || null);
+  function createLocation(name: string, description: string, category: string | null) {
+    const id = addLocation(selected, name, description || null, category);
     setAdding(false);
     if (id) router.push(`/orte/${id}`);
   }
@@ -191,6 +192,7 @@ function MapView() {
                 title="Bespielte Orte"
                 locs={playedLocs}
                 orphans={orphanPlayed}
+                area={selected}
                 played
                 defaultOpen
               />
@@ -288,6 +290,7 @@ function LocationSection({
   title,
   locs,
   orphans = [],
+  area,
   played = false,
   defaultOpen = false,
   onAdd,
@@ -296,11 +299,13 @@ function LocationSection({
   title: string;
   locs: Location[];
   orphans?: string[];
+  area?: string; // Gegend der Orphans – damit sie beim Anklicken eine Ortsseite bekommen
   played?: boolean;
   defaultOpen?: boolean;
   onAdd?: () => void; // zeigt den „+"-Button am Listenende (neuen Ort erstellen)
   adding?: boolean; // Formular offen → „+" in blassem Orange
 }) {
+  const openPlace = useOpenPlace();
   return (
     <AccordionSection title={title} defaultOpen={defaultOpen}>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -312,11 +317,17 @@ function LocationSection({
             name={l.name}
             title={l.description ?? undefined}
             played={played}
+            category={l.category}
           />
         ))}
         {/* Orphans (bespielt, ohne Eintrag) */}
         {orphans.map((n) => (
-          <LocationBubble key={n} name={n} />
+          <LocationBubble
+            key={n}
+            name={n}
+            title="Ortsseite anlegen und öffnen"
+            onClick={area ? () => openPlace(area, n) : undefined}
+          />
         ))}
         {played && locs.length === 0 && orphans.length === 0 && (
           <p className="text-[0.875rem] text-text-tertiary">
@@ -349,10 +360,11 @@ function AddLocationForm({
 }: {
   area: string;
   onCancel: () => void;
-  onCreate: (name: string, description: string) => void;
+  onCreate: (name: string, description: string, category: string | null) => void;
 }) {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
+  const [category, setCategory] = useState<string | null>(null);
   const field =
     "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
@@ -368,6 +380,7 @@ function AddLocationForm({
         className={field}
         autoFocus
       />
+      <LocationCategoryPicker value={category} name={name} onChange={setCategory} />
       <textarea
         value={desc}
         onChange={(e) => setDesc(e.target.value)}
@@ -383,7 +396,7 @@ function AddLocationForm({
           Abbrechen
         </button>
         <button
-          onClick={() => name.trim() && onCreate(name, desc)}
+          onClick={() => name.trim() && onCreate(name, desc, category)}
           disabled={!name.trim()}
           className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-3 py-1.5 disabled:opacity-40"
         >

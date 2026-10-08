@@ -1,5 +1,6 @@
 "use client";
 
+import { LocationCategoryPicker } from "@/components/LocationCategoryPicker";
 import { capFirst, compareInplay } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { BannerPosition } from "@/components/BannerPosition";
@@ -465,6 +466,7 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
   const { theme } = useTheme();
   const [name, setName] = useState(loc.name);
   const [description, setDescription] = useState(loc.description ?? "");
+  const [category, setCategory] = useState<string | null>(loc.category ?? null);
   const [imageUrl, setImageUrl] = useState(loc.image_url ?? "");
   const [images, setImages] = useState<string[]>(loc.images ?? []);
   const [pinterest, setPinterest] = useState(loc.pinterest_url ?? "");
@@ -508,6 +510,8 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
     updateLocation(loc.id, {
       name: trimmed,
       description: description.trim() || null,
+      // nur mitschicken, wenn gewählt/geändert – die Spalte kommt mit schema-location-category.sql
+      ...(category !== (loc.category ?? null) ? { category } : {}),
       image_url: imageUrl || null,
       images,
       pinterest_url: pinterest.trim() || null,
@@ -575,6 +579,13 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
           </span>
         )}
       </label>
+
+      <div className="text-[0.875rem] text-text-secondary">
+        Kategorie
+        <div className="mt-1">
+          <LocationCategoryPicker value={category} name={name} onChange={setCategory} />
+        </div>
+      </div>
 
       <label className="text-[0.875rem] text-text-secondary">
         Beschreibung

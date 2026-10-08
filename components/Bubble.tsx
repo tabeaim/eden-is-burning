@@ -3,6 +3,7 @@ import type { Character } from "@/lib/types";
 import { Icon, type IconName } from "./Icon";
 import { characterImage } from "@/lib/avatar";
 import { isPaused, tierLabel } from "@/lib/characters";
+import { categoryIcon, categoryOf } from "@/lib/places";
 import { GONE_CLASS, PAUSED_CLASS, useCharacterGone } from "@/lib/gone";
 
 // Bubbles – die EINE runde Pill-Form der App (siehe DESIGN.md). Charaktere, NPCs
@@ -18,6 +19,7 @@ const TONES = {
 
 export function Bubble({
   href,
+  onClick,
   tone = "default",
   leading,
   title,
@@ -25,6 +27,7 @@ export function Bubble({
   children,
 }: {
   href?: string;
+  onClick?: () => void;
   tone?: keyof typeof TONES;
   leading?: React.ReactNode; // Avatar oder Icon links
   title?: string;
@@ -40,6 +43,14 @@ export function Bubble({
         {leading}
         {children}
       </Link>
+    );
+  }
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} title={title} className={`${cls} hover:text-text-primary`}>
+        {leading}
+        {children}
+      </button>
     );
   }
   return (
@@ -104,26 +115,33 @@ export function CharacterBubble({
   );
 }
 
-// Ort: Karten-Icon + Name. Mit `id` verlinkt aufs Ortsprofil. Bespielte Orte
-// haben ein oranges Icon, noch unbespielte (`played={false}`) ein blasses graues.
+// Ort: Kategorie-Icon + Name. Mit `id` verlinkt aufs Ortsprofil; mit `onClick`
+// (Ort ohne Eintrag: Ortsseite anlegen und öffnen) wird sie zur Taste. Bespielte
+// Orte haben ein oranges Icon, noch unbespielte (`played={false}`) ein blasses
+// graues. Das Icon zeigt die Kategorie (`category`, sonst aus dem Namen erraten).
 export function LocationBubble({
   name,
   id,
   title,
   played = true,
-  icon = "map",
+  icon,
+  category,
+  onClick,
   className,
 }: {
   name: string;
   id?: string;
   title?: string;
   played?: boolean;
-  icon?: IconName; // Telefonszenen: "phone"
+  icon?: IconName; // fest vorgegeben, z.B. Telefonszenen: "phone"
+  category?: string | null;
+  onClick?: () => void;
   className?: string;
 }) {
   return (
     <Bubble
       href={id ? `/orte/${id}` : undefined}
+      onClick={id ? undefined : onClick}
       title={title}
       className={className}
       leading={
@@ -132,7 +150,7 @@ export function LocationBubble({
             played ? "text-accent" : "text-text-tertiary opacity-45"
           }`}
         >
-          <Icon name={icon} size={13} />
+          <Icon name={icon ?? categoryIcon(categoryOf({ name, category }))} size={13} />
         </span>
       }
     >
