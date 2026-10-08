@@ -380,6 +380,8 @@ function Sidebar({
     unreadChatCount,
     incomingCalls,
     capticUnread,
+    capticAlerts,
+    mailboxAlerts,
     scenes,
     isSceneNew,
     myNpcs,
@@ -406,7 +408,13 @@ function Sidebar({
     "/dashboard":
       newScenes.filter((s) =>
         s.participant_ids.some((id) => myIds.has(id) || (myNpcIds.has(id) && isSubscribed(s.id))),
-      ).length + phoneBadge,
+      ).length +
+      // wie die Hinweise auf dem Dashboard: Captic nur, bis man die Aktivitäten
+      // geöffnet hat (am Handy bleibt der Zähler, bis alles gelesen ist)
+      unreadChatCount +
+      incomingCalls.length +
+      mailboxAlerts.length +
+      capticAlerts.reduce((n, a) => n + a.count, 0),
     "/handy": phoneBadge,
   };
   const [charsOpen, setCharsOpen] = useState(false);
