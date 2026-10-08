@@ -14,6 +14,7 @@ import { useSetPageMeta } from "@/lib/page-meta";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { Facts, FactRow } from "@/components/Facts";
 import { Icon } from "@/components/Icon";
+import { RichText } from "@/components/RichText";
 import { SceneFilterList } from "@/components/SceneFilterList";
 import {
   ProfileLikes,
@@ -105,7 +106,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
         {prof.quote && (
           <p className="text-left text-[1.125rem] leading-snug text-text-primary">
             <span className="mr-1.5 text-[2.125rem] leading-none text-accent">„</span>
-            {prof.quote}
+            <RichText inline html={prof.quote} />
           </p>
         )}
       </div>
@@ -114,7 +115,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
 
       <div className="grid items-start gap-x-10 gap-y-6 md:grid-cols-[minmax(0,1fr)_minmax(22rem,1fr)]">
         {p.bio ? (
-          <p className="max-w-2xl whitespace-pre-wrap text-[0.875rem] leading-relaxed text-text-secondary">{p.bio}</p>
+          <RichText html={p.bio} className="max-w-2xl text-[0.875rem] leading-relaxed text-text-secondary" />
         ) : (
           <p className="text-[0.875rem] text-text-tertiary">Noch keine Beschreibung.</p>
         )}

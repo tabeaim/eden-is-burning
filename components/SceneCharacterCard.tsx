@@ -3,6 +3,7 @@
 import { capFirst } from "@/lib/format";
 import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
+import { RichText } from "./RichText";
 import type { Character, Player } from "@/lib/types";
 import { ageAt } from "@/lib/characters";
 import { GONE_CLASS, GONE_PLAYER_CLASS, useCharacterGone } from "@/lib/gone";
@@ -93,7 +94,7 @@ export function SceneCharacterCard({
                   <div className="mb-2 text-[0.875rem] font-semibold uppercase tracking-wider text-text-primary">
                     {[capFirst(character.role), age != null ? `${age}` : null].filter(Boolean).join(" · ")}
                   </div>
-                  <p className="text-[0.875rem] leading-relaxed text-text-primary/90">{character.bio}</p>
+                  <RichText html={character.bio} className="text-[0.875rem] leading-relaxed text-text-primary/90" />
                 </div>
               </div>
             )}

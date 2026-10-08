@@ -246,6 +246,11 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Einstellungen → Meine Charaktere): Text und/oder Bild am Ende jedes Posts des
   Charakters, sonst nirgends. Der Text darf HTML enthalten; angezeigt wird er
   immer über `SignatureText` (entschärft durch `signatureHtml`, lib/html.ts).
+- **Freie Profiltexte** (Kurzbeschreibung, About, Looks-Beschreibung, Zitat,
+  Timeline-Text, Relations-Erläuterung; bei Spieler*innen Zitat und
+  Beschreibung) dürfen ebenfalls HTML enthalten. Angezeigt werden sie immer über
+  `RichText` (gleicher Filter wie die Signatur) – auch die Hover-Bio in
+  Charakterliste und Szene. Nie roh als `{c.bio}` ausgeben.
 - **Geburtsdatum nachtragen:** Hat ein (importierter) Charakter nur eine
   Alterszahl (`needsBirthdate`), klappen die Grunddaten „Identität" auf, das
   Feld ist orange markiert und bittet um ein Geburtsdatum; das Alter bleibt bis

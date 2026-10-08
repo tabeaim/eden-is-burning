@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Bubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
 import { Icon } from "@/components/Icon";
+import { RichText } from "@/components/RichText";
 import type { Character, Player } from "@/lib/types";
 
 // Main Characters · Supporting Characters · Statist*innen (für alle: bearbeiten,
@@ -260,7 +261,7 @@ function CharacterCard({
                 <div className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-wider text-text-primary">
                   {[capFirst(c.role), c.age ? `${c.age}` : null].filter(Boolean).join(" · ")}
                 </div>
-                <p className="text-[0.8125rem] leading-relaxed text-text-primary/90">{c.bio}</p>
+                <RichText html={c.bio} className="text-[0.8125rem] leading-relaxed text-text-primary/90" />
               </div>
             </div>
           )}

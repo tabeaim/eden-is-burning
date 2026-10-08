@@ -28,6 +28,7 @@ import { hasPhone } from "@/lib/phone";
 import { PhonePreview } from "@/components/phone/PhonePreview";
 import { StatistActions } from "@/components/StatistActions";
 import { ProfileEditPanel } from "@/components/ProfileEditPanel";
+import { RichText } from "@/components/RichText";
 import {
   ProfileFacts,
   ProfileFamilyTree,
@@ -211,7 +212,7 @@ export default function CharacterPage({
       {topTab === "general" && (
         <div className={SPLIT}>
           {c.bio ? (
-            <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary">{c.bio}</p>
+            <RichText html={c.bio} className="text-left text-[0.875rem] leading-relaxed text-text-secondary" />
           ) : (
             <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
           )}
@@ -402,7 +403,7 @@ function QuoteBlock({ c }: { c: Character }) {
   return (
     <p className="text-left text-[1.125rem] leading-snug text-text-primary">
       <span className="mr-1.5 text-[2.125rem] leading-none text-accent">„</span>
-      {c.quote}
+      <RichText inline html={c.quote} />
     </p>
   );
 }
@@ -473,9 +474,10 @@ function CharacterTab({ c }: { c: Character }) {
       {c.personality && (
         <section className="lg:col-span-2">
           <Heading>about.</Heading>
-          <p className="whitespace-pre-wrap text-left text-[0.875rem] leading-relaxed text-text-secondary">
-            {c.personality}
-          </p>
+          <RichText
+            html={c.personality}
+            className="text-left text-[0.875rem] leading-relaxed text-text-secondary"
+          />
         </section>
       )}
       <ProfileTraits c={c} />
@@ -744,9 +746,11 @@ function RelationRow({
           </div>
         </div>
       ) : (
-        <p className="mt-2 text-[0.875rem] text-text-secondary leading-relaxed">
-          {rel.note || <span className="text-text-tertiary">Noch keine Beschreibung.</span>}
-        </p>
+        rel.note ? (
+          <RichText html={rel.note} className="mt-2 text-[0.875rem] text-text-secondary leading-relaxed" />
+        ) : (
+          <p className="mt-2 text-[0.875rem] leading-relaxed text-text-tertiary">Noch keine Beschreibung.</p>
+        )
       )}
       </div>
     </div>

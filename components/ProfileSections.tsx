@@ -22,6 +22,7 @@ import { DEFAULT_AVATAR, characterImage } from "@/lib/avatar";
 import { Facts, FactRow } from "./Facts";
 import { Bubble, LocationBubble } from "./Bubble";
 import { Icon } from "./Icon";
+import { RichText } from "./RichText";
 
 // Bausteine des Charakterprofils (siehe DESIGN.md): Facts mit englischen Labels,
 // dazu die frei gestaltbaren Abschnitte Skills, Eigenschaften, Slider,
@@ -184,7 +185,7 @@ export function ProfileLooks({ c }: { c: Character }) {
   if (!rows.some(([, v]) => v) && !note) return null;
   return (
     <FactBox title="looks.">
-      {note && <p className="mb-2 whitespace-pre-wrap text-[0.875rem] leading-relaxed text-text-secondary">{note}</p>}
+      {note && <RichText html={note} className="mb-2 text-[0.875rem] leading-relaxed text-text-secondary" />}
       <Facts>
         {rows.map(([label, value]) => (
           <FactRow key={label} label={label} value={value} />
@@ -327,7 +328,7 @@ export function ProfileTimeline({ c, bare = false }: { c: Character; bare?: bool
               </div>
             )}
             {t.text && (
-              <p className="mt-2 whitespace-pre-wrap text-[0.875rem] leading-relaxed text-text-secondary">{t.text}</p>
+              <RichText html={t.text} className="mt-2 text-[0.875rem] leading-relaxed text-text-secondary" />
             )}
           </li>
         ))}
