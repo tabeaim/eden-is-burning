@@ -253,9 +253,6 @@ export function LocationList() {
             Filter zurücksetzen ({activeFilters})
           </button>
         )}
-        <span className="ml-auto text-[0.875rem] uppercase tracking-wider text-text-tertiary">
-          Sortieren
-        </span>
         <select
           value={sortKey}
           onChange={(e) => {
@@ -264,7 +261,8 @@ export function LocationList() {
             // Namen von A an, alles andere mit dem Größten/Neuesten zuerst
             setSortDir(k === "name" ? "asc" : "desc");
           }}
-          className="bg-bg-primary border border-border-subtle rounded-md px-2.5 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+          aria-label="Sortieren nach"
+          className="ml-auto bg-bg-primary border border-border-subtle rounded-md px-2.5 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
         >
           {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
             <option key={k} value={k} className="bg-bg-surface">

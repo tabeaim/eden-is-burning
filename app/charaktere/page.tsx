@@ -146,9 +146,6 @@ export default function CharaktereePage() {
           />
         </div>
         <div className="ml-auto flex items-center gap-1.5">
-          <span className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
-            Sortieren
-          </span>
           <select
             value={sortKey}
             onChange={(e) => {
