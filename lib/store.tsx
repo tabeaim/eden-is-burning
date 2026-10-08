@@ -2151,7 +2151,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const after = (iso: string, mark: string | undefined) =>
       !mark || new Date(iso).getTime() > new Date(mark).getTime();
     for (const e of state.capticEvents) {
-      if (!mine.has(e.target_id) || mine.has(e.actor_id)) continue;
+      // Aktionen der eigenen Charaktere untereinander zählen nicht – außer
+      // Follow-Anfragen: die muss der angefragte Charakter beantworten
+      if (!mine.has(e.target_id) || (mine.has(e.actor_id) && e.kind !== "request")) continue;
       // gelesen: einzeln angeklickt oder vor dem letzten „Alle gelesen"
       if (!after(e.created_at, reads[`captic:${e.target_id}`]) || !after(e.created_at, reads[e.id])) continue;
       out.set(e.target_id, [...(out.get(e.target_id) ?? []), e]);

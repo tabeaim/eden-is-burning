@@ -4,7 +4,7 @@ import type { Character } from "@/lib/types";
 import type { ScriptLine } from "@/lib/script";
 import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
-import { contactShortName } from "@/lib/phone";
+import { PHONE_AREA, contactShortName } from "@/lib/phone";
 import { ContactAvatar, useMyPhone } from "./phone/PhoneFrame";
 import { CharacterSelect } from "./CharacterSelect";
 import { Icon } from "./Icon";
@@ -26,11 +26,14 @@ export function useSpeaker(viewer: Character | undefined) {
 }
 
 // Aus wessen Sicht ich die Szene lese: mein Charakter in der Szene (bei mehreren
-// der, dessen Handy gerade gewählt ist). Ohne eigenen Charakter: niemand.
+// der, dessen Handy gerade gewählt ist). Nur am Telefon – dort sieht man, wie
+// das Gegenüber im eigenen Handy steht. In Szenen mit Ort (und ohne eigenen
+// Charakter) niemand: dann stehen Vornamen und normale Profilbilder da.
 export function useScriptViewer(sceneId: string): Character | undefined {
   const { scenes } = useStore();
   const { myChars, stored } = useMyPhone();
-  const ids = scenes.find((s) => s.id === sceneId)?.participant_ids ?? [];
+  const scene = scenes.find((s) => s.id === sceneId);
+  const ids = scene?.location_area === PHONE_AREA ? scene.participant_ids : [];
   const here = myChars.filter((c) => ids.includes(c.id));
   return here.find((c) => c.id === stored) ?? here[0];
 }
@@ -96,6 +99,13 @@ export function ScriptEditor({
   const { npcs } = useStore();
   const set = (i: number, patch: Partial<ScriptLine>) =>
     onChange(lines.map((l, j) => (j === i ? ({ ...l, ...patch } as ScriptLine) : l)));
+  const move = (i: number, by: -1 | 1) => {
+    const next = [...lines];
+    [next[i], next[i + by]] = [next[i + by], next[i]];
+    onChange(next);
+  };
+  const moveBtn =
+    "rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-text-primary disabled:opacity-30 disabled:hover:bg-transparent";
   const listed = self && !mine.some((c) => c.id === self.id) ? [self, ...mine] : mine;
 
   return (
@@ -142,12 +152,35 @@ export function ScriptEditor({
                   )}
                 </>
               ))}
+            {/* Reihenfolge: Zeile nach oben / unten schieben */}
+            <span className="ml-auto flex items-center">
+              <button
+                type="button"
+                disabled={i === 0}
+                onClick={() => move(i, -1)}
+                title="Nach oben"
+                aria-label="Zeile nach oben"
+                className={moveBtn}
+              >
+                <Icon name="chevron-right" size={14} className="-rotate-90" />
+              </button>
+              <button
+                type="button"
+                disabled={i === lines.length - 1}
+                onClick={() => move(i, 1)}
+                title="Nach unten"
+                aria-label="Zeile nach unten"
+                className={moveBtn}
+              >
+                <Icon name="chevron-right" size={14} className="rotate-90" />
+              </button>
+            </span>
             <button
               type="button"
               onClick={() => onChange(lines.filter((_, j) => j !== i))}
               title="Zeile entfernen"
               aria-label="Zeile entfernen"
-              className="ml-auto rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-red-400"
+              className="rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-red-400"
             >
               <Icon name="trash" size={13} />
             </button>

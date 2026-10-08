@@ -876,7 +876,8 @@ function PostRow({
         </div>
       )}
       <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start">
-        {card}
+        {/* Drehbuch-Format: nur die Zeilen, ohne die große Charakter-Karte */}
+        {!script && card}
         {prose}
       </div>
     </div>
@@ -979,7 +980,7 @@ function DraftRow({
         </div>
       </div>
       <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start">
-        <SceneCharacterCard character={c} player={player(c.player_id)} at={scene.inplay_date} />
+        {!script && <SceneCharacterCard character={c} player={player(c.player_id)} at={scene.inplay_date} />}
         {script ? (
           <div className="post-box min-w-0 flex-1">
             <ScriptView lines={script} viewer={viewer} />
@@ -1072,10 +1073,12 @@ function ReplyBox({
             Vorschau
           </div>
           <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start">
-            <SceneCharacterCard
-              character={activeChar}
-              player={player(activeChar.player_id)}
-            />
+            {!script && (
+              <SceneCharacterCard
+                character={activeChar}
+                player={player(activeChar.player_id)}
+              />
+            )}
             {script ? (
               <div className="min-w-0 flex-1">
                 <ScriptView lines={parseScript(preview) ?? []} viewer={viewer} />

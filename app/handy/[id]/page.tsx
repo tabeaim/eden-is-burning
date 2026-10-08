@@ -247,6 +247,16 @@ function ChatView({ chat }: { chat: Chat }) {
   // Trenner entfernen (die Nachrichten rücken zum Tag davor bzw. danach)
   const [dayMenu, setDayMenu] = useState<string | null>(null);
   const [dayEdit, setDayEdit] = useState<string | null>(null);
+  // Trenner nachträglich setzen (Rechtsklick zwischen zwei Nachrichten oder im Menü
+  // einer Nachricht): ab dieser Nachricht bis zum nächsten Trenner gilt ein neuer Tag
+  const [splitAt, setSplitAt] = useState<string | null>(null);
+  const idsFrom = (id: string) => {
+    const i = messages.findIndex((m) => m.id === id);
+    if (i < 0) return [];
+    let j = i;
+    while (j + 1 < messages.length && messages[j + 1].day === messages[i].day) j++;
+    return messages.slice(i, j + 1).map((m) => m.id);
+  };
   const idsOfDay = (d: string) => messages.filter((m) => m.day === d).map((m) => m.id);
   // Nachrichten auf einen anderen Tag legen. Das Datum einer Szene folgt ihrer
   // frühesten Nachricht – sonst stünde sie in der Timeline am alten Tag.
@@ -586,6 +596,17 @@ function ChatView({ chat }: { chat: Chat }) {
                 </button>
               </div>
             )}
+            {/* Zwischenraum: Rechtsklick setzt hier einen Trenner */}
+            {canEdit && prev && !newDay && (
+              <div
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setSplitAt(m.id);
+                }}
+                title="Rechtsklick: Trenner hier einfügen"
+                className="relative z-[1] -my-1 h-2.5"
+              />
+            )}
             <div
               id={m.id}
               className={`relative flex flex-col rounded-xl transition-colors duration-700 ${
@@ -894,6 +915,16 @@ function ChatView({ chat }: { chat: Chat }) {
                   Antworten
                 </SheetButton>
               )}
+              {canEdit && active.kind !== "date" && messages[0]?.id !== active.id && (
+                <SheetButton
+                  onClick={() => {
+                    setSplitAt(active.id);
+                    closeSheet();
+                  }}
+                >
+                  Trenner davor setzen
+                </SheetButton>
+              )}
               {canEdit && (
                 <SheetButton
                   onClick={() => {
@@ -1096,6 +1127,18 @@ function ChatView({ chat }: { chat: Chat }) {
           onSave={(date) => {
             moveMessages(idsOfDay(dayEdit), date);
             setDayEdit(null);
+          }}
+        />
+      )}
+
+      {splitAt && (
+        <DateSheet
+          initial={messages.find((m) => m.id === splitAt)?.day ?? ""}
+          hint={`Setzt hier einen Trenner: Die ${idsFrom(splitAt).length} Nachrichten ab hier (bis zum nächsten Trenner) bekommen den gewählten Tag.`}
+          onCancel={() => setSplitAt(null)}
+          onSave={(date) => {
+            moveMessages(idsFrom(splitAt), date);
+            setSplitAt(null);
           }}
         />
       )}
@@ -1582,35 +1625,42 @@ function EditSheet({
   );
 }
 
-// Sprachnachricht (textbasiert): Play-Symbol, Wellenform und geschätzte Dauer;
-// „Text" klappt das Gesprochene auf. Die Farbe kommt von der Blase.
+// Sprachnachricht (textbasiert): Play-Symbol, Wellenform und geschätzte Dauer.
+// Ein Tipp aufs Play-Symbol klappt das Gesprochene auf (das Symbol dreht sich wie
+// ein Akkordeon-Pfeil). Die Farbe kommt von der Blase.
 function VoiceMessage({ id, text }: { id: string; text: string }) {
   const [open, setOpen] = useState(false);
   // Wellenform: je Nachricht gleichbleibend aus der ID abgeleitet
-  const bars = Array.from({ length: 22 }, (_, i) => 4 + ((id.charCodeAt(i % id.length) * (i + 3)) % 14));
+  const bars = Array.from({ length: 30 }, (_, i) => 4 + ((id.charCodeAt(i % id.length) * (i + 3)) % 14));
   return (
-    <span className="block min-w-[11.5rem]">
-      <span className="flex items-center gap-2">
-        <Icon name="play" size={16} fill="currentColor" />
-        <span className="flex h-[18px] flex-1 items-center gap-[2px]" aria-hidden>
+    <span className="block min-w-[12.5rem]">
+      <span className="flex items-center gap-2.5">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((v) => !v);
+          }}
+          aria-expanded={open}
+          aria-label={open ? "Text einklappen" : "Sprachnachricht abspielen (Text ausklappen)"}
+          className="-m-1 shrink-0 p-1"
+        >
+          <Icon
+            name="play"
+            size={16}
+            fill="currentColor"
+            className={`transition-transform ${open ? "rotate-90" : ""}`}
+          />
+        </button>
+        {/* reicht immer bis zur Dauer, auch wenn die Blase aufgeklappt breiter ist */}
+        <span className="flex h-[18px] min-w-0 flex-1 items-center justify-between" aria-hidden>
           {bars.map((h, i) => (
             <span key={i} style={{ height: h }} className="w-[2px] rounded-full bg-current opacity-60" />
           ))}
         </span>
-        <span className="text-[0.75rem] tabular-nums opacity-70">{voiceDuration(text)}</span>
+        <span className="shrink-0 text-[0.75rem] tabular-nums opacity-70">{voiceDuration(text)}</span>
       </span>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen((v) => !v);
-        }}
-        aria-expanded={open}
-        className="mt-1 text-[0.75rem] font-semibold underline opacity-70 hover:opacity-100"
-      >
-        {open ? "Text einklappen" : "Text ausklappen"}
-      </button>
-      {open && <span className="mt-1 block whitespace-pre-wrap break-words">{text}</span>}
+      {open && <span className="mt-1.5 block whitespace-pre-wrap break-words">{text}</span>}
     </span>
   );
 }
