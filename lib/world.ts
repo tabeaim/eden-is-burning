@@ -186,8 +186,44 @@ export const EXTRA_AREAS: Record<string, { name: string; character: string }> = 
 // Alle Bereiche, in denen Orte liegen und Szenen spielen können (für Selects)
 export const PLACE_AREAS: string[] = [...AREA_ORDER, ...Object.keys(EXTRA_AREAS)];
 
+// Texte eines Bezirks, wie sie Admins überschreiben können (Einstellungen → Admin →
+// Bezirke). Leere Angaben bei Preislevel/Bewohner*innen blenden die Zeile aus.
+export interface AreaTexts {
+  name: string;
+  character: string;
+  priceLevel: string;
+  residents: string;
+}
+
+// Von Admins geänderte Texte (aus den App-Einstellungen; der Store trägt sie hier
+// ein, damit `areaName`/`areaInfo` überall ohne Umweg gelten)
+let custom: Record<string, Partial<AreaTexts>> = {};
+export function setAreaTexts(next: Record<string, Partial<AreaTexts>> | null | undefined) {
+  custom = next ?? {};
+}
+
+/** Fest eingetragene Texte eines Bezirks (ohne Änderungen der Admins). */
+export function areaDefaults(key: string): AreaTexts | null {
+  const a = AREAS[key as AreaKey];
+  const dash = (v: string) => (v === "–" ? "" : v);
+  if (a) return { name: a.name, character: a.character, priceLevel: dash(a.priceLevel), residents: dash(a.residents) };
+  const e = EXTRA_AREAS[key];
+  return e ? { name: e.name, character: e.character, priceLevel: "", residents: "" } : null;
+}
+
+/** Aktuelle Texte eines Bezirks: Änderungen der Admins über den festen Angaben. */
+export function areaInfo(key: string): AreaTexts | null {
+  const base = areaDefaults(key);
+  return base ? { ...base, ...custom[key] } : null;
+}
+
+/** Von Admins vergebener Name, falls er vom festen abweicht (für die Karte). */
+export function customAreaName(key: string): string | null {
+  return custom[key]?.name ?? null;
+}
+
 export function areaName(key: string): string {
-  return AREAS[key as AreaKey]?.name ?? EXTRA_AREAS[key]?.name ?? key;
+  return areaInfo(key)?.name ?? key;
 }
 
 /**

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
-import { AREAS, EXTRA_AREAS, areaImage, areaName, type AreaKey } from "@/lib/world";
+import { areaImage, areaInfo, areaName } from "@/lib/world";
 import { bannerStyle } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
 import { EdenMap } from "@/components/EdenMap";
@@ -91,7 +91,7 @@ function MapView() {
   // Link auf eine Gegend (z.B. vom Arbeitsplatz im Charakterprofil): /orte?area=byron
   useEffect(() => {
     const area = new URLSearchParams(window.location.search).get("area");
-    if (area && (area in AREAS || area in EXTRA_AREAS)) setSelected(area);
+    if (area && areaInfo(area)) setSelected(area);
   }, []);
 
   const areaStats = useMemo(() => {
@@ -121,8 +121,7 @@ function MapView() {
     (n) => !locations.some((l) => l.name === n),
   );
 
-  const info = AREAS[selected as AreaKey];
-  const extra = EXTRA_AREAS[selected];
+  const info = areaInfo(selected);
 
   // Neuer Ort (unabhängig von einer Szene) → direkt aufs Ortsprofil zum Ausbauen
   function createLocation(name: string, description: string, category: string | null) {
@@ -143,7 +142,7 @@ function MapView() {
 
         {/* Detail-Panel */}
         <div className="relative z-10 w-full lg:w-[410px] lg:shrink-0 lg:ml-auto rounded-xl border border-border-subtle bg-bg-surface/95 backdrop-blur-sm panel-shadow min-h-[320px] overflow-hidden">
-          {info || extra ? (
+          {info ? (
             <>
               {/* Titelbild-Banner mit Namen */}
               <div className="relative h-32 w-full bg-bg-surface-2">
@@ -153,25 +152,21 @@ function MapView() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-bg-surface via-bg-surface/30 to-transparent" />
                 <h2 className="absolute bottom-3 left-5 right-5 font-display lowercase text-[1.875rem] text-text-primary">
-                  {info?.name ?? extra?.name}
+                  {info.name}
                 </h2>
               </div>
 
               <div className="p-5">
               {/* Kurzbeschreibung */}
               <p className="text-[0.875rem] text-text-secondary leading-relaxed">
-                {info?.character ?? extra?.character}
+                {info.character}
               </p>
 
               {/* Steckbrief */}
-              {info && (info.priceLevel !== "–" || info.residents !== "–") && (
+              {(info.priceLevel || info.residents) && (
                 <Facts className="mt-4">
-                  {info.priceLevel !== "–" && (
-                    <FactRow label="Preislevel" value={info.priceLevel} />
-                  )}
-                  {info.residents !== "–" && (
-                    <FactRow label="Hier wohnen" value={info.residents} />
-                  )}
+                  {info.priceLevel && <FactRow label="Preislevel" value={info.priceLevel} />}
+                  {info.residents && <FactRow label="Hier wohnen" value={info.residents} />}
                 </Facts>
               )}
 

@@ -15,7 +15,7 @@ import {
   webUrl,
   zodiacOf,
 } from "@/lib/characters";
-import { AREA_ORDER, AREAS, areaName } from "@/lib/world";
+import { AREA_ORDER, areaName } from "@/lib/world";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { DEFAULT_AVATAR, characterImage } from "@/lib/avatar";
@@ -70,7 +70,7 @@ export function ProfileFacts({ c }: { c: Character }) {
       const played = scenes.some((s) => s.location_area === loc.area && s.location_name === loc.name);
       return <LocationBubble key={loc.id} id={loc.id} name={loc.name} category={loc.category} played={played} />;
     }
-    const area = AREA_ORDER.find((k) => AREAS[k].name.toLowerCase() === q);
+    const area = AREA_ORDER.find((k) => areaName(k).toLowerCase() === q);
     if (area) {
       return (
         <Bubble
@@ -82,7 +82,7 @@ export function ProfileFacts({ c }: { c: Character }) {
             </span>
           }
         >
-          {AREAS[area].name}
+          {areaName(area)}
         </Bubble>
       );
     }

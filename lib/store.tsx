@@ -33,6 +33,7 @@ import type {
 } from "./types";
 import { withinHours } from "./format";
 import { setDefaultAvatars } from "./avatar";
+import { setAreaTexts } from "./world";
 import { supabase, supabaseConfigured } from "./supabase";
 import { rememberPhone } from "./phone";
 import { replaceHandle, requestId } from "./captic";
@@ -403,6 +404,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [appSettings, setAppSettings] = useState<AppSettings>({});
   // Standard-Avatare gelten überall, wo `characterImage`/`playerImage` rechnen
   setDefaultAvatars(appSettings.defaultAvatars);
+  // ebenso die von Admins geänderten Bezirks-Texte (`areaName`/`areaInfo`)
+  setAreaTexts(appSettings.areas);
   // Lese-Status pro Szene (wann zuletzt geöffnet). Eine Szene gilt als "neu",
   // wenn ihr jüngster Post neuer ist als der letzte Besuch (oder nie geöffnet).
   const [reads, setReads] = useState<Record<string, string>>({});

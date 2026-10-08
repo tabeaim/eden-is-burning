@@ -195,9 +195,9 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
   const placeSuggestions = (value: string | null | undefined) => {
     const q = (value ?? "").trim().toLowerCase();
     return [
-      ...AREA_ORDER.filter((k) => !q || AREAS[k].name.toLowerCase().includes(q)).map((k) => ({
+      ...AREA_ORDER.filter((k) => !q || areaName(k).toLowerCase().includes(q)).map((k) => ({
         key: `area:${k}`,
-        label: AREAS[k].name,
+        label: areaName(k),
         hint: "Gegend",
       })),
       ...places
@@ -209,7 +209,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
   const pickPlace = (key: string): { name: string; id: string | null } | null => {
     if (key.startsWith("area:")) {
       const k = key.slice(5) as (typeof AREA_ORDER)[number];
-      return AREAS[k] ? { name: AREAS[k].name, id: null } : null;
+      return AREAS[k] ? { name: areaName(k), id: null } : null;
     }
     const l = places.find((x) => x.id === key);
     return l ? { name: l.name, id: l.id } : null;
@@ -369,7 +369,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
               )}
               {AREA_ORDER.map((k) => (
                 <option key={k} value={k} className="bg-bg-surface">
-                  {AREAS[k].name}
+                  {areaName(k)}
                 </option>
               ))}
             </select>

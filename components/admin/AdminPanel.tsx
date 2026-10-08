@@ -4,6 +4,7 @@ import { useStore } from "@/lib/store";
 import { tierOf } from "@/lib/characters";
 import { Collapsible } from "../Collapsible";
 import { AdminApps } from "./AdminApps";
+import { AdminAreas } from "./AdminAreas";
 import { AdminCharacters } from "./AdminCharacters";
 import { AdminDesign } from "./AdminDesign";
 import { AdminPlayers } from "./AdminPlayers";
@@ -46,6 +47,9 @@ export function AdminPanel() {
       </Collapsible>
       <Collapsible title="Statist*innen">
         <AdminCharacters tier="extra" />
+      </Collapsible>
+      <Collapsible title="Bezirke">
+        <AdminAreas />
       </Collapsible>
       <Collapsible title="Orte">
         <AdminLocations />

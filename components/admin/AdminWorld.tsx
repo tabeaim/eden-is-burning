@@ -6,7 +6,7 @@ import { PHONE_AREA } from "@/lib/phone";
 import { useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
-import { AREA_ORDER, AREAS, EXTRA_AREAS, areaName } from "@/lib/world";
+import { PLACE_AREAS, areaName } from "@/lib/world";
 import { TIER_NAMES, tierOf } from "@/lib/characters";
 import { characterImage } from "@/lib/avatar";
 import { formatInplayDate } from "@/lib/format";
@@ -63,10 +63,8 @@ function CommitInput({
   );
 }
 
-const AREA_OPTIONS: [string, string][] = [
-  ...AREA_ORDER.map((k) => [k, AREAS[k].name] as [string, string]),
-  ...Object.entries(EXTRA_AREAS).map(([k, v]) => [k, v.name] as [string, string]),
-];
+// Erst beim Zeichnen bilden: Die Namen können Admins ändern (Admin → Bezirke)
+const areaOptions = (): [string, string][] => PLACE_AREAS.map((k) => [k, areaName(k)]);
 
 // --- Orte --------------------------------------------------------------------
 export function AdminLocations() {
@@ -113,7 +111,7 @@ export function AdminLocations() {
           <option value="" className="bg-bg-surface">
             Alle Gegenden
           </option>
-          {AREA_OPTIONS.map(([k, n]) => (
+          {areaOptions().map(([k, n]) => (
             <option key={k} value={k} className="bg-bg-surface">
               {n}
             </option>
@@ -154,8 +152,8 @@ export function AdminLocations() {
               aria-label="Gegend"
               className={`${field} col-start-1 sm:col-start-auto`}
             >
-              {!AREA_OPTIONS.some(([k]) => k === l.area) && <option value={l.area}>{areaName(l.area)}</option>}
-              {AREA_OPTIONS.map(([k, n]) => (
+              {!areaOptions().some(([k]) => k === l.area) && <option value={l.area}>{areaName(l.area)}</option>}
+              {areaOptions().map(([k, n]) => (
                 <option key={k} value={k} className="bg-bg-surface">
                   {n}
                 </option>
@@ -222,7 +220,7 @@ export function AdminLocations() {
           <input value={newName} onChange={(e) => setNewName(e.target.value)} className={`mt-1 ${field}`} />
         </label>
         <select value={newArea} onChange={(e) => setNewArea(e.target.value)} aria-label="Gegend" className={`${field} w-auto`}>
-          {AREA_OPTIONS.map(([k, n]) => (
+          {areaOptions().map(([k, n]) => (
             <option key={k} value={k} className="bg-bg-surface">
               {n}
             </option>

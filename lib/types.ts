@@ -510,4 +510,7 @@ export interface AppSettings {
   // Standardbilder für Charaktere bzw. Spieler*innen ohne eigenes Bild (sonst die
   // anonyme Silhouette, siehe lib/avatar.ts)
   defaultAvatars?: { character?: string | null; player?: string | null };
+  // Geänderte Texte der Bezirke (AreaKey bzw. „rest"/„industrial"/„eden" -> nur die
+  // abweichenden Felder; sonst gelten die festen Angaben aus lib/world.ts)
+  areas?: Record<string, { name?: string; character?: string; priceLevel?: string; residents?: string }>;
 }

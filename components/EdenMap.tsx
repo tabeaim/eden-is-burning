@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { customAreaName } from "@/lib/world";
 
 // Statische SVG-Karte von Eden, Virginia – 1:1 aus der aktualisierten Figma-Vorlage
 // "Stadtbezirks-Karte" (Frame 608×654) übernommen. Die exakten Vektorpfade sind aus
@@ -229,7 +230,7 @@ export function EdenMap({
 
       {/* Umland-Label (Bereich = Frame-Hintergrund) */}
       <text ref={labelRef("umland")} x="63" y="408" fill="var(--map-umland)" fontSize="12" className="pointer-events-none">
-        Umland
+        {customAreaName("umland") ?? "Umland"}
       </text>
 
       {/* Gegenden */}
@@ -254,9 +255,9 @@ export function EdenMap({
               className="pointer-events-none"
             >
               <text x={d.lx} y={d.ly}>
-                {d.label}
+                {customAreaName(d.key) ?? d.label}
               </text>
-              {d.label2 && (
+              {d.label2 && !customAreaName(d.key) && (
                 <text x={d.lx} y={d.ly + 14}>
                   {d.label2}
                 </text>
@@ -364,7 +365,7 @@ function ExternalPill({
       />
       <circle cx={p.x + 16} cy={p.y + p.h / 2} r="3" fill="var(--map-muted)" />
       <text ref={labelRef} x={p.x + 27} y={p.y + p.h / 2 + 4} fill={selected ? "var(--map-accent)" : "var(--map-pill-text)"} fontSize="12" className="pointer-events-none">
-        {p.label}
+        {customAreaName(p.key) ?? p.label}
       </text>
     </>
   );

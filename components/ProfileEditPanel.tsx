@@ -10,7 +10,7 @@ import { FamilyEditor } from "./FamilyEditor";
 import { normalizeFamily } from "./ProfileSections";
 import { useStore } from "@/lib/store";
 import { normalizeHeight, tierOf } from "@/lib/characters";
-import { AREA_ORDER, AREAS } from "@/lib/world";
+import { AREA_ORDER, areaName } from "@/lib/world";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { characterImage } from "@/lib/avatar";
 import { Icon } from "./Icon";
@@ -202,7 +202,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
                 </option>
                 {AREA_ORDER.map((k) => (
                   <option key={k} value={k} className="bg-bg-surface">
-                    {AREAS[k].name}
+                    {areaName(k)}
                   </option>
                 ))}
               </select>

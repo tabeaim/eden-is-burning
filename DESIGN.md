@@ -343,6 +343,11 @@ dem Inhalt:
 - **Farben der Karte** stehen als `--map-*` in `app/globals.css` (je ein Satz für
   dunkel und hell), nie fest in `EdenMap.tsx`. Die Gegend-Box trägt
   `panel-shadow` – Schatten nur im dunklen Stil.
+- **Texte der Bezirke** (Name, Beschreibung, Preislevel, „Hier wohnen") pflegen
+  Admins unter Einstellungen → Admin → Bezirke (`app_settings.areas`, nur die
+  abweichenden Felder; Standard bleibt `lib/world.ts`). Bezirksnamen und -texte
+  deshalb nie direkt aus `AREAS`/`EXTRA_AREAS` lesen, immer über `areaName(key)`
+  bzw. `areaInfo(key)`.
 - **Bilder der Gegenden** pflegen Admins unter Einstellungen → Admin → Design
   (`appSettings.areaImages`); immer über `areaImage(key, appSettings)`
   (lib/world.ts) holen und mit `bannerStyle` zeichnen.
