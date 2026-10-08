@@ -1,11 +1,9 @@
 // Seitenspezifische Banner-Header. Statt eines einzigen Titelbilds bekommt jede
-// Seite (und jede Szene) einen eigenen, dunkel gehaltenen Vektor-Header im Stil
-// der Eden-Skyline. Alles wird als data:-URI erzeugt – keine externen Bilder,
-// lädt garantiert. Quick&dirty: schnelle Silhouetten + Verläufe, deterministisch
-// pro Seite/Szene, damit sich Header sichtbar unterscheiden.
+// Seite einen eigenen, dunkel gehaltenen Vektor-Header im Stil der Eden-Skyline.
+// Alles wird als data:-URI erzeugt – keine externen Bilder, lädt garantiert.
+// Quick&dirty: schnelle Silhouetten + Verläufe, deterministisch pro Seite.
 //
-// Später kann ein echtes Header-Bild pro Szene (scene.header_url) diese Vorlage
-// überschreiben – die Erzeugung hier ist nur die „Andeutung" verschiedener Header.
+// Szenen und Profile ohne eigenes Bild zeigen den Header ihrer Seite (defaultHeader).
 
 const W = 1600;
 const H = 360;
@@ -344,17 +342,6 @@ const PAGE_THEMES: Record<string, Theme> = {
   },
 };
 
-// Feste Themen-Reihe für Szenen – jede Szene bekommt (per Hash) eine andere.
-const SCENE_PALETTES: Omit<Theme, "glowX" | "motif">[] = [
-  { sky: [[0, "#241436"], [0.45, "#3c1d3f"], [0.75, "#7a2f4a"], [0.9, "#180d14"], [1, "#0a0709"]], glow: "#d24f7a", silhouette: "#0f0810", windows: "#ffb3d1" },
-  { sky: [[0, "#0f2338"], [0.45, "#163049"], [0.72, "#2f5a7a"], [0.9, "#0d151f"], [1, "#070a0e"]], glow: "#4f9fd1", silhouette: "#08101a", windows: "#bfe0ff" },
-  { sky: [[0, "#2a1810"], [0.45, "#3f2717"], [0.72, "#8a4a24"], [0.9, "#1a100a"], [1, "#0b0705"]], glow: "#e8853c", silhouette: "#0f0806", windows: "#ffcf9a" },
-  { sky: [[0, "#10241a"], [0.45, "#173a2a"], [0.72, "#356a44"], [0.9, "#0e1a12"], [1, "#070c09"]], glow: "#54b070", silhouette: "#08130c", windows: "#c8f0cf" },
-  { sky: [[0, "#1c1436"], [0.45, "#291c46"], [0.75, "#4a3a7a"], [0.9, "#110d1c"], [1, "#08070f"]], glow: "#6b6bd0", silhouette: "#0a0816", windows: "#dcd7ff" },
-  { sky: [[0, "#2a1226"], [0.45, "#3a182f"], [0.75, "#7a2a52"], [0.9, "#180a12"], [1, "#0a0608"]], glow: "#d15898", silhouette: "#0f0710", windows: "#ffc2e0" },
-];
-const SCENE_MOTIFS: Motif[] = ["skyline", "spires", "hills", "moon", "crowd", "industry"];
-
 // Heller Stil: dieselben Motive, aber Sand-/Orange-Himmel mit braunen Silhouetten
 const LIGHT_SKY: [number, string][] = [[0, "#f6dfb4"], [0.5, "#f0c78a"], [0.8, "#e8a95a"], [0.93, "#d9b987"], [1, "#fbf5ea"]];
 const lightOf = (t: Theme): Theme => ({ ...t, sky: LIGHT_SKY, glow: "#f2b564", silhouette: "#8a6a3c", windows: "#fff1cf" });
@@ -363,16 +350,6 @@ const lightOf = (t: Theme): Theme => ({ ...t, sky: LIGHT_SKY, glow: "#f2b564", s
 export function pageHeader(segment: string | undefined, mode: "dark" | "light" = "dark"): string {
   const t = PAGE_THEMES[segment ?? "dashboard"] ?? PAGE_THEMES.dashboard;
   return toDataUri(buildSvg(mode === "light" ? lightOf(t) : t, hashStr("page:" + (segment ?? "dashboard"))));
-}
-
-/** Header-Hintergrund für eine einzelne Szene – variiert deterministisch nach id. */
-export function sceneHeader(id: string, mode: "dark" | "light" = "dark"): string {
-  const h = hashStr("scene:" + id);
-  const pal = SCENE_PALETTES[h % SCENE_PALETTES.length];
-  const motif = SCENE_MOTIFS[(h >> 8) % SCENE_MOTIFS.length];
-  const glowX = 0.25 + ((h >> 16) % 100) / 100 * 0.5; // 0.25..0.75
-  const theme: Theme = { ...pal, glowX, motif };
-  return toDataUri(buildSvg(mode === "light" ? lightOf(theme) : theme, h));
 }
 
 // --- Bildausschnitt eigener Header-Bilder ---
@@ -410,4 +387,14 @@ export function headersFor(
   // Altes Format (ohne Stil, flach): galt für den dunklen Stil
   if (!("dark" in h) && !("light" in h)) return mode === "dark" ? (h as Record<string, string>) : {};
   return (h[mode] as Record<string, string> | undefined) ?? {};
+}
+
+/** Standard-Header für alles ohne eigenes Bild (Szene, Charakter-, Spieler*innen-Profil):
+    der aktuelle Header der zugehörigen Seite – das Bild der Admins, sonst die Vorlage. */
+export function defaultHeader(
+  settings: { headers?: unknown } | null | undefined,
+  segment: string,
+  mode: "dark" | "light",
+): string {
+  return headersFor(settings, mode)[segment] || pageHeader(segment, mode);
 }

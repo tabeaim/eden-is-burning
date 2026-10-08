@@ -12,7 +12,7 @@ import { PageMetaProvider, usePageMeta } from "@/lib/page-meta";
 import { Icon, type IconName } from "./Icon";
 import { LoginScreen } from "./LoginScreen";
 import { PendingScreen } from "./PendingScreen";
-import { headersFor, pageHeader, sceneHeader } from "@/lib/headers";
+import { defaultHeader } from "@/lib/headers";
 import { useTheme } from "@/lib/theme";
 import { GONE_CLASS, PAUSED_CLASS } from "@/lib/gone";
 import { joinNames } from "@/lib/format";
@@ -200,19 +200,6 @@ const EMBER_BG: Record<Theme, string> = {
   light: "radial-gradient(120% 140% at 20% -40%, rgba(232,169,90,0.55), transparent 55%), linear-gradient(180deg, #f3dcb0, #fbf5ea)",
 };
 
-// Wählt den generierten Header passend zur Route. Szenen-Detailseiten bekommen
-// einen pro Szene variierenden Header, alle anderen Seiten ihren eigenen.
-// Ein von Admins hochgeladenes Header-Bild (Einstellungen → Admin → Design) gilt für
-// die ganze Seite; Szenen-Detailseiten behalten ihren eigenen Header.
-function bannerForPath(pathname: string, custom: Record<string, string>, theme: Theme): string {
-  const seg = pathname.split("/").filter(Boolean);
-  if (seg[0] === "szenen" && seg[1] && seg[1] !== "neu") {
-    return sceneHeader(seg[1], theme);
-  }
-  const key = seg[0] ?? "dashboard";
-  return custom[key] || pageHeader(key, theme);
-}
-
 // Titel im Browser-Tab: „Seite – Eden Is Burning". Detailseiten (Szene, Charakter,
 // Ort, Spieler*in) melden ihren Namen über den Seitentitel; im Handy, das keinen
 // Seitentitel hat, ergibt er sich aus der Adresse.
@@ -278,10 +265,12 @@ function BannerHeader({
     /^\/charaktere\/[^/]+$/.test(pathname) ||
     /^\/spieler\/[^/]+$/.test(pathname) ||
     /^\/orte\/[^/]+$/.test(pathname);
-  // Jede Seite bekommt einen eigenen, generierten Header (dunkle Skyline-Optik).
-  // Szenen-Detailseiten variieren zusätzlich pro Szene; ein echtes header_url der
-  // Szene (falls gesetzt) überschreibt die Vorlage.
-  const banner = (onThisPage && meta.bannerImage) || bannerForPath(pathname, headersFor(appSettings, theme), theme);
+  // Eigenes Bild der Seite (Szene, Profil, Dashboard), sonst der Header der Rubrik:
+  // das von Admins hochgeladene Bild (Einstellungen → Admin → Design) oder die
+  // generierte Vorlage. Detailseiten erben so den Header ihrer Übersicht.
+  const banner =
+    (onThisPage && meta.bannerImage) ||
+    defaultHeader(appSettings, pathname.split("/").filter(Boolean)[0] ?? "dashboard", theme);
 
   return (
     <header className="relative bg-bg-primary">

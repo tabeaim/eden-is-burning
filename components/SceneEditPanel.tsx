@@ -2,7 +2,7 @@
 
 import { useTheme } from "@/lib/theme";
 import { BannerPosition } from "./BannerPosition";
-import { bannerStyle } from "@/lib/headers";
+import { bannerStyle, defaultHeader } from "@/lib/headers";
 import { useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { PHONE_AREA, PHONE_LOCATION } from "@/lib/phone";
@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Toggle } from "@/components/Toggle";
 import { LocationField, locationComplete } from "@/components/LocationField";
-import { sceneHeader } from "@/lib/headers";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { Icon } from "@/components/Icon";
 import { CharacterPicker } from "@/components/CharacterPicker";
@@ -43,6 +42,7 @@ export function SceneEditPanel({
     posts,
     currentPlayer,
     charactersOf,
+    appSettings,
   } = useStore();
   const { theme } = useTheme();
   const router = useRouter();
@@ -127,7 +127,7 @@ export function SceneEditPanel({
         </div>
         <div
           className="relative h-28 w-full rounded-md overflow-hidden border border-border-subtle bg-cover"
-          style={bannerStyle(headerUrl || sceneHeader(title.trim() || scene.id, theme))}
+          style={bannerStyle(headerUrl || defaultHeader(appSettings, "szenen", theme))}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           <button

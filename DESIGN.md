@@ -697,5 +697,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   `--accent-ink` (kräftigeres Orange), weil das helle Orange auf Creme zu blass wäre.
 - **Header** je Stil: Ohne eigenes Bild erzeugt `pageHeader(segment, modus)` einen
   Standard-Header (dunkel: Nachthimmel, hell: Sand-Himmel mit braunen Silhouetten);
-  Admins hinterlegen je Stil eigene Bilder.
+  Admins hinterlegen je Stil eigene Bilder. Szenen, Charakter- und
+  Spieler*innen-Profile ohne eigenes Bild zeigen den aktuellen Header ihrer Rubrik
+  (`defaultHeader(appSettings, "szenen" | "charaktere" | "spieler", modus)`), auch
+  in den Vorschauen beim Anlegen und Bearbeiten.
 - Bewusst dunkel bleiben die Grafiken: Karte (`EdenMap`) und Handy-Gehäuse.

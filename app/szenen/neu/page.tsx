@@ -10,7 +10,7 @@ import { Toggle } from "@/components/Toggle";
 import { LocationField, locationComplete } from "@/components/LocationField";
 import { PageHeader } from "@/components/PageHeader";
 import { CharacterPicker } from "@/components/CharacterPicker";
-import { sceneHeader } from "@/lib/headers";
+import { bannerStyle, defaultHeader } from "@/lib/headers";
 import { AuNameField, auNames } from "@/components/AuNameField";
 import { DatePicker } from "@/components/DatePicker";
 import { PHONE_AREA, PHONE_LOCATION, phoneSceneTitle } from "@/lib/phone";
@@ -34,6 +34,7 @@ export default function NewScenePage() {
     scenes,
     currentPlayer,
     charactersOf,
+    appSettings,
   } = useStore();
   const { theme } = useTheme();
   // Telefonat statt Ort: keine Gegend/kein Ort nötig – die Szene spielt „am Telefon"
@@ -128,8 +129,8 @@ export default function NewScenePage() {
             <span className="text-[0.875rem] text-text-tertiary">Vorschau · nach Erstellen editierbar</span>
           </div>
           <div
-            className="relative h-24 w-full rounded-md overflow-hidden border border-border-subtle bg-center bg-cover opacity-90"
-            style={{ backgroundImage: `url("${sceneHeader(title.trim() || "neue-szene", theme)}")` }}
+            className="relative h-24 w-full rounded-md overflow-hidden border border-border-subtle bg-cover opacity-90"
+            style={bannerStyle(defaultHeader(appSettings, "szenen", theme))}
           >
             <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           </div>
