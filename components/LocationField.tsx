@@ -4,10 +4,11 @@ import { useStore } from "@/lib/store";
 import { PLACE_AREAS, areaName } from "@/lib/world";
 import { PHONE_AREA } from "@/lib/phone";
 import { SuggestInput } from "./SuggestInput";
+import { LocationCategoryPicker } from "./LocationCategoryPicker";
 
 // Ort einer Szene: beim Tippen werden vorhandene Orte vorgeschlagen (die Gegend
 // kommt vom Ort). Gibt es den Namen noch nicht, wird ein neuer Ort angelegt – dann
-// fragt das Feld Gegend und Beschreibung ab (der Name steht schon im Feld). Bleibt
+// fragt das Feld Gegend, Kategorie und Beschreibung ab (der Name steht schon im Feld). Bleibt
 // der Name leer, spielt die Szene nur in einer Gegend; dann wird nur sie abgefragt
 // – außer mit `nameRequired` (neue Szenen brauchen einen Ortsnamen).
 export function LocationField({
@@ -16,6 +17,8 @@ export function LocationField({
   onChange,
   description,
   onDescription,
+  category,
+  onCategory,
   nameRequired = false,
 }: {
   area: string;
@@ -23,6 +26,8 @@ export function LocationField({
   onChange: (area: string, name: string) => void;
   description: string; // nur für neue Orte
   onDescription: (text: string) => void;
+  category: string | null; // nur für neue Orte
+  onCategory: (category: string) => void;
   nameRequired?: boolean;
 }) {
   const { locations } = useStore();
@@ -75,6 +80,12 @@ export function LocationField({
             Gegend <span className="text-accent">*</span>
             <AreaSelect area={area} onChange={(a) => onChange(a, name)} />
           </label>
+          <div className="text-[0.8125rem] text-text-secondary">
+            Kategorie
+            <div className="mt-1">
+              <LocationCategoryPicker value={category} name={name} onChange={onCategory} />
+            </div>
+          </div>
           <label className="text-[0.8125rem] text-text-secondary">
             Beschreibung <span className="text-text-tertiary">(optional)</span>
             <textarea

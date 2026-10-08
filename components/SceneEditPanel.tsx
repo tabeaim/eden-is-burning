@@ -54,6 +54,7 @@ export function SceneEditPanel({
   const [area, setArea] = useState<string>(scene.location_area);
   const [locationName, setLocationName] = useState(scene.location_name);
   const [locationDescription, setLocationDescription] = useState("");
+  const [locationCategory, setLocationCategory] = useState<string | null>(null);
   // Telefonat: keine Gegend/kein Ort, die Szene spielt „am Telefon"
   const [phone, setPhone] = useState(scene.location_area === PHONE_AREA);
   const [date, setDate] = useState(scene.inplay_date);
@@ -80,7 +81,7 @@ export function SceneEditPanel({
   function save() {
     if (!valid) return;
     const loc = phone ? PHONE_LOCATION : locationName.trim();
-    if (!phone) addLocation(area, loc, locationDescription.trim() || null);
+    if (!phone) addLocation(area, loc, locationDescription.trim() || null, locationCategory);
     updateScene(scene.id, {
       title: title.trim(),
       location_area: phone ? PHONE_AREA : area,
@@ -194,6 +195,8 @@ export function SceneEditPanel({
             }}
             description={locationDescription}
             onDescription={setLocationDescription}
+            category={locationCategory}
+            onCategory={setLocationCategory}
           />
         </div>
       )}

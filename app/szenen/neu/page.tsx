@@ -44,6 +44,7 @@ export default function NewScenePage() {
   const [area, setArea] = useState("");
   const [locationName, setLocationName] = useState("");
   const [locationDescription, setLocationDescription] = useState("");
+  const [locationCategory, setLocationCategory] = useState<string | null>(null);
   const [date, setDate] = useState("2021-11-23");
   const [time, setTime] = useState("Nachmittag");
   const [tw, setTw] = useState(false);
@@ -91,7 +92,7 @@ export default function NewScenePage() {
     if (!valid || !firstChar) return;
     const loc = phone ? PHONE_LOCATION : locationName.trim();
     // Neuer Ort wird angelegt und ist durch diese Szene direkt "bespielt".
-    if (!phone) addLocation(area, loc, locationDescription.trim() || null);
+    if (!phone) addLocation(area, loc, locationDescription.trim() || null, locationCategory);
     const id = addScene({
       title: title.trim() || phoneTitle,
       location_area: phone ? PHONE_AREA : area,
@@ -179,6 +180,8 @@ export default function NewScenePage() {
               }}
               description={locationDescription}
               onDescription={setLocationDescription}
+              category={locationCategory}
+              onCategory={setLocationCategory}
               nameRequired
             />
           </div>

@@ -77,6 +77,7 @@ export function AdminLocations() {
   const [ask, setAsk] = useState<Ask | null>(null);
   const [newName, setNewName] = useState("");
   const [newArea, setNewArea] = useState("rivers_edge");
+  const [newCategory, setNewCategory] = useState<string | null>(null);
 
   const list = locations
     .filter((l) => (!area || l.area === area) && (!q.trim() || l.name.toLowerCase().includes(q.trim().toLowerCase())))
@@ -207,7 +208,15 @@ export function AdminLocations() {
         </div>
       ))}
 
-      <div className="flex flex-wrap items-end gap-2 border-t border-border-subtle pt-3">
+      {newName.trim() && (
+        <div className="border-t border-border-subtle pt-3 text-[0.8125rem] text-text-secondary">
+          Kategorie des neuen Orts
+          <div className="mt-1">
+            <LocationCategoryPicker value={newCategory} name={newName} onChange={setNewCategory} />
+          </div>
+        </div>
+      )}
+      <div className={`flex flex-wrap items-end gap-2 ${newName.trim() ? "" : "border-t border-border-subtle pt-3"}`}>
         <label className="min-w-40 flex-1 text-[0.8125rem] text-text-secondary">
           Neuer Ort
           <input value={newName} onChange={(e) => setNewName(e.target.value)} className={`mt-1 ${field}`} />
@@ -222,8 +231,9 @@ export function AdminLocations() {
         <button
           disabled={!newName.trim()}
           onClick={() => {
-            addLocation(newArea, newName);
+            addLocation(newArea, newName, null, newCategory);
             setNewName("");
+            setNewCategory(null);
           }}
           className={btnPrimary}
         >
