@@ -16,6 +16,7 @@ import { useTheme } from "@/lib/theme";
 import { GONE_CLASS, PAUSED_CLASS } from "@/lib/gone";
 import { joinNames } from "@/lib/format";
 import type { Theme } from "@/lib/types";
+import { AlertPing } from "./AlertPing";
 
 // `title` weicht nur ab, wenn der Seitentitel anders heißt als der Menüpunkt.
 const NAV: { href: string; label: string; icon: IconName; title?: string }[] = [
@@ -415,6 +416,7 @@ function Sidebar({
 
   return (
     <>
+    <AlertPing />
     {/* Abdunkelung hinter der offenen Schublade (Handy) */}
     {open && (
       <div onClick={onClose} className="fixed inset-0 z-40 bg-black/60 md:hidden" />

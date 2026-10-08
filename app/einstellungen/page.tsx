@@ -22,6 +22,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MultiSelect } from "@/components/MultiSelect";
 import { Icon } from "@/components/Icon";
 import { useTheme } from "@/lib/theme";
+import { PING_KEY, pingEnabled, playPing } from "@/components/AlertPing";
 import { AdminPanel } from "@/components/admin/AdminPanel";
 import type { Character } from "@/lib/types";
 
@@ -331,6 +332,11 @@ function ProfileTab() {
 function AppearanceTab() {
   const { currentPlayer, updatePlayer } = useStore();
   const { theme, chosen, setTheme } = useTheme();
+  const [ping, setPing] = useState(true);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPing(pingEnabled());
+  }, []);
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   // Entwurf, solange der Ausschnitt-Regler bewegt wird (gespeichert beim Loslassen)
@@ -433,6 +439,28 @@ function AppearanceTab() {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Ton bei Neuem – gilt nur auf diesem Gerät */}
+      <div>
+        <Toggle
+          checked={ping}
+          onChange={(on) => {
+            setPing(on);
+            try {
+              localStorage.setItem(PING_KEY, on ? "1" : "0");
+            } catch {
+              /* ignore */
+            }
+            if (on) playPing();
+          }}
+        >
+          Ton bei Neuem{" "}
+          <span className="text-text-tertiary">
+            (neuer Post in deinen Szenen, Nachricht, Anruf, Mailbox, Captic – solange Eden in einem Tab offen
+            ist; gilt nur auf diesem Gerät)
+          </span>
+        </Toggle>
       </div>
     </div>
   );
