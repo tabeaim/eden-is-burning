@@ -35,37 +35,37 @@ export function QuoteRotator() {
   const arrow =
     "shrink-0 rounded p-1 text-text-tertiary hover:text-accent transition-colors";
 
-  // Linksbündig über die volle Breite: das Zitat (mit großem deutschem
-  // Anführungszeichen) beginnt an der Spaltenkante, rechts ein Knopf für ein
-  // anderes Zitat.
+  // Linksbündig über die volle Breite: links das große deutsche Anführungszeichen,
+  // daneben das Zitat, rechts ein Knopf für ein anderes Zitat.
   return (
     <div className="flex items-center gap-2 py-4 sm:gap-3">
 
-      <div className="min-w-0 flex-1">
-        <blockquote
-          key={q.id}
-          className="prose-serif !text-left !text-[1rem] text-text-primary animate-[fadein_0.5s_ease]"
+      {/* großes „ als hängendes Zeichen in eigener Spalte: Zitat und Quelle stehen
+          rechts davon bündig untereinander, keine Zeile läuft unter das Zeichen */}
+      <div key={q.id} className="flex min-w-0 flex-1 items-start gap-4 animate-[fadein_0.5s_ease] sm:gap-5">
+        <span
+          aria-hidden
+          className="-mt-[1.65rem] shrink-0 select-none text-[4.5rem] leading-none text-accent"
         >
-          {/* großes „ links, über zwei Textzeilen (wie eine Initiale) */}
-          <span aria-hidden className="float-left mr-2 h-[3.6rem] text-[3.6rem] leading-none text-accent">
-            „
-          </span>
-          {q.text}
-        </blockquote>
-        <div className="mt-2 text-[0.875rem] text-text-secondary">
-          {c && (
-            <Link href={`/charaktere/${c.id}`} className="text-text-primary hover:text-accent">
-              {c.name}
-            </Link>
-          )}
-          {scene && (
-            <>
-              {" "}in{" "}
-              <Link href={`/szenen/${scene.id}`} className="italic hover:text-accent">
-                {scene.title}
+          „
+        </span>
+        <div className="min-w-0 flex-1">
+          <blockquote className="prose-serif !text-left !text-[1rem] text-text-primary">{q.text}</blockquote>
+          <div className="mt-2 text-[0.875rem] text-text-secondary">
+            {c && (
+              <Link href={`/charaktere/${c.id}`} className="text-text-primary hover:text-accent">
+                {c.name}
               </Link>
-            </>
-          )}
+            )}
+            {scene && (
+              <>
+                {" "}in{" "}
+                <Link href={`/szenen/${scene.id}`} className="italic hover:text-accent">
+                  {scene.title}
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
