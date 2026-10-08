@@ -5,6 +5,8 @@
 //
 // Szenen und Profile ohne eigenes Bild zeigen den Header ihrer Seite (defaultHeader).
 
+import { areaPhoto } from "./world";
+
 const W = 1600;
 const H = 360;
 
@@ -397,4 +399,14 @@ export function defaultHeader(
   mode: "dark" | "light",
 ): string {
   return headersFor(settings, mode)[segment] || pageHeader(segment, mode);
+}
+
+/** Header eines Orts ohne eigenes Bild: das aktuelle Bild seiner Gegend, und solange
+    die keins hat, der Header der Orte-Seite. */
+export function locationHeader(
+  settings: { headers?: unknown; areaImages?: Record<string, string> } | null | undefined,
+  area: string,
+  mode: "dark" | "light",
+): string {
+  return areaPhoto(area, settings) || defaultHeader(settings, "orte", mode);
 }

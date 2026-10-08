@@ -235,8 +235,15 @@ export function areaImage(
   settings: { areaImages?: Record<string, string> } | null | undefined,
 ): string {
   return (
-    settings?.areaImages?.[key] ||
-    AREAS[key as AreaKey]?.image ||
+    areaPhoto(key, settings) ||
     `https://picsum.photos/seed/${encodeURIComponent(`area-${key}`)}/800/240`
   );
+}
+
+/** Wie `areaImage`, aber ohne Platzhalter: null, solange die Gegend kein Bild hat. */
+export function areaPhoto(
+  key: string,
+  settings: { areaImages?: Record<string, string> } | null | undefined,
+): string | null {
+  return settings?.areaImages?.[key] || AREAS[key as AreaKey]?.image || null;
 }

@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
-import { defaultHeader } from "@/lib/headers";
+import { locationHeader } from "@/lib/headers";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { Icon } from "@/components/Icon";
 import { isHidden, isWorking } from "@/lib/characters";
@@ -32,15 +32,21 @@ export default function LocationPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { location, scenes, characters, player, postsOf, canEditLocation } =
+  const { location, scenes, characters, player, postsOf, canEditLocation, appSettings } =
     useStore();
+  const { theme } = useTheme();
   const loc = location(id);
   const [editing, setEditing] = useState(false);
   const [zoom, setZoom] = useState<string | null>(null);
 
-  // Ortsname als Seitentitel; Banner ist standardmäßig der der Karte, bis ein
+  // Ortsname als Seitentitel; Banner ist das aktuelle Bild der Gegend, bis ein
   // eigenes Bild hinterlegt wird.
-  useSetPageMeta(loc?.name ?? "Ort", undefined, loc?.image_url ?? undefined, "max-w-6xl");
+  useSetPageMeta(
+    loc?.name ?? "Ort",
+    undefined,
+    loc ? loc.image_url || locationHeader(appSettings, loc.area, theme) : undefined,
+    "max-w-6xl",
+  );
 
   useEffect(() => {
     if (!zoom) return;
@@ -526,12 +532,12 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
         Ort bearbeiten
       </div>
 
-      {/* Banner – ohne eigenes Bild gilt der Banner der Karte */}
+      {/* Banner – ohne eigenes Bild gilt das Bild der Gegend */}
       <div>
         <div className="flex items-center justify-between text-[0.875rem] text-text-secondary mb-1">
           <span>
             Banner{" "}
-            {!imageUrl && <span className="text-text-tertiary">(Standard: wie Karte)</span>}
+            {!imageUrl && <span className="text-text-tertiary">(Standard: Bild der Gegend)</span>}
           </span>
           {imageUrl && (
             <button
@@ -545,7 +551,7 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
         </div>
         <div
           className="relative h-28 w-full rounded-md overflow-hidden border border-border-subtle bg-bg-primary bg-cover"
-          style={bannerStyle(imageUrl || defaultHeader(appSettings, "orte", theme))}
+          style={bannerStyle(imageUrl || locationHeader(appSettings, loc.area, theme))}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           <button

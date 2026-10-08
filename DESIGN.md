@@ -351,6 +351,9 @@ dem Inhalt:
 - **Bilder der Gegenden** pflegen Admins unter Einstellungen → Admin → Design
   (`appSettings.areaImages`); immer über `areaImage(key, appSettings)`
   (lib/world.ts) holen und mit `bannerStyle` zeichnen.
+- **Orte ohne eigenes Headerbild** zeigen das aktuelle Bild ihrer Gegend
+  (`locationHeader(appSettings, area, modus)`, lib/headers.ts); hat die Gegend
+  keins, den Header der Orte-Seite.
 
 ## Timeline
 
