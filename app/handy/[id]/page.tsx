@@ -228,6 +228,13 @@ function ChatView({ chat }: { chat: Chat }) {
   const [sel, setSel] = useState<string[] | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
   const [selDateOpen, setSelDateOpen] = useState(false);
+  // Tipp auf einen Tagestrenner: alle Nachrichten dieses Tages verlegen oder den
+  // Trenner entfernen (die Nachrichten rücken zum Tag davor bzw. danach)
+  const [dayMenu, setDayMenu] = useState<string | null>(null);
+  const [dayEdit, setDayEdit] = useState<string | null>(null);
+  const idsOfDay = (d: string) => messages.filter((m) => m.day === d).map((m) => m.id);
+  const dayBefore = dayMenu ? messages[messages.findIndex((m) => m.day === dayMenu) - 1]?.day : undefined;
+  const dayAfter = dayMenu ? messages[messages.findLastIndex((m) => m.day === dayMenu) + 1]?.day : undefined;
   // Bereich markieren: mit gehaltener Umschalttaste (oder „Bereich" in der Leiste)
   // die erste und die letzte Nachricht antippen – alles dazwischen ist mit markiert.
   const selAnchor = useRef<string | null>(null);
@@ -480,9 +487,19 @@ function ChatView({ chat }: { chat: Chat }) {
             <Fragment key={m.id}>
             {newDay && m.day && (
               <div data-pos={formatInplayDate(m.day)} className="my-3 flex justify-center">
-                <span className="rounded-full bg-white/[0.06] px-3 py-1 text-[0.75rem] text-text-tertiary">
-                  {formatInplayDate(m.day)}
-                </span>
+                {canEdit ? (
+                  <button
+                    onClick={() => setDayMenu(m.day)}
+                    title="Tag ändern oder Trenner entfernen"
+                    className="rounded-full bg-white/[0.06] px-3 py-1 text-[0.75rem] text-text-tertiary hover:text-text-primary"
+                  >
+                    {formatInplayDate(m.day)}
+                  </button>
+                ) : (
+                  <span className="rounded-full bg-white/[0.06] px-3 py-1 text-[0.75rem] text-text-tertiary">
+                    {formatInplayDate(m.day)}
+                  </span>
+                )}
               </div>
             )}
             {sceneStart && sc && (
@@ -828,7 +845,7 @@ function ChatView({ chat }: { chat: Chat }) {
                   Markieren – mehrere zu einer Szene zusammenfügen
                 </SheetButton>
               )}
-              {active.kind === "text" && (isAdmin || canWriteAs(active.character_id)) && (
+              {active.kind !== "date" && (isAdmin || canWriteAs(active.character_id)) && (
                 <SheetButton
                   onClick={() => {
                     setEditId(active.id);
@@ -964,6 +981,61 @@ function ChatView({ chat }: { chat: Chat }) {
             patchMessages(sel, { inplay_date: date });
             setSelDateOpen(false);
             setSel(null);
+          }}
+        />
+      )}
+
+      {/* Optionen eines Tagestrenners */}
+      {dayMenu && (
+        <Sheet onClose={() => setDayMenu(null)}>
+          <div className="mb-2 px-1 text-[0.8125rem] text-text-tertiary">
+            {formatInplayDate(dayMenu)} · {idsOfDay(dayMenu).length}{" "}
+            {idsOfDay(dayMenu).length === 1 ? "Nachricht" : "Nachrichten"}
+          </div>
+          <SheetList>
+            <SheetButton
+              onClick={() => {
+                setDayEdit(dayMenu);
+                setDayMenu(null);
+              }}
+            >
+              Tag ändern
+            </SheetButton>
+            {dayBefore && (
+              <SheetButton
+                danger
+                onClick={() => {
+                  patchMessages(idsOfDay(dayMenu), { inplay_date: dayBefore });
+                  setDayMenu(null);
+                }}
+              >
+                Trenner entfernen – Nachrichten zum {formatInplayDateShort(dayBefore)} davor
+              </SheetButton>
+            )}
+            {dayAfter && (
+              <SheetButton
+                danger
+                onClick={() => {
+                  patchMessages(idsOfDay(dayMenu), { inplay_date: dayAfter });
+                  setDayMenu(null);
+                }}
+              >
+                Trenner entfernen – Nachrichten zum {formatInplayDateShort(dayAfter)} danach
+              </SheetButton>
+            )}
+            <SheetButton onClick={() => setDayMenu(null)}>Abbrechen</SheetButton>
+          </SheetList>
+        </Sheet>
+      )}
+
+      {dayEdit && (
+        <DateSheet
+          initial={dayEdit}
+          hint={`Legt alle ${idsOfDay(dayEdit).length} Nachrichten dieses Tages auf einen anderen Tag – sie rutschen im Verlauf dorthin.`}
+          onCancel={() => setDayEdit(null)}
+          onSave={(date) => {
+            patchMessages(idsOfDay(dayEdit), { inplay_date: date });
+            setDayEdit(null);
           }}
         />
       )}
@@ -1141,9 +1213,14 @@ function ChatView({ chat }: { chat: Chat }) {
       {editMsg && (
         <EditSheet
           message={editMsg}
+          senders={
+            isAdmin
+              ? parts.map((pid) => character(pid)).filter((c): c is NonNullable<typeof c> => !!c)
+              : undefined
+          }
           onCancel={() => setEditId(null)}
-          onSave={(content, inplay_time) => {
-            updateMessage(editMsg.id, { content, inplay_time });
+          onSave={(patch) => {
+            updateMessage(editMsg.id, patch);
             setEditId(null);
           }}
         />
@@ -1332,32 +1409,72 @@ function GroupSheet({
   );
 }
 
-// Nachricht bearbeiten (eigene; Admins alle): Text und Inplay-Uhrzeit.
+// Nachricht bearbeiten (eigene; Admins alle): Text bzw. Bild-Adresse, Inplay-Tag
+// und -Uhrzeit. Admins können zusätzlich die Absender*in umhängen (`senders`).
 function EditSheet({
   message,
+  senders,
   onSave,
   onCancel,
 }: {
-  message: { content: string; inplay_time?: string | null };
-  onSave: (content: string, time: string | null) => void;
+  message: DatedMessage;
+  senders?: Character[];
+  onSave: (patch: {
+    content: string;
+    inplay_time: string | null;
+    inplay_date?: string;
+    character_id?: string;
+  }) => void;
   onCancel: () => void;
 }) {
+  const media = message.kind !== "text";
   const [text, setText] = useState(message.content);
   const [time, setTime] = useState(message.inplay_time ?? "");
+  const [date, setDate] = useState(message.day);
+  const [sender, setSender] = useState(message.character_id);
+  const field =
+    "w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/20 sm:text-[0.9375rem]";
   return (
-    <div className="absolute inset-0 z-20 bg-black/55 p-3 pt-16" onClick={onCancel}>
+    <div className="absolute inset-0 z-20 overflow-y-auto bg-black/55 p-3 pt-16" onClick={onCancel}>
       <div
         onClick={(e) => e.stopPropagation()}
         className="rounded-2xl border border-border-subtle bg-bg-surface-2 p-4"
       >
         <div className="text-[0.9375rem] font-semibold text-text-primary">Nachricht bearbeiten</div>
-        <textarea
-          value={text}
-          rows={4}
-          autoFocus
-          onChange={(e) => setText(e.target.value)}
-          className="mt-3 w-full resize-none rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/20 sm:text-[0.9375rem]"
-        />
+        {media ? (
+          <input
+            value={text}
+            autoFocus
+            onChange={(e) => setText(e.target.value)}
+            placeholder={message.kind === "gif" ? "Adresse des GIFs" : "Adresse des Fotos"}
+            className={`${field} mt-3`}
+          />
+        ) : (
+          <textarea
+            value={text}
+            rows={4}
+            autoFocus
+            onChange={(e) => setText(e.target.value)}
+            className={`${field} mt-3 resize-none`}
+          />
+        )}
+        {senders && (
+          <label className="mt-2 flex items-center justify-between gap-3 rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[0.875rem] text-text-secondary">
+            Von
+            <select
+              value={sender}
+              onChange={(e) => setSender(e.target.value)}
+              className="min-w-0 bg-transparent text-right text-[16px] font-semibold text-text-primary outline-none [color-scheme:dark] sm:text-[0.875rem]"
+            >
+              {senders.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <DatePicker value={date} onChange={setDate} className="mt-2" />
         <label className="mt-2 flex items-center justify-between gap-3 rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[0.875rem] text-text-secondary">
           Uhrzeit
           <input
@@ -1373,7 +1490,14 @@ function EditSheet({
           </button>
           <button
             disabled={!text.trim()}
-            onClick={() => onSave(text.trim(), time || null)}
+            onClick={() =>
+              onSave({
+                content: text.trim(),
+                inplay_time: time || null,
+                ...(date && date !== message.day ? { inplay_date: date } : {}),
+                ...(sender !== message.character_id ? { character_id: sender } : {}),
+              })
+            }
             className="rounded-md bg-accent/90 px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
           >
             Speichern

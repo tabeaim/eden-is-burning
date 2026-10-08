@@ -184,7 +184,10 @@ interface StoreValue extends PersistedState {
     opts?: { replyTo?: string | null; time?: string | null; date?: string | null; sceneId?: string | null },
   ) => void;
   deleteMessage: (messageId: string) => void;
-  updateMessage: (messageId: string, patch: Pick<ChatMessage, "content" | "inplay_time">) => void;
+  updateMessage: (
+    messageId: string,
+    patch: Partial<Pick<ChatMessage, "content" | "inplay_time" | "inplay_date" | "character_id">>,
+  ) => void;
   // Löscht den Chat samt aller Nachrichten – für alle
   deleteChat: (chatId: string) => void;
   // „Left on read": die neueste Nachricht bewusst unbeantwortet lassen (oder zurücknehmen)
@@ -1627,7 +1630,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const updateMessage = useCallback(
-    (messageId: string, patch: Pick<ChatMessage, "content" | "inplay_time">) => {
+    (
+      messageId: string,
+      patch: Partial<Pick<ChatMessage, "content" | "inplay_time" | "inplay_date" | "character_id">>,
+    ) => {
       persist("updateMessage", supabase.from("chat_messages").update(patch).eq("id", messageId));
       setState((s) => ({
         ...s,
