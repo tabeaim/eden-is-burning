@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
-import { pageHeader } from "@/lib/headers";
+import { defaultHeader } from "@/lib/headers";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { Icon } from "@/components/Icon";
 import { isHidden, isWorking } from "@/lib/characters";
@@ -462,7 +462,7 @@ function PeopleEditor({
 
 // Editiermodus des Ortsprofils (Admins + Ersteller*in).
 function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => void }) {
-  const { updateLocation, locationsOf } = useStore();
+  const { updateLocation, locationsOf, appSettings } = useStore();
   const { theme } = useTheme();
   const [name, setName] = useState(loc.name);
   const [description, setDescription] = useState(loc.description ?? "");
@@ -545,7 +545,7 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
         </div>
         <div
           className="relative h-28 w-full rounded-md overflow-hidden border border-border-subtle bg-bg-primary bg-cover"
-          style={bannerStyle(imageUrl || pageHeader("orte", theme))}
+          style={bannerStyle(imageUrl || defaultHeader(appSettings, "orte", theme))}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           <button

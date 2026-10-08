@@ -8,7 +8,7 @@ import { characterImage } from "@/lib/avatar";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
-import { pageHeader } from "@/lib/headers";
+import { defaultHeader } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
 import { TIER_NAMES, isPaused, playsAs, tierLabel, tierOf } from "@/lib/characters";
 import { PAUSED_CLASS } from "@/lib/gone";
@@ -331,7 +331,7 @@ function ProfileTab() {
 
 // Darstellung: eigener Dashboard-Header und Farbmodus (dunkel/hell).
 function AppearanceTab() {
-  const { currentPlayer, updatePlayer } = useStore();
+  const { currentPlayer, updatePlayer, appSettings } = useStore();
   const { theme, chosen, setTheme } = useTheme();
   const [ping, setPing] = useState(true);
   useEffect(() => {
@@ -383,7 +383,7 @@ function AppearanceTab() {
         </div>
         <div
           className="relative h-32 w-full rounded-md overflow-hidden border border-border-subtle bg-bg-primary bg-cover"
-          style={bannerStyle(header || pageHeader("dashboard", theme))}
+          style={bannerStyle(header || defaultHeader(appSettings, "dashboard", theme))}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
           <button
