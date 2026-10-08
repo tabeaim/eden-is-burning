@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { LocationCategoryPicker } from "./LocationCategoryPicker";
-import { categoryIcon, categoryLabel, categoryOf } from "@/lib/places";
-import { useRouter } from "next/navigation";
+import { LOCATION_CATEGORIES, categoryIcon, categoryLabel, categoryOf } from "@/lib/places";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { PLACE_AREAS, areaImage, areaName } from "@/lib/world";
@@ -45,13 +44,13 @@ function cardImage(loc: Location, settings: AppSettings): string {
 // Listenansicht der Orte: alle Orte als Karten, durchsuchbar und filterbar –
 // angelehnt an die Szenenübersicht.
 export function LocationList() {
-  const router = useRouter();
   const { locations, scenes, characters, players, character, postsOf, addLocation } =
     useStore();
 
   const [tabState, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [areas, setAreas] = useState<string[]>([]); // AreaKey | "rest"
+  const [categories, setCategories] = useState<string[]>([]); // LocationCategory
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -81,6 +80,8 @@ export function LocationList() {
   const statsOf = (l: Location) => stats.get(sceneKey(l.area, l.name)) ?? NO_STATS;
 
   const areaOptions = areaFilterOptions();
+  // nur Kategorien, zu denen es Orte gibt
+  const categoryOptions = LOCATION_CATEGORIES.map(([value]) => ({ value: value as string, label: categoryLabel(value) })).filter((o) => places.some((l) => categoryOf(l) === o.value));
 
   const charsByPlayer = players
     .map((p) => ({ player: p, chars: characters.filter((c) => c.player_id === p.id) }))
@@ -116,6 +117,8 @@ export function LocationList() {
     if (tab === "unplayed" && played) return false;
     // Gegend (Mehrfach): mind. eine muss passen
     if (!areaMatches(areas, l.area)) return false;
+    // Kategorie (Mehrfach): mind. eine muss passen
+    if (categories.length > 0 && !categories.includes(categoryOf(l))) return false;
     // Charaktere/Spieler*innen: der Ort muss zu ALLEN gewählten passen
     if (tokens.length > 0 && !tokens.every((t) => tokenMatches(t, l))) return false;
     return true;
@@ -158,20 +161,22 @@ export function LocationList() {
   direct.sort(sortFn);
   kin.sort(sortFn);
 
-  const activeFilters = (q ? 1 : 0) + areas.length + tokens.length;
+  const activeFilters = (q ? 1 : 0) + areas.length + categories.length + tokens.length;
   function resetFilters() {
     setSearch("");
     setAreas([]);
+    setCategories([]);
     setTokens([]);
   }
+  const toggleCategory = (v: string) =>
+    setCategories(categories.includes(v) ? categories.filter((x) => x !== v) : [...categories, v]);
   const toggleArea = (v: string) =>
     setAreas(areas.includes(v) ? areas.filter((x) => x !== v) : [...areas, v]);
 
-  // Neuer Ort → direkt aufs Ortsprofil zum Ausbauen
+  // Neuer Ort: bleibt in der Liste (der Ort erscheint dort als Karte)
   function createLocation(area: string, name: string, description: string, category: string | null) {
-    const id = addLocation(area, name, description || null, category);
+    addLocation(area, name, description || null, category);
     setAdding(false);
-    if (id) router.push(`/orte/${id}`);
   }
 
   const count = direct.length + kin.length;
@@ -216,6 +221,13 @@ export function LocationList() {
             selected={areas}
             onToggle={toggleArea}
             onClear={() => setAreas([])}
+          />
+          <MultiSelect
+            label="Kategorie"
+            options={categoryOptions}
+            selected={categories}
+            onToggle={toggleCategory}
+            onClear={() => setCategories([])}
           />
         </div>
 
