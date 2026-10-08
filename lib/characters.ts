@@ -35,6 +35,13 @@ export function playsAs(
   return tierOf(c) === "extra" ? co : c.player_id === playerId || co;
 }
 
+// Pausierter Main Character: wird gerade nicht bespielt. Seine Karte ist ausgegraut,
+// sein Name steht in Szenen kursiv, auf dem Dashboard bildet er keine Gruppe, und
+// bei den Alter Egos steht er hinter den aktiven Main Characters (vor den SCs).
+export function isPaused(c: Pick<Character, "is_npc" | "profile"> | null | undefined): boolean {
+  return !!c && !c.is_npc && !!c.profile?.paused;
+}
+
 // Gilt der Charakter als gelöscht? Das ist er, wenn er im Papierkorb liegt oder die
 // Spieler*in(nen) dahinter ihr Konto gelöscht haben. Er bleibt dann in Szenen und
 // Posts bestehen, wird aber überall durchgestrichen gekennzeichnet. Konto gelöscht:

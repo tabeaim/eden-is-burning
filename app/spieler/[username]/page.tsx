@@ -9,7 +9,8 @@ import type { Player, PlayerProfile } from "@/lib/types";
 import { areaName } from "@/lib/world";
 import { characterImage } from "@/lib/avatar";
 import { formatDateTime, formatInplayDate, capFirst } from "@/lib/format";
-import { playsAs, tierLabel } from "@/lib/characters";
+import { isPaused, playsAs, tierLabel } from "@/lib/characters";
+import { PAUSED_CARD_CLASS, PAUSED_CLASS } from "@/lib/gone";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { Facts, FactRow } from "@/components/Facts";
@@ -64,7 +65,19 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
 
   const chars = charactersOf(p.id);
   const side = npcs.filter((c) => playsAs(c, p.id));
-  const all = [...chars, ...side];
+  // Zuletzt aktive zuerst: jüngster Post oder jüngste Handy-Nachricht des Charakters;
+  // wer noch nichts geschrieben hat, steht hinten (neueste zuerst)
+  const lastActive = new Map<string, string>();
+  for (const x of [...posts, ...chatMessages]) {
+    if (x.character_id && x.created_at > (lastActive.get(x.character_id) ?? "")) {
+      lastActive.set(x.character_id, x.created_at);
+    }
+  }
+  const all = [...chars, ...side].sort(
+    (a, b) =>
+      (lastActive.get(b.id) ?? "").localeCompare(lastActive.get(a.id) ?? "") ||
+      b.created_at.localeCompare(a.created_at),
+  );
   const ids = new Set(all.map((c) => c.id));
   const postCount = posts.filter((x) => ids.has(x.character_id)).length;
   const lastPostAt = (sceneId: string) =>
@@ -162,16 +175,24 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
               <Link
                 key={c.id}
                 href={`/charaktere/${c.id}`}
-                className="flex gap-3 rounded-xl border border-border-subtle bg-bg-surface p-3 transition-colors hover:bg-white/[0.03]"
+                title={isPaused(c) ? "Charakter pausiert" : undefined}
+                className={`flex gap-3 rounded-xl border border-border-subtle bg-bg-surface p-3 transition-colors hover:bg-white/[0.03] ${
+                  isPaused(c) ? PAUSED_CARD_CLASS : ""
+                }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={characterImage(c)} alt={c.name} className="h-24 w-16 shrink-0 rounded-lg object-cover" />
                 <div className="min-w-0">
                   <div className="font-serif text-[0.875rem] text-text-primary">
-                    {c.name}
+                    <span className={isPaused(c) ? PAUSED_CLASS : ""}>{c.name}</span>
                     {c.is_npc && (
                       <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
                         {tierLabel(c)}
+                      </span>
+                    )}
+                    {isPaused(c) && (
+                      <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
+                        pausiert
                       </span>
                     )}
                   </div>

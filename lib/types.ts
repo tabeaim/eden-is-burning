@@ -143,6 +143,9 @@ export interface ThingItem {
 // Erweitertes Charakterprofil (JSON-Spalte `profile`). Grunddaten pflegt man in
 // den Einstellungen, die beschreibenden Teile direkt im Profil.
 export interface CharacterProfile {
+  // Pausiert (nur Main Characters): Karte ausgegraut, Name in Szenen kursiv, keine
+  // Gruppe auf dem Dashboard – siehe isPaused
+  paused?: boolean;
   // --- Grunddaten ---
   birthdate?: string | null; // ISO-Datum; daraus wird das Alter berechnet
   gender?: string | null; // "weiblich" | "männlich" | "divers" | frei

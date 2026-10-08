@@ -2,7 +2,7 @@
 
 import { bannerStyle } from "@/lib/headers";
 import { characterImage } from "@/lib/avatar";
-import { tierOf } from "@/lib/characters";
+import { isPaused, tierOf } from "@/lib/characters";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -13,7 +13,7 @@ import { LoginScreen } from "./LoginScreen";
 import { PendingScreen } from "./PendingScreen";
 import { headersFor, pageHeader, sceneHeader } from "@/lib/headers";
 import { useTheme } from "@/lib/theme";
-import { GONE_CLASS } from "@/lib/gone";
+import { GONE_CLASS, PAUSED_CLASS } from "@/lib/gone";
 import { joinNames } from "@/lib/format";
 import type { Theme } from "@/lib/types";
 
@@ -385,8 +385,13 @@ function Sidebar({
     isSubscribed,
   } = useStore();
   const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
-  // Alter Egos: eigene Main Characters und zugeordnete Supporting Characters (mit SC-Tag)
-  const egos = [...myChars, ...myNpcs.filter((c) => tierOf(c) === "supporting")];
+  // Alter Egos: eigene Main Characters, dahinter die pausierten, dann zugeordnete
+  // Supporting Characters (mit SC-Tag)
+  const egos = [
+    ...myChars.filter((c) => !isPaused(c)),
+    ...myChars.filter(isPaused),
+    ...myNpcs.filter((c) => tierOf(c) === "supporting"),
+  ];
   const phoneBadge =
     unreadChatCount + incomingCalls.length + capticUnread.reduce((n, a) => n + a.count, 0);
   // Orange Zähler im Menü: Szenen = alle ungelesenen; Dashboard = Bewegung bei
@@ -515,7 +520,12 @@ function Sidebar({
                     alt={c.name}
                     className="h-[17px] w-[17px] shrink-0 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle group-hover:ring-accent/50"
                   />
-                  <span className="truncate">{c.name}</span>
+                  <span className={`truncate ${isPaused(c) ? `${PAUSED_CLASS} opacity-60` : ""}`}>{c.name}</span>
+                  {isPaused(c) && (
+                    <span className="ml-auto shrink-0 text-[0.625rem] uppercase tracking-wider text-text-tertiary">
+                      pausiert
+                    </span>
+                  )}
                   {tierOf(c) === "supporting" && (
                     <span
                       title="Supporting Character"

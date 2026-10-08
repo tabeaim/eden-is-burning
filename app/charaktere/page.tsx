@@ -1,10 +1,10 @@
 "use client";
 
-import { GONE_CLASS, GONE_PLAYER_CLASS, useCharacterGone } from "@/lib/gone";
+import { GONE_CLASS, GONE_PLAYER_CLASS, PAUSED_CARD_CLASS, useCharacterGone } from "@/lib/gone";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { NewCharacterButton } from "@/components/NewCharacterButton";
-import { TIER_NAMES, tierOf } from "@/lib/characters";
+import { TIER_NAMES, isPaused, tierOf } from "@/lib/characters";
 import { StatistActions } from "@/components/StatistActions";
 import { useStore } from "@/lib/store";
 import { formatInplayDateShort, capFirst } from "@/lib/format";
@@ -219,8 +219,14 @@ function CharacterCard({
 }) {
   const tier = tierOf(c);
   const gone = useCharacterGone(c);
+  const paused = isPaused(c);
   return (
-    <div className="group relative flex flex-col rounded-xl border border-border-subtle bg-bg-surface p-4 text-center transition-colors hover:bg-white/[0.03]">
+    <div
+      title={paused ? "Charakter pausiert" : undefined}
+      className={`group relative flex flex-col rounded-xl border border-border-subtle bg-bg-surface p-4 text-center transition-colors hover:bg-white/[0.03] ${
+        paused ? PAUSED_CARD_CLASS : ""
+      }`}
+    >
       <div className="font-display lowercase text-[1.625rem] leading-none text-text-primary">
         <Link
           href={`/charaktere/${c.id}`}
@@ -303,6 +309,7 @@ function CharacterCard({
       <div className="mt-1 text-[0.8125rem] text-text-tertiary">
         {tier !== "main" && <span className="uppercase tracking-wider">{TIER_NAMES[tier]} · </span>}
         Lebendig seit {formatInplayDateShort(c.created_at.slice(0, 10))}
+        {paused && <span className="uppercase tracking-wider"> · pausiert</span>}
       </div>
       {tier === "extra" && <StatistActions character={c} className="mt-3" />}
     </div>

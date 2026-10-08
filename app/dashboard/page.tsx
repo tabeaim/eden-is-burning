@@ -14,6 +14,7 @@ import { ChatRow } from "@/components/phone/ChatRow";
 import { rememberPhone } from "@/lib/phone";
 import { formatInplayDateShort } from "@/lib/format";
 import { chatUnits, isArchived, isLeftOnRead, unitKey, type ChatUnit } from "@/lib/chats";
+import { isPaused } from "@/lib/characters";
 import type { Character, Player, Scene } from "@/lib/types";
 
 export default function DashboardPage() {
@@ -52,7 +53,8 @@ export default function DashboardPage() {
   // Main Characters und bespielte Nebenfiguren. Für Nebenfiguren (SC, Statist*in)
   // zählen nur „abonnierte" Szenen und Chats – also die, in denen ich selbst mit
   // ihnen gestartet oder geantwortet habe (mehrere können dieselbe Figur bespielen).
-  const myChars = [...charactersOf(currentPlayer.id), ...myNpcs];
+  // Pausierte Main Characters bilden keine Gruppe und zählen nicht mit.
+  const myChars = [...charactersOf(currentPlayer.id).filter((c) => !isPaused(c)), ...myNpcs];
   const follows = (c: Character, itemId: string) => !c.is_npc || isSubscribed(itemId);
 
   // Zeitpunkt des letzten Posts einer Szene (postsOf ist nach post_number sortiert)

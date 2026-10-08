@@ -9,7 +9,9 @@ import { useStore } from "@/lib/store";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { pageHeader } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
-import { TIER_NAMES, playsAs, tierLabel, tierOf } from "@/lib/characters";
+import { TIER_NAMES, isPaused, playsAs, tierLabel, tierOf } from "@/lib/characters";
+import { PAUSED_CLASS } from "@/lib/gone";
+import { Toggle } from "@/components/Toggle";
 import { PhoneSettings } from "@/components/phone/PhoneSettings";
 import { NewCharacterButton } from "@/components/NewCharacterButton";
 import Link from "next/link";
@@ -512,14 +514,19 @@ function CharacterEditor({ character }: { character: Character }) {
     setJump(null);
   }, [jump, open, phoneAnchor]);
   const kindName = TIER_NAMES[tierOf(character)];
+  const paused = isPaused(character);
 
   return (
     <div
       ref={box}
       id={anchor}
-      className="scroll-mt-4 rounded-xl border border-border-subtle bg-bg-surface overflow-hidden"
+      className={`scroll-mt-4 rounded-xl border border-border-subtle bg-bg-surface ${
+        paused ? "border-dashed" : ""
+      }`}
     >
-      <div className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02]">
+      {/* kein overflow-hidden an der Karte: aufgeklappte Auswahllisten (Zuordnung)
+          ragen über ihren Rand hinaus */}
+      <div className={`flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] ${open ? "rounded-t-xl" : "rounded-xl"}`}>
         <Link href={`/charaktere/${character.id}`} title="Zum Profil" className="shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -535,11 +542,14 @@ function CharacterEditor({ character }: { character: Character }) {
         >
         <div className="flex-1 min-w-0">
           <div className="text-[0.875rem] text-text-primary">
-            {character.name}
+            <span className={paused ? `${PAUSED_CLASS} opacity-60` : ""}>{character.name}</span>
             {character.is_npc && (
               <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
                 {tierLabel(character)}
               </span>
+            )}
+            {paused && (
+              <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">pausiert</span>
             )}
           </div>
           <div className="text-[0.875rem] text-text-tertiary">{capFirst(character.role)}</div>
@@ -561,6 +571,23 @@ function CharacterEditor({ character }: { character: Character }) {
                 <PhoneSettings character={character} reduced={character.is_npc} />
               </Collapsible>
             </div>
+          )}
+          {tierOf(character) === "main" && (
+            <Collapsible title="Pausieren">
+              <Toggle
+                checked={paused}
+                onChange={(on) =>
+                  updateCharacter(character.id, { profile: { ...(character.profile ?? {}), paused: on } })
+                }
+              >
+                {character.name} pausieren
+              </Toggle>
+              <p className="text-[0.8125rem] text-text-tertiary">
+                Für Charaktere, die du gerade nicht bespielst: Die Charakter-Karte wird ausgegraut, der Name
+                steht in Szenen kursiv, und auf dem Dashboard taucht {character.name} nicht mehr als Gruppe auf.
+                Szenen, Posts und Chats bleiben, wie sie sind – schreiben kannst du weiterhin.
+              </p>
+            </Collapsible>
           )}
           {tierOf(character) === "supporting" && (
             <Collapsible title="Zuordnung">

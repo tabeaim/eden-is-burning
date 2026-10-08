@@ -5,8 +5,8 @@ import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
 import { RichText } from "./RichText";
 import type { Character, Player } from "@/lib/types";
-import { ageAt } from "@/lib/characters";
-import { GONE_CLASS, GONE_PLAYER_CLASS, useCharacterGone } from "@/lib/gone";
+import { ageAt, isPaused } from "@/lib/characters";
+import { GONE_CLASS, GONE_PLAYER_CLASS, PAUSED_CLASS, useCharacterGone } from "@/lib/gone";
 
 // Charakterkarte für die Szenenansicht. Ab `md` groß neben dem Post (Bildformat
 // 600×502; die Bio erscheint als Overlay, solange die Maus über dem Bild ist –
@@ -24,6 +24,7 @@ export function SceneCharacterCard({
 }) {
   const age = ageAt(character, at);
   const gone = useCharacterGone(character);
+  const paused = isPaused(character);
   const href = `/charaktere/${character.id}`;
   const byPlayer = player && (
     <>
@@ -56,9 +57,9 @@ export function SceneCharacterCard({
         <div className="min-w-0 flex-1">
           <Link
             href={href}
-            title={gone ? "Charakter gelöscht" : undefined}
+            title={gone ? "Charakter gelöscht" : paused ? "Charakter pausiert" : undefined}
             className={`block truncate font-serif text-[0.9375rem] font-bold uppercase tracking-wide text-text-primary ${
-              gone ? GONE_CLASS : ""
+              gone ? GONE_CLASS : paused ? PAUSED_CLASS : ""
             }`}
           >
             {character.name}
@@ -117,9 +118,9 @@ export function SceneCharacterCard({
             so breit, dass ein langer Name wie „Reece Logan Henderson“ in eine Zeile passt. */}
         <Link
           href={href}
-          title={gone ? "Charakter gelöscht" : undefined}
+          title={gone ? "Charakter gelöscht" : paused ? "Charakter pausiert" : undefined}
           className={`mt-3 block text-center font-serif text-[1.125rem] font-bold uppercase tracking-wide text-text-primary hover:text-accent ${
-            gone ? GONE_CLASS : ""
+            gone ? GONE_CLASS : paused ? PAUSED_CLASS : ""
           }`}
         >
           {character.name}
