@@ -223,7 +223,7 @@ export function SceneEditPanel({
       {/* Format: nur umstellbar, solange noch nichts geschrieben wurde */}
       {postCount === 0 ? (
         <Toggle checked={script} onChange={setScript}>
-          Drehbuch-Format <span className="text-text-tertiary">(Regieanweisungen und „Name: Text“)</span>
+          Drehbuch-Format
         </Toggle>
       ) : (
         scene.format === "script" && (

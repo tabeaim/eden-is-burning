@@ -47,7 +47,7 @@ export default function NewScenePage() {
   const [locationDescription, setLocationDescription] = useState("");
   const [locationCategory, setLocationCategory] = useState<string | null>(null);
   const [date, setDate] = useState("2021-11-23");
-  const [time, setTime] = useState("Nachmittag");
+  const [time, setTime] = useState("");
   const [tw, setTw] = useState(false);
   const [au, setAu] = useState(false);
   const [auName, setAuName] = useState("");
@@ -161,10 +161,7 @@ export default function NewScenePage() {
         </Toggle>
 
         <Toggle checked={script} onChange={setScript}>
-          Drehbuch-Format{" "}
-          <span className="text-text-tertiary">
-            (reduziert: Regieanweisungen und „Name: Text“ – umstellbar, solange noch kein Post da ist)
-          </span>
+          Drehbuch-Format
         </Toggle>
 
         {!phone && (
