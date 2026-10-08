@@ -1,5 +1,6 @@
 "use client";
 
+import { playerImage } from "@/lib/avatar";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { playsAs, tierOf } from "@/lib/characters";
@@ -39,14 +40,8 @@ export function AdminPlayers() {
         const me = p.id === currentPlayer?.id;
         return (
           <div key={p.id} className={`${row} flex flex-wrap items-center gap-3 px-3 py-2.5`}>
-            {p.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.avatar_url} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover bg-bg-primary" />
-            ) : (
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-primary text-[0.875rem] text-text-tertiary">
-                {p.username.slice(0, 1).toUpperCase()}
-              </span>
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={playerImage(p)} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover bg-bg-primary" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2 text-[0.875rem] text-text-primary">
                 {p.username}

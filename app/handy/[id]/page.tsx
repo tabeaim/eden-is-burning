@@ -331,8 +331,11 @@ function ChatView({ chat }: { chat: Chat }) {
     markChatSeen(chat.id);
     if (seenCount.current === null) {
       seenCount.current = messages.length;
-      const anchor = jump.current;
+      // Der Anker steht bei einem Klick innerhalb der App erst jetzt in der Adresse
+      // (beim ersten Rendern noch nicht) – deshalb hier noch einmal nachsehen
+      const anchor = jump.current || window.location.hash.slice(1);
       jump.current = "";
+      if (sceneById.get(anchor)?.status === "active") setPick(anchor);
       if (anchor && scrollToId(anchor, sceneById.has(anchor) ? "start" : "center")) {
         if (sceneById.has(anchor)) return;
         setHighlight(anchor);

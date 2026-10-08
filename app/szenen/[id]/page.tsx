@@ -1174,7 +1174,7 @@ function ReplyBox({
           {draft
             ? "Entwurf – nur für dich sichtbar"
             : script
-              ? "Drehbuch-Format: Regie und Dialog, Zeile für Zeile"
+              ? ""
               : "Formatierung wird beim Einfügen übernommen"}
         </span>
         <button

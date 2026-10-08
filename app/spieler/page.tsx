@@ -1,5 +1,6 @@
 "use client";
 
+import { playerImage } from "@/lib/avatar";
 import Link from "next/link";
 import { useMemo } from "react";
 import { useStore } from "@/lib/store";
@@ -82,7 +83,7 @@ function PlayerRow({
         <span className="relative shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={player.avatar_url ?? ""}
+            src={playerImage(player)}
             alt=""
             className="h-14 w-14 rounded-full object-cover bg-bg-primary ring-1 ring-border-subtle group-hover:ring-accent/50"
           />

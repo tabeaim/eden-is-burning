@@ -24,6 +24,9 @@ export function CharacterSelect({
   search?: { placeholder: string; characters: Character[] };
 }) {
   const [open, setOpen] = useState(false);
+  // nach oben aufklappen, wenn unter dem Feld zu wenig Platz ist (sonst
+  // schneidet der Seitenrand die Liste ab)
+  const [up, setUp] = useState(false);
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
   const found = search
@@ -59,7 +62,12 @@ export function CharacterSelect({
     <div ref={ref} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={(e) => {
+          const box = e.currentTarget.getBoundingClientRect();
+          const below = window.innerHeight - box.bottom;
+          setUp(below < 320 && box.top > below);
+          setOpen((o) => !o);
+        }}
         aria-haspopup="listbox"
         aria-expanded={open}
         className="flex max-w-full items-center gap-2 rounded-md border border-border-subtle bg-bg-primary py-1.5 pl-1.5 pr-2.5 text-[0.875rem] text-text-primary hover:border-white/25"
@@ -75,7 +83,7 @@ export function CharacterSelect({
       {open && (
         <div
           role="listbox"
-          className="absolute left-0 z-30 mt-1 max-h-72 w-72 max-w-[calc(100vw-3rem)] overflow-y-auto rounded-lg border border-border-subtle bg-bg-surface-2 p-1 shadow-2xl shadow-black/70"
+          className={`absolute left-0 z-30 ${up ? "bottom-full mb-1" : "mt-1"} max-h-72 w-72 max-w-[calc(100vw-3rem)] overflow-y-auto rounded-lg border border-border-subtle bg-bg-surface-2 p-1 shadow-2xl shadow-black/70`}
         >
           {/* zuerst die eigene Liste, darunter das Suchfeld für weitere (SC/Statist*in) */}
           {characters.map((c) => {

@@ -32,6 +32,7 @@ import type {
   SceneQuote,
 } from "./types";
 import { withinHours } from "./format";
+import { setDefaultAvatars } from "./avatar";
 import { supabase, supabaseConfigured } from "./supabase";
 import { rememberPhone } from "./phone";
 import { replaceHandle, requestId } from "./captic";
@@ -400,6 +401,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [ready, setReady] = useState(false);
   const [appSettings, setAppSettings] = useState<AppSettings>({});
+  // Standard-Avatare gelten überall, wo `characterImage`/`playerImage` rechnen
+  setDefaultAvatars(appSettings.defaultAvatars);
   // Lese-Status pro Szene (wann zuletzt geöffnet). Eine Szene gilt als "neu",
   // wenn ihr jüngster Post neuer ist als der letzte Besuch (oder nie geöffnet).
   const [reads, setReads] = useState<Record<string, string>>({});

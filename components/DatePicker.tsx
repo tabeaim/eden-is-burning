@@ -17,7 +17,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 // Datumsfeld mit kleinem Kalender zum Aufklappen. `value` ist ein ISO-Datum
 // ("2021-11-22") oder leer. Monat per Pfeile/Auswahl, Jahr frei eintippbar (für
-// Rückblenden und AUs).
+// Rückblenden und AUs) – ein neues Jahr gilt sofort für das gewählte Datum.
 export function DatePicker({
   value,
   onChange,
@@ -120,7 +120,15 @@ export function DatePicker({
               max={9999}
               onChange={(e) => {
                 const y = parseInt(e.target.value, 10);
-                if (y >= 1 && y <= 9999) setView((v) => ({ ...v, y }));
+                if (!(y >= 1 && y <= 9999)) return;
+                setView((v) => ({ ...v, y }));
+                // Nur das Jahr ändern: Tag und Monat des gewählten Datums bleiben
+                // (29. Februar wird in Nicht-Schaltjahren zum 28.)
+                if (valid) {
+                  const m = parseInt(value.slice(5, 7), 10);
+                  const d = Math.min(parseInt(value.slice(8, 10), 10), new Date(y, m, 0).getDate());
+                  onChange(`${String(y).padStart(4, "0")}-${pad(m)}-${pad(d)}`);
+                }
               }}
               aria-label="Jahr"
               className="w-[4.5rem] bg-bg-primary border border-border-subtle rounded-md px-1.5 py-1 text-[0.8125rem] text-text-primary outline-none"

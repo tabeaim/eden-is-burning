@@ -1,5 +1,6 @@
 "use client";
 
+import { playerImage } from "@/lib/avatar";
 import { GONE_CLASS, GONE_PLAYER_CLASS, PAUSED_CARD_CLASS, useCharacterGone } from "@/lib/gone";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -292,10 +293,8 @@ function CharacterCard({
                 <Bubble
                   href={`/spieler/${pl.username}`}
                   leading={
-                    pl.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={pl.avatar_url} alt="" className="h-5 w-5 rounded-full object-cover" />
-                    ) : undefined
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={playerImage(pl)} alt="" className="h-5 w-5 rounded-full object-cover" />
                   }
                 >
                   {pl.username}

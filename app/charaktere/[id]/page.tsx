@@ -1,5 +1,6 @@
 "use client";
 
+import { playerImage } from "@/lib/avatar";
 import { use, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
@@ -305,10 +306,8 @@ export default function CharacterPage({
                   key={o.id}
                   href={`/spieler/${o.username}`}
                   leading={
-                    o.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={o.avatar_url} alt="" className="h-5 w-5 rounded-full object-cover" />
-                    ) : undefined
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={playerImage(o)} alt="" className="h-5 w-5 rounded-full object-cover" />
                   }
                 >
                   {o.username}

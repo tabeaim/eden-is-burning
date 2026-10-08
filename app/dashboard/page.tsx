@@ -1,5 +1,6 @@
 "use client";
 
+import { playerImage } from "@/lib/avatar";
 import { CAPTIC_OPEN_KEY } from "@/components/phone/captic/CapticApp";
 import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
@@ -464,7 +465,7 @@ function PlayerPresenceList({
           <span className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={p.avatar_url ?? ""}
+              src={playerImage(p)}
               alt={p.username}
               className="w-7 h-7 rounded-full object-cover bg-bg-primary"
             />

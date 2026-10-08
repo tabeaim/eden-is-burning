@@ -507,4 +507,7 @@ export interface AppSettings {
   // Eigene Bilder der Gegenden (AreaKey bzw. „rest"/„industrial" -> Bildadresse,
   // ggf. mit Ausschnitt-Anhang) – Gegend-Panel der Karte und Ortskarten ohne Bild
   areaImages?: Record<string, string>;
+  // Standardbilder für Charaktere bzw. Spieler*innen ohne eigenes Bild (sonst die
+  // anonyme Silhouette, siehe lib/avatar.ts)
+  defaultAvatars?: { character?: string | null; player?: string | null };
 }

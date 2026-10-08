@@ -9,6 +9,7 @@ import { BannerPosition } from "../BannerPosition";
 import { Icon } from "../Icon";
 import { AREA_ORDER, EXTRA_AREAS, areaImage, areaName } from "@/lib/world";
 import type { Theme } from "@/lib/types";
+import { characterImage, playerImage } from "@/lib/avatar";
 import { hint, label, pill, row } from "./ui";
 
 const THEMES: [Theme, string][] = [
@@ -32,6 +33,7 @@ const PAGES: [string, string][] = [
 const AREA_KEYS: string[] = [...AREA_ORDER, ...Object.keys(EXTRA_AREAS)];
 // Schlüssel im gemeinsamen Entwurfs-/Upload-Zustand: Gegenden mit Vorsatz
 const AREA = "area:";
+const AVATAR = "avatar:";
 
 // Design: Standard-Farbmodus der App, Header-Bilder je Stil (dunkel/hell) und
 // die Bilder der Gegenden.
@@ -69,11 +71,17 @@ export function AdminDesign() {
     else delete next[key];
     updateAppSettings({ areaImages: next });
   };
+  const setDefaultAvatar = (key: "character" | "player", url: string | null) =>
+    updateAppSettings({ defaultAvatars: { ...(appSettings.defaultAvatars ?? {}), [key]: url } });
   async function onFile(f: File | undefined) {
     const key = target.current;
     if (!f || !key) return;
     setBusy(key);
     try {
+      if (key.startsWith(AVATAR)) {
+        const url = await uploadImage(f, "avatars", IMAGE_SIZES.avatar);
+        return setDefaultAvatar(key.slice(AVATAR.length) as "character" | "player", url);
+      }
       clearDraft(key);
       const url = await uploadImage(f, "headers", IMAGE_SIZES.banner);
       if (key.startsWith(AREA)) setAreaImage(key.slice(AREA.length), url);
@@ -104,6 +112,50 @@ export function AdminDesign() {
           Gilt für alle, die unter Einstellungen → Darstellung keinen eigenen Modus gewählt haben. Der helle Stil nutzt
           Creme- und Orange-Töne.
         </p>
+      </div>
+
+      {/* Standard-Avatare */}
+      <div>
+        <div className={`${label} mb-2`}>Standard-Avatare</div>
+        <p className={`${hint} mb-3`}>
+          Für Charaktere bzw. Spieler*innen ohne eigenes Bild. Ohne eigenes Standardbild gilt die anonyme Silhouette.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {(
+            [
+              ["character", "Charaktere", characterImage({ faceclaim_image_url: null })],
+              ["player", "Spieler*innen", playerImage(null)],
+            ] as const
+          ).map(([key, name, shown]) => (
+            <div key={key} className={`${row} flex items-center gap-3 p-3`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={shown} alt="" className="h-16 w-16 shrink-0 rounded-full bg-bg-primary object-cover" />
+              <div className="min-w-0 flex-1">
+                <div className="text-[0.875rem] text-text-primary">{name}</div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <button
+                    disabled={busy === AVATAR + key}
+                    onClick={() => {
+                      target.current = AVATAR + key;
+                      file.current?.click();
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] px-2.5 py-1.5 text-[0.8125rem] text-text-secondary hover:bg-white/[0.08] hover:text-text-primary disabled:opacity-50"
+                  >
+                    <Icon name="upload" size={14} /> {busy === AVATAR + key ? "Lädt hoch…" : "Bild hochladen"}
+                  </button>
+                  {appSettings.defaultAvatars?.[key] && (
+                    <button
+                      onClick={() => setDefaultAvatar(key, null)}
+                      className="text-[0.8125rem] text-text-tertiary underline hover:text-text-primary"
+                    >
+                      Zurück zur Silhouette
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Header-Bilder je Stil */}

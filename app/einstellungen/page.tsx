@@ -1,5 +1,6 @@
 "use client";
 
+import { playerImage } from "@/lib/avatar";
 import { capFirst } from "@/lib/format";
 import { BannerPosition } from "@/components/BannerPosition";
 import { bannerStyle } from "@/lib/headers";
@@ -172,7 +173,7 @@ function ProfileTab() {
       <div className="flex items-center gap-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={currentPlayer.avatar_url ?? ""}
+          src={playerImage(currentPlayer)}
           alt={currentPlayer.username}
           className="w-20 h-20 rounded-full object-cover bg-bg-surface border border-border-subtle"
         />

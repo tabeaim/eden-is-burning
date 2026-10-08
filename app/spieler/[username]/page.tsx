@@ -1,5 +1,6 @@
 "use client";
 
+import { playerImage } from "@/lib/avatar";
 import { BannerPosition } from "@/components/BannerPosition";
 import { bannerStyle } from "@/lib/headers";
 import { use, useRef, useState } from "react";
@@ -52,7 +53,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
     p?.profile?.header_url ?? undefined,
     "max-w-6xl",
     undefined,
-    p?.avatar_url ?? undefined,
+    p ? playerImage(p) : undefined,
   );
 
   if (!p) {

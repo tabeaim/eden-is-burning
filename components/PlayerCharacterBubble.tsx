@@ -1,5 +1,6 @@
 "use client";
 
+import { playerImage } from "@/lib/avatar";
 import { characterImage } from "@/lib/avatar";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
@@ -64,7 +65,7 @@ export function PlayerCharacterBubble({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={player.avatar_url ?? ""}
+          src={playerImage(player)}
           alt={player.username}
           className="w-5 h-5 rounded-full object-cover"
         />

@@ -1,5 +1,6 @@
 "use client";
 
+import { playerImage } from "@/lib/avatar";
 import { bannerStyle } from "@/lib/headers";
 import { characterImage } from "@/lib/avatar";
 import { isPaused, tierOf } from "@/lib/characters";
@@ -557,7 +558,7 @@ function Sidebar({
           <Link href={`/spieler/${currentPlayer.username}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={currentPlayer.avatar_url ?? placeholder(currentPlayer.username)}
+              src={playerImage(currentPlayer)}
               alt={currentPlayer.username}
               className="w-8 h-8 rounded-full object-cover bg-bg-surface ring-1 ring-border-subtle"
             />
@@ -579,8 +580,4 @@ function Sidebar({
     </aside>
     </>
   );
-}
-
-function placeholder(seed: string) {
-  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/80/80`;
 }
