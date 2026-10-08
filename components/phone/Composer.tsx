@@ -32,6 +32,8 @@ export function Composer({
   const [text, setText] = useState("");
   const [panel, setPanel] = useState<null | "emoji" | "gif" | "plus">(null);
   const [uploading, setUploading] = useState(false);
+  // Sprachnachricht: der getippte Text geht als (textbasierte) Sprachnachricht raus
+  const [voice, setVoice] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
   const file = useRef<HTMLInputElement>(null);
 
@@ -44,7 +46,8 @@ export function Composer({
 
   function send() {
     if (!text.trim()) return;
-    onSend("text", text);
+    onSend(voice ? "voice" : "text", text);
+    setVoice(false);
     setText("");
     requestAnimationFrame(resize);
   }
@@ -102,6 +105,17 @@ export function Composer({
           <span>Min</span>
         </div>
       )}
+      {voice && (
+        <div className="mb-1.5 flex items-center gap-2 rounded-lg border-l-2 border-accent bg-white/[0.05] py-1.5 pl-2.5 pr-1 text-[0.75rem]">
+          <Icon name="volume" size={14} className="text-accent" />
+          <span className="min-w-0 flex-1 text-text-secondary">
+            Sprachnachricht – schreib, was gesagt wird
+          </span>
+          <button type="button" onClick={() => setVoice(false)} className="px-1.5 text-text-tertiary hover:text-text-primary">
+            Abbrechen
+          </button>
+        </div>
+      )}
       <div className="flex items-end gap-1">
         {(media || onDate) && (
           <button
@@ -122,7 +136,7 @@ export function Composer({
             ref={area}
             value={text}
             rows={1}
-            placeholder={placeholder}
+            placeholder={voice ? "Sprachnachricht …" : placeholder}
             onChange={(e) => {
               setText(e.target.value);
               resize();
@@ -178,6 +192,18 @@ export function Composer({
               >
                 <Icon name="photo" size={20} />
                 {uploading ? "Lädt…" : "Foto"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setVoice(true);
+                  setPanel(null);
+                  area.current?.focus();
+                }}
+                className={menuBtn}
+              >
+                <Icon name="volume" size={20} />
+                Sprachnachricht
               </button>
             </>
           )}

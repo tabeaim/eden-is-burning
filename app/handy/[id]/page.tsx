@@ -15,6 +15,7 @@ import {
   isLeftOnRead,
   messageSnippet,
   newestMessage,
+  voiceDuration,
   type DatedMessage,
 } from "@/lib/chats";
 import {
@@ -26,6 +27,7 @@ import {
 import { ownerGone } from "@/lib/characters";
 import { GONE_CLASS } from "@/lib/gone";
 import { ChatNameText } from "@/components/phone/ChatNameText";
+import { Icon } from "@/components/Icon";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DatePicker } from "@/components/DatePicker";
 import { Composer } from "@/components/phone/Composer";
@@ -227,12 +229,52 @@ function ChatView({ chat }: { chat: Chat }) {
   // Mehrere Nachrichten markieren: zu einer Szene zusammenfügen, lösen, Tag ändern
   const [sel, setSel] = useState<string[] | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
+  // „Nachrichten anpassen" einer Szene: ihre Nachrichten sind vormarkiert, an- und
+  // abwählen, „Übernehmen" – was markiert ist, gehört danach zur Szene
+  const [adjust, setAdjust] = useState<string | null>(null);
+  const adjustScene = adjust ? sceneById.get(adjust) : undefined;
+  const applyAdjust = () => {
+    if (!adjustScene || !sel) return;
+    const keep = new Set(sel);
+    patchMessages(messages.filter((m) => m.scene_id === adjustScene.id && !keep.has(m.id)).map((m) => m.id), { scene_id: null });
+    patchMessages(messages.filter((m) => m.scene_id !== adjustScene.id && keep.has(m.id)).map((m) => m.id), { scene_id: adjustScene.id });
+    setSel(null);
+    setAdjust(null);
+    setRangeMode(false);
+  };
   const [selDateOpen, setSelDateOpen] = useState(false);
   // Tipp auf einen Tagestrenner: alle Nachrichten dieses Tages verlegen oder den
   // Trenner entfernen (die Nachrichten rücken zum Tag davor bzw. danach)
   const [dayMenu, setDayMenu] = useState<string | null>(null);
   const [dayEdit, setDayEdit] = useState<string | null>(null);
   const idsOfDay = (d: string) => messages.filter((m) => m.day === d).map((m) => m.id);
+  // Nachrichten auf einen anderen Tag legen. Das Datum einer Szene folgt ihrer
+  // frühesten Nachricht – sonst stünde sie in der Timeline am alten Tag.
+  const moveMessages = (ids: string[], date: string) => {
+    patchMessages(ids, { inplay_date: date });
+    const moved = new Set(ids);
+    const touched = new Set(messages.filter((m) => moved.has(m.id) && m.scene_id).map((m) => m.scene_id));
+    for (const sc of scenesHere) {
+      if (!touched.has(sc.id)) continue;
+      const first = messages
+        .filter((m) => m.scene_id === sc.id)
+        .map((m) => (moved.has(m.id) ? date : m.day))
+        .sort()[0];
+      if (first && first !== sc.inplay_date) updateChatScene(sc.id, { inplay_date: first });
+    }
+  };
+  // Umgekehrt: neues Szenendatum verschiebt die Nachrichten der Szene mit (bei
+  // mehreren Tagen alle um denselben Abstand)
+  const moveScene = (sc: ChatScene, date: string) => {
+    const own = messages.filter((m) => m.scene_id === sc.id);
+    const first = own.map((m) => m.day).sort()[0];
+    if (!first || first === date) return;
+    const diff = Date.parse(date) - Date.parse(first);
+    for (const d of new Set(own.map((m) => m.day))) {
+      const to = new Date(Date.parse(d) + diff).toISOString().slice(0, 10);
+      patchMessages(own.filter((m) => m.day === d).map((m) => m.id), { inplay_date: to });
+    }
+  };
   const dayBefore = dayMenu ? messages[messages.findIndex((m) => m.day === dayMenu) - 1]?.day : undefined;
   const dayAfter = dayMenu ? messages[messages.findLastIndex((m) => m.day === dayMenu) + 1]?.day : undefined;
   // Bereich markieren: mit gehaltener Umschalttaste (oder „Bereich" in der Leiste)
@@ -615,6 +657,8 @@ function ChatView({ chat }: { chat: Chat }) {
                     onLoad={onMedia}
                     className="block max-h-72 min-h-16 w-full min-w-24 object-cover"
                   />
+                ) : m.kind === "voice" ? (
+                  <VoiceMessage id={m.id} text={m.content} />
                 ) : (
                   <span className="whitespace-pre-wrap break-words">{m.content}</span>
                 )}
@@ -685,7 +729,9 @@ function ChatView({ chat }: { chat: Chat }) {
                 ? "Letzte Nachricht des Bereichs antippen"
                 : sel.length === 0
                   ? "Nachrichten antippen"
-                  : `${sel.length} markiert`}
+                  : adjustScene
+                    ? `„${adjustScene.title}“: ${sel.length} markiert`
+                    : `${sel.length} markiert`}
             </span>
             <button
               disabled={sel.length === 0}
@@ -700,28 +746,42 @@ function ChatView({ chat }: { chat: Chat }) {
             >
               Bereich
             </button>
-            <button
-              disabled={sel.length === 0}
-              onClick={() => setAssignOpen(true)}
-              className="rounded-md bg-accent/90 px-3 py-1.5 font-medium text-black disabled:opacity-40"
-            >
-              Szene …
-            </button>
-            <button
-              disabled={sel.length === 0}
-              onClick={() => setSelDateOpen(true)}
-              className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-text-primary disabled:opacity-40"
-            >
-              Tag ändern
-            </button>
+            {adjustScene ? (
+              <button
+                disabled={sel.length === 0}
+                onClick={applyAdjust}
+                title="Markierte Nachrichten gehören zur Szene, alle anderen werden gelöst"
+                className="rounded-md bg-accent/90 px-3 py-1.5 font-medium text-black disabled:opacity-40"
+              >
+                Übernehmen
+              </button>
+            ) : (
+              <>
+                <button
+                  disabled={sel.length === 0}
+                  onClick={() => setAssignOpen(true)}
+                  className="rounded-md bg-accent/90 px-3 py-1.5 font-medium text-black disabled:opacity-40"
+                >
+                  Szene …
+                </button>
+                <button
+                  disabled={sel.length === 0}
+                  onClick={() => setSelDateOpen(true)}
+                  className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-text-primary disabled:opacity-40"
+                >
+                  Tag ändern
+                </button>
+              </>
+            )}
             <button
               onClick={() => {
                 setSel(null);
+                setAdjust(null);
                 setRangeMode(false);
               }}
               className="px-1 text-text-tertiary hover:text-text-primary"
             >
-              Fertig
+              {adjustScene ? "Abbrechen" : "Fertig"}
             </button>
           </div>
         </div>
@@ -978,7 +1038,7 @@ function ChatView({ chat }: { chat: Chat }) {
           hint={`Legt die ${sel.length} markierten Nachrichten auf diesen Tag – sie rutschen im Verlauf dorthin.`}
           onCancel={() => setSelDateOpen(false)}
           onSave={(date) => {
-            patchMessages(sel, { inplay_date: date });
+            moveMessages(sel, date);
             setSelDateOpen(false);
             setSel(null);
           }}
@@ -1005,7 +1065,7 @@ function ChatView({ chat }: { chat: Chat }) {
               <SheetButton
                 danger
                 onClick={() => {
-                  patchMessages(idsOfDay(dayMenu), { inplay_date: dayBefore });
+                  moveMessages(idsOfDay(dayMenu), dayBefore);
                   setDayMenu(null);
                 }}
               >
@@ -1016,7 +1076,7 @@ function ChatView({ chat }: { chat: Chat }) {
               <SheetButton
                 danger
                 onClick={() => {
-                  patchMessages(idsOfDay(dayMenu), { inplay_date: dayAfter });
+                  moveMessages(idsOfDay(dayMenu), dayAfter);
                   setDayMenu(null);
                 }}
               >
@@ -1034,7 +1094,7 @@ function ChatView({ chat }: { chat: Chat }) {
           hint={`Legt alle ${idsOfDay(dayEdit).length} Nachrichten dieses Tages auf einen anderen Tag – sie rutschen im Verlauf dorthin.`}
           onCancel={() => setDayEdit(null)}
           onSave={(date) => {
-            patchMessages(idsOfDay(dayEdit), { inplay_date: date });
+            moveMessages(idsOfDay(dayEdit), date);
             setDayEdit(null);
           }}
         />
@@ -1099,7 +1159,10 @@ function ChatView({ chat }: { chat: Chat }) {
           }
           onCancel={() => setSceneForm(null)}
           onSave={(data) => {
-            if (sceneForm.scene) updateChatScene(sceneForm.scene.id, data);
+            if (sceneForm.scene) {
+              moveScene(sceneForm.scene, data.inplay_date);
+              updateChatScene(sceneForm.scene.id, data);
+            }
             else {
               const id = addChatScene(chat.id, data);
               if (sceneForm.from) {
@@ -1148,7 +1211,18 @@ function ChatView({ chat }: { chat: Chat }) {
                   setSceneMenu(null);
                 }}
               >
-                Titel, Datum, Zusammenfassung bearbeiten
+                Szenendetails bearbeiten
+              </SheetButton>
+            )}
+            {canEdit && (
+              <SheetButton
+                onClick={() => {
+                  setSel(messages.filter((m) => m.scene_id === menuScene.id).map((m) => m.id));
+                  setAdjust(menuScene.id);
+                  setSceneMenu(null);
+                }}
+              >
+                Nachrichten anpassen
               </SheetButton>
             )}
             {canEdit && menuScene.status === "active" && (
@@ -1169,7 +1243,7 @@ function ChatView({ chat }: { chat: Chat }) {
                   setSceneMenu(null);
                 }}
               >
-                Szene auflösen – Nachrichten bleiben lose im Chat
+                Szenengruppierung auflösen
               </SheetButton>
             )}
             <SheetButton onClick={() => setSceneMenu(null)}>Abbrechen</SheetButton>
@@ -1427,7 +1501,7 @@ function EditSheet({
   }) => void;
   onCancel: () => void;
 }) {
-  const media = message.kind !== "text";
+  const media = message.kind === "gif" || message.kind === "image";
   const [text, setText] = useState(message.content);
   const [time, setTime] = useState(message.inplay_time ?? "");
   const [date, setDate] = useState(message.day);
@@ -1505,5 +1579,38 @@ function EditSheet({
         </div>
       </div>
     </div>
+  );
+}
+
+// Sprachnachricht (textbasiert): Play-Symbol, Wellenform und geschätzte Dauer;
+// „Text" klappt das Gesprochene auf. Die Farbe kommt von der Blase.
+function VoiceMessage({ id, text }: { id: string; text: string }) {
+  const [open, setOpen] = useState(false);
+  // Wellenform: je Nachricht gleichbleibend aus der ID abgeleitet
+  const bars = Array.from({ length: 22 }, (_, i) => 4 + ((id.charCodeAt(i % id.length) * (i + 3)) % 14));
+  return (
+    <span className="block min-w-[11.5rem]">
+      <span className="flex items-center gap-2">
+        <Icon name="play" size={16} fill="currentColor" />
+        <span className="flex h-[18px] flex-1 items-center gap-[2px]" aria-hidden>
+          {bars.map((h, i) => (
+            <span key={i} style={{ height: h }} className="w-[2px] rounded-full bg-current opacity-60" />
+          ))}
+        </span>
+        <span className="text-[0.75rem] tabular-nums opacity-70">{voiceDuration(text)}</span>
+      </span>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+        aria-expanded={open}
+        className="mt-1 text-[0.75rem] font-semibold underline opacity-70 hover:opacity-100"
+      >
+        {open ? "Text einklappen" : "Text ausklappen"}
+      </button>
+      {open && <span className="mt-1 block whitespace-pre-wrap break-words">{text}</span>}
+    </span>
   );
 }

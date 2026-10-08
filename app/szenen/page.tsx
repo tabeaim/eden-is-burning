@@ -10,7 +10,7 @@ import { MultiSelect } from "@/components/MultiSelect";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import { SceneCard } from "@/components/SceneCard";
 import { PlotBar, PlotTools } from "@/components/PlotBar";
-import { areaFilterOptions, areaMatches, plotScenes, visiblePlots } from "@/lib/plots";
+import { areaFilterOptions, areaMatches, plotFilters, plotScenes, tokensMatch, visiblePlots } from "@/lib/plots";
 import { AU_UNNAMED, auNames } from "@/components/AuNameField";
 import type { Plot, Scene } from "@/lib/types";
 import { SCENE_KINDS, chatHref, newestMessage, sceneKind } from "@/lib/chats";
@@ -61,12 +61,6 @@ export default function ScenesPage() {
   const [searchPost, setSearchPost] = useState("");
   const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED
   const [plotId, setPlotId] = useState<string | null>(null); // geöffneter Plot
-  // Filter vor dem Öffnen eines Plots – beim Schließen kommen sie zurück
-  const [beforePlot, setBeforePlot] = useState<{
-    tokens: string[];
-    aus: string[];
-    areas: string[];
-  } | null>(null);
   const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
   const [areas, setAreas] = useState<string[]>([]); // AreaKey | "rest"
   const [periods, setPeriods] = useState<string[]>([]); // "YYYY-MM"
@@ -81,9 +75,12 @@ export default function ScenesPage() {
     const chars = params.get("chars");
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (area) setAreas([area]);
-    if (chars)
+    if (chars) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTokens(chars.split(",").filter(Boolean).map((id) => `char:${id}`));
+      // aus den Relations: alles Gemeinsame, auch Anrufe und SMS
+      setKinds([]);
+    }
   }, []);
 
   const myCharIds = useMemo(
@@ -120,12 +117,6 @@ export default function ScenesPage() {
       });
   }, [scenes]);
 
-  function tokenMatches(token: string, participantIds: string[]): boolean {
-    const [type, id] = token.split(":");
-    if (type === "char") return participantIds.includes(id);
-    return participantIds.some((pid) => character(pid)?.player_id === id);
-  }
-
   // Suche: getrennt nach Titel und nach Post-Text (eins von beiden oder beide)
   const qTitle = searchTitle.trim().toLowerCase();
   const qPost = searchPost.trim().toLowerCase();
@@ -150,18 +141,18 @@ export default function ScenesPage() {
     if (!qPost) return null;
     if (scene.chat_id) {
       const hit = chatMessages.find(
-        (m) => m.scene_id === scene.id && m.kind === "text" && m.content.toLowerCase().includes(qPost),
+        (m) => m.scene_id === scene.id && (m.kind === "text" || m.kind === "voice") && m.content.toLowerCase().includes(qPost),
       );
       return hit?.id ?? null;
     }
     return (postHits?.term === qPost ? postHits.hits.get(scene.id) : null) ?? null;
   };
 
-  // Geöffneter Plot: seine Szenen (aktuelle Filter für Charaktere/AU/Gegend plus
-  // von Hand ergänzte, minus entfernte) ersetzen diese drei Filter.
+  // Geöffneter Plot: seine Szenen (eigene Filter plus von Hand ergänzte, minus
+  // entfernte). Was darüber hinaus gewählt ist, grenzt weiter ein.
   const plot = plots.find((p) => p.id === plotId) ?? null;
   const plotIds = plot
-    ? new Set(plotScenes(plot, scenes, { tokens, aus, areas }, character).map((s) => s.id))
+    ? new Set(plotScenes(plot, scenes, plotFilters(plot), character).map((s) => s.id))
     : null;
   const myPlots = visiblePlots(
     plots,
@@ -172,17 +163,11 @@ export default function ScenesPage() {
   function togglePlot(p: Plot) {
     if (plotId === p.id) {
       setPlotId(null);
-      setTokens(beforePlot?.tokens ?? []);
-      setAus(beforePlot?.aus ?? []);
-      setAreas(beforePlot?.areas ?? []);
-      setBeforePlot(null);
       return;
     }
-    if (!plotId) setBeforePlot({ tokens, aus, areas });
+    // Gewählte Charakter-Filter fallen weg, alle anderen bleiben
     setPlotId(p.id);
-    setTokens([...p.tokens]);
-    setAus([...p.aus]);
-    setAreas([...(p.areas ?? [])]);
+    setTokens([]);
   }
 
   // Reiter ohne Szenen werden nicht angezeigt („Alle" immer; ein einzelner Reiter braucht keine Leiste)
@@ -204,19 +189,14 @@ export default function ScenesPage() {
     if (tab === "mine" && !s.participant_ids.some((id) => myCharIds.has(id)))
       return false;
     // AUs (Mehrfach): Szene muss in einem der gewählten AUs spielen
-    if (!plotIds && aus.length > 0 && !(s.au && aus.includes(s.au_name || AU_UNNAMED)))
+    if (aus.length > 0 && !(s.au && aus.includes(s.au_name || AU_UNNAMED)))
       return false;
     if (qTitle && !s.title.toLowerCase().includes(qTitle)) return false;
     if (qPost && !postMatchId(s)) return false;
-    // Charaktere/Spieler: Szene muss zu ALLEN gewählten Tokens passen
-    if (
-      !plotIds &&
-      tokens.length > 0 &&
-      !tokens.every((t) => tokenMatches(t, s.participant_ids))
-    )
-      return false;
+    // Charaktere/Spieler*innen (ab drei Charakteren: Gruppen-Regel, siehe tokensMatch)
+    if (!tokensMatch(tokens, s.participant_ids, character)) return false;
     // Gegend (Mehrfach): mind. eine muss passen
-    if (!plotIds && !areaMatches(areas, s.location_area)) return false;
+    if (!areaMatches(areas, s.location_area)) return false;
     // Zeiträume (Mehrfach): mind. einer muss passen
     if (periods.length > 0 && !periods.includes(s.inplay_date.slice(0, 7)))
       return false;
@@ -268,7 +248,6 @@ export default function ScenesPage() {
     setAus([]);
     setKinds(["scene"]);
     setPlotId(null);
-    setBeforePlot(null);
     setTokens([]);
     setAreas([]);
     setPeriods([]);

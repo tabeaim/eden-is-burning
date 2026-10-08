@@ -1,5 +1,6 @@
 "use client";
 
+import { useMyPhone } from "@/components/phone/PhoneFrame";
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -108,6 +109,20 @@ export default function ScenePage({
   }, [scene?.id, postsEpoch, loadScenePosts]);
   const postsLoading = posts.some((p) => p.partial);
   const turnId = scene ? whoseTurn(scene, posts) : null;
+
+  // Das Handy in der Navigation gehört dem eigenen Charakter dieser Szene – sind
+  // mehrere dabei, dem, der dran ist (sonst bleibt ein schon gewählter von ihnen)
+  const { myChars: phoneChars, stored: phoneOwner, setOwner: setPhoneOwner } = useMyPhone();
+  const myHere = phoneChars.filter((c) => scene?.participant_ids.includes(c.id)).map((c) => c.id);
+  const phoneFor = myHere.includes(turnId ?? "")
+    ? turnId
+    : myHere.includes(phoneOwner ?? "")
+      ? phoneOwner
+      : myHere[0];
+  useEffect(() => {
+    if (phoneFor && phoneFor !== phoneOwner) setPhoneOwner(phoneFor);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phoneFor]);
 
   // Sub-Seite: Titel in den Banner-Header, die Daten als Untertitel-Zeile
   // (dort, wo auf anderen Seiten die Tagline/der Untertitel steht), plus das
@@ -353,7 +368,7 @@ export default function ScenePage({
               <Icon name="message" size={14} /> Antworten
             </button>
           )}
-          {myTurn && (
+          {myTurn && scene.participant_ids.length > 2 && (
             <button onClick={passTurn} className={actionBtn} title="Zug weitergeben">
               <Icon name="arrow-right" size={14} /> Weitergeben
             </button>
@@ -506,7 +521,7 @@ function SceneHeader({
                 <Icon name="message" size={14} /> Antworten
               </button>
             )}
-            {scene.status === "active" && myTurn && (
+            {scene.status === "active" && myTurn && scene.participant_ids.length > 2 && (
               <button onClick={onPassTurn} className={`max-md:hidden ${btn}`} title="Zug weitergeben">
                 <Icon name="arrow-right" size={14} /> Weitergeben
               </button>
@@ -739,7 +754,7 @@ function PostRow({
   ) : (
     <div
       ref={wrapRef}
-      className="relative flex-1 min-w-0 select-text"
+      className="post-box relative flex-1 min-w-0 select-text"
       onMouseUp={onMouseUp}
     >
       <div

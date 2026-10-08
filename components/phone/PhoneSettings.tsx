@@ -21,7 +21,7 @@ import { PhoneAvatar } from "./PhoneFrame";
 // Handy-Einstellungen eines Charakters (Einstellungen → Meine Charaktere). Jede
 // Änderung wird sofort gespeichert – unabhängig vom „Speichern" des Profils.
 // `reduced` (Supporting Characters): nur Profilbild, Modell, Farbe und Zustand –
-// kein Hintergrundbild, keine Apps, kein Captic.
+// dazu Captic, aber kein Hintergrundbild und keine Apps.
 export function PhoneSettings({ character, reduced = false }: { character: Character; reduced?: boolean }) {
   const { updateCharacter, characters, npcs } = useStore();
   const [uploading, setUploading] = useState(false);
@@ -186,6 +186,19 @@ export function PhoneSettings({ character, reduced = false }: { character: Chara
         </div>
       </div>
 
+      {/* Captic gibt es auch für Supporting Characters */}
+      {!phone.burner && (
+        <Toggle
+          checked={phone.captic}
+          onChange={(on) => save({ captic: { ...raw.captic, enabled: on } })}
+        >
+          Captic{" "}
+          <span className="text-text-tertiary">
+            (Foto-Netzwerk – das Profil bearbeitest du danach direkt in der App auf dem Handy)
+          </span>
+        </Toggle>
+      )}
+
       {reduced ? null : phone.burner ? (
         <p className="text-[0.8125rem] text-text-tertiary">
           Das Burner Phone ist ein altes Tastenhandy: kein Hintergrundbild, keine Apps, kein
@@ -193,16 +206,6 @@ export function PhoneSettings({ character, reduced = false }: { character: Chara
         </p>
       ) : (
         <>
-          <Toggle
-            checked={phone.captic}
-            onChange={(on) => save({ captic: { ...raw.captic, enabled: on } })}
-          >
-            Captic{" "}
-            <span className="text-text-tertiary">
-              (Foto-Netzwerk – das Profil bearbeitest du danach direkt in der App auf dem Handy)
-            </span>
-          </Toggle>
-
           <div>
             <div className={label}>Hintergrundbild</div>
             <div className="flex flex-wrap items-center gap-2.5">

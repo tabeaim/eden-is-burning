@@ -39,13 +39,43 @@ export function tokenMatches(
   return participantIds.some((pid) => character(pid)?.player_id === id);
 }
 
+// Charakter-/Spieler*innen-Filter. Bis zwei Charaktere: alle müssen dabei sein.
+// Ab drei gewählten Charakteren gilt die Gruppen-Regel – mind. zwei von ihnen
+// spielen mit und sonst kein Main Character (Nebenfiguren stören nicht). So
+// findet „Lou, Sam, Nigel" auch die Szenen zu zweit. Spieler*innen-Tokens müssen
+// immer passen; ihre Charaktere zählen in der Gruppe nicht als Fremde.
+export function tokensMatch(
+  tokens: string[],
+  participantIds: string[],
+  character: CharacterLookup,
+): boolean {
+  const chars = tokens.filter((t) => t.startsWith("char:")).map((t) => t.slice(5));
+  const playerIds = tokens.filter((t) => t.startsWith("player:")).map((t) => t.slice(7));
+  if (!playerIds.every((id) => tokenMatches(`player:${id}`, participantIds, character))) return false;
+  if (chars.length < 3) return chars.every((id) => participantIds.includes(id));
+  if (participantIds.filter((id) => chars.includes(id)).length < 2) return false;
+  return participantIds.every((id) => {
+    if (chars.includes(id)) return true;
+    const c = character(id);
+    return !c || !!c.is_npc || playerIds.includes(c.player_id);
+  });
+}
+
 // Timeline-Regel: AUs sind eigene Zeitlinien – ohne AU-Auswahl nur Canon, mit
-// Auswahl nur die Szenen der gewählten AUs. Alle Tokens müssen passen.
+// Auswahl nur die Szenen der gewählten AUs.
 export function matchesFilters(s: Scene, f: PlotFilters, character: CharacterLookup): boolean {
   if (f.aus.length === 0 ? s.au : !(s.au && f.aus.includes(s.au_name || AU_UNNAMED)))
     return false;
   if (!areaMatches(f.areas, s.location_area)) return false;
-  return f.tokens.every((t) => tokenMatches(t, s.participant_ids, character));
+  return tokensMatch(f.tokens, s.participant_ids, character);
+}
+
+// Filter, die bei geöffnetem Plot zusätzlich gewählt sind, grenzen dessen Szenen
+// weiter ein (ohne AU-Auswahl bleibt jede Zeitlinie des Plots stehen).
+export function narrowsTo(s: Scene, f: PlotFilters, character: CharacterLookup): boolean {
+  if (f.aus.length > 0 && !(s.au && f.aus.includes(s.au_name || AU_UNNAMED))) return false;
+  if (!areaMatches(f.areas, s.location_area)) return false;
+  return tokensMatch(f.tokens, s.participant_ids, character);
 }
 
 export function plotFilters(p: Plot): PlotFilters {

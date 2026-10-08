@@ -20,6 +20,14 @@ export function formatInplayDate(iso: string): string {
   return `${d}. ${MONTHS_DE[m - 1]} ${y}`;
 }
 
+// "2021-11-22" -> "Mo, 22. November 2021" (Timeline)
+const WEEKDAYS_DE = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+export function formatInplayDateWeekday(iso: string): string {
+  const [y, m, d] = iso.split("-").map((n) => parseInt(n, 10));
+  if (!y || !m || !d) return iso;
+  return `${WEEKDAYS_DE[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]}, ${formatInplayDate(iso)}`;
+}
+
 // "2021-11-22" -> "22.11.2021" (für kompakte Zeilen)
 export function formatInplayDateShort(iso: string): string {
   const [y, m, d] = iso.split("-");

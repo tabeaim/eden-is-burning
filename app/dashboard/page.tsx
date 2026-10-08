@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { QuoteRotator } from "@/components/QuoteRotator";
 import { SceneCard, SceneRow } from "@/components/SceneCard";
 import { ChatRow } from "@/components/phone/ChatRow";
-import { rememberPhone } from "@/lib/phone";
+import { MAILBOX_KEY, rememberPhone } from "@/lib/phone";
 import { formatInplayDateShort } from "@/lib/format";
 import { chatUnits, isArchived, isLeftOnRead, unitKey, type ChatUnit } from "@/lib/chats";
 import { isPaused } from "@/lib/characters";
@@ -32,6 +32,8 @@ export default function DashboardPage() {
     chatMessages,
     chatScenes,
     incomingCalls,
+    mailboxAlerts,
+    dismissMailboxAlert,
     capticAlerts,
     character,
     myNpcs,
@@ -218,6 +220,64 @@ export default function DashboardPage() {
               ))}
             </section>
           )}
+          {/* Mailbox: abgelehnter eigener Anruf (aufsprechen) bzw. neue Nachricht auf
+              der Mailbox eines eigenen Charakters – beides führt in die Anrufliste */}
+          {mailboxAlerts.length > 0 && (
+            <section className="flex flex-col gap-2">
+              {mailboxAlerts.map(({ kind, call }) => {
+                const caller = character(call.caller_id);
+                const callee = character(call.callee_id);
+                return (
+                  <div
+                    key={`${kind}:${call.id}`}
+                    className="flex items-center gap-1 rounded-lg border border-accent/60 bg-accent-soft pr-1.5 hover:bg-accent/20"
+                  >
+                    <Link
+                      href="/handy/telefon"
+                      onClick={() => {
+                        rememberPhone(kind === "leave" ? call.caller_id : call.callee_id);
+                        if (kind === "new") return dismissMailboxAlert("new", call.id);
+                        try {
+                          sessionStorage.setItem(MAILBOX_KEY, call.id);
+                        } catch {
+                          /* ignore */
+                        }
+                      }}
+                      className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-3.5"
+                    >
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center text-accent">
+                        <Icon name="phone" size={20} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-serif text-[0.875rem] leading-snug text-text-primary">
+                          {kind === "leave"
+                            ? `${callee?.name ?? "Jemand"} hat den Anruf von ${caller?.name.split(" ")[0] ?? "dir"} abgelehnt`
+                            : `${caller?.name ?? "Jemand"} hat ${callee?.name.split(" ")[0] ?? "dir"} auf die Mailbox gesprochen`}
+                        </span>
+                        <span className="block text-[0.875rem] text-text-tertiary">
+                          {formatInplayDateShort(call.inplay_date)}
+                          {call.inplay_time ? `, ${call.inplay_time}` : ""}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-[0.8125rem] font-medium text-accent">
+                        {kind === "leave" ? "Auf die Mailbox sprechen ›" : "Anhören ›"}
+                      </span>
+                    </Link>
+                    {kind === "leave" && (
+                      <button
+                        onClick={() => dismissMailboxAlert("leave", call.id)}
+                        title="Nicht aufsprechen – Hinweis ausblenden"
+                        aria-label="Hinweis ausblenden"
+                        className="shrink-0 rounded p-1.5 text-text-tertiary hover:text-text-primary"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </section>
+          )}
           {/* Neue Likes, Kommentare, Follower auf Captic – führt in die Aktivitäten
               des Charakters; dort gilt es als gesehen und der Hinweis verschwindet */}
           {capticAlerts.length > 0 && (
@@ -336,24 +396,23 @@ export default function DashboardPage() {
         {/* RECHTS: Zitate, 24h-Aktivität, Online */}
         <div className="flex flex-col gap-8 lg:sticky lg:top-6">
 
+          {/* nur, wenn in den letzten 24h etwas los war */}
+          {recentItems.length > 0 && (
           <section>
             <h2 className="section-bar text-[0.875rem] text-text-secondary mb-3">
               Aktive Szenen · letzte 24h
             </h2>
-            {recentItems.length === 0 ? (
-              <Empty>Keine.</Empty>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {recentItems.map((item) =>
-                  item.scene ? (
-                    <SceneRow key={item.key} scene={item.scene} />
-                  ) : (
-                    <ChatRow key={item.key} chat={item.unit!.chat} scene={item.unit!.scene} />
-                  ),
-                )}
-              </div>
-            )}
+            <div className="flex flex-col gap-2">
+              {recentItems.map((item) =>
+                item.scene ? (
+                  <SceneRow key={item.key} scene={item.scene} />
+                ) : (
+                  <ChatRow key={item.key} chat={item.unit!.chat} scene={item.unit!.scene} />
+                ),
+              )}
+            </div>
           </section>
+          )}
 
           <section>
             <h2 className="section-bar text-[0.875rem] text-text-secondary mb-3">

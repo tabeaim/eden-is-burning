@@ -6,7 +6,9 @@ import { signatureHtml } from "@/lib/html";
 // Frei geschriebener Profiltext (Kurzbeschreibung, About, Zitat, Timeline …):
 // reiner Text oder HTML, entschärft wie die Text-Signatur (siehe signatureHtml).
 // Zeilenumbrüche bleiben in beiden Fällen stehen; Größe und Farbe gibt die
-// Stelle per `className` vor, sofern das HTML nichts anderes sagt.
+// Stelle per `className` vor, sofern das HTML nichts anderes sagt. Fließtexte
+// stehen im Blocksatz – mit Silbentrennung, damit schmale Spalten (Handy) keine
+// Löcher zwischen den Wörtern bekommen.
 export function RichText({
   html,
   className = "",
@@ -20,7 +22,8 @@ export function RichText({
   const Tag = inline ? "span" : "div";
   return (
     <Tag
-      className={`${className} whitespace-pre-wrap break-words [&_a]:underline [&_a:hover]:text-accent [&_img]:inline-block [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5`}
+      lang="de"
+      className={`${className} ${inline ? "" : "text-justify hyphens-auto"} whitespace-pre-wrap break-words [&_a]:underline [&_a:hover]:text-accent [&_img]:inline-block [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5`}
       dangerouslySetInnerHTML={inner}
     />
   );

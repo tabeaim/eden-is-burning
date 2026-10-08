@@ -101,7 +101,7 @@ export default function MessagesPage() {
       if (newest) last.set(chatId, newest);
       if (!query) continue;
       const hit = newestMessage(
-        ordered.filter((m) => m.kind === "text" && m.content.toLowerCase().includes(query)),
+        ordered.filter((m) => (m.kind === "text" || m.kind === "voice") && m.content.toLowerCase().includes(query)),
       );
       if (hit) hits.set(chatId, hit);
     }

@@ -129,6 +129,7 @@ export function CapticPostCard({
   const author = character(post.character_id);
   const [menu, setMenu] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  const [likers, setLikers] = useState(false);
   const [text, setText] = useState("");
   const [emoji, setEmoji] = useState(false);
   const [caret, setCaret] = useState(0);
@@ -203,7 +204,10 @@ export function CapticPostCard({
       </div>
 
       <div className="px-3 pt-1.5 text-[0.8125rem] leading-snug text-text-secondary">
-        <div className={name}>Gefällt {formatCount(likes)} Mal</div>
+        {/* Antippen zeigt, wer geliket hat (nur Likes von Charakteren haben Namen) */}
+        <button onClick={() => setLikers(true)} disabled={likes === 0} className={name}>
+          Gefällt {formatCount(likes)} Mal
+        </button>
         {post.caption && (
           <p className="mt-1 whitespace-pre-wrap break-words">
             <button onClick={() => author && onProfile(author.id)} className={name}>
@@ -341,6 +345,43 @@ export function CapticPostCard({
               Beitrag löschen
             </SheetButton>
           </SheetList>
+        </Sheet>
+      )}
+      {likers && (
+        <Sheet onClose={() => setLikers(false)}>
+          <div className="mb-2 px-1 text-[0.8125rem] text-text-tertiary">Gefällt</div>
+          <div className="max-h-[50vh] overflow-y-auto rounded-xl">
+            <SheetList>
+              {(post.liked_by ?? []).map((id) => {
+                const c = character(id);
+                if (!c) return null;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => {
+                      setLikers(false);
+                      onProfile(id);
+                    }}
+                    className="flex items-center gap-2.5 px-3 py-2 text-left hover:bg-white/[0.05]"
+                  >
+                    <CapticAvatar character={c} size={32} />
+                    <span className="min-w-0 flex-1 leading-tight">
+                      <span className="block truncate text-[0.8125rem] font-semibold text-text-primary">
+                        {capticHandle(c)}
+                      </span>
+                      <span className="block truncate text-[0.75rem] text-text-secondary">{c.name}</span>
+                    </span>
+                  </button>
+                );
+              })}
+              {(post.likes ?? 0) > 0 && (
+                <div className="px-4 py-3 text-[0.8125rem] text-text-secondary">
+                  {(post.liked_by?.length ?? 0) > 0 ? "und " : ""}
+                  {formatCount(post.likes)} {(post.liked_by?.length ?? 0) > 0 ? "weitere" : "Accounts außerhalb von Eden"}
+                </div>
+              )}
+            </SheetList>
+          </div>
         </Sheet>
       )}
       {confirm && (

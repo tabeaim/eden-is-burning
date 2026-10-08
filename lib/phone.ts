@@ -162,6 +162,10 @@ export function contactPhoto(owner: Owner, other: Other): string | null {
 
 // Übergabe „Nachricht schreiben" aus den Kontakten an „Neue SMS" (sessionStorage)
 export const SMS_TO_KEY = "eden:sms-to";
+// Dashboard → Telefon-App: Anruf, zu dem gleich „Auf die Mailbox sprechen" aufgeht
+export const MAILBOX_KEY = "eden:mailbox";
+// Längste Mailbox-Nachricht (Zeichen)
+export const VOICEMAIL_MAX = 300;
 
 // „2021-12-31" → „2022-01-01"
 export function nextDay(day: string): string {

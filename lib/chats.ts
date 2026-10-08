@@ -199,5 +199,14 @@ export const isGroup = (chat: Pick<Chat, "participant_ids">) => chat.participant
 export function messageSnippet(m: ChatMessage): string {
   if (m.kind === "gif") return "GIF";
   if (m.kind === "image") return "Foto";
+  if (m.kind === "voice") return `Sprachnachricht (${voiceDuration(m.content)})`;
   return m.content;
+}
+
+// Länge einer (textbasierten) Sprachnachricht, aus dem Text geschätzt: gut zwei
+// Wörter pro Sekunde, mindestens zwei Sekunden – „0:14"
+export function voiceDuration(text: string): string {
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  const sec = Math.max(2, Math.round(words / 2.3));
+  return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
 }

@@ -394,13 +394,16 @@ export interface PhoneCall {
   inplay_time: string | null; // „22:10"
   status: "ringing" | "accepted" | "declined" | "cancelled"; // cancelled: vom Anrufenden abgebrochen
   scene_id?: string | null; // Telefonszene, falls eine erstellt wurde
+  // Abgelehnter Anruf: was der/die Anrufende auf die Mailbox gesprochen hat
+  voicemail?: string | null;
   created_at: string;
 }
 
 // text: `content` ist der Nachrichtentext · gif/image: Bild-Adresse ·
 // date: Altbestand – Tagestrenner mit Inplay-Datum, „2021-11-23". Neue Nachrichten
 // tragen ihr Datum selbst (`inplay_date`); Trenner entstehen beim Anzeigen.
-export type ChatMessageKind = "text" | "gif" | "image" | "date";
+// voice: Sprachnachricht – textbasiert, `content` ist das Gesprochene
+export type ChatMessageKind = "text" | "gif" | "image" | "voice" | "date";
 
 export interface ChatMessage {
   id: string;

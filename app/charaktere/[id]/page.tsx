@@ -212,7 +212,7 @@ export default function CharacterPage({
       {topTab === "general" && (
         <div className={SPLIT}>
           {c.bio ? (
-            <RichText html={c.bio} className="text-left text-[0.875rem] leading-relaxed text-text-secondary" />
+            <RichText html={c.bio} className="text-[0.875rem] leading-relaxed text-text-secondary" />
           ) : (
             <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
           )}
@@ -476,7 +476,7 @@ function CharacterTab({ c }: { c: Character }) {
           <Heading>about.</Heading>
           <RichText
             html={c.personality}
-            className="text-left text-[0.875rem] leading-relaxed text-text-secondary"
+            className="text-[0.875rem] leading-relaxed text-text-secondary"
           />
         </section>
       )}
@@ -689,6 +689,13 @@ function RelationRow({
             )}
           </Link>
           {facts && <div className="text-[0.8125rem] text-text-tertiary">{facts}</div>}
+          {/* gemeinsame Szenen der beiden in der Szenen-Übersicht */}
+          <Link
+            href={`/szenen?chars=${c.id},${rc.id}`}
+            className="mt-0.5 inline-flex items-center gap-1 text-[0.8125rem] text-text-tertiary hover:text-accent"
+          >
+            <Icon name="book" size={12} /> Gemeinsame Szenen
+          </Link>
         </div>
       </div>
 

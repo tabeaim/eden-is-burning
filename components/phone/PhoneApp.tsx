@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import type { Character, PhoneCall } from "@/lib/types";
 import { formatInplayDateShort } from "@/lib/format";
@@ -25,7 +25,7 @@ import {
 } from "@/components/phone/PhoneFrame";
 import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
 import { useLongPress } from "@/components/phone/useLongPress";
-import { SMS_TO_KEY } from "@/lib/phone";
+import { MAILBOX_KEY, SMS_TO_KEY, VOICEMAIL_MAX } from "@/lib/phone";
 
 const first = (c: Character | undefined) => c?.name.split(" ")[0] ?? "?";
 const when = (c: Pick<PhoneCall, "inplay_date" | "inplay_time">) =>
@@ -37,7 +37,7 @@ const when = (c: Pick<PhoneCall, "inplay_date" | "inplay_time">) =>
 // eigenem Foto versehen (gilt nur auf diesem Handy).
 export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
   const router = useRouter();
-  const { calls, scenes, character, addCall, updateCall, updateCharacter } = useStore();
+  const { calls, scenes, character, addCall, updateCall, updateCharacter, dismissMailboxAlert } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
   const [view, setView] = useState(initialView);
   const [contact, setContact] = useState<Character | null>(null);
@@ -48,6 +48,20 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
   // Anruf, dessen Optionen (abbrechen, löschen) gerade offen sind
   const [menuFor, setMenuFor] = useState<PhoneCall | null>(null);
   const longPress = useLongPress<PhoneCall>(setMenuFor);
+  // Mailbox: abgelehnter Anruf, auf den gerade gesprochen wird / dessen Nachricht offen ist
+  const [mailboxFor, setMailboxFor] = useState<string | null>(null);
+  const [heardId, setHeardId] = useState<string | null>(null);
+  useEffect(() => {
+    // vom Dashboard („Auf die Mailbox sprechen")
+    try {
+      const id = sessionStorage.getItem(MAILBOX_KEY);
+      sessionStorage.removeItem(MAILBOX_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (id) setMailboxFor(id);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   if (!me) {
     return (
@@ -65,6 +79,9 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
   const ringing = myCalls.filter((c) => c.status === "ringing" && c.callee_id === me.id);
   const log = myCalls.filter((c) => !ringing.includes(c));
+  const mailboxCall = calls.find((c) => c.id === mailboxFor && c.caller_id === me.id && c.status === "declined");
+  const heard = myCalls.find((c) => c.id === heardId);
+  const canLeave = (c: PhoneCall) => c.status === "declined" && c.caller_id === me.id;
 
   // Aus der Anrufliste dieses Handys löschen (beim Gegenüber bleibt der Eintrag).
   // Ein eigener, noch klingelnder Anruf wird dabei abgebrochen.
@@ -125,7 +142,14 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
                         {outgoing ? "↗ ausgehend" : "↙ eingehend"} · {status}
                       </span>
                       {scene && <span className="shrink-0 text-accent">Zur Szene ›</span>}
+                      {canLeave(c) && !c.voicemail && <span className="shrink-0 text-accent">Mailbox ›</span>}
                     </span>
+                    {/* auf die Mailbox gesprochen: eine Zeile, antippen zeigt alles */}
+                    {c.voicemail && (
+                      <span className="mt-0.5 block truncate text-[0.8125rem] text-text-secondary">
+                        „{c.voicemail}“
+                      </span>
+                    )}
                   </span>
                 </>
               );
@@ -151,6 +175,25 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
                     <button
                       onClick={() => setSceneFor(c)}
                       title="Szene zu diesem Anruf erstellen"
+                      className={`${cls} hover:bg-white/[0.03]`}
+                    >
+                      {body}
+                    </button>
+                  ) : c.voicemail ? (
+                    <button
+                      onClick={() => {
+                        setHeardId(c.id);
+                        if (!outgoing) dismissMailboxAlert("new", c.id);
+                      }}
+                      title="Mailbox-Nachricht anhören"
+                      className={`${cls} hover:bg-white/[0.03]`}
+                    >
+                      {body}
+                    </button>
+                  ) : canLeave(c) ? (
+                    <button
+                      onClick={() => setMailboxFor(c.id)}
+                      title="Auf die Mailbox sprechen"
                       className={`${cls} hover:bg-white/[0.03]`}
                     >
                       {body}
@@ -258,6 +301,16 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
                   </SheetButton>
                 );
               })()}
+            {canLeave(menuFor) && (
+              <SheetButton
+                onClick={() => {
+                  setMailboxFor(menuFor.id);
+                  setMenuFor(null);
+                }}
+              >
+                {menuFor.voicemail ? "Mailbox-Nachricht ändern" : "Auf die Mailbox sprechen"}
+              </SheetButton>
+            )}
             <SheetButton
               danger
               onClick={() => {
@@ -272,6 +325,53 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
         </Sheet>
       )}
 
+      {mailboxCall && (
+        <MailboxDialog
+          key={mailboxCall.id}
+          me={me}
+          contact={character(mailboxCall.callee_id)}
+          initial={mailboxCall.voicemail ?? ""}
+          onCancel={() => setMailboxFor(null)}
+          onSave={(text) => {
+            updateCall(mailboxCall.id, { voicemail: text || null });
+            dismissMailboxAlert("leave", mailboxCall.id);
+            setMailboxFor(null);
+            setView("log");
+          }}
+        />
+      )}
+
+      {heard?.voicemail && (
+        <div className={dialogWrap} onClick={() => setHeardId(null)}>
+          <div onClick={(e) => e.stopPropagation()} className={dialogBox}>
+            <div className="flex items-center gap-3">
+              {character(heard.caller_id) && (
+                <ContactAvatar owner={me} character={character(heard.caller_id)!} size={48} />
+              )}
+              <div className="min-w-0">
+                <div className="truncate text-[1rem] font-semibold text-text-primary">
+                  {heard.caller_id === me.id
+                    ? `An ${contactName(me, character(heard.callee_id))}`
+                    : contactName(me, character(heard.caller_id))}
+                </div>
+                <div className="text-[0.8125rem] text-text-tertiary">Mailbox · {when(heard)}</div>
+              </div>
+            </div>
+            <p className="mt-3 whitespace-pre-wrap break-words text-[0.9375rem] leading-relaxed text-text-primary">
+              „{heard.voicemail}“
+            </p>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setHeardId(null)}
+                className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+              >
+                Schließen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {sceneFor ? (
         <PhoneSceneDialog call={sceneFor} onClose={() => setSceneFor(null)} />
       ) : (
@@ -283,6 +383,60 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
 
 const dialogWrap = "absolute inset-0 z-20 overflow-y-auto bg-black/55 p-3 pt-12";
 const dialogBox = "rounded-2xl border border-border-subtle bg-bg-surface-2 p-4";
+
+// Auf die Mailbox sprechen (textbasiert): nach einem abgelehnten Anruf. Die
+// Nachricht steht danach bei beiden in der Anrufliste.
+function MailboxDialog({
+  me,
+  contact,
+  initial,
+  onSave,
+  onCancel,
+}: {
+  me: Character;
+  contact: Character | undefined;
+  initial: string;
+  onSave: (text: string) => void;
+  onCancel: () => void;
+}) {
+  const [text, setText] = useState(initial);
+  return (
+    <div className={dialogWrap} onClick={onCancel}>
+      <div onClick={(e) => e.stopPropagation()} className={dialogBox}>
+        <div className="text-[1rem] font-semibold text-text-primary">
+          Mailbox von {contactName(me, contact)}
+        </div>
+        <div className="text-[0.8125rem] text-text-tertiary">
+          Der Anruf wurde abgelehnt – {first(me)} spricht nach dem Piep.
+        </div>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value.slice(0, VOICEMAIL_MAX))}
+          maxLength={VOICEMAIL_MAX}
+          rows={5}
+          autoFocus
+          placeholder="Was sagt dein Charakter?"
+          className="mt-3 w-full resize-none rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[16px] text-text-primary outline-none focus:border-white/20 sm:text-[0.875rem]"
+        />
+        <div className="mt-1 text-right text-[0.75rem] text-text-tertiary">
+          {text.length} / {VOICEMAIL_MAX}
+        </div>
+        <div className="mt-3 flex items-center justify-end gap-3">
+          <button onClick={onCancel} className="px-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+            Abbrechen
+          </button>
+          <button
+            onClick={() => onSave(text.trim())}
+            disabled={!text.trim() && !initial}
+            className="rounded-md bg-accent/90 px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
+          >
+            {initial && !text.trim() ? "Nachricht löschen" : "Aufsprechen"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Anruf starten: oben Inplay-Datum und Uhrzeit (Pflicht) und „anklingeln",
 // darunter optionaler Titel und „Telefonszene erstellen" (ohne anzuklingeln).

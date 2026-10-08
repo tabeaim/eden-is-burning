@@ -119,6 +119,15 @@ body {
   background-attachment: fixed;
 }
 
+/* Post-Text im dunklen Stil: einfarbige Fläche, damit das Wellenbild dahinter
+   nicht durch die Zeilen läuft (im hellen Stil liegt kein Bild dahinter). */
+html:not([data-theme="light"]) .post-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
 /* Heller Stil (Einstellungen → Darstellung / Admin → Design): Creme-Töne und ein
    sandiges Orange nach dem Vorbild klassischer Foren; Schrift, Abstände und Bausteine
    bleiben wie im dunklen Stil. `--color-white` wird dunkel getönt, damit alle weißen

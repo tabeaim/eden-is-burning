@@ -4,11 +4,13 @@ import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { compareInplay, formatInplayDate } from "@/lib/format";
+import { compareInplay, formatInplayDate, formatInplayDateWeekday } from "@/lib/format";
 import {
   AU_UNNAMED,
   areaFilterOptions,
   matchesFilters,
+  narrowsTo,
+  plotFilters,
   plotScenes,
   visiblePlots,
   type PlotFilters,
@@ -65,9 +67,6 @@ export default function TimelinePage() {
   const [yearSel, setYearSel] = useState<string[]>([]); // leer = alle Jahre
   const [plotId, setPlotId] = useState<string | null>(null);
   const [addingOff, setAddingOff] = useState(false);
-  // Filter, die vor dem Öffnen eines Plots aktiv waren – beim Schließen kommen
-  // sie zurück (waren keine aktiv, ist danach auch keiner aktiv).
-  const [beforePlot, setBeforePlot] = useState<PlotFilters | null>(null);
 
   const plot = plots.find((p) => p.id === plotId) ?? null;
   const editable = plot ? canEditPlot(plot) : false;
@@ -90,10 +89,13 @@ export default function TimelinePage() {
     return opts;
   }, [scenes]);
 
-  // Sichtbare Szenen: im offenen Plot mit den aktuell eingestellten Filtern
+  // Sichtbare Szenen: der offene Plot bringt seine eigenen Filter mit; was
+  // darüber hinaus gewählt ist, grenzt seine Szenen weiter ein
   const shownScenes = (
     plot
-      ? plotScenes(plot, scenes, filters, character)
+      ? plotScenes(plot, scenes, plotFilters(plot), character).filter((s) =>
+          narrowsTo(s, filters, character),
+        )
       : scenes.filter((s) => matchesFilters(s, filters, character))
   ).filter((s) => kinds.length === 0 || kinds.includes(sceneKind(s)));
 
@@ -134,29 +136,27 @@ export default function TimelinePage() {
   }
 
   const filterCount = tokens.length + aus.length + areas.length + activeYears.length + kinds.length;
+  // Gewählte Charakter-/AU-/Gegend-Filter lassen sich als neue Filter des Plots speichern
   const filterChanged = plot
-    ? !sameSet(plot.tokens, tokens) ||
-      !sameSet(plot.aus, aus) ||
-      !sameSet(plot.areas ?? [], areas)
+    ? tokens.length + aus.length + areas.length > 0 &&
+      (!sameSet(plot.tokens, tokens) ||
+        !sameSet(plot.aus, aus) ||
+        !sameSet(plot.areas ?? [], areas))
     : false;
-  const addable = scenes.filter((s) => !shownScenes.includes(s));
+  const addable = plot
+    ? scenes.filter((s) => !plotScenes(plot, scenes, plotFilters(plot), character).includes(s))
+    : [];
 
   function togglePlot(p: Plot) {
     setAddingOff(false);
     if (plotId === p.id) {
       setPlotId(null);
-      setTokens(beforePlot?.tokens ?? []);
-      setAus(beforePlot?.aus ?? []);
-      setAreas(beforePlot?.areas ?? []);
-      setBeforePlot(null);
       return;
     }
-    // Beim Wechsel von Plot zu Plot bleibt der ursprüngliche Stand gemerkt
-    if (!plotId) setBeforePlot({ tokens, aus, areas });
+    // Der Plot kennt seine Charaktere selbst – gewählte Charakter-Filter fallen
+    // weg, alle anderen bleiben. Danach lässt sich wieder eingrenzen.
     setPlotId(p.id);
-    setTokens([...p.tokens]);
-    setAus([...p.aus]);
-    setAreas([...(p.areas ?? [])]);
+    setTokens([]);
   }
 
   function removeScene(id: string) {
@@ -263,8 +263,9 @@ export default function TimelinePage() {
                   updatePlot(plot.id, { tokens: [...tokens], aus: [...aus], areas: [...areas] })
                 }
                 className={smallBtn}
+                title="Ersetzt die Filter des Plots (Charaktere, AU, Gegend) durch die gerade gewählten"
               >
-                <Icon name="check" size={13} /> Filter im Plot speichern
+                <Icon name="check" size={13} /> Als Plot-Filter speichern
               </button>
             )}
             <SceneSearchAdd scenes={addable} onAdd={addScene} />
@@ -479,7 +480,7 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
       <div className="relative rounded-xl border border-border-subtle bg-bg-surface px-4 py-3 transition-colors hover:bg-white/[0.03]">
         <div className="flex items-start justify-between gap-3">
           <div className="text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
-            {formatInplayDate(scene.inplay_date)}
+            {formatInplayDateWeekday(scene.inplay_date)}
             {scene.inplay_time && ` · ${scene.inplay_time}`}
           </div>
           {onRemove && (
@@ -526,7 +527,7 @@ function OffEntry({ off, onRemove }: { off: OffScene; onRemove?: () => void }) {
       <div className="rounded-xl border border-dashed border-border-strong px-4 py-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
-            {formatInplayDate(off.inplay_date)}
+            {formatInplayDateWeekday(off.inplay_date)}
             {off.inplay_time && <> · {off.inplay_time}</>}
             <span className="rounded bg-white/[0.06] px-2 py-0.5">im Off</span>
           </div>

@@ -213,6 +213,10 @@ interface StoreValue extends PersistedState {
   updateCall: (id: string, patch: Partial<PhoneCall>) => void;
   // Klingelnde Anrufe an eigene Charaktere
   incomingCalls: PhoneCall[];
+  // Mailbox-Hinweise fürs Dashboard: „leave" – mein Anruf wurde abgelehnt, ich kann
+  // auf die Mailbox sprechen · „new" – jemand hat mir auf die Mailbox gesprochen
+  mailboxAlerts: { kind: "leave" | "new"; call: PhoneCall }[];
+  dismissMailboxAlert: (kind: "leave" | "new", callId: string) => void;
   // --- Captic ---
   addCapticPost: (post: Omit<CapticPost, "id" | "created_at" | "liked_by">) => string;
   updateCapticPost: (id: string, patch: Partial<CapticPost>) => void;
@@ -1865,6 +1869,32 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return state.calls.filter((c) => c.status === "ringing" && mine.has(c.callee_id));
   }, [state.calls, state.characters, currentPlayer]);
   // --- Captic ----------------------------------------------------------------
+  // Abgelehnte Anrufe der letzten Woche: der/die Anrufende darf auf die Mailbox
+  // sprechen, der/die Angerufene erfährt von der Nachricht. Erledigt per Lese-Marke.
+  const mailboxAlerts = useMemo(() => {
+    if (!currentPlayer) return [];
+    const mine = new Set(
+      state.characters.filter((c) => !c.deleted_at && playsAs(c, currentPlayer.id)).map((c) => c.id),
+    );
+    const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const out: { kind: "leave" | "new"; call: PhoneCall }[] = [];
+    for (const call of state.calls) {
+      if (call.status !== "declined" || new Date(call.created_at).getTime() < since) continue;
+      if (!call.voicemail && mine.has(call.caller_id) && !reads[`vm-out:${call.id}`])
+        out.push({ kind: "leave", call });
+      if (call.voicemail && mine.has(call.callee_id) && !reads[`vm-in:${call.id}`])
+        out.push({ kind: "new", call });
+    }
+    return out;
+  }, [state.calls, state.characters, reads, currentPlayer]);
+  const dismissMailboxAlert = useCallback(
+    (kind: "leave" | "new", callId: string) => {
+      const key = `${kind === "leave" ? "vm-out" : "vm-in"}:${callId}`;
+      if (myPlayerId) applyReads(myPlayerId, { [key]: new Date().toISOString() });
+    },
+    [myPlayerId, applyReads],
+  );
+
   const addCapticPost = useCallback((post: Omit<CapticPost, "id" | "created_at" | "liked_by">) => {
     const row: CapticPost = {
       ...post,
@@ -2308,6 +2338,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addCall,
       updateCall,
       incomingCalls,
+      mailboxAlerts,
+      dismissMailboxAlert,
       addCapticPost,
       updateCapticPost,
       deleteCapticPost,
@@ -2432,6 +2464,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addCall,
       updateCall,
       incomingCalls,
+      mailboxAlerts,
+      dismissMailboxAlert,
       addCapticPost,
       updateCapticPost,
       deleteCapticPost,
