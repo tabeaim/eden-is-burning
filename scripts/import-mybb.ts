@@ -4,6 +4,8 @@
  *   npm run import-mybb -- --dump="/pfad/zum/backup.sql"            Probelauf
  *   npm run import-mybb -- --dump="/pfad/zum/backup.sql" --apply    schreibt in die Datenbank
  *
+ *   … --richtext [--apply]   nur das HTML der freien Profiltexte nachziehen (siehe unten)
+ *
  * Der Probelauf schreibt nichts in die Datenbank: Er zeigt Zahlen und Hinweise und
  * legt das Ergebnis zum Ansehen unter backups/import-preview_<Datum>_<Projekt>/ ab.
  * --apply verlangt eine vollständige, höchstens 24 Stunden alte Sicherung
@@ -212,6 +214,24 @@ export function toText(input: string | null | undefined): string {
     .trim();
 }
 
+// Forum-Text -> Profiltext für RichText (Kurzbeschreibung, About, Looks, Zitat,
+// Timeline, Relationen): HTML und MyCode bleiben als HTML erhalten. Ohne jede
+// Formatierung bleibt es reiner Text. Ein Zeilenumbruch direkt an einem <br> oder
+// Block-Tag zählt nicht doppelt.
+export function toRich(input: string | null | undefined): string {
+  const raw = (input ?? "").replace(/\r\n?/g, "\n").trim();
+  if (!raw) return "";
+  if (!/<[a-z!/][^>]*>/i.test(raw) && !new RegExp(`\\[\\/?(?:${KNOWN_BB})(?:=[^\\]]*)?\\]`, "i").test(raw)) return toText(raw);
+  const BLOCK = "(?:div|p|h[1-6]|center|ul|ol|li|blockquote|hr|table|tr|td)";
+  return toHtml(
+    raw
+      .replace(/(<br\s*\/?>)[ \t]*\n/gi, "$1")
+      .replace(/\n[ \t]*(<br\s*\/?>)/gi, "$1")
+      .replace(new RegExp(`(</?${BLOCK}\\b[^>]*>)[ \\t]*\\n`, "gi"), "$1")
+      .replace(new RegExp(`\\n[ \\t]*(</?${BLOCK}\\b[^>]*>)`, "gi"), "$1"),
+  );
+}
+
 const slug = (s: string) =>
   s
     .normalize("NFD")
@@ -258,6 +278,15 @@ const mediaKind = (u: string) => (/\.gif(\?|#|$)/i.test(u) ? "gif" : /\.(mp4|web
 // ---------------------------------------------------------------------------
 // Umwandlung (rein rechnerisch, ohne Datenbank)
 // ---------------------------------------------------------------------------
+
+interface Plain {
+  bio: string | null;
+  quote: string | null;
+  personality: string | null;
+  looks_note: string | null;
+  timeline: string[];
+  notes: Record<string, string | null>;
+}
 
 interface Existing {
   players: Row[];
@@ -326,6 +355,9 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
   const characters: Row[] = [];
   const protectedSkipped: string[] = [];
   const protectedDisplayNames = new Map<string, string>(); // Captic-Anzeigename aus dem Forum
+  // So sah der erste Import aus (reiner Text, noch ohne HTML) – daran erkennt
+  // --richtext, welche Felder seither niemand angefasst hat
+  const plainOf = new Map<string, Plain>();
   const playerArea = new Map<string, string>();
   for (const u of users) {
     const f = fields.get(u.uid) ?? {};
@@ -347,7 +379,7 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
 
     const profile: Row = {
       gender: orNull(f.fid46),
-      looks_note: toText(f.fid25) || null,
+      looks_note: toRich(f.fid25) || null,
       is_student: isStudent,
       is_working: isWorking,
       major: orNull(f.fid17),
@@ -369,7 +401,7 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
       timeline: [...str(f.fid44).matchAll(/\[year="([\s\S]*?)" heading="([\s\S]*?)" text="([\s\S]*?)"\]/g)].map((m) => ({
         year: decode(m[1]).trim(),
         title: decode(m[2]).trim(),
-        text: toText(m[3]),
+        text: toRich(m[3]),
       })),
       scene_gif_url: /^https?:\/\//.test(str(f.fid26)) ? str(f.fid26) : null,
       signature_url: sigImg ? sigImg[1] : null,
@@ -407,7 +439,7 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
       role: orNull(f.fid12),
       age: Number.isFinite(age) ? age : null,
       area,
-      bio: toText(f.fid13) || null,
+      bio: toRich(f.fid13) || null,
       pinterest_url: orNull(f.fid16),
       created_at: iso(u.regdate),
       height: height(f.fid21),
@@ -420,8 +452,8 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
       origin: orNull(f.fid8),
       job: orNull(f.fid34) ?? orNull(f.fid12),
       company: orNull(f.fid35),
-      quote: toText(f.fid27) || null,
-      personality: toText(f.fid14) || null,
+      quote: toRich(f.fid27) || null,
+      personality: toRich(f.fid14) || null,
       relationships: {},
       is_npc: shared,
       npc_tier: shared ? "supporting" : null,
@@ -429,6 +461,14 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
       profile,
       phone: captic ? { captic } : null,
     };
+    plainOf.set(id, {
+      bio: toText(f.fid13) || null,
+      quote: toText(f.fid27) || null,
+      personality: toText(f.fid14) || null,
+      looks_note: toText(f.fid25) || null,
+      timeline: [...str(f.fid44).matchAll(/\[year="([\s\S]*?)" heading="([\s\S]*?)" text="([\s\S]*?)"\]/g)].map((m) => toText(m[3])),
+      notes: {},
+    });
     if (PROTECTED_CHARACTER_IDS.includes(id)) {
       protectedSkipped.push(`${u.username} [${id}]`);
       if (captic?.display_name) protectedDisplayNames.set(id, captic.display_name);
@@ -508,7 +548,10 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
     }
     const rel = owner.relationships as Record<string, { label?: string | null; note?: string | null; category?: string | null }>;
     const prev = rel[target];
-    const note = toText(r.description_wanted);
+    const note = toRich(r.description_wanted);
+    const plain = plainOf.get(from) ?? { bio: null, quote: null, personality: null, looks_note: null, timeline: [], notes: {} };
+    plain.notes[target] = [plain.notes[target], toText(r.description_wanted)].filter(Boolean).join("\n\n") || null;
+    plainOf.set(from, plain);
     rel[target] = {
       label: [prev?.label, orNull(r.art)].filter(Boolean).join(" · ") || null,
       note: [prev?.note, note].filter(Boolean).join("\n\n") || null,
@@ -810,6 +853,7 @@ function build(dump: Record<string, DumpRow[]>, existing: Existing) {
     // Relationen geschützter Charaktere: id -> relationships aus dem Forum
     protectedRelations: [...protectedRelations.values()].map((r) => ({ id: r.id as string, relationships: r.relationships as Record<string, unknown> })),
     protectedDisplayNames: [...protectedDisplayNames.entries()],
+    plainOf,
     info: { protectedSkipped, skippedThreads, noDate, npcCount },
   };
 }
@@ -849,6 +893,7 @@ async function main() {
   const dumpFile = option("dump");
   if (!dumpFile) throw new Error('Bitte den Dump angeben: --dump="/pfad/zum/backup.sql"');
   const APPLY = flag("apply");
+  const RICHTEXT = flag("richtext");
   console.log(`→ Import ${APPLY ? "" : "(Probelauf) "}aus ${path.basename(dumpFile)}`);
   console.log(`  nach ${url} (${envFile})`);
 
@@ -892,6 +937,64 @@ async function main() {
     for (const w of warnings) console.log(`  ⚠️  ${w}`);
   }
 
+  // --richtext: nur die freien Profiltexte mit HTML nachziehen (der erste Import hatte
+  // sie als reinen Text geschrieben). Angefasst wird ein Feld nur, wenn es noch genau
+  // so in der Datenbank steht, wie der erste Import es geschrieben hat.
+  const richPatches: { id: string; patch: Row; fields: string[] }[] = [];
+  const richSkipped: string[] = []; // seit dem Import von Hand geändert – bleibt
+  if (RICHTEXT) {
+    const sources = [...out.characters, ...out.protectedRelations.map((r) => ({ ...r, _relationsOnly: true }))] as Row[];
+    for (const next of sources) {
+      const live = existing.characters.find((c) => c.id === next.id);
+      const plain = out.plainOf.get(String(next.id));
+      if (!live || !plain) continue;
+      const patch: Row = {};
+      const fields: string[] = [];
+      if (!next._relationsOnly) {
+        for (const k of ["bio", "quote", "personality"] as const) {
+          if (next[k] && next[k] !== live[k] && live[k] === plain[k]) {
+            patch[k] = next[k];
+            fields.push(k);
+          } else if (next[k] && next[k] !== live[k] && next[k] !== plain[k]) {
+            richSkipped.push(`${next.id}.${k}`);
+          }
+        }
+        const lp = (live.profile as Row | null) ?? {};
+        const np = (next.profile as Row | null) ?? {};
+        const profile: Row = { ...lp };
+        if (np.looks_note && np.looks_note !== lp.looks_note && lp.looks_note === plain.looks_note) {
+          profile.looks_note = np.looks_note;
+          fields.push("looks_note");
+        }
+        const lt = (lp.timeline as { text: string }[] | undefined) ?? [];
+        const nt = (np.timeline as { text: string }[] | undefined) ?? [];
+        if (lt.length === nt.length && lt.some((e, i) => e.text !== nt[i].text && e.text === plain.timeline[i])) {
+          profile.timeline = lt.map((e, i) => (e.text === plain.timeline[i] ? { ...e, text: nt[i].text } : e));
+          fields.push("timeline");
+        }
+        if (fields.includes("looks_note") || fields.includes("timeline")) patch.profile = profile;
+      }
+      const lr = (live.relationships as Record<string, { note?: string | null }> | null) ?? {};
+      const nr = (next.relationships as Record<string, { note?: string | null }> | null) ?? {};
+      const rel = { ...lr };
+      let relChanged = false;
+      for (const [target, entry] of Object.entries(nr)) {
+        if (lr[target] && entry.note && entry.note !== lr[target].note && lr[target].note === plain.notes[target]) {
+          rel[target] = { ...lr[target], note: entry.note };
+          relChanged = true;
+        }
+      }
+      if (relChanged) {
+        patch.relationships = rel;
+        fields.push("relations");
+      }
+      if (fields.length) richPatches.push({ id: String(next.id), patch, fields });
+    }
+    console.log(`\nHTML in Profiltexten nachziehen (${richPatches.length} Charaktere):`);
+    for (const p of richPatches) console.log(`  ${p.id.padEnd(16)} ${p.fields.join(", ")}`);
+    if (richSkipped.length) console.log(`  Seit dem Import geändert, bleibt unangetastet: ${richSkipped.join(", ")}`);
+  }
+
   if (!APPLY) {
     const dir = path.join(BACKUP_ROOT, `import-preview_${stamp()}_${projectRef}`);
     await fs.mkdir(dir, { recursive: true });
@@ -901,6 +1004,14 @@ async function main() {
   }
 
   await requireBackup();
+  if (RICHTEXT) {
+    for (const p of richPatches) {
+      const { error } = await db.from("characters").update(p.patch).eq("id", p.id);
+      if (error) throw new Error(`characters (${p.id}): ${error.message}`);
+    }
+    console.log(`✅ ${richPatches.length} Charaktere aktualisiert. Als Nächstes: npm run migrate-images (Bilder in den Texten)`);
+    return;
+  }
   const phrase = `IMPORT ${projectRef}`;
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const answer = await rl.question(`\nZum Bestätigen exakt eintippen: ${phrase}\n> `);
