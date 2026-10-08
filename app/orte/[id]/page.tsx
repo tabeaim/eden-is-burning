@@ -7,6 +7,8 @@ import { BannerPosition } from "@/components/BannerPosition";
 import { bannerStyle } from "@/lib/headers";
 import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useStore } from "@/lib/store";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
@@ -468,7 +470,22 @@ function PeopleEditor({
 
 // Editiermodus des Ortsprofils (Admins + Ersteller*in).
 function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => void }) {
-  const { updateLocation, locationsOf, appSettings } = useStore();
+  const { updateLocation, deleteLocation, locationsOf, locations, scenes, appSettings, isAdmin } = useStore();
+  const router = useRouter();
+  // Löschen (nur Admins): Hängen Szenen am Ort, ziehen sie vorher an einen anderen um
+  const [deleting, setDeleting] = useState(false);
+  const [moveTo, setMoveTo] = useState("");
+  const sceneCount = scenes.filter((s) => s.location_area === loc.area && s.location_name === loc.name).length;
+  const targets = locations
+    .filter((l) => l.id !== loc.id)
+    .sort((a, b) => a.name.localeCompare(b.name, "de") || areaName(a.area).localeCompare(areaName(b.area), "de"));
+
+  function remove() {
+    const target = targets.find((l) => l.id === moveTo);
+    if (sceneCount > 0 && !target) return;
+    deleteLocation(loc.id, target && { area: target.area, name: target.name });
+    router.push("/orte");
+  }
   const { theme } = useTheme();
   const [name, setName] = useState(loc.name);
   const [description, setDescription] = useState(loc.description ?? "");
@@ -687,6 +704,14 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
       </label>
 
       <div className="flex items-center justify-end gap-3">
+        {isAdmin && (
+          <button
+            onClick={() => setDeleting(true)}
+            className="mr-auto inline-flex items-center gap-1.5 rounded-md border border-red-400/40 px-3 py-1.5 text-[0.8125rem] text-red-300 hover:bg-red-500/10"
+          >
+            Ort löschen
+          </button>
+        )}
         <button
           onClick={onClose}
           className="text-[0.8125rem] text-text-tertiary hover:text-text-primary px-2"
@@ -701,6 +726,69 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
           Speichern
         </button>
       </div>
+
+      {deleting && sceneCount === 0 && (
+        <ConfirmDialog
+          title={`${loc.name} löschen?`}
+          text="Der Ort verschwindet von der Karte, samt Beschreibung, Bildern und hinterlegten Personen. Das lässt sich nicht rückgängig machen."
+          confirmLabel="Ort löschen"
+          onCancel={() => setDeleting(false)}
+          onConfirm={remove}
+        />
+      )}
+      {deleting && sceneCount > 0 && (
+        <div
+          onClick={() => setDeleting(false)}
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4"
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-label={`${loc.name} löschen?`}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.key === "Escape" && setDeleting(false)}
+            className="w-full max-w-sm rounded-xl border border-border-subtle bg-bg-surface p-5 shadow-2xl shadow-black/70"
+          >
+            <div className="font-serif text-[1rem] text-text-primary">{loc.name} löschen?</div>
+            <p className="mt-1.5 text-[0.875rem] leading-relaxed text-text-secondary">
+              {sceneCount === 1 ? "An diesem Ort spielt 1 Szene." : `An diesem Ort spielen ${sceneCount} Szenen.`} Wohin
+              {sceneCount === 1 ? " soll sie" : " sollen sie"} umziehen? Beschreibung, Bilder und hinterlegte Personen
+              des Orts gehen verloren.
+            </p>
+            <select
+              value={moveTo}
+              onChange={(e) => setMoveTo(e.target.value)}
+              autoFocus
+              aria-label="Szenen verschieben nach"
+              className={`mt-3 ${field}`}
+            >
+              <option value="" className="bg-bg-surface">
+                Ort wählen …
+              </option>
+              {targets.map((l) => (
+                <option key={l.id} value={l.id} className="bg-bg-surface">
+                  {l.name} · {areaName(l.area)}
+                </option>
+              ))}
+            </select>
+            <div className="mt-4 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setDeleting(false)}
+                className="text-[0.8125rem] text-text-tertiary hover:text-text-primary px-2"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={remove}
+                disabled={!moveTo}
+                className="rounded-md border border-red-400/50 bg-red-500/15 px-3 py-1.5 text-[0.8125rem] font-medium text-red-200 hover:bg-red-500/25 disabled:opacity-40"
+              >
+                Verschieben und löschen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

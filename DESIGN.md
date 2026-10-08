@@ -351,6 +351,9 @@ dem Inhalt:
 - **Bilder der Gegenden** pflegen Admins unter Einstellungen → Admin → Design
   (`appSettings.areaImages`); immer über `areaImage(key, appSettings)`
   (lib/world.ts) holen und mit `bannerStyle` zeichnen.
+- **Ort löschen** können Admins im Bearbeiten-Modus des Ortsprofils. Hängen Szenen
+  am Ort, fragt ein Dialog, an welchen anderen Ort sie umziehen
+  (`deleteLocation(id, moveTo)`); erst mit Ziel lässt sich löschen.
 - **Orte ohne eigenes Headerbild** zeigen das aktuelle Bild ihrer Gegend
   (`locationHeader(appSettings, area, modus)`, lib/headers.ts); hat die Gegend
   keins, den Header der Orte-Seite.

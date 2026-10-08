@@ -124,7 +124,8 @@ interface StoreValue extends PersistedState {
   addLocation: (area: string, name: string, description?: string | null, category?: string | null) => string | null;
   updateLocation: (id: string, patch: Partial<Location>) => void;
   // Löscht den Ort (Szenen behalten ihren Ortsnamen als Text)
-  deleteLocation: (id: string) => void;
+  // Mit `moveTo` ziehen die Szenen des Orts vorher an einen anderen Ort um.
+  deleteLocation: (id: string, moveTo?: { area: string; name: string }) => void;
   // App-weite Einstellungen (Akzentfarbe, Header-Bilder); ändern nur Admins
   appSettings: AppSettings;
   updateAppSettings: (patch: Partial<AppSettings>) => void;
@@ -1191,9 +1192,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [loadWorld],
   );
 
-  const deleteLocation = useCallback((id: string) => {
-    persist("deleteLocation", supabase.from("locations").delete().eq("id", id));
-    setState((s) => ({ ...s, locations: s.locations.filter((l) => l.id !== id) }));
+  const deleteLocation = useCallback((id: string, moveTo?: { area: string; name: string }) => {
+    setState((s) => {
+      const old = s.locations.find((l) => l.id === id);
+      let scenes = s.scenes;
+      // Szenen hängen per Gegend + Name am Ort – in der Datenbank umziehen, damit
+      // auch die hier nicht geladenen (fremde Entwürfe) mitkommen.
+      if (old && moveTo) {
+        const target = { location_area: moveTo.area, location_name: moveTo.name };
+        persist(
+          "deleteLocation/scenes",
+          supabase.from("scenes").update(target).eq("location_area", old.area).eq("location_name", old.name),
+        );
+        scenes = s.scenes.map((sc) =>
+          sc.location_area === old.area && sc.location_name === old.name ? { ...sc, ...target } : sc,
+        );
+      }
+      persist("deleteLocation", supabase.from("locations").delete().eq("id", id));
+      return { ...s, scenes, locations: s.locations.filter((l) => l.id !== id) };
+    });
   }, []);
 
   const updateAppSettings = useCallback((patch: Partial<AppSettings>) => {
