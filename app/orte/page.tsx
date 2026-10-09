@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
-import { areaImage, areaInfo, areaName } from "@/lib/world";
+import { EDEN_AREA, areaImage, areaInfo, areaName } from "@/lib/world";
 import { bannerStyle } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
 import { EdenMap } from "@/components/EdenMap";
@@ -17,6 +17,9 @@ import type { Location } from "@/lib/types";
 
 type View = "map" | "list";
 const VIEW_KEY = "eden.orte.view";
+
+// Fenster-Ereignis des anklickbaren Seitentitels („Eden, Virginia")
+const HOME_EVENT = "eden:orte-home";
 
 // Orte: eine Seite, zwei Ansichten – die Karte und die Liste aller Orte. Es
 // startet immer die Karte, außer in dieser Sitzung war zuletzt die Liste offen.
@@ -34,6 +37,23 @@ export default function PlacesPage() {
     setView(!area && stored === "list" ? "list" : "map");
   }, []);
 
+  // Klick auf den Seitentitel: zurück zur Übersichtskarte (ganz Eden, kein Bezirk
+  // gewählt). Der Zähler setzt die Karte neu auf; ein Bezirk aus der Adresse
+  // (/orte?area=…) gilt danach nicht mehr.
+  const [home, setHome] = useState(0);
+  useEffect(() => {
+    const goHome = () => {
+      window.history.replaceState(null, "", window.location.pathname);
+      setView("map");
+      try {
+        sessionStorage.setItem(VIEW_KEY, "map");
+      } catch {}
+      setHome((n) => n + 1);
+    };
+    window.addEventListener(HOME_EVENT, goHome);
+    return () => window.removeEventListener(HOME_EVENT, goHome);
+  }, []);
+
   function choose(v: View) {
     setView(v);
     try {
@@ -45,7 +65,10 @@ export default function PlacesPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-6">
       <PageHeader
         title="Eden, Virginia"
-        subtitle="Eden, Virginia – fünf Gegenden, ein Fluss, und alles dahinter." width="max-w-6xl" />
+        subtitle="Eden, Virginia – fünf Gegenden, ein Fluss, und alles dahinter."
+        width="max-w-6xl"
+        titleEvent={HOME_EVENT}
+      />
 
       {/* Umschalter: ab `sm` ausnahmsweise oben rechts auf Höhe des Seitentitels
           (über der Trennlinie), damit er die Karte nicht nach unten schiebt; auf
@@ -77,14 +100,15 @@ export default function PlacesPage() {
       )}
 
       {view === "list" && <LocationList />}
-      {view === "map" && <MapView />}
+      {view === "map" && <MapView key={home} />}
     </div>
   );
 }
 
 function MapView() {
   const { scenes, characters, locationsOf, addLocation, appSettings } = useStore();
-  const [selected, setSelected] = useState<string>("rivers_edge");
+  // Start: ganz Eden im Panel, kein Bezirk markiert
+  const [selected, setSelected] = useState<string>(EDEN_AREA);
   const [adding, setAdding] = useState(false);
   // Link auf eine Gegend (z.B. vom Arbeitsplatz im Charakterprofil): /orte?area=byron
   useEffect(() => {

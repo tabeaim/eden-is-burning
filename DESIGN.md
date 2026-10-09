@@ -343,6 +343,10 @@ dem Inhalt:
 - **Farben der Karte** stehen als `--map-*` in `app/globals.css` (je ein Satz für
   dunkel und hell), nie fest in `EdenMap.tsx`. Die Gegend-Box trägt
   `panel-shadow` – Schatten nur im dunklen Stil.
+- **Karte startet ohne markierten Bezirk:** Das Panel zeigt dann ganz Eden (Bereich
+  `eden`, Texte wie bei den Bezirken unter Admin → Bezirke, Bild unter Design). Ein
+  Klick auf den Seitentitel „Eden, Virginia" führt dorthin zurück (`titleEvent` am
+  `PageHeader`: Der Titel löst ein Fenster-Ereignis aus, auf das die Seite hört).
 - **Texte der Bezirke** (Name, Beschreibung, Preislevel, „Hier wohnen") pflegen
   Admins unter Einstellungen → Admin → Bezirke (`app_settings.areas`, nur die
   abweichenden Felder; Standard bleibt `lib/world.ts`). Bezirksnamen und -texte

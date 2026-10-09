@@ -159,8 +159,9 @@ export const AREA_ORDER: AreaKey[] = [
   "washington",
 ];
 
-// Neutraler Bereich: spielt in Eden, gehört aber zu keinem Stadtteil. Hat auf der
-// Karte keine eigene Fläche und zählt in den Filtern nicht zu „Rest der Welt".
+// Neutraler Bereich: Eden als Ganzes – für alles, was in der Stadt spielt, aber zu
+// keinem Stadtteil gehört. Hat auf der Karte keine eigene Fläche (die Karte startet
+// mit diesem Bereich im Panel) und zählt in den Filtern nicht zu „Rest der Welt".
 export const EDEN_AREA = "eden";
 export const REST_AREA = "rest";
 
@@ -172,9 +173,9 @@ export const EXTRA_AREAS: Record<string, { name: string; character: string }> = 
       "Hafen und Industriegürtel im Südosten – Lagerhallen, Docks, alte Fabriken. Wo Fracht umgeschlagen wird und die Stadt ihre raue Seite zeigt.",
   },
   [EDEN_AREA]: {
-    name: "Eden (ohne Bezirk)",
+    name: "Eden",
     character:
-      "Irgendwo in Eden – für Szenen und Orte, die in der Stadt spielen, sich aber keinem Stadtteil zuordnen lassen.",
+      "Eden, Virginia – fünf Gegenden, ein Fluss, und alles dahinter. Hier stehen auch die Orte und Szenen, die in der Stadt spielen, sich aber keinem Bezirk zuordnen lassen.",
   },
   [REST_AREA]: {
     name: "Rest der Welt",

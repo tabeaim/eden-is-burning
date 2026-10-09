@@ -257,6 +257,7 @@ function BannerHeader({
   // Einheitliche Seitenbreite: alle Seiten teilen dieselbe Container-Breite, damit
   // Titel und linksbündiger Inhalt beim Seitenwechsel nicht horizontal springen.
   const width = (onThisPage && meta.width) || "max-w-6xl";
+  const titleEvent = onThisPage ? meta.titleEvent : undefined;
   // Detailseiten (Szene, Charakter, Ort) zeichnen ihre eigene Trennlinie unter dem
   // Inhalt (Zusammenfassung, Zitat bzw. Bearbeiten-Button), damit der noch über
   // der Linie steht.
@@ -300,9 +301,20 @@ function BannerHeader({
               className="mr-3 inline-block h-[1.15em] w-[1.15em] rounded-full object-cover align-[-0.2em] ring-2 ring-bg-primary"
             />
           )}
-          <span className={onThisPage && meta.deleted ? GONE_CLASS : ""} title={onThisPage && meta.deleted ? "Charakter gelöscht" : undefined}>
-            {title}
-          </span>
+          {titleEvent ? (
+            // Anklickbarer Titel: die Seite hört auf das Ereignis (siehe PageMeta)
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event(titleEvent))}
+              className="cursor-pointer lowercase text-left transition-colors hover:text-accent"
+            >
+              {title}
+            </button>
+          ) : (
+            <span className={onThisPage && meta.deleted ? GONE_CLASS : ""} title={onThisPage && meta.deleted ? "Charakter gelöscht" : undefined}>
+              {title}
+            </span>
+          )}
           <span className="text-accent">.</span>
         </h1>
 

@@ -10,6 +10,7 @@ export function PageHeader({
   subtitle,
   width,
   bannerImage,
+  titleEvent,
   children,
 }: {
   title: string;
@@ -18,9 +19,10 @@ export function PageHeader({
   // derselben Breite zentriert wird und bündig mit dem Inhalt startet.
   width?: string;
   bannerImage?: string; // überschreibt das Standard-Titelbild der Seite
+  titleEvent?: string; // Titel anklickbar: Fenster-Ereignis, auf das die Seite hört
   children?: React.ReactNode;
 }) {
-  useSetPageMeta(title, subtitle, bannerImage, width);
+  useSetPageMeta(title, subtitle, bannerImage, width, undefined, undefined, undefined, titleEvent);
   if (!children) return null;
   return <div className="flex justify-end -mt-1 mb-5">{children}</div>;
 }
