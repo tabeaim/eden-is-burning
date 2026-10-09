@@ -17,6 +17,8 @@ import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { Facts, FactRow } from "@/components/Facts";
 import { Icon } from "@/components/Icon";
 import { RichText } from "@/components/RichText";
+import { RichEditor } from "@/components/RichEditor";
+import { plainText } from "@/lib/html";
 import { SceneFilterList } from "@/components/SceneFilterList";
 import {
   ProfileLikes,
@@ -302,16 +304,15 @@ function PlayerEditPanel({ player, onClose }: { player: Player; onClose: () => v
         Zitat
         <input value={quote} maxLength={300} onChange={(e) => setQuote(e.target.value)} className={`mt-1 ${field}`} />
       </label>
-      <label className={label}>
-        Beschreibung ({bio.length}/500)
-        <textarea
+      <div className={label}>
+        Beschreibung ({plainText(bio).length}/500)
+        <RichEditor
           value={bio}
           maxLength={500}
-          rows={4}
-          onChange={(e) => setBio(e.target.value)}
-          className={`mt-1 resize-y ${field}`}
+          onChange={setBio}
+          className="mt-1"
         />
-      </label>
+      </div>
 
       <div className={group}>Header</div>
       <div className="flex flex-wrap items-center gap-3">

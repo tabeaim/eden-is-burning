@@ -9,6 +9,7 @@ import { PLACE_AREAS, areaImage, areaName } from "@/lib/world";
 import { areaFilterOptions, areaMatches } from "@/lib/plots";
 import { PHONE_AREA } from "@/lib/phone";
 import { bannerStyle } from "@/lib/headers";
+import { plainText } from "@/lib/html";
 import { hasAnyWord, norm, relatedWords } from "@/lib/place-words";
 import { Icon } from "./Icon";
 import { MultiSelect } from "./MultiSelect";
@@ -154,7 +155,7 @@ export function LocationList() {
     if (!q) direct.push(l);
     else if (norm(l.name).includes(q)) direct.push(l);
     else {
-      const text = norm(`${l.name} ${l.description ?? ""}`);
+      const text = norm(`${l.name} ${plainText(l.description)}`);
       if (text.includes(q) || hasAnyWord(text, related)) kin.push(l);
     }
   }
@@ -363,7 +364,7 @@ function LocationCard({ loc, stats }: { loc: Location; stats: Stats }) {
         </h3>
         {loc.description && (
           <p className="mt-1.5 text-[0.875rem] leading-relaxed text-text-secondary line-clamp-3">
-            {loc.description}
+            {plainText(loc.description)}
           </p>
         )}
         <div className="mt-auto pt-3 flex items-center gap-1.5 text-[0.875rem] text-text-tertiary">

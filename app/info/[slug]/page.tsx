@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Icon } from "@/components/Icon";
 import { RichText } from "@/components/RichText";
+import { RichEditor } from "@/components/RichEditor";
 import { useStore } from "@/lib/store";
 import { INFO_ICONS, infoPages } from "@/lib/info";
 import type { InfoPage } from "@/lib/types";
@@ -118,15 +119,10 @@ function InfoEditPanel({ page, onClose }: { page: InfoPage; onClose: () => void 
         <input value={text} onChange={(e) => setText(e.target.value)} className={`mt-1 ${field}`} />
       </label>
 
-      <label className="text-[0.875rem] text-text-secondary">
-        Inhalt <span className="text-text-tertiary">(Text oder HTML, Zeilenumbrüche bleiben erhalten)</span>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={16}
-          className={`mt-1 resize-y leading-relaxed ${field}`}
-        />
-      </label>
+      <div className="text-[0.875rem] text-text-secondary">
+        Inhalt
+        <RichEditor value={content} onChange={setContent} minHeight="min-h-[20rem]" className="mt-1" />
+      </div>
 
       <div className="flex flex-wrap items-center justify-end gap-3">
         <button

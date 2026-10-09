@@ -18,6 +18,8 @@ import {
 } from "@/lib/characters";
 import { Toggle } from "./Toggle";
 import { Collapsible } from "./Collapsible";
+import { RichEditor } from "./RichEditor";
+import { plainText } from "@/lib/html";
 import { AREA_ORDER, AREAS, areaName } from "@/lib/world";
 import { PHONE_AREA } from "@/lib/phone";
 import { uploadImage, uploadAnimation, IMAGE_SIZES } from "@/lib/images";
@@ -348,8 +350,8 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         {formatInplayDate("2022-01-01")}, in einer Szene zum Datum der Szene.
       </p>
       {F({
-        label: `Kurzbeschreibung (${(d.bio ?? "").length}/1000)`,
-        children: <textarea {...text("bio")} maxLength={1000} rows={3} className={`${field} resize-y`} />,
+        label: `Kurzbeschreibung (${plainText(d.bio).length}/1000)`,
+        children: <RichEditor value={d.bio ?? ""} onChange={(v) => set("bio", (v || null) as never)} maxLength={1000} />,
       })}
 
       </Collapsible>
@@ -536,15 +538,14 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       {/* --- Aussehen --- */}
       <Collapsible title="Aussehen">
         {F({
-          label: `Beschreibung (${(p.looks_note ?? "").length}/300)`,
+          label: `Beschreibung (${plainText(p.looks_note).length}/300)`,
           children: (
-            <textarea
+            <RichEditor
               value={p.looks_note ?? ""}
               maxLength={300}
-              rows={2}
-              onChange={(e) => setProfile({ looks_note: e.target.value || null })}
+              onChange={(v) => setProfile({ looks_note: v || null })}
               placeholder="Kurz in Worten: Wie wirkt der Charakter, woran erkennt man ihn?"
-              className={`${field} resize-y`}
+              minHeight="min-h-[4rem]"
             />
           ),
         })}

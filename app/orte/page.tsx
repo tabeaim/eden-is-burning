@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import { EDEN_AREA, areaImage, areaInfo, areaName } from "@/lib/world";
 import { bannerStyle } from "@/lib/headers";
+import { plainText } from "@/lib/html";
+import { RichText } from "@/components/RichText";
 import { PageHeader } from "@/components/PageHeader";
 import { EdenMap } from "@/components/EdenMap";
 import { LocationList } from "@/components/LocationList";
@@ -181,9 +183,7 @@ function MapView() {
 
               <div className="p-5">
               {/* Kurzbeschreibung */}
-              <p className="text-[0.875rem] text-text-secondary leading-relaxed">
-                {info.character}
-              </p>
+              <RichText html={info.character} className="text-[0.875rem] text-text-secondary leading-relaxed" />
 
               {/* Steckbrief */}
               {(info.priceLevel || info.residents) && (
@@ -337,7 +337,7 @@ function LocationSection({
                 key={loc.id}
                 id={loc.id}
                 name={loc.name}
-                title={loc.description ?? undefined}
+                title={plainText(loc.description) || undefined}
                 played={played}
                 category={loc.category}
               />

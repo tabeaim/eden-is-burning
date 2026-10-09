@@ -30,6 +30,7 @@ import { PhonePreview } from "@/components/phone/PhonePreview";
 import { StatistActions } from "@/components/StatistActions";
 import { ProfileEditPanel } from "@/components/ProfileEditPanel";
 import { RichText } from "@/components/RichText";
+import { RichEditor } from "@/components/RichEditor";
 import {
   ProfileFacts,
   ProfileFamilyTree,
@@ -736,12 +737,11 @@ function RelationRow({
             placeholder="Beziehung (z. B. Freunde, Ex, Rivalen)"
             className={field}
           />
-          <textarea
+          <RichEditor
             value={note}
-            onChange={(e) => setNote(e.target.value)}
+            onChange={setNote}
             placeholder="Kurze Erläuterung zur Beziehung…"
-            rows={2}
-            className={`${field} resize-y`}
+            minHeight="min-h-[4rem]"
           />
           <div className="flex items-center justify-end gap-2">
             <button onClick={() => setEditing(false)} className={btnQuiet}>

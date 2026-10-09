@@ -9,6 +9,8 @@ import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { RichText } from "@/components/RichText";
+import { RichEditor } from "@/components/RichEditor";
 import { useStore } from "@/lib/store";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { areaName } from "@/lib/world";
@@ -114,9 +116,7 @@ export default function LocationPage({
           <section>
             <Heading>about.</Heading>
             {loc.description ? (
-              <p className="whitespace-pre-line text-[0.875rem] leading-relaxed text-text-secondary">
-                {loc.description}
-              </p>
+              <RichText html={loc.description} className="text-[0.875rem] leading-relaxed text-text-secondary" />
             ) : (
               <p className="text-[0.875rem] text-text-tertiary">
                 Noch keine Beschreibung hinterlegt.
@@ -610,16 +610,16 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
         </div>
       </div>
 
-      <label className="text-[0.875rem] text-text-secondary">
+      <div className="text-[0.875rem] text-text-secondary">
         Beschreibung
-        <textarea
+        <RichEditor
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={setDescription}
           placeholder="Wie sieht es hier aus, wie riecht es, wer hängt hier rum?"
-          rows={5}
-          className={`mt-1 ${field} resize-y`}
+          minHeight="min-h-[8rem]"
+          className="mt-1"
         />
-      </label>
+      </div>
 
       {/* Vibes-Fotos */}
       <div>

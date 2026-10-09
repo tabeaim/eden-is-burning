@@ -2,6 +2,7 @@
 
 import { useStore } from "@/lib/store";
 import { PLACE_AREAS, areaDefaults, areaInfo, type AreaTexts } from "@/lib/world";
+import { CommitRichEditor } from "../RichEditor";
 import { field, hint, label, row } from "./ui";
 
 // Welche Felder Pflicht sind: Ohne Namen oder Beschreibung gilt wieder der Standard,
@@ -38,7 +39,7 @@ export function AdminAreas() {
     <div className="flex flex-col gap-3">
       <p className={hint}>
         Name, Beschreibung und Steckbrief jedes Bezirks. Änderungen gelten sofort für alle, auf der Karte, im
-        Bezirks-Panel unter „Orte" und überall, wo die Gegend genannt wird. Leeres Preislevel oder „Hier wohnen" blendet
+        Bezirks-Panel unter „Orte“ und überall, wo die Gegend genannt wird. Leeres Preislevel oder „Hier wohnen“ blendet
         die Zeile aus. Die Bilder der Bezirke stehen unter Design.
       </p>
       {PLACE_AREAS.map((key) => {
@@ -69,15 +70,12 @@ export function AdminAreas() {
                   className={`mt-1 ${field}`}
                 />
               </label>
-              <label className="sm:col-span-2">
+              <div className="sm:col-span-2">
                 Beschreibung
-                <textarea
-                  defaultValue={info.character}
-                  onBlur={(e) => save(key, "character", e.target.value)}
-                  rows={3}
-                  className={`mt-1 resize-y ${field}`}
-                />
-              </label>
+                <div className="mt-1">
+                  <CommitRichEditor value={info.character} onCommit={(v) => save(key, "character", v)} />
+                </div>
+              </div>
               <label>
                 Preislevel
                 <input

@@ -714,6 +714,14 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   gemeinsame Standardbild `public/headers/standard.webp` mit je Stil und Seite
   eigenem Ausschnitt (nur für unbekannte Seiten noch die generierte Vorlage);
   Admins hinterlegen je Stil eigene Bilder.
+- **Texteditoren für gestaltete Seiten** (Profiltexte von Charakteren und
+  Spieler*innen, Timeline, Relations, Ortsbeschreibung, Bezirksbeschreibung,
+  Info-Seiten): immer `RichEditor` (components/RichEditor.tsx) mit derselben Leiste
+  wie der Post-Editor (fett, kursiv, unterstrichen, größer, kleiner), nie ein
+  nacktes `<textarea>`. Ohne Speichern-Knopf `CommitRichEditor` (speichert beim
+  Verlassen). Angezeigt wird mit `RichText`; für Tooltips, Suche, Zähler und
+  gekürzte Vorschauen `plainText()` (lib/html.ts). Der Editor steht nie in einem
+  `<label>` (ein Klick auf die Beschriftung würde sonst „Fett" auslösen).
 - **Info-Seiten** (`appSettings.infoPages`, lib/info.ts): Admins legen sie in der
   Info-Übersicht an („Neue Seite") und bearbeiten sie auf der Seite selbst
   (Titel, Icon, Kurztext der Karte, Inhalt als Text/HTML über `RichText`,

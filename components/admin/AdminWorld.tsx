@@ -11,6 +11,7 @@ import { TIER_NAMES, tierOf } from "@/lib/characters";
 import { characterImage } from "@/lib/avatar";
 import { formatInplayDate } from "@/lib/format";
 import { ConfirmDialog } from "../ConfirmDialog";
+import { CommitRichEditor } from "../RichEditor";
 import { Collapsible } from "../Collapsible";
 import { MultiSelect } from "../MultiSelect";
 import { CharacterBubble } from "../Bubble";
@@ -189,15 +190,15 @@ export function AdminLocations() {
                   />
                 </div>
               </div>
-              <label>
+              <div>
                 Beschreibung
-                <textarea
-                  defaultValue={l.description ?? ""}
-                  onBlur={(e) => e.target.value !== (l.description ?? "") && updateLocation(l.id, { description: e.target.value.trim() || null })}
-                  rows={3}
-                  className={`mt-1 resize-y ${field}`}
-                />
-              </label>
+                <div className="mt-1">
+                  <CommitRichEditor
+                    value={l.description ?? ""}
+                    onCommit={(v) => updateLocation(l.id, { description: v || null })}
+                  />
+                </div>
+              </div>
               <div className={hint}>
                 {sceneCount(l)} Szenen · angelegt von {player(l.created_by ?? "")?.username ?? "–"} · {formatInplayDate(l.created_at.slice(0, 10))}
               </div>

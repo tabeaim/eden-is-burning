@@ -15,6 +15,8 @@ import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { characterImage } from "@/lib/avatar";
 import { Icon } from "./Icon";
 import { Collapsible } from "./Collapsible";
+import { RichEditor } from "./RichEditor";
+import { plainText } from "@/lib/html";
 
 const MAX_VIBES = 12;
 
@@ -212,10 +214,10 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
               <input {...text("tagline")} maxLength={60} className={`mt-1 uppercase ${field}`} />
             </label>
           </div>
-          <label className={label}>
-            Kurzbeschreibung ({(d.bio ?? "").length}/1000)
-            <textarea {...text("bio")} maxLength={1000} rows={3} className={`mt-1 resize-y ${field}`} />
-          </label>
+          <div className={label}>
+            Kurzbeschreibung ({plainText(d.bio).length}/1000)
+            <RichEditor value={d.bio ?? ""} onChange={(v) => set("bio", v || null)} maxLength={1000} className="mt-1" />
+          </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {(
               [
@@ -273,7 +275,12 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       </label>
 
       <div className={group}>Ausführliche Beschreibung</div>
-      <textarea {...text("personality")} rows={6} className={`resize-y ${field}`} placeholder="Wer ist dieser Charakter?" />
+      <RichEditor
+        value={d.personality ?? ""}
+        onChange={(v) => set("personality", v || null)}
+        placeholder="Wer ist dieser Charakter?"
+        minHeight="min-h-[10rem]"
+      />
 
       </Collapsible>
 
@@ -407,12 +414,12 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
               placeholder="Ereignis, z. B. High School Diploma"
               className={field}
             />
-            <textarea
+            <RichEditor
               value={t.text}
-              onChange={(e) => setTimeline(timeline.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))}
+              onChange={(v) => setTimeline(timeline.map((x, j) => (j === i ? { ...x, text: v } : x)))}
               placeholder="Was ist passiert?"
-              rows={2}
-              className={`resize-y sm:col-span-2 ${field}`}
+              minHeight="min-h-[4rem]"
+              className="sm:col-span-2"
             />
           </div>
           <button onClick={() => setTimeline(timeline.filter((_, j) => j !== i))} aria-label="Eintrag entfernen" className={removeBtn}>

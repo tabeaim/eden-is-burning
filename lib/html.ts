@@ -67,3 +67,16 @@ export function signatureHtml(input: string | null | undefined): string {
   clean(doc.body);
   return doc.body.innerHTML;
 }
+
+// Reiner Text eines (möglicherweise formatierten) Texts – für Tooltips, Suche,
+// Zeichenzähler und gekürzte Vorschauen. Absätze und Umbrüche werden zu Zeilen.
+export function plainText(input: string | null | undefined): string {
+  const raw = input ?? "";
+  if (!/<[a-z!/][^>]*>/i.test(raw)) return raw;
+  if (typeof DOMParser === "undefined") return raw.replace(/<[^>]+>/g, " ");
+  const doc = new DOMParser().parseFromString(`<body>${raw}</body>`, "text/html");
+  doc.body.querySelectorAll("script, style").forEach((el) => el.remove());
+  doc.body.querySelectorAll("br").forEach((br) => br.replaceWith("\n"));
+  doc.body.querySelectorAll("div, p, li, h1, h2, h3, h4, h5, h6, blockquote").forEach((el) => el.append("\n"));
+  return (doc.body.textContent ?? "").replace(/\n{3,}/g, "\n\n").trim();
+}
