@@ -18,6 +18,18 @@ import { chatUnits, isArchived, isLeftOnRead, unitKey, type ChatUnit } from "@/l
 import { isPaused } from "@/lib/characters";
 import type { Character, Player, Scene } from "@/lib/types";
 
+// Merker für auf-/zugeklappte Abschnitte (pro Gerät)
+const DRAN_KEY = "eden:dash-dran";
+const WARTEN_KEY = "eden:dash-warten";
+function recall(key: string): boolean | null {
+  try {
+    const v = localStorage.getItem(key);
+    return v === null ? null : v === "1";
+  } catch {
+    return null;
+  }
+}
+
 export default function DashboardPage() {
   const store = useStore();
   const {
@@ -40,9 +52,28 @@ export default function DashboardPage() {
     myNpcs,
     isSubscribed,
   } = store;
-  const [showWarten, setShowWarten] = useState(false);
-  // "Du bist dran": null = noch nicht selbst umgeschaltet → Standard (s.u.)
-  const [showDran, setShowDran] = useState<boolean | null>(null);
+  // Auf-/zugeklappte Abschnitte merkt sich das Gerät (localStorage); null = noch
+  // nie selbst umgeschaltet → Standard (s.u.)
+  // (Das Dashboard wird erst nach dem Laden im Browser gezeichnet, siehe AppShell –
+  // der Merker lässt sich deshalb gleich beim ersten Zeichnen lesen.)
+  const [showWartenState, setShowWartenState] = useState<boolean | null>(() => recall(WARTEN_KEY));
+  const [showDran, setShowDranState] = useState<boolean | null>(() => recall(DRAN_KEY));
+  const remember = (key: string, open: boolean) => {
+    try {
+      localStorage.setItem(key, open ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  };
+  const setShowDran = (open: boolean) => {
+    setShowDranState(open);
+    remember(DRAN_KEY, open);
+  };
+  const showWarten = showWartenState ?? false;
+  const setShowWarten = (open: boolean) => {
+    setShowWartenState(open);
+    remember(WARTEN_KEY, open);
+  };
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -356,7 +387,8 @@ export default function DashboardPage() {
 
           <section>
             <button
-              onClick={() => setShowWarten((v) => !v)}
+              onClick={() => setShowWarten(!showWarten)}
+              aria-expanded={showWarten}
               className={`flex w-full items-center gap-2 text-left ${showWarten ? "mb-4" : ""}`}
             >
               <h2 className="section-bar text-[0.875rem] text-text-tertiary">
