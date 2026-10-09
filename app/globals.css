@@ -93,8 +93,20 @@ body {
 }
 
 /* Moody Grunge-/Rauch-Hintergrund: geschichtete radiale Gradienten + feine Sprenkel,
-   darunter das Wellen-Foto (dunkler Stil) über die ganze Fensterfläche */
+   darunter das Hintergrundbild über die ganze Fensterfläche – im dunklen Stil das
+   Wellen-Foto, sonst das von Admins hinterlegte (`--page-bg`, `--page-bg-opacity`
+   setzt die AppShell aus Einstellungen → Admin → Design). Liegt als feste Ebene
+   hinter dem Inhalt, damit sich die Deckkraft regeln lässt. */
 body {
+  isolation: isolate;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--page-bg-opacity, 1);
   background-image:
     radial-gradient(
       120% 80% at 50% -10%,
@@ -112,11 +124,10 @@ body {
       transparent 50%
     ),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
-    url("/bg-wave.webp");
+    var(--page-bg, url("/bg-wave.webp"));
   background-size: auto, auto, auto, auto, cover;
   background-position: 0 0, 0 0, 0 0, 0 0, center;
   background-repeat: no-repeat, no-repeat, no-repeat, repeat, no-repeat;
-  background-attachment: fixed;
 }
 
 /* Post-Text im dunklen Stil: einfarbige Fläche, damit das Wellenbild dahinter
@@ -175,8 +186,11 @@ html[data-theme="light"] {
 html[data-theme="light"] .text-yellow-400 {
   color: #7a5a00;
 }
-html[data-theme="light"] body {
-  background-image: none;
+html[data-theme="light"] body::before {
+  background-image: var(--page-bg, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 /* `text-white` steht immer auf dunklem Grund (Foto, Overlay, App-Kachel) und
    bleibt deshalb echtes Weiß – nur die weißen Flächen/Rahmen werden getönt. */

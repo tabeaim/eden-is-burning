@@ -92,6 +92,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <PageMetaProvider>
       <TabTitle pathname={pathname} />
+      <PageBackground />
       {/* Speichern fehlgeschlagen – die Änderung ist nur lokal sichtbar */}
       {saveError && (
         <div
@@ -212,6 +213,25 @@ const PHONE_TITLES: Record<string, string> = {
   "/handy/telefon": "Telefon",
   "/handy/kontakte": "Kontakte",
 };
+// Hintergrundbild der Seiten (Einstellungen → Admin → Design): reicht Bild und
+// Deckkraft des aktuellen Stils als CSS-Variablen an die Ebene in globals.css.
+// Ohne eigene Angaben gelten deren Standardwerte.
+function PageBackground() {
+  const { appSettings } = useStore();
+  const { theme } = useTheme();
+  const bg = appSettings.background?.[theme];
+  const url = bg?.url ?? null;
+  const opacity = bg?.opacity ?? null;
+  useEffect(() => {
+    const root = document.documentElement.style;
+    if (url) root.setProperty("--page-bg", `url("${url}")`);
+    else root.removeProperty("--page-bg");
+    if (opacity === null) root.removeProperty("--page-bg-opacity");
+    else root.setProperty("--page-bg-opacity", String(Math.min(100, Math.max(0, opacity)) / 100));
+  }, [url, opacity]);
+  return null;
+}
+
 function TabTitle({ pathname }: { pathname: string }) {
   const meta = usePageMeta();
   const { chats, character } = useStore();

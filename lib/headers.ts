@@ -348,8 +348,8 @@ const PAGE_THEMES: Record<string, Theme> = {
 const LIGHT_SKY: [number, string][] = [[0, "#f6dfb4"], [0.5, "#f0c78a"], [0.8, "#e8a95a"], [0.93, "#d9b987"], [1, "#fbf5ea"]];
 const lightOf = (t: Theme): Theme => ({ ...t, sky: LIGHT_SKY, glow: "#f2b564", silhouette: "#8a6a3c", windows: "#fff1cf" });
 
-/** Header-Hintergrund (CSS-Wert für background-image) für eine Seite. */
-export function pageHeader(segment: string | undefined, mode: "dark" | "light" = "dark"): string {
+/** Generierter Header-Hintergrund für eine Seite (nur noch Rückfall, siehe `standardHeader`). */
+function pageHeader(segment: string | undefined, mode: "dark" | "light" = "dark"): string {
   const t = PAGE_THEMES[segment ?? "dashboard"] ?? PAGE_THEMES.dashboard;
   return toDataUri(buildSvg(mode === "light" ? lightOf(t) : t, hashStr("page:" + (segment ?? "dashboard"))));
 }
@@ -391,14 +391,29 @@ export function headersFor(
   return (h[mode] as Record<string, string> | undefined) ?? {};
 }
 
+// Standard-Header der Seiten: ein gemeinsames Bild (public/headers/standard.webp),
+// je Stil und Seite mit eigenem Ausschnitt (% von oben). Gilt, solange Admins unter
+// Einstellungen → Admin → Design kein eigenes Bild hinterlegt haben.
+const STANDARD_IMAGE = "/headers/standard.webp";
+const STANDARD_Y: Record<"dark" | "light", Record<string, number>> = {
+  dark: { dashboard: 98, szenen: 94, orte: 98, kalender: 96, charaktere: 98, spieler: 97, info: 96, einstellungen: 97 },
+  light: { dashboard: 0, szenen: 0, orte: 0, kalender: 0, charaktere: 0, spieler: 0, info: 0, einstellungen: 0 },
+};
+
+/** Standard-Header einer Seite; für Seiten ohne festen Ausschnitt die generierte Vorlage. */
+export function standardHeader(segment: string, mode: "dark" | "light"): string {
+  const y = STANDARD_Y[mode][segment];
+  return y === undefined ? pageHeader(segment, mode) : withBannerY(STANDARD_IMAGE, y);
+}
+
 /** Standard-Header für alles ohne eigenes Bild (Szene, Charakter-, Spieler*innen-Profil):
-    der aktuelle Header der zugehörigen Seite – das Bild der Admins, sonst die Vorlage. */
+    der aktuelle Header der zugehörigen Seite – das Bild der Admins, sonst der Standard. */
 export function defaultHeader(
   settings: { headers?: unknown } | null | undefined,
   segment: string,
   mode: "dark" | "light",
 ): string {
-  return headersFor(settings, mode)[segment] || pageHeader(segment, mode);
+  return headersFor(settings, mode)[segment] || standardHeader(segment, mode);
 }
 
 /** Header eines Orts ohne eigenes Bild: das aktuelle Bild seiner Gegend, und solange

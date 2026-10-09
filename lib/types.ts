@@ -498,6 +498,11 @@ export type Theme = "dark" | "light";
 
 // App-weite Einstellungen (Einstellungen → Admin → Design). Liegen als eine Zeile
 // (key "app") in der Tabelle app_settings; schreiben dürfen nur Admins.
+export interface PageBackground {
+  url?: string | null;
+  opacity?: number | null; // 0–100
+}
+
 export interface AppSettings {
   // Modus für alle, die keinen eigenen gewählt haben
   defaultTheme?: Theme | null;
@@ -510,6 +515,9 @@ export interface AppSettings {
   // Standardbilder für Charaktere bzw. Spieler*innen ohne eigenes Bild (sonst die
   // anonyme Silhouette, siehe lib/avatar.ts)
   defaultAvatars?: { character?: string | null; player?: string | null };
+  // Hintergrundbild der Seiten je Stil: eigenes Bild (sonst der Standard des Stils –
+  // dunkel das Wellenbild, hell keins) und Deckkraft in Prozent (ohne Angabe 100)
+  background?: { dark?: PageBackground; light?: PageBackground };
   // Geänderte Texte der Bezirke (AreaKey bzw. „rest"/„industrial"/„eden" -> nur die
   // abweichenden Felder; sonst gelten die festen Angaben aus lib/world.ts)
   areas?: Record<string, { name?: string; character?: string; priceLevel?: string; residents?: string }>;

@@ -710,9 +710,14 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   hellen Stil ist `--color-white` dunkel getönt. Schwarze Schrift auf `bg-accent` bleibt.
 - **Akzent als Schrift** (`text-accent`, `hover:text-accent`) nutzt im hellen Stil
   `--accent-ink` (kräftigeres Orange), weil das helle Orange auf Creme zu blass wäre.
-- **Header** je Stil: Ohne eigenes Bild erzeugt `pageHeader(segment, modus)` einen
-  Standard-Header (dunkel: Nachthimmel, hell: Sand-Himmel mit braunen Silhouetten);
-  Admins hinterlegen je Stil eigene Bilder. Szenen, Charakter- und
+- **Header** je Stil: Ohne eigenes Bild gilt `standardHeader(segment, modus)` – das
+  gemeinsame Standardbild `public/headers/standard.webp` mit je Stil und Seite
+  eigenem Ausschnitt (nur für unbekannte Seiten noch die generierte Vorlage);
+  Admins hinterlegen je Stil eigene Bilder.
+- **Hintergrund der Seiten** je Stil (`appSettings.background`, Admin → Design):
+  eigenes Bild und Deckkraft. Er liegt als feste Ebene `body::before` hinter dem
+  Inhalt (`--page-bg`, `--page-bg-opacity`, gesetzt von `PageBackground` in der
+  AppShell); Standard ist dunkel das Wellenbild, hell kein Bild. Szenen, Charakter- und
   Spieler*innen-Profile ohne eigenes Bild zeigen den aktuellen Header ihrer Rubrik
   (`defaultHeader(appSettings, "szenen" | "charaktere" | "spieler", modus)`), auch
   in den Vorschauen beim Anlegen und Bearbeiten.

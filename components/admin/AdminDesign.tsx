@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { useTheme } from "@/lib/theme";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
-import { bannerStyle, headersFor, pageHeader } from "@/lib/headers";
+import { bannerStyle, headersFor, standardHeader } from "@/lib/headers";
 import { BannerPosition } from "../BannerPosition";
 import { Icon } from "../Icon";
 import { AREA_ORDER, EXTRA_AREAS, areaImage, areaName } from "@/lib/world";
@@ -34,6 +34,7 @@ const AREA_KEYS: string[] = [...AREA_ORDER, ...Object.keys(EXTRA_AREAS)];
 // Schlüssel im gemeinsamen Entwurfs-/Upload-Zustand: Gegenden mit Vorsatz
 const AREA = "area:";
 const AVATAR = "avatar:";
+const BACKGROUND = "background";
 
 // Design: Standard-Farbmodus der App, Header-Bilder je Stil (dunkel/hell) und
 // die Bilder der Gegenden.
@@ -71,6 +72,19 @@ export function AdminDesign() {
     else delete next[key];
     updateAppSettings({ areaImages: next });
   };
+  // Hintergrund der Seiten für den gewählten Stil
+  const background = appSettings.background?.[style] ?? {};
+  const setBackground = (patch: { url?: string | null; opacity?: number | null }) =>
+    updateAppSettings({ background: { ...appSettings.background, [style]: { ...background, ...patch } } });
+  // Deckkraft, solange der Regler bewegt wird (gespeichert beim Loslassen)
+  const [opacityDraft, setOpacityDraft] = useState<number | null>(null);
+  const opacity = opacityDraft ?? background.opacity ?? 100;
+  const commitOpacity = () => {
+    if (opacityDraft !== null && opacityDraft !== (background.opacity ?? 100)) setBackground({ opacity: opacityDraft });
+    setOpacityDraft(null);
+  };
+  // Standard des Stils: dunkel das Wellenbild, hell kein Bild
+  const backgroundShown = background.url || (style === "dark" ? "/bg-wave.webp" : null);
   const setDefaultAvatar = (key: "character" | "player", url: string | null) =>
     updateAppSettings({ defaultAvatars: { ...(appSettings.defaultAvatars ?? {}), [key]: url } });
   async function onFile(f: File | undefined) {
@@ -84,6 +98,7 @@ export function AdminDesign() {
       }
       clearDraft(key);
       const url = await uploadImage(f, "headers", IMAGE_SIZES.banner);
+      if (key === BACKGROUND) return setBackground({ url });
       if (key.startsWith(AREA)) setAreaImage(key.slice(AREA.length), url);
       else setHeader(key, url);
     } finally {
@@ -170,7 +185,7 @@ export function AdminDesign() {
         </div>
         <p className={`${hint} mb-3`}>
           Je Stil ein eigenes Bild pro Seite – im dunklen Stil passen dunkle, im hellen helle Fotos. Ohne eigenes Bild
-          gilt der generierte Standard-Header. Eigene Header von Szenen, Orten, Charakteren und Spieler*innen haben
+          gilt das Standardbild. Eigene Header von Szenen, Orten, Charakteren und Spieler*innen haben
           Vorrang.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -191,7 +206,7 @@ export function AdminDesign() {
                 </div>
                 <div
                   className="relative h-24 w-full overflow-hidden rounded-md border border-border-subtle bg-bg-primary bg-cover"
-                  style={bannerStyle(url || pageHeader(key, style))}
+                  style={bannerStyle(url || standardHeader(key, style))}
                 >
                   <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
                   <button
@@ -218,6 +233,66 @@ export function AdminDesign() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Hintergrund der Seiten je Stil */}
+      <div>
+        <div className={`${label} mb-2`}>
+          Hintergrund der Seiten <span className="text-text-tertiary">(Stil {style === "dark" ? "dunkel" : "hell"})</span>
+        </div>
+        <p className={`${hint} mb-3`}>
+          Liegt hinter allen Seiten, für den oben gewählten Stil. Ohne eigenes Bild gilt im dunklen Stil das Wellenbild,
+          im hellen keins. Die Deckkraft blendet das Bild in die Seitenfarbe aus – je niedriger, desto ruhiger der
+          Hintergrund und desto besser lesbar die Schrift.
+        </p>
+        <div className={`${row} p-3`}>
+          <div className="mb-2 flex items-center justify-between gap-2 text-[0.875rem] text-text-primary">
+            {background.url ? "Eigenes Bild" : backgroundShown ? "Standardbild" : "Kein Bild"}
+            {background.url && (
+              <button
+                onClick={() => setBackground({ url: null })}
+                className="text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+              >
+                Standard
+              </button>
+            )}
+          </div>
+          <div className="relative h-40 w-full overflow-hidden rounded-md border border-border-subtle bg-bg-primary">
+            {backgroundShown && (
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url("${backgroundShown}")`, opacity: opacity / 100 }}
+              />
+            )}
+            <button
+              disabled={busy === BACKGROUND}
+              onClick={() => {
+                target.current = BACKGROUND;
+                file.current?.click();
+              }}
+              className="absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-black/50 px-2.5 py-1.5 text-[0.8125rem] text-white hover:bg-black/70 disabled:opacity-50"
+            >
+              <Icon name="upload" size={14} /> {busy === BACKGROUND ? "Lädt hoch…" : "Bild hochladen"}
+            </button>
+          </div>
+          <label className="mt-2 flex items-center gap-3 text-[0.8125rem] text-text-secondary">
+            <span className="shrink-0">Deckkraft</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={opacity}
+              disabled={!backgroundShown}
+              onChange={(e) => setOpacityDraft(parseInt(e.target.value, 10))}
+              onPointerUp={commitOpacity}
+              onKeyUp={commitOpacity}
+              onBlur={commitOpacity}
+              aria-label="Deckkraft des Hintergrundbilds"
+              className="min-w-0 flex-1 accent-[var(--accent)] disabled:opacity-40"
+            />
+            <span className="w-10 shrink-0 text-right text-text-tertiary">{opacity} %</span>
+          </label>
         </div>
       </div>
 
