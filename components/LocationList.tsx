@@ -5,6 +5,7 @@ import { LocationCategoryPicker } from "./LocationCategoryPicker";
 import { LOCATION_CATEGORIES, categoryIcon, categoryLabel, categoryOf } from "@/lib/places";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
+import { useSessionState } from "@/lib/session-state";
 import { PLACE_AREAS, areaImage, areaName } from "@/lib/world";
 import { areaFilterOptions, areaMatches } from "@/lib/plots";
 import { PHONE_AREA } from "@/lib/phone";
@@ -48,13 +49,13 @@ export function LocationList() {
   const { locations, scenes, characters, players, character, postsOf, addLocation } =
     useStore();
 
-  const [tabState, setTab] = useState<Tab>("all");
-  const [search, setSearch] = useState("");
-  const [areas, setAreas] = useState<string[]>([]); // AreaKey | "rest"
-  const [categories, setCategories] = useState<string[]>([]); // LocationCategory
-  const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
-  const [sortKey, setSortKey] = useState<SortKey>("name");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [tabState, setTab] = useSessionState<Tab>("orte:tab", "all");
+  const [search, setSearch] = useSessionState("orte:search", "");
+  const [areas, setAreas] = useSessionState<string[]>("orte:areas", []); // AreaKey | "rest"
+  const [categories, setCategories] = useSessionState<string[]>("orte:categories", []); // LocationCategory
+  const [tokens, setTokens] = useSessionState<string[]>("orte:tokens", []); // "char:<id>" | "player:<id>"
+  const [sortKey, setSortKey] = useSessionState<SortKey>("orte:sortkey", "name");
+  const [sortDir, setSortDir] = useSessionState<"asc" | "desc">("orte:sortdir", "asc");
   const [adding, setAdding] = useState(false);
 
   const places = useMemo(

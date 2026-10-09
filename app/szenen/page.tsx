@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
+import { useSessionState } from "@/lib/session-state";
 import { compareInplay } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
@@ -53,19 +54,19 @@ export default function ScenesPage() {
   // Gespielte Szenen (auch Telefonszenen) und SMS-Szenen in einer Liste
   const scenes = useMemo(() => [...playedScenes, ...smsScenes], [playedScenes, smsScenes]);
 
-  const [tabState, setTab] = useState<Tab>("all");
+  const [tabState, setTab] = useSessionState<Tab>("szenen:tab", "all");
   // Art: zunächst nur richtige Szenen; Anrufe und SMS lassen sich dazuwählen (leer = alle)
-  const [kinds, setKinds] = useState<string[]>(["scene"]);
+  const [kinds, setKinds] = useSessionState<string[]>("szenen:kinds", ["scene"]);
   const kindsChanged = kinds.length !== 1 || kinds[0] !== "scene";
-  const [searchTitle, setSearchTitle] = useState("");
-  const [searchPost, setSearchPost] = useState("");
-  const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED
-  const [plotId, setPlotId] = useState<string | null>(null); // geöffneter Plot
-  const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
-  const [areas, setAreas] = useState<string[]>([]); // AreaKey | "rest"
-  const [periods, setPeriods] = useState<string[]>([]); // "YYYY-MM"
-  const [sortKey, setSortKey] = useState<SortKey>("active");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [searchTitle, setSearchTitle] = useSessionState("szenen:searchtitle", "");
+  const [searchPost, setSearchPost] = useSessionState("szenen:searchpost", "");
+  const [aus, setAus] = useSessionState<string[]>("szenen:aus", []); // AU-Namen | AU_UNNAMED
+  const [plotId, setPlotId] = useSessionState<string | null>("szenen:plotid", null); // geöffneter Plot
+  const [tokens, setTokens] = useSessionState<string[]>("szenen:tokens", []); // "char:<id>" | "player:<id>"
+  const [areas, setAreas] = useSessionState<string[]>("szenen:areas", []); // AreaKey | "rest"
+  const [periods, setPeriods] = useSessionState<string[]>("szenen:periods", []); // "YYYY-MM"
+  const [sortKey, setSortKey] = useSessionState<SortKey>("szenen:sortkey", "active");
+  const [sortDir, setSortDir] = useSessionState<"asc" | "desc">("szenen:sortdir", "desc");
 
   // Filter aus der URL übernehmen (Verlinkung von „Karte" bzw. Relations).
   // Bewusst im Effect (nach Hydration), da window.location erst clientseitig vorliegt.
@@ -73,6 +74,17 @@ export default function ScenesPage() {
     const params = new URLSearchParams(window.location.search);
     const area = params.get("area");
     const chars = params.get("chars");
+    // Ein Link mit Filter ersetzt, was aus der Sitzung noch gemerkt ist
+    if (area || chars) {
+      setPlotId(null);
+      setAus([]);
+      setPeriods([]);
+      setSearchTitle("");
+      setSearchPost("");
+      setTab("all");
+      if (!area) setAreas([]);
+      if (!chars) setTokens([]);
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (area) setAreas([area]);
     if (chars) {

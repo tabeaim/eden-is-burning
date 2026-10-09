@@ -8,6 +8,7 @@ import { NewCharacterButton } from "@/components/NewCharacterButton";
 import { TIER_NAMES, isPaused, tierOf } from "@/lib/characters";
 import { StatistActions } from "@/components/StatistActions";
 import { useStore } from "@/lib/store";
+import { useSessionState } from "@/lib/session-state";
 import { formatInplayDateShort, capFirst } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { Bubble } from "@/components/Bubble";
@@ -36,10 +37,10 @@ const SORT_LABELS: Record<SortKey, string> = {
 
 export default function CharaktereePage() {
   const { characters, npcs, posts, player } = useStore();
-  const [query, setQuery] = useState("");
-  const [tabState, setTab] = useState<Tab>("played");
-  const [sortKey, setSortKey] = useState<SortKey>("name");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [query, setQuery] = useSessionState("charaktere:query", "");
+  const [tabState, setTab] = useSessionState<Tab>("charaktere:tab", "played");
+  const [sortKey, setSortKey] = useSessionState<SortKey>("charaktere:sortkey", "name");
+  const [sortDir, setSortDir] = useSessionState<"asc" | "desc">("charaktere:sortdir", "asc");
 
   // Anzahl Posts und Zeitpunkt des letzten Posts pro Charakter
   const { postCounts, lastActive } = useMemo(() => {

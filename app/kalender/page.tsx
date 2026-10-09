@@ -4,6 +4,7 @@ import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
+import { useSessionState } from "@/lib/session-state";
 import { compareInplay, formatInplayDate, formatInplayDateWeekday } from "@/lib/format";
 import {
   AU_UNNAMED,
@@ -60,12 +61,12 @@ export default function TimelinePage() {
   } = useStore();
   // Gespielte Szenen (auch Telefonszenen) und SMS-Szenen auf einem Zeitstrahl
   const scenes = useMemo(() => [...playedScenes, ...smsScenes], [playedScenes, smsScenes]);
-  const [kinds, setKinds] = useState<string[]>([]); // Szene | Anruf | SMS (leer = alle)
-  const [tokens, setTokens] = useState<string[]>([]); // "char:<id>" | "player:<id>"
-  const [aus, setAus] = useState<string[]>([]); // AU-Namen | AU_UNNAMED (leer = Canon)
-  const [areas, setAreas] = useState<string[]>([]); // Gegend
-  const [yearSel, setYearSel] = useState<string[]>([]); // leer = alle Jahre
-  const [plotId, setPlotId] = useState<string | null>(null);
+  const [kinds, setKinds] = useSessionState<string[]>("timeline:kinds", []); // Szene | Anruf | SMS (leer = alle)
+  const [tokens, setTokens] = useSessionState<string[]>("timeline:tokens", []); // "char:<id>" | "player:<id>"
+  const [aus, setAus] = useSessionState<string[]>("timeline:aus", []); // AU-Namen | AU_UNNAMED (leer = Canon)
+  const [areas, setAreas] = useSessionState<string[]>("timeline:areas", []); // Gegend
+  const [yearSel, setYearSel] = useSessionState<string[]>("timeline:yearsel", []); // leer = alle Jahre
+  const [plotId, setPlotId] = useSessionState<string | null>("timeline:plotid", null);
   const [addingOff, setAddingOff] = useState(false);
 
   const plot = plots.find((p) => p.id === plotId) ?? null;
