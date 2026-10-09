@@ -498,6 +498,15 @@ export type Theme = "dark" | "light";
 
 // App-weite Einstellungen (Einstellungen → Admin → Design). Liegen als eine Zeile
 // (key "app") in der Tabelle app_settings; schreiben dürfen nur Admins.
+// Unterseite unter „Info" (siehe lib/info.ts)
+export interface InfoPage {
+  id: string; // steht in der Adresse: /info/<id>
+  title: string;
+  text: string; // Kurztext auf der Karte der Übersicht
+  icon: string; // IconName
+  content: string; // Inhalt: reiner Text oder HTML (wie Profiltexte)
+}
+
 export interface PageBackground {
   url?: string | null;
   opacity?: number | null; // 0–100
@@ -515,6 +524,8 @@ export interface AppSettings {
   // Standardbilder für Charaktere bzw. Spieler*innen ohne eigenes Bild (sonst die
   // anonyme Silhouette, siehe lib/avatar.ts)
   defaultAvatars?: { character?: string | null; player?: string | null };
+  // Info-Seiten in ihrer Reihenfolge (ohne Angabe die fest eingetragenen)
+  infoPages?: InfoPage[] | null;
   // Hintergrundbild der Seiten je Stil: eigenes Bild (sonst der Standard des Stils –
   // dunkel das Wellenbild, hell keins) und Deckkraft in Prozent (ohne Angabe 100)
   background?: { dark?: PageBackground; light?: PageBackground };

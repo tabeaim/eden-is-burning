@@ -714,6 +714,10 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   gemeinsame Standardbild `public/headers/standard.webp` mit je Stil und Seite
   eigenem Ausschnitt (nur für unbekannte Seiten noch die generierte Vorlage);
   Admins hinterlegen je Stil eigene Bilder.
+- **Info-Seiten** (`appSettings.infoPages`, lib/info.ts): Admins legen sie in der
+  Info-Übersicht an („Neue Seite") und bearbeiten sie auf der Seite selbst
+  (Titel, Icon, Kurztext der Karte, Inhalt als Text/HTML über `RichText`,
+  Reihenfolge, Löschen). Eine Route für alle: `app/info/[slug]`.
 - **Hintergrund der Seiten** je Stil (`appSettings.background`, Admin → Design):
   eigenes Bild und Deckkraft. Er liegt als feste Ebene `body::before` hinter dem
   Inhalt (`--page-bg`, `--page-bg-opacity`, gesetzt von `PageBackground` in der

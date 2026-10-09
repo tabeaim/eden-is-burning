@@ -133,7 +133,7 @@ body::before {
 /* Post-Text im dunklen Stil: einfarbige Fläche, damit das Wellenbild dahinter
    nicht durch die Zeilen läuft (im hellen Stil liegt kein Bild dahinter). */
 html:not([data-theme="light"]) .post-box {
-  background: var(--bg-surface);
+  background: var(--bg-primary);
   border: 1px solid var(--border-subtle);
   border-radius: 0.75rem;
   padding: 1rem 1.25rem;
