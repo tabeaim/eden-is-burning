@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import { areaImage, areaInfo, areaName } from "@/lib/world";
@@ -84,7 +83,6 @@ export default function PlacesPage() {
 }
 
 function MapView() {
-  const router = useRouter();
   const { scenes, characters, locationsOf, addLocation, appSettings } = useStore();
   const [selected, setSelected] = useState<string>("rivers_edge");
   const [adding, setAdding] = useState(false);
@@ -113,7 +111,8 @@ function MapView() {
     [scenesHere],
   );
 
-  const locations = locationsOf(selected);
+  // alphabetisch, wie die Orte im Panel stehen
+  const locations = [...locationsOf(selected)].sort((a, b) => a.name.localeCompare(b.name, "de"));
   const playedLocs: Location[] = locations.filter((l) => playedNames.has(l.name));
   const ideaLocs: Location[] = locations.filter((l) => !playedNames.has(l.name));
   // Szenen-Orte ohne Location-Eintrag (Altbestand) ergänzen
@@ -123,11 +122,11 @@ function MapView() {
 
   const info = areaInfo(selected);
 
-  // Neuer Ort (unabhängig von einer Szene) → direkt aufs Ortsprofil zum Ausbauen
+  // Neuer Ort (unabhängig von einer Szene): bleibt auf der Karte, der Ort
+  // erscheint im Panel
   function createLocation(name: string, description: string, category: string | null) {
-    const id = addLocation(selected, name, description || null, category);
+    addLocation(selected, name, description || null, category);
     setAdding(false);
-    if (id) router.push(`/orte/${id}`);
   }
 
   return (
@@ -304,26 +303,29 @@ function LocationSection({
   return (
     <AccordionSection title={title} defaultOpen={defaultOpen}>
       <div className="flex flex-wrap items-center gap-1.5">
-        {/* Jeder Ort führt auf sein Ortsprofil */}
-        {locs.map((l) => (
-          <LocationBubble
-            key={l.id}
-            id={l.id}
-            name={l.name}
-            title={l.description ?? undefined}
-            played={played}
-            category={l.category}
-          />
-        ))}
-        {/* Orphans (bespielt, ohne Eintrag) */}
-        {orphans.map((n) => (
-          <LocationBubble
-            key={n}
-            name={n}
-            title="Ortsseite anlegen und öffnen"
-            onClick={area ? () => openPlace(area, n) : undefined}
-          />
-        ))}
+        {/* Alphabetisch gemischt: Orte mit Ortsprofil und Orphans (bespielt, ohne
+            Eintrag – sie bekommen beim Anklicken eine Ortsseite) */}
+        {[...locs.map((l) => ({ name: l.name, loc: l as Location | null })), ...orphans.map((n) => ({ name: n, loc: null }))]
+          .sort((a, b) => a.name.localeCompare(b.name, "de"))
+          .map(({ name, loc }) =>
+            loc ? (
+              <LocationBubble
+                key={loc.id}
+                id={loc.id}
+                name={loc.name}
+                title={loc.description ?? undefined}
+                played={played}
+                category={loc.category}
+              />
+            ) : (
+              <LocationBubble
+                key={name}
+                name={name}
+                title="Ortsseite anlegen und öffnen"
+                onClick={area ? () => openPlace(area, name) : undefined}
+              />
+            ),
+          )}
         {played && locs.length === 0 && orphans.length === 0 && (
           <p className="text-[0.875rem] text-text-tertiary">
             Hier wurde noch nicht gespielt.
