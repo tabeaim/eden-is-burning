@@ -1,11 +1,65 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useProseEditor } from "@/lib/editor";
+import { stepFontSize, useProseEditor } from "@/lib/editor";
 import { signatureHtml } from "@/lib/html";
 
 const toolBtn =
   "rounded px-2 py-1 text-[0.875rem] text-text-secondary hover:text-text-primary hover:bg-white/[0.06]";
+
+// Formatierungsleiste aller Texteditoren (auch des Post-Editors): fett, kursiv,
+// unterstrichen, Schrift größer/kleiner in feinen Stufen. `target` ist das
+// contentEditable-Feld, `onChange` meldet, dass sich sein Inhalt geändert hat.
+export function FormatBar({
+  target,
+  onChange,
+  className = "",
+}: {
+  target: React.RefObject<HTMLElement | null>;
+  onChange?: () => void;
+  className?: string;
+}) {
+  const run = (action: () => void) => () => {
+    target.current?.focus();
+    action();
+    onChange?.();
+  };
+  const exec = (cmd: string) => run(() => document.execCommand(cmd, false));
+  // Mausklick darf die Textauswahl nicht aufheben
+  const keep = (e: React.MouseEvent) => e.preventDefault();
+  return (
+    <div className={`flex items-center gap-0.5 rounded-md border border-border-subtle bg-bg-primary px-1.5 py-1 ${className}`}>
+      <button type="button" onMouseDown={keep} onClick={exec("bold")} className={`${toolBtn} font-bold`} title="Fett">
+        B
+      </button>
+      <button type="button" onMouseDown={keep} onClick={exec("italic")} className={`${toolBtn} italic`} title="Kursiv">
+        I
+      </button>
+      <button type="button" onMouseDown={keep} onClick={exec("underline")} className={`${toolBtn} underline`} title="Unterstrichen">
+        U
+      </button>
+      <span className="mx-1 h-4 w-px bg-border-subtle" />
+      <button
+        type="button"
+        onMouseDown={keep}
+        onClick={run(() => stepFontSize(target.current, 1))}
+        className={toolBtn}
+        title="Schrift etwas größer"
+      >
+        A+
+      </button>
+      <button
+        type="button"
+        onMouseDown={keep}
+        onClick={run(() => stepFontSize(target.current, -1))}
+        className={toolBtn}
+        title="Schrift etwas kleiner"
+      >
+        A−
+      </button>
+    </div>
+  );
+}
 
 // Texteditor für alles, was als gestaltete Seite erscheint (Profile, Orte, Bezirke,
 // Info-Seiten): dieselbe Leiste wie im Post-Editor (fett, kursiv, unterstrichen,
@@ -49,12 +103,6 @@ export function RichEditor({
     onChange(emitted.current);
   }
 
-  function exec(cmd: string, arg?: string) {
-    ref.current?.focus();
-    document.execCommand(cmd, false, arg);
-    emit();
-  }
-
   // Längengrenze: weiteres Tippen/Einfügen blockieren, Löschen bleibt möglich
   useEffect(() => {
     const el = ref.current;
@@ -68,35 +116,9 @@ export function RichEditor({
     return () => el.removeEventListener("beforeinput", limit);
   }, [maxLength]);
 
-  // Leisten-Tasten: Mausklick darf die Textauswahl nicht aufheben
-  const keep = (e: React.MouseEvent) => e.preventDefault();
-
   return (
     <div className={className}>
-      <div className="mb-1 flex items-center gap-0.5 rounded-md border border-border-subtle bg-bg-primary px-1.5 py-1">
-        <button type="button" onMouseDown={keep} onClick={() => exec("bold")} className={`${toolBtn} font-bold`} title="Fett">
-          B
-        </button>
-        <button type="button" onMouseDown={keep} onClick={() => exec("italic")} className={`${toolBtn} italic`} title="Kursiv">
-          I
-        </button>
-        <button
-          type="button"
-          onMouseDown={keep}
-          onClick={() => exec("underline")}
-          className={`${toolBtn} underline`}
-          title="Unterstrichen"
-        >
-          U
-        </button>
-        <span className="mx-1 h-4 w-px bg-border-subtle" />
-        <button type="button" onMouseDown={keep} onClick={() => exec("fontSize", "5")} className={toolBtn} title="Größer">
-          A+
-        </button>
-        <button type="button" onMouseDown={keep} onClick={() => exec("fontSize", "2")} className={toolBtn} title="Kleiner">
-          A−
-        </button>
-      </div>
+      <FormatBar target={ref} onChange={emit} className="mb-1" />
       <div
         ref={ref}
         contentEditable

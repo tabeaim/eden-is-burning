@@ -3,6 +3,7 @@
 import { ScriptEditor } from "@/components/Script";
 import { serializeScript, type ScriptLine } from "@/lib/script";
 import { useTheme } from "@/lib/theme";
+import { RichEditor } from "@/components/RichEditor";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
@@ -269,12 +270,11 @@ export default function NewScenePage() {
                 mine={myChars}
               />
             ) : (
-              <textarea
+              <RichEditor
                 value={firstPost}
-                onChange={(e) => setFirstPost(e.target.value)}
-                rows={4}
-                placeholder="Schreibe den ersten Post… (*Sternchen* für kursiv)"
-                className={`${field} resize-y`}
+                onChange={setFirstPost}
+                placeholder="Schreibe den ersten Post…"
+                minHeight="min-h-[8rem]"
               />
             )}
           </div>

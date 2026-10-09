@@ -718,7 +718,10 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Spieler*innen, Timeline, Relations, Ortsbeschreibung, Bezirksbeschreibung,
   Info-Seiten): immer `RichEditor` (components/RichEditor.tsx) mit derselben Leiste
   wie der Post-Editor (fett, kursiv, unterstrichen, größer, kleiner), nie ein
-  nacktes `<textarea>`. Ohne Speichern-Knopf `CommitRichEditor` (speichert beim
+  nacktes `<textarea>`. Die Leiste selbst ist `FormatBar` (auch im Post-Editor:
+  Antworten, Post bearbeiten, erster Post). „Größer/Kleiner" ändern die Schrift je
+  Klick um ein Zehntel der Grundgröße (`stepFontSize`, lib/editor.ts), relativ zur
+  aktuellen Größe der Auswahl. Ohne Speichern-Knopf `CommitRichEditor` (speichert beim
   Verlassen). Angezeigt wird mit `RichText`; für Tooltips, Suche, Zähler und
   gekürzte Vorschauen `plainText()` (lib/html.ts). Der Editor steht nie in einem
   `<label>` (ein Klick auf die Beschriftung würde sonst „Fett" auslösen).

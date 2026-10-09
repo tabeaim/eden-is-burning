@@ -11,6 +11,7 @@ import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
 import { escapeHtml, formatDateTime, formatInplayDate, renderPost } from "@/lib/format";
 import { copyRich, useProseEditor } from "@/lib/editor";
+import { FormatBar } from "@/components/RichEditor";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { SignatureText } from "@/components/SignatureText";
 import { SceneCharacterCard } from "@/components/SceneCharacterCard";
@@ -760,6 +761,8 @@ function PostRow({
           mine={currentPlayer ? [...charactersOf(currentPlayer.id), ...myNpcs] : []}
         />
       ) : (
+        <>
+        <FormatBar target={editRef} className="mb-2" />
         <div
           ref={editRef}
           contentEditable
@@ -767,7 +770,7 @@ function PostRow({
           lang="de"
           spellCheck
           className="reply-editor prose-serif w-full min-h-[120px] rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-text-primary outline-none focus:border-white/20"
-        />
+        />        </>
       )}
       <div className="mt-2 flex justify-end gap-2">
         <button
@@ -1040,11 +1043,6 @@ function ReplyBox({
 
   const activeChar = activeCharId ? character(activeCharId) : myChars[0];
 
-  function exec(cmd: string, value?: string) {
-    document.execCommand(cmd, false, value);
-    editorRef.current?.focus();
-  }
-
   function send() {
     const html = script ? serializeScript(lines) : (editorRef.current?.innerHTML ?? "");
     const text = script ? html : (editorRef.current?.textContent?.trim() ?? "");
@@ -1063,9 +1061,6 @@ function ReplyBox({
     saveDraft(scene.id, activeChar.id, html, draft?.id);
     onClose();
   }
-
-  const toolBtn =
-    "rounded px-2 py-1 text-[0.875rem] text-text-secondary hover:text-text-primary hover:bg-white/[0.06]";
 
   return (
     <div id="reply-box" className="mt-10 rounded-xl border border-border-subtle bg-bg-surface p-5">
@@ -1140,24 +1135,7 @@ function ReplyBox({
       ) : (
         <>
         {/* Formatierungs-Toolbar */}
-        <div className="mb-2 flex items-center gap-0.5 rounded-md border border-border-subtle bg-bg-primary px-1.5 py-1">
-          <button onClick={() => exec("bold")} className={`${toolBtn} font-bold`} title="Fett">
-            B
-          </button>
-          <button onClick={() => exec("italic")} className={`${toolBtn} italic`} title="Kursiv">
-            I
-          </button>
-          <button onClick={() => exec("underline")} className={`${toolBtn} underline`} title="Unterstrichen">
-            U
-          </button>
-          <span className="mx-1 h-4 w-px bg-border-subtle" />
-          <button onClick={() => exec("fontSize", "5")} className={toolBtn} title="Größer">
-            A+
-          </button>
-          <button onClick={() => exec("fontSize", "2")} className={toolBtn} title="Kleiner">
-            A−
-          </button>
-        </div>
+        <FormatBar target={editorRef} className="mb-2" />
 
         <div
           id="reply-editor"

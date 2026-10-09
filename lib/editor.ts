@@ -96,7 +96,8 @@ function onBeforeInput(root: HTMLElement, e: InputEvent) {
 // und die Auszeichnungen fett, kursiv, unterstrichen, durchgestrichen (sowie die
 // Größen des eigenen Editors) – alles andere fällt weg.
 
-type Fmt = { b: boolean; i: boolean; u: boolean; s: boolean; size: string | null };
+// `size`: alte feste Stufen (<font size>), `em`: feine Stufen des Editors (siehe stepFontSize)
+type Fmt = { b: boolean; i: boolean; u: boolean; s: boolean; size: string | null; em: number };
 type Run = { text: string; fmt: Fmt };
 
 const SKIP = new Set(["STYLE", "SCRIPT", "HEAD", "META", "TITLE", "LINK", "TEMPLATE", "NOSCRIPT"]);
@@ -126,6 +127,11 @@ function fmtOf(el: HTMLElement, f: Fmt): Fmt {
     if (size === "2" || size === "5") next.size = size;
   }
   const st = el.style;
+  const em = /^([\d.]+)(em|%)$/.exec(st.fontSize);
+  if (em) {
+    const ratio = parseFloat(em[1]) / (em[2] === "%" ? 100 : 1);
+    if (ratio > 0) next.em = clampSize(f.em * ratio);
+  }
   if (st.fontWeight) {
     const w = st.fontWeight;
     next.b = w === "bold" || w === "bolder" || parseInt(w, 10) >= 600;
@@ -139,7 +145,8 @@ function fmtOf(el: HTMLElement, f: Fmt): Fmt {
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-const same = (a: Fmt, b: Fmt) => a.b === b.b && a.i === b.i && a.u === b.u && a.s === b.s && a.size === b.size;
+const same = (a: Fmt, b: Fmt) =>
+  a.b === b.b && a.i === b.i && a.u === b.u && a.s === b.s && a.size === b.size && a.em === b.em;
 
 function lineHtml(runs: Run[]): string {
   const merged: Run[] = [];
@@ -160,6 +167,7 @@ function lineHtml(runs: Run[]): string {
       if (fmt.i) html = `<i>${html}</i>`;
       if (fmt.b) html = `<b>${html}</b>`;
       if (fmt.size) html = `<font size="${fmt.size}">${html}</font>`;
+      if (fmt.em !== 1) html = `<span style="font-size: ${fmt.em}em">${html}</span>`;
       return html;
     })
     .join("");
@@ -215,14 +223,14 @@ export function cleanPastedHtml(html: string): string {
     node.childNodes.forEach((child) => walk(child, next, keep));
     if (block) flush();
   };
-  walk(doc.body, { b: false, i: false, u: false, s: false, size: null }, false);
+  walk(doc.body, { b: false, i: false, u: false, s: false, size: null, em: 1 }, false);
   // ein <br> am Absatzende ist kein eigener Umbruch
   for (const l of lines) while (l.length > 1 && l[l.length - 1].text === "\n") l.pop();
   return linesToHtml(lines);
 }
 
 export function plainToHtml(text: string): string {
-  const fmt: Fmt = { b: false, i: false, u: false, s: false, size: null };
+  const fmt: Fmt = { b: false, i: false, u: false, s: false, size: null, em: 1 };
   return linesToHtml(text.replace(/\r\n?/g, "\n").split("\n").map((t) => (t ? [{ text: t, fmt }] : [])));
 }
 
@@ -255,6 +263,73 @@ export function useProseEditor(ref: React.RefObject<HTMLElement | null>, active 
       el.removeEventListener("paste", paste);
     };
   }, [ref, active]);
+}
+
+// --- Schriftgröße in feinen Stufen -------------------------------------------
+// „Größer"/„Kleiner" der Editor-Leiste: je Klick ein Zehntel der Grundgröße, relativ
+// zur aktuellen Größe der Auswahl (statt der groben Stufen von execCommand).
+const SIZE_STEP = 0.1;
+const clampSize = (ratio: number) => Math.min(2.5, Math.max(0.6, Math.round(ratio * 100) / 100));
+
+// Erstes Textstück, das wirklich in der Auswahl liegt (nicht nur an ihrem Rand)
+function firstSelectedText(root: HTMLElement, range: Range): Node | null {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (!range.intersectsNode(n) || !n.textContent) continue;
+    if (n === range.startContainer && range.startOffset >= n.textContent.length) continue;
+    if (n === range.endContainer && range.endOffset === 0) continue;
+    return n;
+  }
+  return null;
+}
+
+export function stepFontSize(root: HTMLElement | null, dir: 1 | -1) {
+  const sel = window.getSelection();
+  if (!root || !sel || sel.rangeCount === 0 || !root.contains(sel.anchorNode)) return;
+  const range = sel.getRangeAt(0);
+  const base = parseFloat(getComputedStyle(root).fontSize) || 14;
+  const px = (el: Element | null) => parseFloat(getComputedStyle(el ?? root).fontSize) || base;
+  const sized = (parent: Element | null, target: number) => {
+    const span = document.createElement("span");
+    span.style.fontSize = `${Math.round(((target * base) / px(parent)) * 1000) / 1000}em`;
+    return span;
+  };
+
+  if (sel.isCollapsed) {
+    // Ohne Auswahl: ab der Schreibmarke in der neuen Größe weiterschreiben
+    const at = range.startContainer;
+    const parent = at instanceof Element ? at : at.parentElement;
+    const span = sized(parent, clampSize(px(parent) / base + dir * SIZE_STEP));
+    span.textContent = "\u200b";
+    range.insertNode(span);
+    sel.collapse(span.firstChild, 1);
+    return;
+  }
+
+  // Größe am Anfang der Auswahl messen, dann die Auswahl vom Browser umschließen
+  // lassen (<font size="7"> als Marke) und die Marken durch Spannen ersetzen.
+  const first = firstSelectedText(root, range);
+  const target = clampSize(px(first?.parentElement ?? null) / base + dir * SIZE_STEP);
+  document.execCommand("styleWithCSS", false, "false");
+  document.execCommand("fontSize", false, "7");
+  const spans = Array.from(root.querySelectorAll<HTMLElement>('font[size="7"]')).map((font) => {
+    const span = sized(font.parentElement, target);
+    span.append(...Array.from(font.childNodes));
+    // feste Größen im Inneren würden die neue Größe überstimmen
+    span.querySelectorAll<HTMLElement>("span, font").forEach((el) => {
+      el.style.fontSize = "";
+      el.removeAttribute("size");
+    });
+    font.replaceWith(span);
+    return span;
+  });
+  if (spans.length) {
+    const next = document.createRange();
+    next.setStartBefore(spans[0]);
+    next.setEndAfter(spans[spans.length - 1]);
+    sel.removeAllRanges();
+    sel.addRange(next);
+  }
 }
 
 // --- Kopieren ----------------------------------------------------------------
