@@ -19,6 +19,7 @@ export type PageMeta = {
   // Titel anklickbar: löst dieses Fenster-Ereignis aus, auf das die Seite hört
   // (z.B. „Eden, Virginia" → zurück zur Übersichtskarte)
   titleEvent?: string;
+  kicker?: string; // kleines Etikett über dem Titel („Character File", „Player File")
 };
 
 type Ctx = { meta: PageMeta; setMeta: (m: PageMeta) => void };
@@ -42,10 +43,11 @@ export function useSetPageMeta(
   avatar?: string,
   deleted?: boolean,
   titleEvent?: string,
+  kicker?: string,
 ) {
   const setMeta = useContext(PageMetaCtx)?.setMeta;
   const pathname = usePathname();
   useEffect(() => {
-    setMeta?.({ title, subtitle, statusBadge, path: pathname, bannerImage, width, avatar, deleted, titleEvent });
-  }, [setMeta, title, subtitle, statusBadge, bannerImage, width, pathname, avatar, deleted, titleEvent]);
+    setMeta?.({ title, subtitle, statusBadge, path: pathname, bannerImage, width, avatar, deleted, titleEvent, kicker });
+  }, [setMeta, title, subtitle, statusBadge, bannerImage, width, pathname, avatar, deleted, titleEvent, kicker]);
 }

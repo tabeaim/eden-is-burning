@@ -56,6 +56,10 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
     "max-w-6xl",
     undefined,
     p ? playerImage(p) : undefined,
+    undefined,
+    undefined,
+    // Etikett über dem Namen, wie im Charakterprofil
+    p ? "Player File" : undefined,
   );
 
   if (!p) {

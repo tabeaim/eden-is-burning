@@ -403,6 +403,13 @@ selbst) rutscht alles über der Linie (Zitat, Szenenkopf, Bearbeiten) in diese
 Lücke, also mit auf das Bild. Der Seiteninhalt (`main`) liegt dafür über dem
 Titelbild; den Verlauf zum Hintergrundfoto zeichnet der Header.
 
+Charakter- und Spieler*innen-Profile tragen über dem Titel ein kleines, leicht
+schräges Etikett in der Akzentfarbe („Character File", „Player File") – letzter
+Parameter `kicker` von `useSetPageMeta`.
+
+**Charakter- und Spieler*innen-Profil sind gleich aufgebaut:** Jede Änderung am
+einen gilt auch fürs andere.
+
 ## Seitenbreite
 
 Alle Seiten nutzen denselben Container `max-w-6xl mx-auto px-8` (auch als `width`

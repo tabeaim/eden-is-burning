@@ -313,9 +313,16 @@ function BannerHeader({
 
       {/* Titel – steht auf dem Titelbild (nicht beschnitten).
           Container in der Seitenbreite zentriert → Titel startet bündig mit dem Inhalt. */}
-      <div className={`relative ${width} mx-auto px-4 sm:px-8`}>
+      <div className={`relative ${width} mx-auto px-4 sm:px-8 ${noBanner ? "" : "-mt-[3.625rem] sm:-mt-[5.875rem]"}`}>
+        {/* Etikett der Profile („Character File", „Player File"): leicht schräg
+            aufgeklebt über dem Titel */}
+        {!noBanner && onThisPage && meta.kicker && (
+          <div className="absolute bottom-full left-4 mb-2.5 -rotate-2 rounded-[3px] bg-accent px-2.5 py-1 text-[0.6875rem] font-bold uppercase leading-none tracking-[0.18em] text-black sm:left-8">
+            {meta.kicker}
+          </div>
+        )}
         <h1 className={`page-title inline-block ${
-          noBanner ? (navHidden ? "mt-7 md:mt-14" : "mt-7") : "-mt-[3.625rem] sm:-mt-[5.875rem]"
+          noBanner ? (navHidden ? "mt-7 md:mt-14" : "mt-7") : ""
         } max-w-full break-words font-display lowercase text-[2.125rem] sm:text-[3.375rem] leading-none text-text-primary`}>
           {onThisPage && meta.avatar && (
             // eslint-disable-next-line @next/next/no-img-element

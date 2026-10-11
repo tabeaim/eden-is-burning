@@ -100,6 +100,9 @@ export default function CharacterPage({
     undefined,
     // Konto der Spieler*in gelöscht: Name im Titel durchgestrichen
     c ? ownerGone(c, player) : false,
+    undefined,
+    // Etikett über dem Namen
+    c ? "Character File" : undefined,
   );
 
   if (!c) {
