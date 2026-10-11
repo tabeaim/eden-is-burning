@@ -126,8 +126,18 @@ export function ChatRow({
         </div>
         {last && (
           <div className="shrink-0 text-right text-[0.8125rem] leading-snug text-text-tertiary">
-            <div className="text-text-secondary">Letzte Nachricht</div>
-            <div>{formatDateTimeShort(last.created_at)}</div>
+            {/* wie in der `SceneCard`: Klick springt zur neuesten Nachricht */}
+            <Link
+              href={chatHref(chat.id, last.id)}
+              onClick={() => forCharacter && rememberPhone(forCharacter)}
+              title="Zur neuesten Nachricht springen"
+              className="group/last relative z-10 block hover:text-accent"
+            >
+              <div className="text-text-secondary group-hover/last:text-accent group-hover/last:underline">
+                Letzte Nachricht
+              </div>
+              <div className="group-hover/last:underline">{formatDateTimeShort(last.created_at)}</div>
+            </Link>
           </div>
         )}
         {action && <div className="relative z-10 shrink-0">{action}</div>}
