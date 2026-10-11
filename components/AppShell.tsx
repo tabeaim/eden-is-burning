@@ -35,7 +35,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { ready, currentPlayer, isApproved, touchPresence, saveError, clearSaveError, refresh } =
     useStore();
   const pathname = usePathname();
-  // Handy: Navigation als Schublade, die über die Menü-Taste aufgeht
+  // Schmale Fenster (unter `lg`, also auch ein halbes Bildschirmfenster): Navigation
+  // als Schublade, die über die Menü-Taste aufgeht – der Inhalt bekommt die ganze Breite
   const [navOpen, setNavOpen] = useState(false);
   useEffect(() => setNavOpen(false), [pathname]);
   // Größere Bildschirme: Seitenleiste lässt sich dauerhaft ausblenden (pro Gerät gemerkt)
@@ -133,14 +134,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <>
             <div
               onMouseEnter={() => setNavPeek(true)}
-              className="hidden md:block fixed inset-y-0 left-0 z-30 w-2"
+              className="hidden lg:block fixed inset-y-0 left-0 z-30 w-2"
             />
             <button
               onClick={() => hideNav(false)}
               onMouseEnter={() => setNavPeek(true)}
               title="Seitenleiste fixieren"
               aria-label="Seitenleiste fixieren"
-              className="hidden md:flex fixed left-3 top-3 z-30 rounded-md border border-border-subtle bg-bg-sidebar/80 p-1.5 text-text-secondary backdrop-blur hover:text-text-primary"
+              className="hidden lg:flex fixed left-3 top-3 z-30 rounded-md border border-border-subtle bg-bg-sidebar/80 p-1.5 text-text-secondary backdrop-blur hover:text-text-primary"
             >
               <Icon name="sidebar" size={18} />
             </button>
@@ -150,8 +151,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {/* Schmale Bildschirme: Die Wortmarke steht oben und scrollt mit weg; nur
               die Menü-Taste bleibt beim Scrollen stehen. */}
           {!bare && (
-            <div className="md:hidden flex items-center border-b border-border-subtle bg-bg-sidebar px-4 py-3.5">
-              <Link href="/dashboard" className="whitespace-nowrap font-display text-[1.5rem] leading-none text-text-primary">
+            <div className="lg:hidden flex items-center border-b border-border-subtle bg-bg-sidebar px-4 py-3.5">
+              <Link href="/dashboard" className="whitespace-nowrap font-display text-[1.25rem] leading-none text-text-primary">
                 eden is burning<span className="text-accent">.</span>
               </Link>
             </div>
@@ -159,7 +160,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button
             onClick={() => setNavOpen(true)}
             aria-label="Menü öffnen"
-            className="md:hidden fixed right-3 top-2 z-30 rounded-md border border-border-subtle bg-bg-sidebar/85 p-1.5 text-text-secondary backdrop-blur hover:text-text-primary"
+            className="lg:hidden fixed right-3 top-2 z-30 rounded-md border border-border-subtle bg-bg-sidebar/85 p-1.5 text-text-secondary backdrop-blur hover:text-text-primary"
           >
             <MenuIcon />
           </button>
@@ -324,9 +325,9 @@ function BannerHeader({
             ? ""
             : ownsDivider
               ? // Detailseiten: Luft unter dem Titel für ihren Kopfbereich
-                "-mt-[3.875rem] sm:-mt-[6.25rem]"
+                "-mt-[3.875rem] sm:-mt-[5.25rem] lg:-mt-[6.25rem]"
               : // sonst sitzt der Titel knapp über der Trennlinie
-                "-mt-[3.125rem] sm:-mt-[4.75rem]"
+                "-mt-[3.125rem] sm:-mt-[3.75rem] lg:-mt-[4.75rem]"
         }`}
       >
         {/* Etikett der Profile („Character File", „Player File"): leicht schräg
@@ -337,8 +338,8 @@ function BannerHeader({
           </div>
         )}
         <h1 className={`page-title inline-block ${
-          noBanner ? (navHidden ? "mt-7 md:mt-14" : "mt-7") : ""
-        } max-w-full break-words font-display lowercase text-[2.375rem] sm:text-[3.75rem] leading-none text-text-primary`}>
+          noBanner ? (navHidden ? "mt-7 lg:mt-14" : "mt-7") : ""
+        } max-w-full break-words font-display lowercase text-[2.375rem] sm:text-[2.75rem] lg:text-[3.75rem] leading-none text-text-primary`}>
           {onThisPage && meta.avatar && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -479,21 +480,21 @@ function Sidebar({
     <AlertPing />
     {/* Abdunkelung hinter der offenen Schublade (Handy) */}
     {open && (
-      <div onClick={onClose} className="fixed inset-0 z-40 bg-black/60 md:hidden" />
+      <div onClick={onClose} className="fixed inset-0 z-40 bg-black/60 lg:hidden" />
     )}
     <aside
       onMouseLeave={() => hidden && onPeek(false)}
-      className={`w-[230px] md:w-[190px] shrink-0 bg-bg-sidebar border-r border-border-subtle flex flex-col fixed inset-y-0 left-0 z-50 overflow-y-auto transition-transform ${
+      className={`w-[230px] lg:w-[190px] shrink-0 bg-bg-sidebar border-r border-border-subtle flex flex-col fixed inset-y-0 left-0 z-50 overflow-y-auto transition-transform ${
         hidden
           ? peek
-            ? "md:translate-x-0 md:shadow-2xl md:shadow-black/70"
+            ? "lg:translate-x-0 lg:shadow-2xl lg:shadow-black/70"
             : ""
-          : "md:sticky md:top-0 md:h-screen md:translate-x-0"
+          : "lg:sticky lg:top-0 lg:h-screen lg:translate-x-0"
       } ${open ? "translate-x-0" : "-translate-x-full"}`}
     >
       <div className="px-4 pt-5 pb-5 border-b border-border-subtle">
         <Link href="/dashboard" className="block leading-none">
-          <div className="whitespace-nowrap font-display text-[1.5rem] text-text-primary">
+          <div className="whitespace-nowrap font-display text-[1.25rem] text-text-primary">
             eden is burning<span className="text-accent">.</span>
           </div>
         </Link>
@@ -505,7 +506,7 @@ function Sidebar({
           onClick={onToggleHidden}
           title={hidden ? "Seitenleiste fixieren" : "Seitenleiste ausblenden (erscheint beim Hovern)"}
           aria-label={hidden ? "Seitenleiste fixieren" : "Seitenleiste ausblenden"}
-          className={`hidden md:flex self-start rounded-md px-2.5 py-1.5 transition-colors hover:bg-white/[0.04] hover:text-text-primary ${
+          className={`hidden lg:flex self-start rounded-md px-2.5 py-1.5 transition-colors hover:bg-white/[0.04] hover:text-text-primary ${
             hidden ? "text-text-tertiary" : "text-accent"
           }`}
         >

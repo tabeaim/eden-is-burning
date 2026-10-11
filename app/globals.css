@@ -55,8 +55,8 @@
   --font-sans: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
   /* Georgia-Serifenschrift entfernt -> serifenlos (Content-Titel, Prosa, Zitate) */
   --font-serif: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
-  /* Display-Font (Bebas Neue) für Bildmarke & Seiten-Überschriften */
-  --font-display: var(--font-display), "Arial Narrow", Impact, sans-serif;
+  /* Display-Font (Fraunces) für Bildmarke & Seiten-Überschriften */
+  --font-display: var(--font-display), Georgia, "Times New Roman", serif;
 }
 
 * {
@@ -250,13 +250,13 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
   display: none;
 }
 
-/* Display-Font (Bebas Neue) – Bildmarke & Seiten-Überschriften. Die Schrift kennt
-   nur Großbuchstaben und einen Schnitt; sie läuft schmal, deshalb etwas Luft
-   zwischen den Buchstaben. */
+/* Display-Font (Fraunces) – Bildmarke & Seiten-Überschriften: kräftig und etwas
+   enger gesetzt; die optische Größe richtet sich nach der Schriftgröße. */
 .font-display {
-  font-family: var(--font-display), "Arial Narrow", Impact, sans-serif;
-  font-weight: 400;
-  letter-spacing: 0.03em;
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
 }
 
 /* Sektions-Bar-Überschrift wie im Forum (GENERAL / INPLAY) */

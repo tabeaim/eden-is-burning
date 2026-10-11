@@ -37,10 +37,9 @@ eigenes Bild zeigen alle den Silhouetten-Avatar (`characterImage`).
 ## Farben & Schrift
 
 Tokens stehen in `app/globals.css` (`--accent`, `--olive`, `--bg-*`, `--text-*`,
-`--border-*`). Display-Schrift (`font-display`, Bebas Neue über `next/font/google` – nur
-Großbuchstaben, ein Schnitt, leicht gesperrt) nur für Logo, Seitentitel und die
-Abschnitts-Überschriften mit Punkt („FACTS.", „SCENES."; im Code weiter klein
-geschrieben). Abschnitts-Überschriften sind `1.625rem`, auf dem Dashboard
+`--border-*`). Display-Schrift (`font-display`, Fraunces über `next/font/google` – variable
+Serifenschrift, Gewicht 600, etwas enger gesetzt) nur für Logo, Seitentitel und die
+kleingeschriebenen Abschnitts-Überschriften mit Punkt („facts.", „scenes."). Abschnitts-Überschriften sind `1.625rem`, auf dem Dashboard
 (`DashHeading`) `1.5rem`, in den Profilen (`SectionHeading`) `1.75rem`
 (Unter-Überschriften `1.25rem`). Schriftgrößen immer aus der vorhandenen Skala
 nehmen, keine krummen Zwischenwerte.
@@ -378,7 +377,7 @@ Ein Menüpunkt „Orte", zwei Ansichten. Es startet immer die Karte, außer in
 dieser Sitzung war zuletzt die Liste offen; ein Link `/orte?area=…` öffnet immer
 die Karte. Der Umschalter steht ab `sm` ausnahmsweise oben rechts auf Höhe des
 Seitentitels (er soll die Karte nicht nach unten schieben), auf dem Handy über
-dem Inhalt:
+dem Inhalt (seit dem Umbau der Seitenleiste: ab `lg` oben rechts, darunter über dem Inhalt):
 
 - **Liste** (`components/LocationList.tsx`): alle Orte als Karten, aufgebaut wie
   die Szenen-Übersicht – Reiter (Alle, Bespielt, Noch nicht bespielt),
@@ -428,7 +427,7 @@ ihr AU im Filter gewählt ist – ohne Auswahl zeigt die Timeline nur Canon.
 ## Header – `BannerHeader` in `components/AppShell.tsx`
 
 Das Titelbild ist `h-48`, ab `sm` `h-56`. Der Seitentitel (`2.375rem`, ab `sm`
-`3.75rem`) steht ganz auf dem Bild, knapp über der Unterkante; dort sitzt die
+`2.75rem`, ab `lg` `3.75rem`) steht ganz auf dem Bild, knapp über der Unterkante; dort sitzt die
 Trennlinie zur Seite. Auf Detailseiten (Szene, Charakter, Spieler*in, Ort – sie
 zeichnen die Trennlinie selbst) sitzt der Titel höher, und alles über der Linie
 (Zitat, Szenenkopf, Bearbeiten) rutscht in die Lücke darunter, also mit auf das
@@ -477,7 +476,11 @@ mehrspaltige Raster und Karte-neben-Text erst ab `sm`/`md`/`lg` nebeneinander,
 Button-Reihen mit `flex-wrap`, keine festen Breiten ohne `max-w-full`. Raster, die erst
 ab einem Breakpoint mehrspaltig werden, bekommen immer `grid-cols-1` dazu – sonst
 drückt breiter Inhalt die Spalte über den Bildschirmrand. Die
-Seitenleiste ist unter `md` eine Schublade (Menü-Taste in der Kopfleiste).
+Seitenleiste ist unter `lg` (1024px) eine Schublade (Menü-Taste in der Kopfleiste) –
+also auch in einem halben Bildschirmfenster; der Inhalt hat dann die ganze Breite.
+`md:`-Regeln dürfen deshalb mit mindestens 768px Inhaltsbreite rechnen, erst ab
+`lg` geht die Seitenleiste (190px) davon ab. Nichts darf am Fensterrand kleben
+oder eine waagerechte Bildlaufleiste auslösen.
 
 ## Messenger („Handy") – `components/phone/`
 

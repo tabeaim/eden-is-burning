@@ -74,14 +74,14 @@ export default function PlacesPage() {
         noBanner={view !== "list"}
       />
 
-      {/* Umschalter: ab `sm` ausnahmsweise oben rechts auf Höhe des Seitentitels
+      {/* Umschalter: ab `lg` ausnahmsweise oben rechts auf Höhe des Seitentitels
           (über der Trennlinie, auf dem Titelbild), damit er die Karte nicht nach unten schiebt; auf
-          dem Handy ist dort kein Platz, da steht er über dem Inhalt. */}
+          in schmalen Fenstern ist dort kein Platz, da steht er über dem Inhalt. */}
       {view && (
-        <div className="sm:relative sm:h-0">
+        <div className="lg:relative lg:h-0">
         <div
-          className={`flex gap-1.5 mb-4 sm:mb-0 sm:absolute sm:right-0 sm:z-10 ${
-            view === "list" ? "sm:-top-[5.375rem]" : "sm:-top-[4.875rem]"
+          className={`flex gap-1.5 mb-4 lg:mb-0 lg:absolute lg:right-0 lg:z-10 ${
+            view === "list" ? "lg:-top-[5.375rem]" : "lg:-top-[4.875rem]"
           }`}
         >
           {(

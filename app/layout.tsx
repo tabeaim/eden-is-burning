@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Montserrat, Bebas_Neue } from "next/font/google";
+import { Montserrat, Fraunces } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
@@ -12,12 +12,12 @@ const sans = Montserrat({
 });
 
 // Display-Schrift – Bildmarke (Logo) und Seiten-Überschriften
-// (Bebas Neue: nur Großbuchstaben, ein Schnitt. Die frühere Schreibmaschinen-Schrift
-// liegt noch unter app/fonts.)
-const display = Bebas_Neue({
+// (Fraunces: variable Serifenschrift; die optische Größe folgt der Schriftgröße.
+// Die frühere Schreibmaschinen-Schrift liegt noch unter app/fonts.)
+const display = Fraunces({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: "400",
+  axes: ["opsz"],
   display: "swap",
 });
 
