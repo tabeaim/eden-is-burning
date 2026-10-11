@@ -15,12 +15,9 @@ import { ChatRow } from "@/components/phone/ChatRow";
 import { MAILBOX_KEY, rememberPhone } from "@/lib/phone";
 import { formatInplayDateShort } from "@/lib/format";
 import { chatUnits, isArchived, isLeftOnRead, unitKey, type ChatUnit } from "@/lib/chats";
-import { isPaused } from "@/lib/characters";
+import { isPaused, tierOf } from "@/lib/characters";
 import type { Character, Player, Scene } from "@/lib/types";
 
-// Kästchen der rechten Spalte (wie die Abschnitts-Boxen der Profile): Überschrift
-// samt Zeitraum steht mit in der Box
-const DASH_BOX = "rounded-lg border border-border-subtle bg-bg-surface px-5 pb-5 pt-4";
 // Merker für auf-/zugeklappte Abschnitte (pro Gerät)
 const DRAN_KEY = "eden:dash-dran";
 const WARTEN_KEY = "eden:dash-warten";
@@ -93,6 +90,11 @@ export default function DashboardPage() {
   // Pausierte Main Characters bilden keine Gruppe und zählen nicht mit.
   const myChars = [...charactersOf(currentPlayer.id).filter((c) => !isPaused(c)), ...myNpcs];
   const follows = (c: Character, itemId: string) => !c.is_npc || isSubscribed(itemId);
+  // Szenen zusätzlich: Ist ein mir zugeordneter Supporting Character am Zug, steht
+  // die Szene auch ohne Abo bei mir unter „Du bist dran" (Statist*innen nicht – die
+  // kann jede*r bespielen).
+  const tracks = (c: Character, s: Scene) =>
+    follows(c, s.id) || (tierOf(c) === "supporting" && whoseTurn(s, postsOf(s.id)) === c.id);
 
   // Zeitpunkt des letzten Posts einer Szene (postsOf ist nach post_number sortiert)
   const lastPostAt = (sceneId: string): string | null => {
@@ -127,7 +129,7 @@ export default function DashboardPage() {
           s.status === "active" &&
           !s.paused &&
           s.participant_ids.includes(c.id) &&
-          follows(c, s.id),
+          tracks(c, s),
       );
       const dran: Scene[] = [];
       const warten: Scene[] = [];
@@ -169,7 +171,7 @@ export default function DashboardPage() {
     (s) =>
       s.status === "active" &&
       !s.paused &&
-      myChars.some((c) => s.participant_ids.includes(c.id) && follows(c, s.id)),
+      myChars.some((c) => s.participant_ids.includes(c.id) && tracks(c, s)),
   );
   // Chat-Stränge zählen mit (jeder einmal, auch wenn mehrere eigene Charaktere dabei sind)
   const openChatIds = new Set(grouped.flatMap((g) => [...g.chatsDran, ...g.chatsWarten].map(unitKey)));
@@ -434,8 +436,8 @@ export default function DashboardPage() {
 
           {/* nur, wenn in den letzten 24h etwas los war */}
           {recentItems.length > 0 && (
-          <section className={DASH_BOX}>
-            <DashHeading className="mb-3">szenen · letzte 24h.</DashHeading>
+          <section>
+            <DashHeading className="mb-3">zuletzt aktive szenen.</DashHeading>
             <div className="flex flex-col gap-2">
               {recentItems.map((item) =>
                 item.scene ? (
@@ -448,7 +450,7 @@ export default function DashboardPage() {
           </section>
           )}
 
-          <section className={DASH_BOX}>
+          <section>
             <DashHeading className="mb-3">jetzt online.</DashHeading>
             <PlayerPresenceList
               players={onlineNow}
@@ -459,7 +461,7 @@ export default function DashboardPage() {
           </section>
 
           {onlineRecent.length > 0 && (
-            <section className={DASH_BOX}>
+            <section>
               <DashHeading className="mb-3">zuletzt online.</DashHeading>
               <PlayerPresenceList players={onlineRecent} />
             </section>
