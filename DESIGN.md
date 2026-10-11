@@ -243,7 +243,8 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Größe an den Ecken, Drehung am Griff oben, Stapelfolge); gespeichert
   liegen die Bilder frei auf durchsichtigem Grund. Beim Hinzufügen kann ein
   einfarbiger Hintergrund entfernt werden (`lib/cutout.ts`).
-- **Facts:** Label fett in Großbuchstaben (0.75rem, grau), Wert in normaler
+- **Facts:** Label fett in Großbuchstaben (0.75rem, grau, ohne Doppelpunkt), Wert
+  mit `gap-x-6` Abstand daneben in normaler
   Schreibweise (0.875rem) – `Facts`/`FactRow`. Im Profil steht jede Kategorie
   („facts.", „studies.", „work.") in einer dezenten Box
   (`rounded-lg border bg-bg-surface`); die Facts-Spalte ist breit genug für lange

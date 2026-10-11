@@ -1,4 +1,4 @@
-// Fakten-Liste (siehe DESIGN.md): Label fett in Großbuchstaben mit Doppelpunkt,
+// Fakten-Liste (siehe DESIGN.md): Label fett in Großbuchstaben, ohne Doppelpunkt,
 // Wert daneben in normaler Schreibweise und Textgröße; lange Werte brechen um, statt aus der Spalte zu laufen.
 export function Facts({
   className = "",
@@ -9,7 +9,7 @@ export function Facts({
 }) {
   return (
     <dl
-      className={`${className} grid grid-cols-[max-content_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1.5 text-[0.875rem]`}
+      className={`${className} grid grid-cols-[max-content_minmax(0,1fr)] items-baseline gap-x-6 gap-y-1.5 text-[0.875rem]`}
     >
       {children}
     </dl>
@@ -24,7 +24,7 @@ export function FactRow({ label, value }: { label: string; value: React.ReactNod
   return (
     <>
       <dt className="text-[0.75rem] font-bold uppercase tracking-wider text-text-tertiary">
-        {label}:
+        {label}
       </dt>
       <dd className="break-words text-text-primary">{shown}</dd>
     </>

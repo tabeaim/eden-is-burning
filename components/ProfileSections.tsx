@@ -203,7 +203,7 @@ export function ProfileLooks({ c, wide = false }: { c: Character; wide?: boolean
       )}
       <Facts
         className={
-          wide ? "gap-y-2.5 sm:grid-cols-[max-content_minmax(0,1fr)_max-content_minmax(0,1fr)] sm:gap-x-5" : ""
+          wide ? "gap-y-2.5 sm:grid-cols-[max-content_minmax(0,1fr)_max-content_minmax(0,1fr)]" : ""
         }
       >
         {rows.map(([label, value]) => (
