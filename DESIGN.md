@@ -37,7 +37,7 @@ eigenes Bild zeigen alle den Silhouetten-Avatar (`characterImage`).
 ## Farben & Schrift
 
 Tokens stehen in `app/globals.css` (`--accent`, `--olive`, `--bg-*`, `--text-*`,
-`--border-*`). Display-Schrift (`font-display`) nur für Logo, Seitentitel und die
+`--border-*`). Display-Schrift (`font-display`, Barriecito) nur für Logo, Seitentitel und die
 kleingeschriebenen Abschnitts-Überschriften mit Punkt („facts.", „scenes.").
 Alles andere ist Montserrat. Standard-Textgröße `0.875rem`, Bubbles/Buttons
 `0.8125rem`.
@@ -670,9 +670,11 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   (dunkel/hell) ein Standard-Banner (`appSettings.standardHeader`, gilt überall
   ohne eigenes Bild) und ein Header-Bild pro Seite, inkl. Ausschnitt-Regler. Eigene
   Header von Szenen, Orten, Charakteren und Spieler*innen haben Vorrang.
-  „Seiten-Header überschreiben…" entfernt nach Nachfrage (`ConfirmDialog`) die
-  Seiten-Bilder des Stils, nie automatisch; eigene Banner von Szenen, Profilen,
-  Dashboards und Orten bleiben immer erhalten. Keine
+  Ein neues Bild im Standard-Banner-Feld ist erst ein Entwurf
+  (`standardHeaderDraft`, zum Ausprobieren von Bild und Ausschnitt); erst
+  „Überschreiben…" übernimmt es nach Nachfrage (`ConfirmDialog`) und entfernt die
+  Seiten-Bilder des Stils. Eigene Banner von Szenen, Profilen, Dashboards und
+  Orten bleiben immer erhalten. Keine
   Farbauswahl: Die Akzentfarbe gehört zum jeweiligen Stil.
 - **Konto löschen** (SQL: `supabase/schema-delete-player.sql`): eigenes Konto unter
   Mein Profil (Passwort zur Bestätigung), das anderer unter Admin → Spieler*innen.

@@ -534,6 +534,9 @@ export interface AppSettings {
   // Standard-Banner je Stil: gilt überall, wo weder die Seite noch der Inhalt ein
   // eigenes Bild hat (sonst das mitgelieferte Standardbild)
   standardHeader?: { dark?: string | null; light?: string | null };
+  // Noch nicht übernommener Entwurf des Standard-Banners (Admin → Design); gilt
+  // erst nach „Überschreiben"
+  standardHeaderDraft?: { dark?: string | null; light?: string | null };
   // Eigene Bilder der Gegenden (AreaKey bzw. „rest"/„industrial" -> Bildadresse,
   // ggf. mit Ausschnitt-Anhang) – Gegend-Panel der Karte und Ortskarten ohne Bild
   areaImages?: Record<string, string>;
