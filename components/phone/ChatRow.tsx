@@ -87,7 +87,7 @@ export function ChatRow({
           </h3>
           <div className="mt-2 flex min-w-0 items-center gap-3">
             <Bubble
-              className="max-w-[65%] shrink-0 overflow-hidden whitespace-nowrap"
+              className="min-w-0 max-w-[65%] shrink-0 whitespace-nowrap"
               leading={
                 <span className="flex shrink-0 -space-x-1.5">
                   {participants.map((c) => (
@@ -104,16 +104,19 @@ export function ChatRow({
                 </span>
               }
             >
+              <span className="min-w-0 truncate">
               {participants.map((c, n) => (
-                <span key={c.id} className={c.id === turnId ? "inline-flex items-center gap-0.5 text-accent" : undefined}>
+                <span key={c.id} className={c.id === turnId ? "text-accent" : undefined}>
                   {n > 0 && n === participants.length - 1 && <span className="text-text-secondary">&amp;&nbsp;</span>}
                   {c.name.split(" ")[0]}
-                  {c.id === turnId && <Icon name="flame" size={12} />}
+                  {c.id === turnId && <Icon name="flame" size={12} className="ml-0.5 inline-block align-[-0.1em]" />}
                   {participants.length > 2 && n < participants.length - 2 && (
                     <span className="text-text-secondary">,</span>
                   )}
+                  {n < participants.length - 1 && " "}
                 </span>
               ))}
+              </span>
             </Bubble>
             {/* bewusst ohne Vorschau der Nachricht – nichts spoilern */}
             <div className="min-w-0 flex-1 truncate text-[0.875rem] text-text-tertiary">

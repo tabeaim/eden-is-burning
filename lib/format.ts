@@ -157,6 +157,12 @@ export function joinNames(names: string[]): string {
   return names.length === 2 ? names.join(" & ") : names.join(", ");
 }
 
+// Wie `joinNames`, aber immer mit „&" vor dem letzten Namen („A, B & C") – in
+// den Szenen- und Chat-Karten
+export function joinNamesAnd(names: string[]): string {
+  return names.length <= 2 ? names.join(" & ") : `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}`;
+}
+
 // Erster Buchstabe groß (Beschäftigung u. Ä.): „barkeeper" -> „Barkeeper"
 export function capFirst(s: string | null | undefined): string {
   const t = (s ?? "").trimStart();

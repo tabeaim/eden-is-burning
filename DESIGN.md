@@ -342,7 +342,9 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
 - **Relations** bearbeitet nur, wer den Charakter selbst spielt (`playsAs`). Der
   erklärende Hinweis steht nur beim eigenen Charakter und verschwindet nach drei
   Eintragungen/Leerungen (Zähler `relation_uses` im Spieler*innen-Profil).
-- **Namen aufzählen:** zwei mit „&", mehr mit Kommas (`joinNames`).
+- **Namen aufzählen:** zwei mit „&", mehr mit Kommas (`joinNames`). In den Szenen-
+  und Chat-Karten immer mit „&" vor dem letzten Namen („A, B & C", `joinNamesAnd`);
+  passen nicht alle in die Bubble, endet die Aufzählung mit „…".
 - **Formular-Abschnitte** in den Charakter-Einstellungen sind aufklappbar
   (`Collapsible`); Abschnitte mit fehlender Pflichtangabe bleiben offen. Kleine
   berechnete Hinweise (Alter, Sternzeichen, Studienjahr) stehen klein unter dem
