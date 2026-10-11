@@ -90,11 +90,10 @@ export default function DashboardPage() {
   // Pausierte Main Characters bilden keine Gruppe und zählen nicht mit.
   const myChars = [...charactersOf(currentPlayer.id).filter((c) => !isPaused(c)), ...myNpcs];
   const follows = (c: Character, itemId: string) => !c.is_npc || isSubscribed(itemId);
-  // Szenen zusätzlich: Ist ein mir zugeordneter Supporting Character am Zug, steht
-  // die Szene auch ohne Abo bei mir unter „Du bist dran" (Statist*innen nicht – die
-  // kann jede*r bespielen).
-  const tracks = (c: Character, s: Scene) =>
-    follows(c, s.id) || (tierOf(c) === "supporting" && whoseTurn(s, postsOf(s.id)) === c.id);
+  // Szenen zusätzlich: Die Szenen eines mir zugeordneten Supporting Characters
+  // stehen auch ohne Abo bei mir – unter „Du bist dran" bzw. als eigene Gruppe
+  // unter „Wartet auf andere" (Statist*innen nicht – die kann jede*r bespielen).
+  const tracks = (c: Character, s: Scene) => follows(c, s.id) || tierOf(c) === "supporting";
 
   // Zeitpunkt des letzten Posts einer Szene (postsOf ist nach post_number sortiert)
   const lastPostAt = (sceneId: string): string | null => {

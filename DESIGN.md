@@ -455,8 +455,9 @@ gespiegelt): links Hinweise (Anrufe, Mailbox, Captic – nur wenn es welche gibt
 dann unter „alerts."), „du bist dran." und
 „wartet auf andere."; rechts das Zitat über allem, darunter – frei, ohne
 Kästchen – „zuletzt aktive szenen." (letzte 24 Stunden), „jetzt online." und
-„zuletzt online." (letzte 24 Stunden). Ist ein zugeordneter Supporting Character
-am Zug, steht die Szene auch ohne Abo unter „du bist dran.". Chats stehen in den Listen links als Karte im
+„zuletzt online." (letzte 24 Stunden). Die aktiven Szenen eines zugeordneten
+Supporting Characters stehen auch ohne Abo auf dem Dashboard: unter „du bist
+dran." bzw. als eigene Gruppe unter „wartet auf andere.". Chats stehen in den Listen links als Karte im
 Aufbau der Szenenkarte (`ChatRow card`), rechts als kompakte Zeile. Abschnitts-Überschriften wie überall in
 der Display-Schrift (`DashHeading`), links dahinter der Zähler, ebenfalls in der
 Display-Schrift. „Du bist dran" ist eine
