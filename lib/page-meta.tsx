@@ -20,6 +20,7 @@ export type PageMeta = {
   // (z.B. „Eden, Virginia" → zurück zur Übersichtskarte)
   titleEvent?: string;
   kicker?: string; // kleines Etikett über dem Titel („Character File", „Player File")
+  noBanner?: boolean; // nur der Titel, kein Titelbild (Karte unter „Orte")
 };
 
 type Ctx = { meta: PageMeta; setMeta: (m: PageMeta) => void };
@@ -44,10 +45,11 @@ export function useSetPageMeta(
   deleted?: boolean,
   titleEvent?: string,
   kicker?: string,
+  noBanner?: boolean,
 ) {
   const setMeta = useContext(PageMetaCtx)?.setMeta;
   const pathname = usePathname();
   useEffect(() => {
-    setMeta?.({ title, subtitle, statusBadge, path: pathname, bannerImage, width, avatar, deleted, titleEvent, kicker });
-  }, [setMeta, title, subtitle, statusBadge, bannerImage, width, pathname, avatar, deleted, titleEvent, kicker]);
+    setMeta?.({ title, subtitle, statusBadge, path: pathname, bannerImage, width, avatar, deleted, titleEvent, kicker, noBanner });
+  }, [setMeta, title, subtitle, statusBadge, bannerImage, width, pathname, avatar, deleted, titleEvent, kicker, noBanner]);
 }

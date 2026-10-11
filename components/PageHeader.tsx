@@ -11,6 +11,7 @@ export function PageHeader({
   width,
   bannerImage,
   titleEvent,
+  noBanner,
   children,
 }: {
   title: string;
@@ -20,9 +21,10 @@ export function PageHeader({
   width?: string;
   bannerImage?: string; // überschreibt das Standard-Titelbild der Seite
   titleEvent?: string; // Titel anklickbar: Fenster-Ereignis, auf das die Seite hört
+  noBanner?: boolean; // nur der Titel, kein Titelbild
   children?: React.ReactNode;
 }) {
-  useSetPageMeta(title, subtitle, bannerImage, width, undefined, undefined, undefined, titleEvent);
+  useSetPageMeta(title, subtitle, bannerImage, width, undefined, undefined, undefined, titleEvent, undefined, noBanner);
   if (!children) return null;
   return <div className="flex justify-end -mt-1 mb-5">{children}</div>;
 }

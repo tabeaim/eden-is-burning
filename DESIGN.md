@@ -424,7 +424,8 @@ zeichnen die Trennlinie selbst) sitzt der Titel höher, und alles über der Lini
 (Zitat, Szenenkopf, Bearbeiten) rutscht in die Lücke darunter, also mit auf das
 Bild. Titel und Bild des Dashboards kennt der Header schon vor der Seite – sonst
 flackert beides beim Wechsel dorthin. Alle Seiten außer dem Handy tragen das
-Titelbild, auch „Orte" mit der Karte. Der Seiteninhalt (`main`) liegt dafür über dem
+Titelbild – Ausnahme: die Karte unter „Orte" zeigt nur den Seitentitel (`noBanner`
+am `PageHeader`), der Platz gehört der Karte; die Orte-Liste hat das Bild. Der Seiteninhalt (`main`) liegt dafür über dem
 Titelbild; den Verlauf zum Hintergrundfoto zeichnet der Header.
 
 Charakter- und Spieler*innen-Profile tragen über dem Titel ein kleines, leicht

@@ -70,6 +70,8 @@ export default function PlacesPage() {
         subtitle="Eden, Virginia – fünf Gegenden, ein Fluss, und alles dahinter."
         width="max-w-6xl"
         titleEvent={HOME_EVENT}
+        // die Karte ohne Titelbild, die Liste mit
+        noBanner={view !== "list"}
       />
 
       {/* Umschalter: ab `sm` ausnahmsweise oben rechts auf Höhe des Seitentitels
@@ -77,7 +79,11 @@ export default function PlacesPage() {
           dem Handy ist dort kein Platz, da steht er über dem Inhalt. */}
       {view && (
         <div className="sm:relative sm:h-0">
-        <div className="flex gap-1.5 mb-4 sm:mb-0 sm:absolute sm:right-0 sm:-top-[5.375rem] sm:z-10">
+        <div
+          className={`flex gap-1.5 mb-4 sm:mb-0 sm:absolute sm:right-0 sm:z-10 ${
+            view === "list" ? "sm:-top-[5.375rem]" : "sm:-top-[4.875rem]"
+          }`}
+        >
           {(
             [
               ["list", "Liste", "grid"],

@@ -23,9 +23,9 @@ import { AlertPing } from "./AlertPing";
 const NAV: { href: string; label: string; icon: IconName; title?: string }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/szenen", label: "Szenen", icon: "book" },
-  { href: "/orte", label: "Orte", icon: "map", title: "Eden, Virginia" },
   { href: "/kalender", label: "Timeline", icon: "calendar" },
   { href: "/handy", label: "Handy", icon: "phone" },
+  { href: "/orte", label: "Orte", icon: "map", title: "Eden, Virginia" },
   { href: "/charaktere", label: "Charaktere", icon: "users" },
   { href: "/spieler", label: "Spieler*innen", icon: "star" },
   { href: "/info", label: "Info", icon: "info" },
@@ -163,8 +163,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <MenuIcon />
           </button>
-          {/* Alle Seiten tragen das Titelbild, auch die Karte (`noBanner` gäbe nur
-              den Seitentitel aus). */}
           {!bare && <BannerHeader pathname={pathname} navHidden={navHidden} />}
           {/* Der Seiteninhalt liegt über dem Titelbild: Was auf Detailseiten über der
               Trennlinie steht (Zitat, Szenenkopf, Bearbeiten), ragt mit auf den Header. */}
@@ -248,11 +246,9 @@ function TabTitle({ pathname }: { pathname: string }) {
 // (Zitat, Szenenkopf, Bearbeiten) rutscht in die Lücke darunter.
 function BannerHeader({
   pathname,
-  noBanner = false,
   navHidden = false,
 }: {
   pathname: string;
-  noBanner?: boolean; // Titel ohne Titelbild darüber
   navHidden?: boolean; // dann sitzt oben links die Einblenden-Taste
 }) {
   const meta = usePageMeta();
@@ -263,6 +259,10 @@ function BannerHeader({
     (n) => pathname === n.href || pathname.startsWith(n.href + "/"),
   );
   const onThisPage = meta.path === pathname;
+  // Die Karte unter „Orte" bekommt ausnahmsweise kein Titelbild – nur den
+  // Seitentitel; der Platz gehört der Karte. Die Orte-Liste trägt es. Die Seite
+  // startet mit der Karte, deshalb gilt das auch, bevor sie sich gemeldet hat.
+  const noBanner = pathname === "/orte" && (!onThisPage || !!meta.noBanner);
   // Das Dashboard heißt „Hallo, …" und hat ein eigenes Bild. Beides steht hier
   // schon, bevor die Seite es meldet – sonst blitzen beim Wechsel aufs Dashboard
   // kurz „Dashboard" und das Standardbild auf.
