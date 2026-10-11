@@ -18,6 +18,9 @@ import { chatUnits, isArchived, isLeftOnRead, unitKey, type ChatUnit } from "@/l
 import { isPaused } from "@/lib/characters";
 import type { Character, Player, Scene } from "@/lib/types";
 
+// Kästchen der rechten Spalte (wie die Abschnitts-Boxen der Profile): Überschrift
+// samt Zeitraum steht mit in der Box
+const DASH_BOX = "rounded-lg border border-border-subtle bg-bg-surface px-5 pb-5 pt-4";
 // Merker für auf-/zugeklappte Abschnitte (pro Gerät)
 const DRAN_KEY = "eden:dash-dran";
 const WARTEN_KEY = "eden:dash-warten";
@@ -425,8 +428,8 @@ export default function DashboardPage() {
 
           {/* nur, wenn in den letzten 24h etwas los war */}
           {recentItems.length > 0 && (
-          <section>
-            <DashHeading note="letzte 24h" className="mb-3">aktive szenen.</DashHeading>
+          <section className={DASH_BOX}>
+            <DashHeading className="mb-3">szenen · letzte 24h.</DashHeading>
             <div className="flex flex-col gap-2">
               {recentItems.map((item) =>
                 item.scene ? (
@@ -439,8 +442,8 @@ export default function DashboardPage() {
           </section>
           )}
 
-          <section>
-            <DashHeading note="jetzt" className="mb-3">online.</DashHeading>
+          <section className={DASH_BOX}>
+            <DashHeading className="mb-3">online · jetzt.</DashHeading>
             <PlayerPresenceList
               players={onlineNow}
               now
@@ -450,8 +453,8 @@ export default function DashboardPage() {
           </section>
 
           {onlineRecent.length > 0 && (
-            <section>
-              <DashHeading note="letzte 24h" className="mb-3">online.</DashHeading>
+            <section className={DASH_BOX}>
+              <DashHeading className="mb-3">online · letzte 24h.</DashHeading>
               <PlayerPresenceList players={onlineRecent} />
             </section>
           )}
@@ -614,7 +617,7 @@ function ChatItem({
 }
 
 // Abschnitts-Überschrift des Dashboards: wie überall in der Display-Schrift, klein
-// geschrieben mit Punkt; dahinter klein der Zähler bzw. der Zeitraum
+// geschrieben mit Punkt; dahinter bei den Listen links der Zähler
 function DashHeading({
   children,
   note,
