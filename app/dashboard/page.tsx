@@ -229,9 +229,8 @@ export default function DashboardPage() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-8 lg:gap-16 items-start">
-        {/* LINKS: Zitat über allem, darunter die Szenenübersicht */}
+        {/* LINKS: die Szenenübersicht */}
         <div className="flex flex-col gap-6 lg:gap-10">
-          <QuoteRotator />
           {/* Klingelnde Anrufe an eigene Charaktere – führen aufs Handy zum Abheben */}
           {incomingCalls.length > 0 && (
             <section className="flex flex-col gap-2">
@@ -420,8 +419,9 @@ export default function DashboardPage() {
           </section>
         </div>
 
-        {/* RECHTS: 24h-Aktivität, Online */}
+        {/* RECHTS: Zitat über allem, darunter 24h-Aktivität und Online */}
         <div className="flex flex-col gap-8 lg:sticky lg:top-6">
+          <QuoteRotator />
 
           {/* nur, wenn in den letzten 24h etwas los war */}
           {recentItems.length > 0 && (

@@ -442,8 +442,8 @@ einen gilt auch fürs andere.
 
 ## Dashboard – `app/dashboard/page.tsx`
 
-Zwei Spalten: links das Zitat über allem, darunter Hinweise (Anrufe, Mailbox,
-Captic), „du bist dran." und „wartet auf andere."; rechts „aktive szenen." und
+Zwei Spalten: links Hinweise (Anrufe, Mailbox, Captic), „du bist dran." und
+„wartet auf andere."; rechts das Zitat über allem, darunter „aktive szenen." und
 „online.". Abschnitts-Überschriften wie überall in der Display-Schrift
 (`DashHeading`), dahinter klein Zähler bzw. Zeitraum. „Du bist dran" ist eine
 einzige Liste über alle Charaktere – Szenen und Chats gemischt, das Neueste
