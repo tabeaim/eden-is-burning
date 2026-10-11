@@ -522,19 +522,19 @@ label:has(input[type="file"]) {
    diesen Block und das Attribut im Layout entfernen; zum Übernehmen die Werte
    oben in die Tokens schreiben. */
 html[data-env="dev"] {
-  --accent: #9fb88a;
-  --accent-soft: rgba(159, 184, 138, 0.16);
-  --map-campus: #7fa06a;
+  --accent: #7f9f6a;
+  --accent-soft: rgba(127, 159, 106, 0.16);
+  --map-campus: #6a8a57;
 }
 html[data-env="dev"][data-theme="light"] {
-  --accent: #a9c193;
-  --accent-ink: #3f5a2c;
-  --accent-soft: rgba(140, 170, 115, 0.32);
+  --accent: #93b07c;
+  --accent-ink: #35501f;
+  --accent-soft: rgba(125, 155, 100, 0.32);
 }
 html[data-env="dev"] .on-dark {
-  --accent: #9fb88a;
-  --accent-ink: #9fb88a;
+  --accent: #7f9f6a;
+  --accent-ink: #7f9f6a;
 }
 html[data-env="dev"] ::selection {
-  background: rgba(159, 184, 138, 0.35);
+  background: rgba(127, 159, 106, 0.35);
 }
