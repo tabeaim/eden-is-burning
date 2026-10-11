@@ -178,6 +178,9 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   hinterlegt). Linksbündig über die ganze Breite; der Stammbaum steht mittig.
   Das Pinterest-Board wird schon beim Öffnen des Profils unsichtbar aufgebaut. Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
+- **Reiter-Leisten** der Profile: darunter ein Strich (`mt-4 mb-6`), dann der Inhalt.
+- **„meet <Vorname>."** steht als Abschnitts-Überschrift über der Kurzbeschreibung
+  (General); im Spieler*innen-Profil „meet <Username>." über der Beschreibung.
 - **Abschnitte als Box** (`SectionBox`): Jeder Abschnitt des Profils (Facts-Gruppen,
   about, character, skills, sliders, likes, looks, vibes) steht in einer
   dezenten Box, die Überschrift mit in der Box – nie darüber. Boxen in einem

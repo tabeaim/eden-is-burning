@@ -41,6 +41,7 @@ import {
   ProfileTimeline,
   ProfileTraits,
   SectionBox,
+  SectionHeading,
 } from "@/components/ProfileSections";
 import type { Character, RelationCategory, Scene } from "@/lib/types";
 
@@ -63,6 +64,8 @@ const SPLIT = "grid items-start gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,2fr)_min
 const CARDS = "grid items-start gap-3 lg:grid-cols-2";
 // kleine Boxen nebeneinander (Facts-Gruppen)
 const BOXES = "grid grid-cols-1 gap-5 sm:grid-cols-2";
+// Strich unter einer Reiter-Leiste
+const TAB_RULE = "mt-4 mb-6 border-b border-border-subtle";
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
@@ -208,20 +211,26 @@ export default function CharacterPage({
       <div className="border-b border-border-subtle mt-4 mb-6" />
 
       {/* OBEN: General (Kurzbeschreibung, daneben die Facts in Gruppen) · Scenes · Relations */}
-      <div className="mb-6 flex flex-wrap gap-x-1.5 gap-y-2.5">
+      <div className="flex flex-wrap gap-x-1.5 gap-y-2.5">
         {topTabs.map(([key, label]) => (
           <button key={key} onClick={() => setTopTab(key)} className={tabBtn(topTab === key)}>
             {label}
           </button>
         ))}
       </div>
+      {/* Strich unter den Reitern */}
+      <div className={TAB_RULE} />
       {topTab === "general" && (
         <div className={SPLIT}>
-          {c.bio ? (
-            <RichText html={c.bio} className="text-[0.875rem] leading-relaxed text-text-secondary" />
-          ) : (
-            <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
-          )}
+          {/* Kurzbeschreibung, darüber „meet <Vorname>." */}
+          <section>
+            <SectionHeading>meet {c.name.split(" ")[0]}.</SectionHeading>
+            {c.bio ? (
+              <RichText html={c.bio} className="text-[0.875rem] leading-relaxed text-text-secondary" />
+            ) : (
+              <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
+            )}
+          </section>
           {/* Facts (Looks stehen im Reiter „Looks") */}
           <div className={BOXES}>
             <ProfileFacts c={c} />
@@ -238,13 +247,14 @@ export default function CharacterPage({
       <div className="mt-6 mb-6 border-b border-border-subtle" />
 
       {/* UNTEN: Reiter + Inhalt, linksbündig über die ganze Breite */}
-      <div className="mb-6 flex flex-wrap gap-x-1.5 gap-y-2.5">
+      <div className="flex flex-wrap gap-x-1.5 gap-y-2.5">
         {tabs.map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)} className={tabBtn(tab === key)}>
             {label}
           </button>
         ))}
       </div>
+      <div className={TAB_RULE} />
 
       {/* Das Pinterest-Board wird schon beim Öffnen des Profils aufgebaut (unsichtbar),
           damit es beim Wechsel auf den Reiter sofort da ist */}

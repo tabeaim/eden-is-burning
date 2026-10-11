@@ -25,6 +25,7 @@ import {
   ProfileSkills,
   ProfileSliders,
   SectionBox,
+  SectionHeading,
 } from "@/components/ProfileSections";
 
 type Tab = "characters" | "scenes" | "about";
@@ -134,11 +135,15 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
       {editing && <PlayerEditPanel player={p} onClose={() => setEditing(false)} />}
 
       <div className="grid items-start gap-x-10 gap-y-6 md:grid-cols-[minmax(0,1fr)_minmax(22rem,1fr)]">
-        {p.bio ? (
-          <RichText html={p.bio} className="max-w-2xl text-[0.875rem] leading-relaxed text-text-secondary" />
-        ) : (
-          <p className="text-[0.875rem] text-text-tertiary">Noch keine Beschreibung.</p>
-        )}
+        {/* Beschreibung, darüber „meet <Name>." – wie im Charakterprofil */}
+        <section>
+          <SectionHeading>meet {p.username}.</SectionHeading>
+          {p.bio ? (
+            <RichText html={p.bio} className="max-w-2xl text-[0.875rem] leading-relaxed text-text-secondary" />
+          ) : (
+            <p className="text-[0.875rem] text-text-tertiary">Noch keine Beschreibung.</p>
+          )}
+        </section>
         <SectionBox title="facts.">
           <Facts>
             <FactRow label="Member since" value={`${formatInplayDate(p.created_at.slice(0, 10))} · seit ${since(p.created_at)}`} />
@@ -156,7 +161,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
       <div className="mt-6 mb-6 border-b border-border-subtle" />
 
       {/* Reiter wie im Charakterprofil */}
-      <div className="mb-6 flex flex-wrap gap-x-1.5 gap-y-2.5">
+      <div className="flex flex-wrap gap-x-1.5 gap-y-2.5">
         {tabs.map(([key, label]) => (
           <button
             key={key}
@@ -171,6 +176,8 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
           </button>
         ))}
       </div>
+      {/* Strich unter den Reitern, wie im Charakterprofil */}
+      <div className="mt-4 mb-6 border-b border-border-subtle" />
 
       {tab === "characters" && (
         <section>
