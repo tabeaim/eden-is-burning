@@ -41,7 +41,6 @@ import {
   ProfileTimeline,
   ProfileTraits,
   SectionBox,
-  SectionHeading,
 } from "@/components/ProfileSections";
 import type { Character, RelationCategory, Scene } from "@/lib/types";
 
@@ -474,16 +473,14 @@ function CharacterTab({ c }: { c: Character }) {
   // dann rückt die erste Box neben den About-Text, der sonst die Zeile füllt.
   const beside = c.personality && boxes.length % 2 === 1 ? boxes.shift() : null;
   const about = c.personality && (
-    // der Fließtext steht frei, ohne Box
-    <section>
-      <SectionHeading>about.</SectionHeading>
+    <SectionBox title="about.">
       <RichText html={c.personality} className="text-[0.875rem] leading-relaxed text-text-secondary" />
-    </section>
+    </SectionBox>
   );
   return (
     <div className="flex flex-col gap-5">
       {beside ? (
-        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {about}
           {beside}
         </div>

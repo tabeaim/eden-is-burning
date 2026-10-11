@@ -179,11 +179,10 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Das Pinterest-Board wird schon beim Öffnen des Profils unsichtbar aufgebaut. Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
 - **Abschnitte als Box** (`SectionBox`): Jeder Abschnitt des Profils (Facts-Gruppen,
-  character, skills, sliders, likes, looks, vibes) steht in einer
+  about, character, skills, sliders, likes, looks, vibes) steht in einer
   dezenten Box, die Überschrift mit in der Box – nie darüber. Boxen in einem
-  Raster haben `gap-5` und sind in einer Zeile gleich hoch. Ausnahmen: „about."
-  (Fließtext) steht frei mit Überschrift darüber, und die Looks-Box ist nur so
-  hoch wie ihr Inhalt.
+  Raster haben `gap-5` und sind in einer Zeile gleich hoch. Ausnahme: Die
+  Looks-Box ist nur so hoch wie ihr Inhalt.
 - **Reiter Character:** „about." füllt die Zeile, darunter die Boxen
   zweispaltig. Ist eine ungerade Zahl an Boxen ausgefüllt (eine oder drei),
   rückt die erste neben den About-Text, damit keine Lücke bleibt.
