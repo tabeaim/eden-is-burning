@@ -630,7 +630,7 @@ function DashHeading({
   className?: string;
 }) {
   return (
-    <h2 className={`${className} flex items-baseline gap-2.5 font-display lowercase text-[1.625rem] leading-none text-accent`}>
+    <h2 className={`${className} flex items-baseline gap-2.5 font-display lowercase text-[1.75rem] leading-none text-accent`}>
       {children}
       {note && (
         <span

@@ -40,7 +40,8 @@ Tokens stehen in `app/globals.css` (`--accent`, `--olive`, `--bg-*`, `--text-*`,
 `--border-*`). Display-Schrift (`font-display`, Computer Modern Typewriter – lokal eingebunden
 aus `app/fonts`, nur der normale Schnitt) nur für Logo, Seitentitel und die
 kleingeschriebenen Abschnitts-Überschriften mit Punkt („facts.", „scenes.").
-Abschnitts-Überschriften sind `1.625rem`, in den Profilen (`SectionHeading`)
+Abschnitts-Überschriften sind `1.625rem`, in den Profilen (`SectionHeading`) und
+auf dem Dashboard (`DashHeading`)
 `1.75rem` (Unter-Überschriften `1.25rem`), etwas
 enger gesetzt und eine Spur kräftiger: Ein Gewicht 500 hat die Schrift nicht, es
 ist per hauchdünner Kontur angenähert (`h2`/`h3` mit `font-display` und
