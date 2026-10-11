@@ -73,11 +73,11 @@ export default function PlacesPage() {
       />
 
       {/* Umschalter: ab `sm` ausnahmsweise oben rechts auf Höhe des Seitentitels
-          (über der Trennlinie), damit er die Karte nicht nach unten schiebt; auf
+          (über der Trennlinie, auf dem Titelbild), damit er die Karte nicht nach unten schiebt; auf
           dem Handy ist dort kein Platz, da steht er über dem Inhalt. */}
       {view && (
         <div className="sm:relative sm:h-0">
-        <div className="flex gap-1.5 mb-4 sm:mb-0 sm:absolute sm:right-0 sm:-top-[4.5rem] sm:z-10">
+        <div className="flex gap-1.5 mb-4 sm:mb-0 sm:absolute sm:right-0 sm:-top-[5.375rem] sm:z-10">
           {(
             [
               ["list", "Liste", "grid"],

@@ -423,7 +423,8 @@ Trennlinie zur Seite. Auf Detailseiten (Szene, Charakter, Spieler*in, Ort – si
 zeichnen die Trennlinie selbst) sitzt der Titel höher, und alles über der Linie
 (Zitat, Szenenkopf, Bearbeiten) rutscht in die Lücke darunter, also mit auf das
 Bild. Titel und Bild des Dashboards kennt der Header schon vor der Seite – sonst
-flackert beides beim Wechsel dorthin. Der Seiteninhalt (`main`) liegt dafür über dem
+flackert beides beim Wechsel dorthin. Alle Seiten außer dem Handy tragen das
+Titelbild, auch „Orte" mit der Karte. Der Seiteninhalt (`main`) liegt dafür über dem
 Titelbild; den Verlauf zum Hintergrundfoto zeichnet der Header.
 
 Charakter- und Spieler*innen-Profile tragen über dem Titel ein kleines, leicht

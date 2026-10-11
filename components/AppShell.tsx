@@ -163,15 +163,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <MenuIcon />
           </button>
-          {/* Die Karte bekommt ausnahmsweise kein Titelbild – nur den Seitentitel;
-              der Platz gehört der Karte. */}
-          {!bare && (
-            <BannerHeader
-              pathname={pathname}
-              noBanner={pathname === "/orte"}
-              navHidden={navHidden}
-            />
-          )}
+          {/* Alle Seiten tragen das Titelbild, auch die Karte (`noBanner` gäbe nur
+              den Seitentitel aus). */}
+          {!bare && <BannerHeader pathname={pathname} navHidden={navHidden} />}
           {/* Der Seiteninhalt liegt über dem Titelbild: Was auf Detailseiten über der
               Trennlinie steht (Zitat, Szenenkopf, Bearbeiten), ragt mit auf den Header. */}
           <main className="relative flex-1 min-w-0">{children}</main>
