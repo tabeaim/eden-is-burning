@@ -178,7 +178,11 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   hinterlegt). Linksbündig über die ganze Breite; der Stammbaum steht mittig.
   Das Pinterest-Board wird schon beim Öffnen des Profils unsichtbar aufgebaut. Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
-- **Reiter-Leisten** der Profile: darunter ein Strich (`mt-4 mb-6`), dann der Inhalt.
+- **Reiter-Leisten** (Profile, Szenen, Charaktere, Orte-Liste, Einstellungen):
+  darunter ein Strich (`TabRule`), dann der Inhalt. Die Reiter stehen mittig
+  zwischen der Linie darüber und dem Strich – 1.25rem nach oben (`mb-5` an der
+  Linie bzw. `pt-5` am Seiten-Container) und nach unten. Verschachtelte Leisten
+  (Admin-Unterreiter, Status-Filter der Szenenliste, Handy) bekommen keinen Strich.
 - **„meet <Vorname>."** steht als Abschnitts-Überschrift über der Kurzbeschreibung
   (General); im Spieler*innen-Profil „meet <Username>." über der Beschreibung.
 - **Abschnitte als Box** (`SectionBox`): Jeder Abschnitt des Profils (Facts-Gruppen,

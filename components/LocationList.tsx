@@ -5,6 +5,7 @@ import { LocationCategoryPicker } from "./LocationCategoryPicker";
 import { LOCATION_CATEGORIES, categoryIcon, categoryLabel, categoryOf } from "@/lib/places";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
+import { TabRule } from "@/components/TabRule";
 import { useSessionState } from "@/lib/session-state";
 import { PLACE_AREAS, areaImage, areaName } from "@/lib/world";
 import { areaFilterOptions, areaMatches } from "@/lib/plots";
@@ -186,7 +187,8 @@ export function LocationList() {
   return (
     <div>
       {tabs.length > 1 && (
-        <div className="flex gap-1.5 mb-4">
+        <>
+        <div className="flex gap-1.5">
           {tabs.map(([key, label]) => (
             <button
               key={key}
@@ -201,6 +203,9 @@ export function LocationList() {
             </button>
           ))}
         </div>
+        {/* Abstand wie nach oben zur Header-Linie (Seite: py-6) */}
+        <TabRule gap="mt-6" />
+        </>
       )}
 
       {/* Filterleiste */}

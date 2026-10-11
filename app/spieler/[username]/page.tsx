@@ -12,6 +12,7 @@ import { characterImage } from "@/lib/avatar";
 import { formatDateTime, formatInplayDate, capFirst } from "@/lib/format";
 import { isPaused, playsAs, tierLabel } from "@/lib/characters";
 import { PAUSED_CARD_CLASS, PAUSED_CLASS } from "@/lib/gone";
+import { TabRule } from "@/components/TabRule";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { Facts, FactRow } from "@/components/Facts";
@@ -158,7 +159,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
 
       {tabs.length > 0 && (
         <>
-      <div className="mt-6 mb-6 border-b border-border-subtle" />
+      <div className="mt-6 mb-5 border-b border-border-subtle" />
 
       {/* Reiter wie im Charakterprofil */}
       <div className="flex flex-wrap gap-x-1.5 gap-y-2.5">
@@ -177,7 +178,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
         ))}
       </div>
       {/* Strich unter den Reitern, wie im Charakterprofil */}
-      <div className="mt-4 mb-6 border-b border-border-subtle" />
+      <TabRule />
 
       {tab === "characters" && (
         <section>

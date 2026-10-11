@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useStore, whoseTurn } from "@/lib/store";
 import { useSessionState } from "@/lib/session-state";
 import { compareInplay } from "@/lib/format";
+import { TabRule } from "@/components/TabRule";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { MultiSelect } from "@/components/MultiSelect";
@@ -269,12 +270,13 @@ export default function ScenesPage() {
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
+    <div className={`max-w-6xl mx-auto px-4 sm:px-8 pb-8 ${sceneTabs.length > 1 ? "pt-5" : "pt-8"}`}>
       <PageHeader title="Szenen" subtitle="Alle Threads in Eden." width="max-w-6xl" />
 
-      {/* Primäre Tabs */}
+      {/* Primäre Tabs – mittig zwischen Header-Linie und Strich */}
       {sceneTabs.length > 1 && (
-        <div className="flex gap-1.5 mb-4">
+        <>
+        <div className="flex gap-1.5">
           {sceneTabs.map(([key, label]) => (
             <button
               key={key}
@@ -289,6 +291,8 @@ export default function ScenesPage() {
             </button>
           ))}
         </div>
+        <TabRule />
+        </>
       )}
 
       {/* Filterleiste */}

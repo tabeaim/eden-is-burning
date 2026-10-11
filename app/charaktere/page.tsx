@@ -8,6 +8,7 @@ import { NewCharacterButton } from "@/components/NewCharacterButton";
 import { TIER_NAMES, isPaused, tierOf } from "@/lib/characters";
 import { StatistActions } from "@/components/StatistActions";
 import { useStore } from "@/lib/store";
+import { TabRule } from "@/components/TabRule";
 import { useSessionState } from "@/lib/session-state";
 import { formatInplayDateShort, capFirst } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
@@ -103,7 +104,7 @@ export default function CharaktereePage() {
     });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-5 pb-8">
       <PageHeader
         title="Charaktere"
         subtitle="Das Charakterverzeichnis von Eden."
@@ -111,7 +112,7 @@ export default function CharaktereePage() {
       />
 
       {/* Reiter wie in der Szenen-Übersicht; rechts „Neu anlegen" passend zum Reiter */}
-      <div className="flex flex-wrap items-center gap-1.5 mb-4">
+      <div className="flex flex-wrap items-center gap-1.5">
         {shown.length > 1 && shown.map(([key, label]) => (
           <button
             key={key}
@@ -131,6 +132,7 @@ export default function CharaktereePage() {
           {canCreate("extras") && <NewCharacterButton kind="extra" />}
         </div>
       </div>
+      <TabRule />
 
       {/* Textsuche links, Sortierung rechts */}
       <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-2">

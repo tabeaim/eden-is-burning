@@ -11,6 +11,7 @@ import { formatInplayDate, timeAgo, capFirst } from "@/lib/format";
 import { Icon } from "@/components/Icon";
 import { Bubble, LocationBubble } from "@/components/Bubble";
 import { characterImage } from "@/lib/avatar";
+import { TabRule } from "@/components/TabRule";
 import { SceneFilterList } from "@/components/SceneFilterList";
 import {
   RELATION_CATEGORIES,
@@ -64,8 +65,6 @@ const SPLIT = "grid items-start gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,2fr)_min
 const CARDS = "grid items-start gap-3 lg:grid-cols-2";
 // kleine Boxen nebeneinander (Facts-Gruppen)
 const BOXES = "grid grid-cols-1 gap-5 sm:grid-cols-2";
-// Strich unter einer Reiter-Leiste
-const TAB_RULE = "mt-4 mb-6 border-b border-border-subtle";
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
@@ -207,8 +206,8 @@ export default function CharacterPage({
         </div>
       )}
 
-      {/* Trennlinie zur Seite */}
-      <div className="border-b border-border-subtle mt-4 mb-6" />
+      {/* Trennlinie zur Seite; die Reiter stehen mittig zwischen ihr und dem Strich darunter */}
+      <div className="border-b border-border-subtle mt-4 mb-5" />
 
       {/* OBEN: General (Kurzbeschreibung, daneben die Facts in Gruppen) · Scenes · Relations */}
       <div className="flex flex-wrap gap-x-1.5 gap-y-2.5">
@@ -219,7 +218,7 @@ export default function CharacterPage({
         ))}
       </div>
       {/* Strich unter den Reitern */}
-      <div className={TAB_RULE} />
+      <TabRule />
       {topTab === "general" && (
         <div className={SPLIT}>
           {/* Kurzbeschreibung, darüber „meet <Vorname>." */}
@@ -244,7 +243,7 @@ export default function CharacterPage({
 
       {tabs.length > 0 && (
         <>
-      <div className="mt-6 mb-6 border-b border-border-subtle" />
+      <div className="mt-6 mb-5 border-b border-border-subtle" />
 
       {/* UNTEN: Reiter + Inhalt, linksbündig über die ganze Breite */}
       <div className="flex flex-wrap gap-x-1.5 gap-y-2.5">
@@ -254,7 +253,7 @@ export default function CharacterPage({
           </button>
         ))}
       </div>
-      <div className={TAB_RULE} />
+      <TabRule />
 
       {/* Das Pinterest-Board wird schon beim Öffnen des Profils aufgebaut (unsichtbar),
           damit es beim Wechsel auf den Reiter sofort da ist */}

@@ -7,6 +7,7 @@ import { bannerStyle } from "@/lib/headers";
 import { characterImage } from "@/lib/avatar";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
+import { TabRule } from "@/components/TabRule";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { defaultHeader } from "@/lib/headers";
 import { PageHeader } from "@/components/PageHeader";
@@ -49,13 +50,11 @@ export default function SettingsPage() {
   if (isAdmin) tabs.push(["admin", "Admin"]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-5 pb-8">
       <PageHeader title="Einstellungen" width="max-w-6xl" />
 
-      {/* Inhalt linksbündig in Formularbreite; die Admin-Verwaltung braucht mehr Platz */}
-      <div className={tab === "admin" ? "max-w-5xl" : "max-w-2xl"}>
-      {/* Reiter wie in der Szenen-Übersicht (runde Pills) */}
-      <div className="flex flex-wrap gap-1.5 mb-6">
+      {/* Reiter wie in der Szenen-Übersicht (runde Pills), darunter der Strich über die Seitenbreite */}
+      <div className="flex flex-wrap gap-1.5">
         {tabs.map(([key, label]) => (
           <button
             key={key}
@@ -70,7 +69,10 @@ export default function SettingsPage() {
           </button>
         ))}
       </div>
+      <TabRule />
 
+      {/* Inhalt linksbündig in Formularbreite; die Admin-Verwaltung braucht mehr Platz */}
+      <div className={tab === "admin" ? "max-w-5xl" : "max-w-2xl"}>
       {tab === "profile" && <ProfileTab />}
       {tab === "characters" && <CharactersTab />}
       {tab === "appearance" && <AppearanceTab />}
