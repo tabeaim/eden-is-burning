@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Montserrat, Fraunces } from "next/font/google";
+import { Montserrat, Lacquer } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
@@ -12,12 +12,12 @@ const sans = Montserrat({
 });
 
 // Display-Schrift – Bildmarke (Logo) und Seiten-Überschriften
-// (Fraunces: variable Serifenschrift; die optische Größe folgt der Schriftgröße.
+// (Lacquer: handgemalte Versalschrift, nur in einem Schnitt.
 // Die frühere Schreibmaschinen-Schrift liegt noch unter app/fonts.)
-const display = Fraunces({
+const display = Lacquer({
   variable: "--font-display",
   subsets: ["latin"],
-  axes: ["opsz"],
+  weight: "400",
   display: "swap",
 });
 

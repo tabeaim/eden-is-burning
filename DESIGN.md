@@ -37,8 +37,8 @@ eigenes Bild zeigen alle den Silhouetten-Avatar (`characterImage`).
 ## Farben & Schrift
 
 Tokens stehen in `app/globals.css` (`--accent`, `--olive`, `--bg-*`, `--text-*`,
-`--border-*`). Display-Schrift (`font-display`, Fraunces über `next/font/google` – variable
-Serifenschrift, Gewicht 600, etwas enger gesetzt) nur für Logo, Seitentitel und die
+`--border-*`). Display-Schrift (`font-display`, Lacquer über `next/font/google` – handgemalte
+Versalschrift, nur Gewicht 400) nur für Logo, Seitentitel und die
 kleingeschriebenen Abschnitts-Überschriften mit Punkt („facts.", „scenes."). Abschnitts-Überschriften sind `1.625rem`, auf dem Dashboard
 (`DashHeading`) `1.5rem`, in den Profilen (`SectionHeading`) `1.75rem`
 (Unter-Überschriften `1.25rem`). Schriftgrößen immer aus der vorhandenen Skala
