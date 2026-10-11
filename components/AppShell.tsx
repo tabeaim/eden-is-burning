@@ -151,7 +151,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               die Menü-Taste bleibt beim Scrollen stehen. */}
           {!bare && (
             <div className="md:hidden flex items-center border-b border-border-subtle bg-bg-sidebar px-4 py-3.5">
-              <Link href="/dashboard" className="font-display text-[1.25rem] leading-none text-text-primary">
+              <Link href="/dashboard" className="site-logo font-display text-[1.25rem] leading-none text-text-primary">
                 eden is burning<span className="text-accent">.</span>
               </Link>
             </div>
@@ -476,7 +476,7 @@ function Sidebar({
     >
       <div className="px-4 pt-5 pb-5 border-b border-border-subtle">
         <Link href="/dashboard" className="block leading-none">
-          <div className="font-display text-[1.25rem] text-text-primary">
+          <div className="site-logo font-display text-[1.25rem] text-text-primary">
             eden is burning<span className="text-accent">.</span>
           </div>
         </Link>

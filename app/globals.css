@@ -559,3 +559,9 @@ html[data-env="dev"] ::selection {
 html[data-env="dev"] .font-display {
   font-family: "CMU Typewriter Probe", var(--font-display), "Barriecito", sans-serif;
 }
+/* die Schreibmaschinen-Schrift läuft breiter: Wortmarke etwas kleiner, damit sie
+   in der Seitenleiste in einer Zeile bleibt */
+html[data-env="dev"] .site-logo {
+  font-size: 1.0625rem;
+  white-space: nowrap;
+}
