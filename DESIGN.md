@@ -183,7 +183,7 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   dezenten Box, die Überschrift mit in der Box – nie darüber. Boxen in einem
   Raster haben `gap-5` und sind in einer Zeile gleich hoch.
 - **Skills & Slider:** Beschriftung über dem Balken (Skill: Name links, Prozent
-  rechts; Slider: beide Pole links und rechts; klein, 0.625rem, normale
+  rechts; Slider: beide Pole links und rechts; 0.75rem, normale
   Schreibweise statt Großbuchstaben), darunter ein dünner, runder
   Balken in der Akzentfarbe; beim Slider gefüllt bis zum runden Regler.
 - **Looks:** links das Style-Whiteboard, rechts in einer Box der Fließtext über
