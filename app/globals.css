@@ -538,3 +538,24 @@ html[data-env="dev"] .on-dark {
 html[data-env="dev"] ::selection {
   background: rgba(227, 111, 76, 0.35);
 }
+
+/* NUR LOKAL: Probe-Display-Schrift Computer Modern Typewriter statt Barriecito.
+   Die Datei liegt unter public/fonts/cmuntt.(woff2|woff|ttf|otf) – eine davon
+   genügt; ist die Schrift auf dem Rechner installiert, greift sie auch ohne
+   Datei. Fehlt beides, bleibt Barriecito. */
+@font-face {
+  font-family: "CMU Typewriter Probe";
+  src:
+    local("CMU Typewriter Text"),
+    local("CMUTypewriter-Regular"),
+    url("/fonts/cmuntt.woff2") format("woff2"),
+    url("/fonts/cmuntt.woff") format("woff"),
+    url("/fonts/cmuntt.ttf") format("truetype"),
+    url("/fonts/cmuntt.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+html[data-env="dev"] .font-display {
+  font-family: "CMU Typewriter Probe", var(--font-display), "Barriecito", sans-serif;
+}
