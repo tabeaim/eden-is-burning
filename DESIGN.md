@@ -86,7 +86,8 @@ Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden")
 1. **`SceneCard`** – ausführliche Karte, zweizeilig: oben der Titel; darunter
    links alle Beteiligten in **einer** Bubble (zusammengerückte Avatare + Vornamen;
    wer dran ist: Avatar mit Akzent-Ring, Name in der Akzentfarbe mit Flamme) und
-   Ort (reiner Text, führt aufs Ortsprofil) · Datum. Rechts neben beiden Zeilen
+   Ort (reiner Text, führt aufs Ortsprofil) · Datum (numerisch, ohne Inplay-Uhrzeit).
+   Rechts neben beiden Zeilen
    der letzte Post („Letzter Post" + Datum und Uhrzeit numerisch). Die zweite Zeile
    bricht nie um – was nicht passt, wird mit … gekürzt. Szenen-Übersicht, Dashboard,
    Ortsprofil, Charakterprofil.

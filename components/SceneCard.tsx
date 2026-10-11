@@ -9,7 +9,6 @@ import { joinNames } from "@/lib/format";
 import { useStore, whoseTurn } from "@/lib/store";
 import {
   formatDateTimeShort,
-  formatInplayDate,
   formatInplayDateShort,
 } from "@/lib/format";
 import type { Character, Scene } from "@/lib/types";
@@ -170,8 +169,7 @@ export function SceneCard({
   const info = (
     <div className="truncate text-[0.875rem] text-text-tertiary">
       <SceneLocation scene={scene} />
-      {formatInplayDate(scene.inplay_date)}
-      {scene.inplay_time && `, ${scene.inplay_time}`}
+      {formatInplayDateShort(scene.inplay_date)}
       {scene.au && (
         <>
           {" · "}
