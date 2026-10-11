@@ -340,7 +340,8 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Avatare + Vornamen, ohne Bubbles und ohne „Letzter Post".
 - **Relations:** Bearbeiten und Löschen als Icon-Menü beim Hover über der Box
   (`group/rel`), wie bei den Posts.
-- **Tagline** immer in Großbuchstaben (`uppercase`), überall.
+- **Tagline** immer in Großbuchstaben (`uppercase`), überall. Auf den Karten der
+  Charakter-Übersicht steht keine Tagline – nur der Name über dem Bild.
 - **Arbeitgeber / Universität = Ort:** Beide Felder schlagen Orte und Gegenden
   vor. Ist ein Ort gewählt, steht der Charakter im Ortsprofil unter „works here."
   bzw. „studies here.".

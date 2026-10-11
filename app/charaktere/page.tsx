@@ -237,16 +237,9 @@ function CharacterCard({
           {c.name}
         </Link>
       </div>
-      {c.tagline && (
-        <div className="mt-1.5 flex justify-center">
-          <span className="rounded-full border border-border-subtle bg-white/[0.03] px-3 py-0.5 text-[0.6875rem] uppercase tracking-wider text-text-secondary">
-            {c.tagline}
-          </span>
-        </div>
-      )}
 
       {/* Avatar im Originalformat, nie größer als das Bild selbst; mt-auto hält die
-          Bilder einer Reihe auf gleicher Höhe, auch ohne Tagline */}
+          Bilder einer Reihe auf gleicher Höhe, auch bei umbrechenden Namen */}
       <div className="mt-auto w-full pt-3">
         <Link
           href={`/charaktere/${c.id}`}
