@@ -518,23 +518,23 @@ label:has(input[type="file"]) {
 }
 
 /* NUR LOKAL (next dev, `data-env="dev"` setzt app/layout.tsx): Probe-Akzent in
-   gedecktem Blau statt Orange. Stage und Live bleiben orange. Zum Verwerfen
+   orangigem Rot statt Orange. Stage und Live bleiben orange. Zum Verwerfen
    diesen Block und das Attribut im Layout entfernen; zum Übernehmen die Werte
    oben in die Tokens schreiben. */
 html[data-env="dev"] {
-  --accent: #7f9fc0;
-  --accent-soft: rgba(127, 159, 192, 0.16);
-  --map-campus: #6a8cb0;
+  --accent: #e36f4c;
+  --accent-soft: rgba(227, 111, 76, 0.16);
+  --map-campus: #d95f3f;
 }
 html[data-env="dev"][data-theme="light"] {
-  --accent: #8fabc9;
-  --accent-ink: #23466b;
-  --accent-soft: rgba(120, 150, 185, 0.32);
+  --accent: #e58563;
+  --accent-ink: #8f2f10;
+  --accent-soft: rgba(227, 120, 88, 0.32);
 }
 html[data-env="dev"] .on-dark {
-  --accent: #7f9fc0;
-  --accent-ink: #7f9fc0;
+  --accent: #e36f4c;
+  --accent-ink: #e36f4c;
 }
 html[data-env="dev"] ::selection {
-  background: rgba(127, 159, 192, 0.35);
+  background: rgba(227, 111, 76, 0.35);
 }
