@@ -432,8 +432,8 @@ ihr AU im Filter gewählt ist – ohne Auswahl zeigt die Timeline nur Canon.
 
 Das Titelbild ist `h-48`, ab `sm` `h-56`. Der Seitentitel (`2.375rem`, ab `sm`
 `2.75rem`, ab `lg` `3.75rem`) steht ganz auf dem Bild, knapp über der Unterkante; dort sitzt die
-Trennlinie zur Seite. Auf Detailseiten (Szene, Charakter, Spieler*in, Ort – sie
-zeichnen die Trennlinie selbst) sitzt der Titel höher, und alles über der Linie
+Trennlinie zur Seite. Auf Detailseiten (Szene, Charakter, Spieler*in, Ort) und
+dem Dashboard (sie zeichnen die Trennlinie selbst) sitzt der Titel höher, und alles über der Linie
 (Zitat, Szenenkopf, Bearbeiten) rutscht in die Lücke darunter, also mit auf das
 Bild. Titel und Bild des Dashboards kennt der Header schon vor der Seite – sonst
 flackert beides beim Wechsel dorthin. Alle Seiten außer dem Handy tragen das
@@ -450,10 +450,14 @@ einen gilt auch fürs andere.
 
 ## Dashboard – `app/dashboard/page.tsx`
 
+Das wechselnde Szenenzitat (`QuoteRotator`) steht wie das Zitat im Profil direkt
+unter dem Seitentitel, über der Trennlinie, in voller Breite; der Knopf für ein
+anderes Zitat sitzt rechts oben, der Text fließt um ihn herum.
+
 Zwei Spalten im Verhältnis 3:2 mit `gap-x-10` (das Profil-Raster `SPLIT`,
 gespiegelt): links Hinweise (Anrufe, Mailbox, Captic – nur wenn es welche gibt,
 dann unter „alerts."), „du bist dran." und
-„wartet auf andere."; rechts das Zitat über allem, darunter – frei, ohne
+„wartet auf andere."; rechts – frei, ohne
 Kästchen – „zuletzt aktive szenen." (letzte 24 Stunden), „jetzt online." und
 „zuletzt online." (letzte 24 Stunden). Die aktiven Szenen eines zugeordneten
 Supporting Characters stehen auch ohne Abo auf dem Dashboard: unter „du bist

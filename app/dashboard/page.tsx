@@ -224,13 +224,18 @@ export default function DashboardPage() {
     .sort(byLastSeen);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-1 pb-8">
       <PageHeader
         title={`Hallo, ${currentPlayer.username}`}
         subtitle="Dein Inplaytracker – offene Szenen, in denen du mitspielst."
         width="max-w-6xl"
         bannerImage={currentPlayer.dashboard_header_url ?? undefined}
       />
+
+      {/* Zitat – direkt unter dem Seitentitel, über der Trennlinie (die zeichnet die
+          Seite selbst, siehe ownsDivider in AppShell) */}
+      <QuoteRotator />
+      <div className="mt-4 mb-6 border-b border-border-subtle" />
 
       {/* Raster wie `SPLIT` im Profil (DESIGN.md → Profil-Raster), gespiegelt: breite
           Inhaltsspalte links, schmalere rechts im Verhältnis 3:2 */}
@@ -431,10 +436,8 @@ export default function DashboardPage() {
           </section>
         </div>
 
-        {/* RECHTS: Zitat über allem, darunter 24h-Aktivität und Online */}
+        {/* RECHTS: 24h-Aktivität und Online */}
         <div className="flex flex-col gap-8 lg:sticky lg:top-6">
-          <QuoteRotator />
-
           {/* nur, wenn in den letzten 24h etwas los war */}
           {recentItems.length > 0 && (
           <section>

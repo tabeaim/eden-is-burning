@@ -278,10 +278,11 @@ function BannerHeader({
   // Titel und linksbündiger Inhalt beim Seitenwechsel nicht horizontal springen.
   const width = (onThisPage && meta.width) || "max-w-6xl";
   const titleEvent = onThisPage ? meta.titleEvent : undefined;
-  // Detailseiten (Szene, Charakter, Ort) zeichnen ihre eigene Trennlinie unter dem
-  // Inhalt (Zusammenfassung, Zitat bzw. Bearbeiten-Button), damit der noch über
-  // der Linie steht.
+  // Detailseiten (Szene, Charakter, Ort) und das Dashboard zeichnen ihre eigene
+  // Trennlinie unter dem Inhalt (Zusammenfassung, Zitat bzw. Bearbeiten-Button),
+  // damit der noch über der Linie steht.
   const ownsDivider =
+    onDashboard ||
     (/^\/szenen\/[^/]+$/.test(pathname) && pathname !== "/szenen/neu") ||
     /^\/charaktere\/[^/]+$/.test(pathname) ||
     /^\/spieler\/[^/]+$/.test(pathname) ||
