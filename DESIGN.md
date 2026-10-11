@@ -448,7 +448,8 @@ einen gilt auch fürs andere.
 
 ## Dashboard – `app/dashboard/page.tsx`
 
-Zwei Spalten: links Hinweise (Anrufe, Mailbox, Captic), „du bist dran." und
+Zwei Spalten: links Hinweise (Anrufe, Mailbox, Captic – nur wenn es welche gibt,
+dann unter „alerts."), „du bist dran." und
 „wartet auf andere."; rechts das Zitat über allem, darunter je in einem
 Kästchen „szenen · letzte 24h.", „jetzt online." und „zuletzt online." (letzte
 24 Stunden; Titel in der Box). Chats stehen in den Listen links als Karte im
@@ -517,8 +518,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Dashboard:** Chats erscheinen als `ChatRow` (`components/phone/ChatRow.tsx`,
   Aufbau wie `SceneRow`, Handy-Icon statt Streichholz) – in „letzte 24h" als
   „Neue Nachrichten bei A & B", unter „Du bist dran" als „Chat mit …" (nie mit
-  Vorschau des Nachrichtentexts – nichts spoilern) samt Knopf
-  „Leave on read" (pausiert den Chat, bis wieder jemand schreibt).
+  Vorschau des Nachrichtentexts – nichts spoilern). „Leave on read" gibt es
+  nur im Handy, nicht auf dem Dashboard.
 - **Fortlaufender Chat + SMS-Szenen** (`lib/chats.ts`, `components/phone/SmsScenes.tsx`):
   Je Paar gibt es einen Chat. Jede Nachricht trägt ihren Inplay-Tag, der Verlauf
   sortiert danach (nicht nach Schreibzeit) – Tagestrenner entstehen beim Anzeigen.

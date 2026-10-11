@@ -234,126 +234,132 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-8 lg:gap-16 items-start">
         {/* LINKS: die Szenenübersicht */}
         <div className="flex flex-col gap-6 lg:gap-10">
-          {/* Klingelnde Anrufe an eigene Charaktere – führen aufs Handy zum Abheben */}
-          {incomingCalls.length > 0 && (
+          {/* Hinweise (Anrufe, Mailbox, Captic) – nur wenn es welche gibt, dann unter „alerts." */}
+          {(incomingCalls.length > 0 || mailboxAlerts.length > 0 || capticAlerts.length > 0) && (
             <section className="flex flex-col gap-2">
-              {incomingCalls.map((call) => (
-                <Link
-                  key={call.id}
-                  href="/handy"
-                  onClick={() => rememberPhone(call.callee_id)}
-                  className="flex items-center gap-3 rounded-lg border border-accent/60 bg-accent-soft px-3.5 py-2.5 hover:bg-accent/20"
-                >
-                  <span className="phone-ring flex h-6 w-6 shrink-0 items-center justify-center text-accent">
-                    <Icon name="phone" size={20} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-serif text-[0.875rem] leading-snug text-text-primary">
-                      {character(call.caller_id)?.name ?? "Jemand"} ruft{" "}
-                      {character(call.callee_id)?.name.split(" ")[0] ?? "dich"} an
-                    </span>
-                    <span className="block text-[0.875rem] text-text-tertiary">
-                      {formatInplayDateShort(call.inplay_date)}
-                      {call.inplay_time ? `, ${call.inplay_time}` : ""}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-[0.8125rem] font-medium text-accent">Reagieren ›</span>
-                </Link>
-              ))}
-            </section>
-          )}
-          {/* Mailbox: abgelehnter eigener Anruf (aufsprechen) bzw. neue Nachricht auf
-              der Mailbox eines eigenen Charakters – beides führt in die Anrufliste */}
-          {mailboxAlerts.length > 0 && (
-            <section className="flex flex-col gap-2">
-              {mailboxAlerts.map(({ kind, call }) => {
-                const caller = character(call.caller_id);
-                const callee = character(call.callee_id);
-                return (
-                  <div
-                    key={`${kind}:${call.id}`}
-                    className="flex items-center gap-1 rounded-lg border border-accent/60 bg-accent-soft pr-1.5 hover:bg-accent/20"
+              <DashHeading className="mb-2">alerts.</DashHeading>
+            {/* Klingelnde Anrufe an eigene Charaktere – führen aufs Handy zum Abheben */}
+            {incomingCalls.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {incomingCalls.map((call) => (
+                  <Link
+                    key={call.id}
+                    href="/handy"
+                    onClick={() => rememberPhone(call.callee_id)}
+                    className="flex items-center gap-3 rounded-lg border border-accent/60 bg-accent-soft px-3.5 py-2.5 hover:bg-accent/20"
                   >
-                    <Link
-                      href="/handy/telefon"
-                      onClick={() => {
-                        rememberPhone(kind === "leave" ? call.caller_id : call.callee_id);
-                        if (kind === "new") return dismissMailboxAlert("new", call.id);
-                        try {
-                          sessionStorage.setItem(MAILBOX_KEY, call.id);
-                        } catch {
-                          /* ignore */
-                        }
-                      }}
-                      className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-3.5"
+                    <span className="phone-ring flex h-6 w-6 shrink-0 items-center justify-center text-accent">
+                      <Icon name="phone" size={20} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-serif text-[0.875rem] leading-snug text-text-primary">
+                        {character(call.caller_id)?.name ?? "Jemand"} ruft{" "}
+                        {character(call.callee_id)?.name.split(" ")[0] ?? "dich"} an
+                      </span>
+                      <span className="block text-[0.875rem] text-text-tertiary">
+                        {formatInplayDateShort(call.inplay_date)}
+                        {call.inplay_time ? `, ${call.inplay_time}` : ""}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-[0.8125rem] font-medium text-accent">Reagieren ›</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+            {/* Mailbox: abgelehnter eigener Anruf (aufsprechen) bzw. neue Nachricht auf
+                der Mailbox eines eigenen Charakters – beides führt in die Anrufliste */}
+            {mailboxAlerts.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {mailboxAlerts.map(({ kind, call }) => {
+                  const caller = character(call.caller_id);
+                  const callee = character(call.callee_id);
+                  return (
+                    <div
+                      key={`${kind}:${call.id}`}
+                      className="flex items-center gap-1 rounded-lg border border-accent/60 bg-accent-soft pr-1.5 hover:bg-accent/20"
                     >
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center text-accent">
-                        <Icon name="phone" size={20} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-serif text-[0.875rem] leading-snug text-text-primary">
-                          {kind === "leave"
-                            ? `${callee?.name ?? "Jemand"} hat den Anruf von ${caller?.name.split(" ")[0] ?? "dir"} abgelehnt`
-                            : `${caller?.name ?? "Jemand"} hat ${callee?.name.split(" ")[0] ?? "dir"} auf die Mailbox gesprochen`}
-                        </span>
-                        <span className="block text-[0.875rem] text-text-tertiary">
-                          {formatInplayDateShort(call.inplay_date)}
-                          {call.inplay_time ? `, ${call.inplay_time}` : ""}
-                        </span>
-                      </span>
-                      <span className="shrink-0 text-[0.8125rem] font-medium text-accent">
-                        {kind === "leave" ? "Auf die Mailbox sprechen ›" : "Anhören ›"}
-                      </span>
-                    </Link>
-                    {kind === "leave" && (
-                      <button
-                        onClick={() => dismissMailboxAlert("leave", call.id)}
-                        title="Nicht aufsprechen – Hinweis ausblenden"
-                        aria-label="Hinweis ausblenden"
-                        className="shrink-0 rounded p-1.5 text-text-tertiary hover:text-text-primary"
+                      <Link
+                        href="/handy/telefon"
+                        onClick={() => {
+                          rememberPhone(kind === "leave" ? call.caller_id : call.callee_id);
+                          if (kind === "new") return dismissMailboxAlert("new", call.id);
+                          try {
+                            sessionStorage.setItem(MAILBOX_KEY, call.id);
+                          } catch {
+                            /* ignore */
+                          }
+                        }}
+                        className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-3.5"
                       >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </section>
-          )}
-          {/* Neue Likes, Kommentare, Follower auf Captic – führt in die Aktivitäten
-              des Charakters; dort gilt es als gesehen und der Hinweis verschwindet */}
-          {capticAlerts.length > 0 && (
-            <section className="flex flex-col gap-2">
-              {capticAlerts.map((a) => (
-                <Link
-                  key={a.characterId}
-                  href="/handy/captic"
-                  onClick={() => {
-                    rememberPhone(a.characterId);
-                    try {
-                      sessionStorage.setItem(CAPTIC_OPEN_KEY, "activity");
-                    } catch {
-                      /* ignore */
-                    }
-                  }}
-                  className="flex items-center gap-3 rounded-lg border border-accent/60 bg-accent-soft px-3.5 py-2.5 hover:bg-accent/20"
-                >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center text-accent">
-                    <Icon name="heart" size={20} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-serif text-[0.875rem] leading-snug text-text-primary">
-                      Neue Aktivität auf Captic
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center text-accent">
+                          <Icon name="phone" size={20} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-serif text-[0.875rem] leading-snug text-text-primary">
+                            {kind === "leave"
+                              ? `${callee?.name ?? "Jemand"} hat den Anruf von ${caller?.name.split(" ")[0] ?? "dir"} abgelehnt`
+                              : `${caller?.name ?? "Jemand"} hat ${callee?.name.split(" ")[0] ?? "dir"} auf die Mailbox gesprochen`}
+                          </span>
+                          <span className="block text-[0.875rem] text-text-tertiary">
+                            {formatInplayDateShort(call.inplay_date)}
+                            {call.inplay_time ? `, ${call.inplay_time}` : ""}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-[0.8125rem] font-medium text-accent">
+                          {kind === "leave" ? "Auf die Mailbox sprechen ›" : "Anhören ›"}
+                        </span>
+                      </Link>
+                      {kind === "leave" && (
+                        <button
+                          onClick={() => dismissMailboxAlert("leave", call.id)}
+                          title="Nicht aufsprechen – Hinweis ausblenden"
+                          aria-label="Hinweis ausblenden"
+                          className="shrink-0 rounded p-1.5 text-text-tertiary hover:text-text-primary"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {/* Neue Likes, Kommentare, Follower auf Captic – führt in die Aktivitäten
+                des Charakters; dort gilt es als gesehen und der Hinweis verschwindet */}
+            {capticAlerts.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {capticAlerts.map((a) => (
+                  <Link
+                    key={a.characterId}
+                    href="/handy/captic"
+                    onClick={() => {
+                      rememberPhone(a.characterId);
+                      try {
+                        sessionStorage.setItem(CAPTIC_OPEN_KEY, "activity");
+                      } catch {
+                        /* ignore */
+                      }
+                    }}
+                    className="flex items-center gap-3 rounded-lg border border-accent/60 bg-accent-soft px-3.5 py-2.5 hover:bg-accent/20"
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center text-accent">
+                      <Icon name="heart" size={20} />
                     </span>
-                    <span className="block text-[0.875rem] text-text-tertiary">
-                      bei {character(a.characterId)?.name ?? "deinem Charakter"}
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-serif text-[0.875rem] leading-snug text-text-primary">
+                        Neue Aktivität auf Captic
+                      </span>
+                      <span className="block text-[0.875rem] text-text-tertiary">
+                        bei {character(a.characterId)?.name ?? "deinem Charakter"}
+                      </span>
                     </span>
-                  </span>
-                  <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-accent px-1 text-[0.6875rem] font-semibold text-black">
-                    {a.count}
-                  </span>
-                </Link>
-              ))}
+                    <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-accent px-1 text-[0.6875rem] font-semibold text-black">
+                      {a.count}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
             </section>
           )}
           <section>
@@ -379,7 +385,7 @@ export default function DashboardPage() {
                   item.scene ? (
                     <SceneCard key={item.key} scene={item.scene} />
                   ) : (
-                    <ChatItem key={item.key} unit={item.unit!} char={item.char} canLeaveOnRead />
+                    <ChatItem key={item.key} unit={item.unit!} char={item.char} />
                   ),
                 )}
               </div>
@@ -531,13 +537,11 @@ function CharacterGroup({
   scenes,
   chats = [],
   muted = false,
-  canLeaveOnRead = false,
 }: {
   char: Character;
   scenes: Scene[];
   chats?: ChatUnit[];
   muted?: boolean;
-  canLeaveOnRead?: boolean; // unbeantwortete Chats lassen sich pausieren
 }) {
   return (
     <div>
@@ -568,53 +572,17 @@ function CharacterGroup({
           <SceneCard key={s.id} scene={s} muted={muted} />
         ))}
         {chats.map((u) => (
-          <ChatItem key={unitKey(u)} unit={u} char={char} muted={muted} canLeaveOnRead={canLeaveOnRead} />
+          <ChatItem key={unitKey(u)} unit={u} char={char} muted={muted} />
         ))}
       </div>
     </div>
   );
 }
 
-// Ein Chat-Strang in den Listen des Dashboards, aus Sicht des eigenen Charakters
-function ChatItem({
-  unit: u,
-  char,
-  muted = false,
-  canLeaveOnRead = false,
-}: {
-  unit: ChatUnit;
-  char: Character;
-  muted?: boolean;
-  canLeaveOnRead?: boolean; // unbeantwortete Chats lassen sich pausieren
-}) {
-  const { leaveOnRead, updateChatScene } = useStore();
-  return (
-    <ChatRow
-      card
-      chat={u.chat}
-      scene={u.scene}
-      forCharacter={char.id}
-      muted={muted}
-      action={
-        canLeaveOnRead ? (
-          <button
-            onClick={() => {
-              leaveOnRead(u.chat.id, char.id, u.last.id);
-              if (u.scene) updateChatScene(u.scene.id, { status: "closed" });
-            }}
-            title={
-              u.scene
-                ? "Nachricht unbeantwortet lassen – beendet die SMS-Szene"
-                : "Nachricht unbeantwortet lassen – der Chat pausiert, bis jemand wieder schreibt"
-            }
-            className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
-          >
-            Leave on read
-          </button>
-        ) : undefined
-      }
-    />
-  );
+// Ein Chat-Strang in den Listen des Dashboards, aus Sicht des eigenen Charakters.
+// („Leave on read" gibt es nur im Handy, nicht hier.)
+function ChatItem({ unit: u, char, muted = false }: { unit: ChatUnit; char: Character; muted?: boolean }) {
+  return <ChatRow card chat={u.chat} scene={u.scene} forCharacter={char.id} muted={muted} />;
 }
 
 // Abschnitts-Überschrift des Dashboards: wie überall in der Display-Schrift, klein
