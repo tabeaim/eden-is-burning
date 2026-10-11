@@ -182,6 +182,8 @@ export interface CharacterProfile {
   // Text-Signatur (reiner Text oder HTML, siehe signatureHtml): steht ebenfalls am
   // Ende jedes Posts (zusätzlich zum oder statt des Bilds)
   signature_text?: string | null;
+  // Ausrichtung von Text- und Bild-Signatur; ohne Angabe zentriert
+  signature_align?: "left" | "center" | "right" | null;
   // GIF, das in Szenen unter dem Avatar steht (höchstens so breit wie der Avatar,
   // halb so hoch)
   scene_gif_url?: string | null;

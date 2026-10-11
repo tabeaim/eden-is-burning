@@ -13,7 +13,7 @@ import { escapeHtml, formatDateTime, formatInplayDate, renderPost } from "@/lib/
 import { copyRich, useProseEditor } from "@/lib/editor";
 import { FormatBar } from "@/components/RichEditor";
 import { useSetPageMeta } from "@/lib/page-meta";
-import { SignatureText } from "@/components/SignatureText";
+import { SignatureText, signatureAlign } from "@/components/SignatureText";
 import { SceneCharacterCard } from "@/components/SceneCharacterCard";
 import { SceneEditPanel } from "@/components/SceneEditPanel";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -808,7 +808,11 @@ function PostRow({
       )}
       {/* Signatur des Charakters (Einstellungen → Meine Charaktere): Text und/oder Bild */}
       {character.profile?.signature_text && (
-        <SignatureText html={character.profile.signature_text} className="mt-6 select-none" />
+        <SignatureText
+          html={character.profile.signature_text}
+          align={character.profile.signature_align}
+          className="mt-6 select-none"
+        />
       )}
       {character.profile?.signature_url && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -817,7 +821,7 @@ function PostRow({
           alt=""
           loading="lazy"
           draggable={false}
-          className={`${character.profile.signature_text ? "mt-2" : "mt-6"} block max-h-40 max-w-full select-none`}
+          className={`${character.profile.signature_text ? "mt-2" : "mt-6"} ${signatureAlign(character.profile.signature_align).image} block max-h-40 max-w-full select-none`}
         />
       )}
       {quoteBtn && (

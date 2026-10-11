@@ -246,6 +246,8 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Einstellungen → Meine Charaktere): Text und/oder Bild am Ende jedes Posts des
   Charakters, sonst nirgends. Der Text darf HTML enthalten; angezeigt wird er
   immer über `SignatureText` (entschärft durch `signatureHtml`, lib/html.ts).
+  Text und Bild stehen zentriert; die Ausrichtung (links/zentriert/rechts) lässt
+  sich dort umstellen (`profile.signature_align`, `signatureAlign`).
 - **Freie Profiltexte** (Kurzbeschreibung, About, Looks-Beschreibung, Zitat,
   Timeline-Text, Relations-Erläuterung; bei Spieler*innen Zitat und
   Beschreibung) dürfen ebenfalls HTML enthalten. Angezeigt werden sie immer über

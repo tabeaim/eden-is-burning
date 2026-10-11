@@ -29,7 +29,7 @@ import { capFirst, formatInplayDate } from "@/lib/format";
 import { DatePicker } from "./DatePicker";
 import { Icon } from "./Icon";
 import { SuggestInput } from "./SuggestInput";
-import { SignatureText } from "./SignatureText";
+import { SignatureText, signatureAlign } from "./SignatureText";
 
 const BYRON = "Byron University";
 
@@ -142,6 +142,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       ...(character.profile ?? {}),
       signature_url: signature,
       signature_text: p.signature_text?.trim() || null,
+      signature_align: p.signature_align ?? null,
       scene_gif_url: gif,
       spotify_url: webUrl(p.spotify_url),
       gpa: p.gpa?.trim() || null,
@@ -592,13 +593,49 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         {p.signature_text?.trim() && (
           <div className="rounded-md border border-dashed border-border-subtle px-3 py-2">
             <div className="mb-1 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">Vorschau</div>
-            <SignatureText html={p.signature_text} />
+            <SignatureText html={p.signature_text} align={p.signature_align} />
           </div>
         )}
         {signature && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={signature} alt="Signatur" className="max-h-40 max-w-full rounded-md" />
+          <img
+            src={signature}
+            alt="Signatur"
+            className={`${signatureAlign(p.signature_align).image} block max-h-40 max-w-full rounded-md`}
+          />
         )}
+        {F({
+          label: "Ausrichtung",
+          hint: "Gilt für Text und Bild. Wird mit den Grunddaten gespeichert.",
+          children: (
+            <div className="flex gap-1.5">
+              {(
+                [
+                  ["left", "Links"],
+                  ["center", "Zentriert"],
+                  ["right", "Rechts"],
+                ] as const
+              ).map(([value, name]) => {
+                const active = (p.signature_align ?? "center") === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setProfile({ signature_align: value })}
+                    className={`rounded-md border px-3 py-1.5 text-[0.8125rem] ${
+                      active
+                        ? "border-accent/70 bg-accent-soft text-text-primary"
+                        : "border-border-subtle bg-white/[0.04] text-text-secondary hover:bg-white/[0.08] hover:text-text-primary"
+                    }`}
+                  >
+                    {name}
+                  </button>
+                );
+              })}
+            </div>
+          ),
+        })}
         <div className="flex flex-wrap items-center gap-3">
           <button
             disabled={uploadingSig}
