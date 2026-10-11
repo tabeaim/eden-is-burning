@@ -549,3 +549,24 @@ label:has(input[type="file"]) {
 @media (prefers-reduced-motion: reduce) {
   .type-caret { animation: none; }
 }
+
+/* Listen in geschriebenen Texten (Posts, Profiltexte) und in den Editoren:
+   Aufzählungspunkte bzw. Nummern in der Akzentfarbe. Tailwind setzt Listen
+   sonst ohne Zeichen und Einzug. */
+.prose-serif ul,
+.reply-editor ul,
+.rich-text ul {
+  list-style: disc outside;
+  padding-left: 1.25rem;
+}
+.prose-serif ol,
+.reply-editor ol,
+.rich-text ol {
+  list-style: decimal outside;
+  padding-left: 1.5rem;
+}
+.prose-serif li::marker,
+.reply-editor li::marker,
+.rich-text li::marker {
+  color: var(--accent-ink, var(--accent));
+}

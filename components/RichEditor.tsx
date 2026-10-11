@@ -8,7 +8,7 @@ const toolBtn =
   "rounded px-2 py-1 text-[0.875rem] text-text-secondary hover:text-text-primary hover:bg-white/[0.06]";
 
 // Formatierungsleiste aller Texteditoren (auch des Post-Editors): fett, kursiv,
-// unterstrichen, Schrift größer/kleiner in feinen Stufen. `target` ist das
+// unterstrichen, Liste mit Aufzählungspunkten, Schrift größer/kleiner in feinen Stufen. `target` ist das
 // contentEditable-Feld, `onChange` meldet, dass sich sein Inhalt geändert hat.
 export function FormatBar({
   target,
@@ -37,6 +37,16 @@ export function FormatBar({
       </button>
       <button type="button" onMouseDown={keep} onClick={exec("underline")} className={`${toolBtn} underline`} title="Unterstrichen">
         U
+      </button>
+      <button
+        type="button"
+        onMouseDown={keep}
+        onClick={exec("insertUnorderedList")}
+        className={toolBtn}
+        title="Liste mit Aufzählungspunkten"
+        aria-label="Liste mit Aufzählungspunkten"
+      >
+        <span aria-hidden className="text-accent">•</span> Liste
       </button>
       <span className="mx-1 h-4 w-px bg-border-subtle" />
       <button
@@ -130,7 +140,7 @@ export function RichEditor({
         spellCheck
         data-placeholder={placeholder}
         onInput={emit}
-        className={`reply-editor ${minHeight} w-full whitespace-pre-wrap break-words rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[0.875rem] leading-relaxed text-text-primary outline-none focus:border-white/20 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5`}
+        className={`reply-editor ${minHeight} w-full whitespace-pre-wrap break-words rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[0.875rem] leading-relaxed text-text-primary outline-none focus:border-white/20`}
       />
     </div>
   );

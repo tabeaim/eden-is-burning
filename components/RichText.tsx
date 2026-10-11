@@ -23,7 +23,7 @@ export function RichText({
   return (
     <Tag
       lang="de"
-      className={`${className} ${inline ? "" : "text-justify hyphens-auto"} whitespace-pre-wrap break-words [&_a]:underline [&_a:hover]:text-accent [&_img]:inline-block [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5`}
+      className={`rich-text ${className} ${inline ? "" : "text-justify hyphens-auto"} whitespace-pre-wrap break-words [&_a]:underline [&_a:hover]:text-accent [&_img]:inline-block [&_img]:max-w-full`}
       dangerouslySetInnerHTML={inner}
     />
   );

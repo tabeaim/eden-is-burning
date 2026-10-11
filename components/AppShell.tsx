@@ -249,8 +249,9 @@ function TabTitle({ pathname }: { pathname: string }) {
 }
 
 // Banner-Header: Titelbild pro Seite (Foto über Glut-Verlauf). Der Seitentitel
-// steht ganz auf dem Titelbild, mit Luft bis zu dessen Unterkante – dort endet der
-// Header mit der Trennlinie; auf Detailseiten rutscht ihr Kopfbereich in die Lücke.
+// steht ganz auf dem Titelbild, knapp über dessen Unterkante – dort endet der
+// Header mit der Trennlinie. Auf Detailseiten sitzt er höher, und ihr Kopfbereich
+// (Zitat, Szenenkopf, Bearbeiten) rutscht in die Lücke darunter.
 function BannerHeader({
   pathname,
   noBanner = false,
@@ -261,14 +262,23 @@ function BannerHeader({
   navHidden?: boolean; // dann sitzt oben links die Einblenden-Taste
 }) {
   const meta = usePageMeta();
-  const { appSettings } = useStore();
+  const { appSettings, currentPlayer } = useStore();
   const { theme } = useTheme();
 
   const navMatch = NAV.find(
     (n) => pathname === n.href || pathname.startsWith(n.href + "/"),
   );
   const onThisPage = meta.path === pathname;
-  const title = (onThisPage && meta.title) || navMatch?.title || navMatch?.label || "Eden is burning";
+  // Das Dashboard heißt „Hallo, …" und hat ein eigenes Bild. Beides steht hier
+  // schon, bevor die Seite es meldet – sonst blitzen beim Wechsel aufs Dashboard
+  // kurz „Dashboard" und das Standardbild auf.
+  const onDashboard = pathname === "/dashboard" && !!currentPlayer;
+  const title =
+    (onThisPage && meta.title) ||
+    (onDashboard ? `Hallo, ${currentPlayer.username}` : "") ||
+    navMatch?.title ||
+    navMatch?.label ||
+    "Eden is burning";
   // Einheitliche Seitenbreite: alle Seiten teilen dieselbe Container-Breite, damit
   // Titel und linksbündiger Inhalt beim Seitenwechsel nicht horizontal springen.
   const width = (onThisPage && meta.width) || "max-w-6xl";
@@ -286,6 +296,7 @@ function BannerHeader({
   // generierte Vorlage. Detailseiten erben so den Header ihrer Übersicht.
   const banner =
     (onThisPage && meta.bannerImage) ||
+    (onDashboard && currentPlayer.dashboard_header_url) ||
     defaultHeader(appSettings, pathname.split("/").filter(Boolean)[0] ?? "dashboard", theme);
 
   return (
@@ -313,7 +324,17 @@ function BannerHeader({
 
       {/* Titel – steht auf dem Titelbild (nicht beschnitten).
           Container in der Seitenbreite zentriert → Titel startet bündig mit dem Inhalt. */}
-      <div className={`relative ${width} mx-auto px-4 sm:px-8 ${noBanner ? "" : "-mt-[3.625rem] sm:-mt-[5.875rem]"}`}>
+      <div
+        className={`relative ${width} mx-auto px-4 sm:px-8 ${
+          noBanner
+            ? ""
+            : ownsDivider
+              ? // Detailseiten: Luft unter dem Titel für ihren Kopfbereich
+                "-mt-[3.875rem] sm:-mt-[6.25rem]"
+              : // sonst sitzt der Titel knapp über der Trennlinie
+                "-mt-[3.125rem] sm:-mt-[4.75rem]"
+        }`}
+      >
         {/* Etikett der Profile („Character File", „Player File"): leicht schräg
             aufgeklebt über dem Titel */}
         {!noBanner && onThisPage && meta.kicker && (
@@ -323,7 +344,7 @@ function BannerHeader({
         )}
         <h1 className={`page-title inline-block ${
           noBanner ? (navHidden ? "mt-7 md:mt-14" : "mt-7") : ""
-        } max-w-full break-words font-display lowercase text-[2.125rem] sm:text-[3.375rem] leading-none text-text-primary`}>
+        } max-w-full break-words font-display lowercase text-[2.375rem] sm:text-[3.75rem] leading-none text-text-primary`}>
           {onThisPage && meta.avatar && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -354,7 +375,7 @@ function BannerHeader({
       </div>
 
       {!ownsDivider && (
-        <div className={`relative border-b border-border-subtle ${noBanner ? "mt-2" : "mt-6 sm:mt-10"}`} />
+        <div className={`relative border-b border-border-subtle ${noBanner ? "mt-2" : "mt-3 sm:mt-4"}`} />
       )}
     </header>
   );

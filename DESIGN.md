@@ -145,6 +145,10 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   ‚…', Apostroph, `--` → –, `...` → …) und Einfügen aus Schreibprogrammen, bei
   dem nur Absätze, Umbrüche und fett/kursiv/unterstrichen/durchgestrichen
   übernommen werden.
+- **Listen:** Die Formatierungsleiste aller Editoren (`FormatBar`) hat „• Liste".
+  Angezeigt werden Listen überall mit Aufzählungspunkten in der Akzentfarbe
+  (Posts, Profiltexte, im Editor selbst – `.prose-serif`, `.rich-text`,
+  `.reply-editor` in `globals.css`).
 - **Entwürfe** (`post_drafts`, nur für die eigene Person lesbar): „Als Entwurf
   speichern" im Antwortfeld; der Entwurf hängt gestrichelt umrandet unter der
   Szene (`DraftRow`) mit „Weiterschreiben", „Veröffentlichen", „Löschen".
@@ -412,11 +416,13 @@ ihr AU im Filter gewählt ist – ohne Auswahl zeigt die Timeline nur Canon.
 
 ## Header – `BannerHeader` in `components/AppShell.tsx`
 
-Das Titelbild ist `h-48`, ab `sm` `h-56`. Der Seitentitel steht ganz auf dem Bild,
-mit Luft bis zur Unterkante; dort sitzt die Trennlinie zur Seite. Auf
-Detailseiten (Szene, Charakter, Spieler*in, Ort – sie zeichnen die Trennlinie
-selbst) rutscht alles über der Linie (Zitat, Szenenkopf, Bearbeiten) in diese
-Lücke, also mit auf das Bild. Der Seiteninhalt (`main`) liegt dafür über dem
+Das Titelbild ist `h-48`, ab `sm` `h-56`. Der Seitentitel (`2.375rem`, ab `sm`
+`3.75rem`) steht ganz auf dem Bild, knapp über der Unterkante; dort sitzt die
+Trennlinie zur Seite. Auf Detailseiten (Szene, Charakter, Spieler*in, Ort – sie
+zeichnen die Trennlinie selbst) sitzt der Titel höher, und alles über der Linie
+(Zitat, Szenenkopf, Bearbeiten) rutscht in die Lücke darunter, also mit auf das
+Bild. Titel und Bild des Dashboards kennt der Header schon vor der Seite – sonst
+flackert beides beim Wechsel dorthin. Der Seiteninhalt (`main`) liegt dafür über dem
 Titelbild; den Verlauf zum Hintergrundfoto zeichnet der Header.
 
 Charakter- und Spieler*innen-Profile tragen über dem Titel ein kleines, leicht

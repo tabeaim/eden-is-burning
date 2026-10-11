@@ -459,16 +459,14 @@ export default function DashboardPage() {
             />
           </section>
 
-          <section>
-            <h2 className="section-bar text-[0.875rem] text-text-secondary mb-3">
-              Spieler online · letzte 24h
-            </h2>
-            {onlineRecent.length === 0 ? (
-              <Empty>Niemand sonst war in den letzten 24h online.</Empty>
-            ) : (
+          {onlineRecent.length > 0 && (
+            <section>
+              <h2 className="section-bar text-[0.875rem] text-text-secondary mb-3">
+                Spieler online · letzte 24h
+              </h2>
               <PlayerPresenceList players={onlineRecent} />
-            )}
-          </section>
+            </section>
+          )}
         </div>
       </div>
     </div>
