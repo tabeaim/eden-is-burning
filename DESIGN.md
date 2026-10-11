@@ -448,7 +448,8 @@ einen gilt auch fürs andere.
 
 ## Dashboard – `app/dashboard/page.tsx`
 
-Zwei Spalten: links Hinweise (Anrufe, Mailbox, Captic – nur wenn es welche gibt,
+Zwei Spalten im Verhältnis 3:2 mit `gap-x-10` (das Profil-Raster `SPLIT`,
+gespiegelt): links Hinweise (Anrufe, Mailbox, Captic – nur wenn es welche gibt,
 dann unter „alerts."), „du bist dran." und
 „wartet auf andere."; rechts das Zitat über allem, darunter – frei, ohne
 Kästchen – „zuletzt aktive szenen." (letzte 24 Stunden), „jetzt online." und

@@ -233,7 +233,9 @@ export default function DashboardPage() {
         bannerImage={currentPlayer.dashboard_header_url ?? undefined}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-8 lg:gap-16 items-start">
+      {/* Raster wie `SPLIT` im Profil (DESIGN.md → Profil-Raster), gespiegelt: breite
+          Inhaltsspalte links, schmalere rechts im Verhältnis 3:2 */}
+      <div className="grid grid-cols-1 items-start gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         {/* LINKS: die Szenenübersicht */}
         <div className="flex flex-col gap-6 lg:gap-10">
           {/* Hinweise (Anrufe, Mailbox, Captic) – nur wenn es welche gibt, dann unter „alerts." */}
