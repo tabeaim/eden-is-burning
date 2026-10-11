@@ -4,13 +4,14 @@ import { useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { useTheme } from "@/lib/theme";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
-import { bannerStyle, headersFor, standardHeader } from "@/lib/headers";
+import { bannerStyle, fallbackHeader, headersFor } from "@/lib/headers";
 import { BannerPosition } from "../BannerPosition";
+import { ConfirmDialog } from "../ConfirmDialog";
 import { Icon } from "../Icon";
 import { AREA_ORDER, EXTRA_AREAS, areaImage, areaName } from "@/lib/world";
 import type { Theme } from "@/lib/types";
 import { characterImage, playerImage } from "@/lib/avatar";
-import { hint, label, pill, row } from "./ui";
+import { btnDanger, hint, label, pill, row } from "./ui";
 
 const THEMES: [Theme, string][] = [
   ["dark", "Dunkel"],
@@ -35,6 +36,7 @@ const AREA_KEYS: string[] = [...AREA_ORDER, ...Object.keys(EXTRA_AREAS)];
 const AREA = "area:";
 const AVATAR = "avatar:";
 const BACKGROUND = "background";
+const STANDARD = "standard:banner";
 
 // Design: Standard-Farbmodus der App, Header-Bilder je Stil (dunkel/hell) und
 // die Bilder der Gegenden.
@@ -63,6 +65,21 @@ export function AdminDesign() {
     else delete next[key];
     updateAppSettings({
       headers: { dark: headersFor(appSettings, "dark"), light: headersFor(appSettings, "light"), [style]: next },
+    });
+  };
+  // Standard-Banner des gewählten Stils
+  const standard = appSettings.standardHeader?.[style] ?? null;
+  const setStandard = (url: string | null) =>
+    updateAppSettings({ standardHeader: { ...appSettings.standardHeader, [style]: url } });
+  // Eigene Header-Bilder der Seiten in diesem Stil entfernen, damit dort der
+  // Standard-Banner gilt – nur auf Knopfdruck. Eigene Banner von Szenen, Profilen,
+  // Dashboards und Orten bleiben immer erhalten.
+  const pageCount = Object.keys(headers).length;
+  const [overwrite, setOverwrite] = useState(false);
+  const overwritePages = () => {
+    setDraft({});
+    updateAppSettings({
+      headers: { dark: headersFor(appSettings, "dark"), light: headersFor(appSettings, "light"), [style]: {} },
     });
   };
   const areaImages = appSettings.areaImages ?? {};
@@ -99,6 +116,7 @@ export function AdminDesign() {
       clearDraft(key);
       const url = await uploadImage(f, "headers", IMAGE_SIZES.banner);
       if (key === BACKGROUND) return setBackground({ url });
+      if (key === STANDARD) return setStandard(url);
       if (key.startsWith(AREA)) setAreaImage(key.slice(AREA.length), url);
       else setHeader(key, url);
     } finally {
@@ -184,10 +202,64 @@ export function AdminDesign() {
           ))}
         </div>
         <p className={`${hint} mb-3`}>
-          Je Stil ein eigenes Bild pro Seite – im dunklen Stil passen dunkle, im hellen helle Fotos. Ohne eigenes Bild
-          gilt das Standardbild. Eigene Header von Szenen, Orten, Charakteren und Spieler*innen haben
-          Vorrang.
+          Je Stil ein Standard-Banner und ein eigenes Bild pro Seite – im dunklen Stil passen dunkle, im hellen helle
+          Fotos. Der Standard-Banner gilt überall, wo weder die Seite noch der Inhalt ein eigenes Bild hat. Eigene
+          Header von Szenen, Orten, Charakteren und Spieler*innen haben Vorrang.
         </p>
+        {/* Standard-Banner des Stils */}
+        <div className={`${row} mb-3 p-3`}>
+          <div className="mb-2 flex items-center justify-between gap-2 text-[0.875rem] text-text-primary">
+            Standard-Banner
+            {standard && (
+              <button
+                onClick={() => {
+                  clearDraft(STANDARD);
+                  setStandard(null);
+                }}
+                className="text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+              >
+                Zurücksetzen
+              </button>
+            )}
+          </div>
+          <div
+            className="relative h-28 w-full overflow-hidden rounded-md border border-border-subtle bg-bg-primary bg-cover"
+            style={bannerStyle(draft[STANDARD] ?? fallbackHeader(appSettings, "dashboard", style))}
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
+            <button
+              disabled={busy === STANDARD}
+              onClick={() => {
+                target.current = STANDARD;
+                file.current?.click();
+              }}
+              className="absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-black/50 px-2.5 py-1.5 text-[0.8125rem] text-white hover:bg-black/70 disabled:opacity-50"
+            >
+              <Icon name="upload" size={14} /> {busy === STANDARD ? "Lädt hoch…" : "Bild hochladen"}
+            </button>
+          </div>
+          {standard && (
+            <BannerPosition
+              url={draft[STANDARD] ?? standard}
+              onChange={(u) => setDraft((d) => ({ ...d, [STANDARD]: u }))}
+              onCommit={(u) => {
+                if (u !== standard) setStandard(u);
+                clearDraft(STANDARD);
+              }}
+            />
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <button onClick={() => setOverwrite(true)} disabled={pageCount === 0} className={btnDanger}>
+              Seiten-Header überschreiben…
+            </button>
+            <span className={hint}>
+              {pageCount
+                ? `${pageCount} ${pageCount === 1 ? "Seite hat" : "Seiten haben"} in diesem Stil ein eigenes Bild. Es bleibt, bis du es hier überschreibst.`
+                : "Keine Seite hat in diesem Stil ein eigenes Bild."}{" "}
+              Banner von Szenen, Profilen, Dashboards und Orten bleiben immer erhalten.
+            </span>
+          </div>
+        </div>
         <div className="grid gap-3 sm:grid-cols-2">
           {PAGES.map(([key, name]) => {
             const url = draft[key] ?? headers[key];
@@ -206,7 +278,7 @@ export function AdminDesign() {
                 </div>
                 <div
                   className="relative h-24 w-full overflow-hidden rounded-md border border-border-subtle bg-bg-primary bg-cover"
-                  style={bannerStyle(url || standardHeader(key, style))}
+                  style={bannerStyle(url || fallbackHeader(appSettings, key, style))}
                 >
                   <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/70 to-transparent" />
                   <button
@@ -351,6 +423,18 @@ export function AdminDesign() {
             );
           })}
         </div>
+        {overwrite && (
+          <ConfirmDialog
+            title="Seiten-Header überschreiben"
+            text={`Die eigenen Header-Bilder der Seiten im Stil ${style === "dark" ? "dunkel" : "hell"} (${pageCount}) werden entfernt; dort gilt dann der Standard-Banner. Banner von Szenen, Profilen, Dashboards und Orten bleiben erhalten.`}
+            confirmLabel="Überschreiben"
+            onCancel={() => setOverwrite(false)}
+            onConfirm={() => {
+              overwritePages();
+              setOverwrite(false);
+            }}
+          />
+        )}
         <input
           ref={file}
           type="file"

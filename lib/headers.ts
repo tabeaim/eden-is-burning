@@ -406,20 +406,32 @@ export function standardHeader(segment: string, mode: "dark" | "light"): string 
   return y === undefined ? pageHeader(segment, mode) : withBannerY(STANDARD_IMAGE, y);
 }
 
-/** Standard-Header für alles ohne eigenes Bild (Szene, Charakter-, Spieler*innen-Profil):
-    der aktuelle Header der zugehörigen Seite – das Bild der Admins, sonst der Standard. */
-export function defaultHeader(
-  settings: { headers?: unknown } | null | undefined,
+type HeaderSettings = { headers?: unknown; standardHeader?: { dark?: string | null; light?: string | null } };
+
+/** Header einer Seite ohne eigenes Seitenbild: der Standard-Banner der Admins für
+    diesen Stil, sonst das mitgelieferte Standardbild. */
+export function fallbackHeader(
+  settings: HeaderSettings | null | undefined,
   segment: string,
   mode: "dark" | "light",
 ): string {
-  return headersFor(settings, mode)[segment] || standardHeader(segment, mode);
+  return settings?.standardHeader?.[mode] || standardHeader(segment, mode);
+}
+
+/** Standard-Header für alles ohne eigenes Bild (Szene, Charakter-, Spieler*innen-Profil):
+    der aktuelle Header der zugehörigen Seite – das Bild der Admins, sonst der Standard. */
+export function defaultHeader(
+  settings: HeaderSettings | null | undefined,
+  segment: string,
+  mode: "dark" | "light",
+): string {
+  return headersFor(settings, mode)[segment] || fallbackHeader(settings, segment, mode);
 }
 
 /** Header eines Orts ohne eigenes Bild: das aktuelle Bild seiner Gegend, und solange
     die keins hat, der Header der Orte-Seite. */
 export function locationHeader(
-  settings: { headers?: unknown; areaImages?: Record<string, string> } | null | undefined,
+  settings: (HeaderSettings & { areaImages?: Record<string, string> }) | null | undefined,
   area: string,
   mode: "dark" | "light",
 ): string {

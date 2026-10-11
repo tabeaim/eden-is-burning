@@ -667,8 +667,12 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Formulare wie in den eigenen Einstellungen.
 - **Design** (`app_settings`, Zeile `app`, SQL: `supabase/schema-app-settings.sql`,
   schreiben nur Admins): der Standard-Farbmodus der App (dunkel/hell) und je Stil
-  (dunkel/hell) ein Header-Bild pro Seite, inkl. Ausschnitt-Regler. Eigene Header
-  von Szenen, Orten, Charakteren und Spieler*innen haben Vorrang. Keine
+  (dunkel/hell) ein Standard-Banner (`appSettings.standardHeader`, gilt überall
+  ohne eigenes Bild) und ein Header-Bild pro Seite, inkl. Ausschnitt-Regler. Eigene
+  Header von Szenen, Orten, Charakteren und Spieler*innen haben Vorrang.
+  „Seiten-Header überschreiben…" entfernt nach Nachfrage (`ConfirmDialog`) die
+  Seiten-Bilder des Stils, nie automatisch; eigene Banner von Szenen, Profilen,
+  Dashboards und Orten bleiben immer erhalten. Keine
   Farbauswahl: Die Akzentfarbe gehört zum jeweiligen Stil.
 - **Konto löschen** (SQL: `supabase/schema-delete-player.sql`): eigenes Konto unter
   Mein Profil (Passwort zur Bestätigung), das anderer unter Admin → Spieler*innen.
@@ -719,7 +723,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   hellen Stil ist `--color-white` dunkel getönt. Schwarze Schrift auf `bg-accent` bleibt.
 - **Akzent als Schrift** (`text-accent`, `hover:text-accent`) nutzt im hellen Stil
   `--accent-ink` (kräftigeres Orange), weil das helle Orange auf Creme zu blass wäre.
-- **Header** je Stil: Ohne eigenes Bild gilt `standardHeader(segment, modus)` – das
+- **Header** je Stil: Ohne eigenes Bild gilt der Standard-Banner der Admins
+  (`fallbackHeader`), ohne den `standardHeader(segment, modus)` – das
   gemeinsame Standardbild `public/headers/standard.webp` mit je Stil und Seite
   eigenem Ausschnitt (nur für unbekannte Seiten noch die generierte Vorlage);
   Admins hinterlegen je Stil eigene Bilder.

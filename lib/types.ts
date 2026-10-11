@@ -531,6 +531,9 @@ export interface AppSettings {
   // Eigene Header-Bilder je Stil und Seite (erstes Pfadstück: dashboard, szenen,
   // orte …), Bildadresse ggf. mit Ausschnitt-Anhang „#y=…" (siehe lib/headers.ts)
   headers?: { dark?: Record<string, string>; light?: Record<string, string> };
+  // Standard-Banner je Stil: gilt überall, wo weder die Seite noch der Inhalt ein
+  // eigenes Bild hat (sonst das mitgelieferte Standardbild)
+  standardHeader?: { dark?: string | null; light?: string | null };
   // Eigene Bilder der Gegenden (AreaKey bzw. „rest"/„industrial" -> Bildadresse,
   // ggf. mit Ausschnitt-Anhang) – Gegend-Panel der Karte und Ortskarten ohne Bild
   areaImages?: Record<string, string>;
