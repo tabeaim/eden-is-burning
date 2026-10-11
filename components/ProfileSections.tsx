@@ -242,10 +242,10 @@ export function ProfileSkills({ c }: { c: WithProfile }) {
         {skills.map((s, i) => (
           <div key={i}>
             <div className="mb-1.5 flex items-baseline justify-between gap-3">
-              <div className="min-w-0 break-words text-[0.6875rem] uppercase tracking-wider text-text-primary">
+              <div className="min-w-0 break-words text-[0.625rem] text-text-primary">
                 {s.name}
               </div>
-              <div className="text-[0.6875rem] tabular-nums text-text-tertiary">{s.value}%</div>
+              <div className="text-[0.625rem] tabular-nums text-text-tertiary">{s.value}%</div>
             </div>
             <div
               className="h-1 overflow-hidden rounded-full bg-white/[0.12]"
@@ -296,7 +296,7 @@ export function ProfileSliders({ c }: { c: WithProfile }) {
           const at = `${Math.min(100, Math.max(0, s.value))}%`;
           return (
             <div key={i}>
-              <div className="mb-1 flex items-baseline justify-between gap-4 text-[0.6875rem] uppercase leading-tight tracking-wider text-text-primary">
+              <div className="mb-1 flex items-baseline justify-between gap-4 text-[0.625rem] leading-tight text-text-primary">
                 <div className="min-w-0 break-words">{s.left}</div>
                 <div className="min-w-0 break-words text-right">{s.right}</div>
               </div>
