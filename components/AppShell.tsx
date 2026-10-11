@@ -23,9 +23,9 @@ import { AlertPing } from "./AlertPing";
 const NAV: { href: string; label: string; icon: IconName; title?: string }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/szenen", label: "Szenen", icon: "book" },
-  { href: "/handy", label: "Handy", icon: "phone" },
   { href: "/orte", label: "Orte", icon: "map", title: "Eden, Virginia" },
   { href: "/kalender", label: "Timeline", icon: "calendar" },
+  { href: "/handy", label: "Handy", icon: "phone" },
   { href: "/charaktere", label: "Charaktere", icon: "users" },
   { href: "/spieler", label: "Spieler*innen", icon: "star" },
   { href: "/info", label: "Info", icon: "info" },
