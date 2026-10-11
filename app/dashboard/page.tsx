@@ -443,7 +443,7 @@ export default function DashboardPage() {
           )}
 
           <section className={DASH_BOX}>
-            <DashHeading className="mb-3">online · jetzt.</DashHeading>
+            <DashHeading className="mb-3">jetzt online.</DashHeading>
             <PlayerPresenceList
               players={onlineNow}
               now
@@ -454,7 +454,7 @@ export default function DashboardPage() {
 
           {onlineRecent.length > 0 && (
             <section className={DASH_BOX}>
-              <DashHeading className="mb-3">online · letzte 24h.</DashHeading>
+              <DashHeading className="mb-3">zuletzt online.</DashHeading>
               <PlayerPresenceList players={onlineRecent} />
             </section>
           )}
@@ -590,6 +590,7 @@ function ChatItem({
   const { leaveOnRead, updateChatScene } = useStore();
   return (
     <ChatRow
+      card
       chat={u.chat}
       scene={u.scene}
       forCharacter={char.id}
@@ -630,7 +631,7 @@ function DashHeading({
   className?: string;
 }) {
   return (
-    <h2 className={`${className} flex items-baseline gap-2.5 font-display lowercase text-[1.75rem] leading-none text-accent`}>
+    <h2 className={`${className} flex items-baseline gap-2.5 font-display lowercase text-[1.5rem] leading-none text-accent`}>
       {children}
       {note && (
         <span

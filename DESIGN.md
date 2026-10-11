@@ -40,8 +40,8 @@ Tokens stehen in `app/globals.css` (`--accent`, `--olive`, `--bg-*`, `--text-*`,
 `--border-*`). Display-Schrift (`font-display`, Computer Modern Typewriter – lokal eingebunden
 aus `app/fonts`, nur der normale Schnitt) nur für Logo, Seitentitel und die
 kleingeschriebenen Abschnitts-Überschriften mit Punkt („facts.", „scenes.").
-Abschnitts-Überschriften sind `1.625rem`, in den Profilen (`SectionHeading`) und
-auf dem Dashboard (`DashHeading`)
+Abschnitts-Überschriften sind `1.625rem`, auf dem Dashboard (`DashHeading`)
+`1.5rem`, in den Profilen (`SectionHeading`)
 `1.75rem` (Unter-Überschriften `1.25rem`), etwas
 enger gesetzt und eine Spur kräftiger: Ein Gewicht 500 hat die Schrift nicht, es
 ist per hauchdünner Kontur angenähert (`h2`/`h3` mit `font-display` und
@@ -449,8 +449,9 @@ einen gilt auch fürs andere.
 
 Zwei Spalten: links Hinweise (Anrufe, Mailbox, Captic), „du bist dran." und
 „wartet auf andere."; rechts das Zitat über allem, darunter je in einem
-Kästchen „szenen · letzte 24h.", „online · jetzt." und „online · letzte 24h."
-(Zeitraum im Titel, Titel in der Box). Abschnitts-Überschriften wie überall in
+Kästchen „szenen · letzte 24h.", „jetzt online." und „zuletzt online." (letzte
+24 Stunden; Titel in der Box). Chats stehen in den Listen links als Karte im
+Aufbau der Szenenkarte (`ChatRow card`), rechts als kompakte Zeile. Abschnitts-Überschriften wie überall in
 der Display-Schrift (`DashHeading`), links dahinter der Zähler, ebenfalls in der
 Display-Schrift. „Du bist dran" ist eine
 einzige Liste über alle Charaktere – Szenen und Chats gemischt, das Neueste
