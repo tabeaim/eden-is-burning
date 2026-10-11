@@ -563,11 +563,15 @@ html[data-env="dev"] .font-display {
    läuft breit, deshalb kleiner und enger als Barriecito */
 html[data-env="dev"] h2.font-display,
 html[data-env="dev"] h3.font-display {
-  font-size: 1.6875rem;
+  /* Größen aus der vorhandenen Skala (1.625rem wie „brought to you by", 1.25rem) */
+  font-size: 1.625rem;
   letter-spacing: -0.04em;
+  /* Gewicht 500: Die Schrift gibt es nur in 400 (dazu Light und Bold), deshalb
+     angenähert durch eine hauchdünne Kontur in der Schriftfarbe */
+  -webkit-text-stroke: 0.02em currentColor;
 }
 html[data-env="dev"] h3.font-display {
-  font-size: 1.375rem;
+  font-size: 1.25rem;
 }
 /* die Schreibmaschinen-Schrift läuft breiter: Wortmarke etwas kleiner, damit sie
    in der Seitenleiste in einer Zeile bleibt */
