@@ -593,10 +593,6 @@ function SceneHeader({
         <p className="mt-3 font-serif text-[0.875rem] italic text-text-secondary leading-relaxed">
           {scene.summary}
         </p>
-      ) : (
-        <p className="mt-3 text-[0.875rem] text-text-tertiary">
-          Noch keine Zusammenfassung hinterlegt – beim Beenden der Szene ergänzbar.
-        </p>
       )}
     </div>
   );
