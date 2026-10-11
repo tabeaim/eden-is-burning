@@ -184,6 +184,9 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Raster haben `gap-5` und sind in einer Zeile gleich hoch. Ausnahmen: „about."
   (Fließtext) steht frei mit Überschrift darüber, und die Looks-Box ist nur so
   hoch wie ihr Inhalt.
+- **Reiter Character:** „about." füllt die Zeile, darunter die Boxen
+  zweispaltig. Ist eine ungerade Zahl an Boxen ausgefüllt (eine oder drei),
+  rückt die erste neben den About-Text, damit keine Lücke bleibt.
 - **Skills & Slider:** Beschriftung über dem Balken (Skill: Name links, Prozent
   rechts; Slider: beide Pole links und rechts; 0.75rem, normale
   Schreibweise statt Großbuchstaben), darunter ein dünner, runder

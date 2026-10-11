@@ -462,25 +462,38 @@ function hasLooksContent(c: Character): boolean {
 
 function CharacterTab({ c }: { c: Character }) {
   const empty = !hasCharacterContent(c);
+  const p = c.profile ?? {};
+  // die ausgefüllten Boxen, in fester Reihenfolge
+  const boxes = [
+    (p.traits_plus?.length || p.traits_minus?.length) && <ProfileTraits key="traits" c={c} />,
+    p.skills?.length && <ProfileSkills key="skills" c={c} />,
+    p.sliders?.length && <ProfileSliders key="sliders" c={c} />,
+    (p.likes?.length || p.dislikes?.length) && <ProfileLikes key="likes" c={c} />,
+  ].filter((x): x is React.ReactElement => !!x);
+  // Bei ungerader Anzahl (eine oder drei) bliebe neben einer Box eine Lücke –
+  // dann rückt die erste Box neben den About-Text, der sonst die Zeile füllt.
+  const beside = c.personality && boxes.length % 2 === 1 ? boxes.shift() : null;
+  const about = c.personality && (
+    // der Fließtext steht frei, ohne Box
+    <section>
+      <SectionHeading>about.</SectionHeading>
+      <RichText html={c.personality} className="text-[0.875rem] leading-relaxed text-text-secondary" />
+    </section>
+  );
   return (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-      {c.personality && (
-        // der Fließtext steht frei, ohne Box
-        <section className="lg:col-span-2">
-          <SectionHeading>about.</SectionHeading>
-          <RichText
-            html={c.personality}
-            className="text-[0.875rem] leading-relaxed text-text-secondary"
-          />
-        </section>
+    <div className="flex flex-col gap-5">
+      {beside ? (
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+          {about}
+          {beside}
+        </div>
+      ) : (
+        about
       )}
-      <ProfileTraits c={c} />
-      <ProfileSkills c={c} />
-      <ProfileSliders c={c} />
-      <ProfileLikes c={c} />
+      {boxes.length > 0 && <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">{boxes}</div>}
       <Vibes c={c} />
       {empty && (
-        <p className="text-[0.875rem] text-text-tertiary lg:col-span-2">Noch keine Charakterbeschreibung hinterlegt.</p>
+        <p className="text-[0.875rem] text-text-tertiary">Noch keine Charakterbeschreibung hinterlegt.</p>
       )}
     </div>
   );
