@@ -41,6 +41,7 @@ import {
   ProfileTimeline,
   ProfileTraits,
   SectionBox,
+  SectionHeading,
 } from "@/components/ProfileSections";
 import type { Character, RelationCategory, Scene } from "@/lib/types";
 
@@ -464,12 +465,14 @@ function CharacterTab({ c }: { c: Character }) {
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       {c.personality && (
-        <SectionBox title="about." className="lg:col-span-2">
+        // der Fließtext steht frei, ohne Box
+        <section className="lg:col-span-2">
+          <SectionHeading>about.</SectionHeading>
           <RichText
             html={c.personality}
             className="text-[0.875rem] leading-relaxed text-text-secondary"
           />
-        </SectionBox>
+        </section>
       )}
       <ProfileTraits c={c} />
       <ProfileSkills c={c} />
@@ -485,14 +488,15 @@ function CharacterTab({ c }: { c: Character }) {
 
 // Aussehen: links das Style-Whiteboard (Collage wie bei den Pockets, gepflegt
 // über „Bearbeiten"), rechts der Fließtext über die ganze Breite und darunter
-// die Angaben. Ohne Whiteboard füllen Text und Angaben die Zeile.
+// die Angaben – die Box ist nur so hoch wie ihr Inhalt. Ohne Whiteboard füllen
+// Text und Angaben die Zeile.
 function LookTab({ c }: { c: Character }) {
   const outfit = c.profile?.outfit ?? [];
   if (!hasLooksContent(c)) {
     return <p className="text-[0.875rem] text-text-tertiary">Noch nichts zum Aussehen hinterlegt.</p>;
   }
   return (
-    <div className={`grid grid-cols-1 gap-5 ${outfit.length > 0 ? "lg:grid-cols-2" : ""}`}>
+    <div className={`grid grid-cols-1 items-start gap-5 ${outfit.length > 0 ? "lg:grid-cols-2" : ""}`}>
       {outfit.length > 0 && (
         // ohne Box und Überschrift – die Collage steht frei und füllt die Spalte
         <ThingsBoard items={outfit} fill />
