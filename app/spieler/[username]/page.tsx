@@ -24,7 +24,7 @@ import {
   ProfileLikes,
   ProfileSkills,
   ProfileSliders,
-  SectionHeading,
+  SectionBox,
 } from "@/components/ProfileSections";
 
 type Tab = "characters" | "scenes" | "about";
@@ -135,9 +135,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
         ) : (
           <p className="text-[0.875rem] text-text-tertiary">Noch keine Beschreibung.</p>
         )}
-        <section>
-          <SectionHeading>facts.</SectionHeading>
-          <div className="rounded-lg border border-border-subtle bg-bg-surface px-3.5 py-3">
+        <SectionBox title="facts.">
           <Facts>
             <FactRow label="Member since" value={`${formatInplayDate(p.created_at.slice(0, 10))} · seit ${since(p.created_at)}`} />
             <FactRow label="Characters" value={`${chars.length}`} />
@@ -146,8 +144,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
             <FactRow label="Posts" value={`${postCount}`} />
             <FactRow label="Last seen" value={formatDateTime(p.last_seen)} />
           </Facts>
-          </div>
-        </section>
+        </SectionBox>
       </div>
 
       {tabs.length > 0 && (
@@ -215,7 +212,7 @@ export default function PlayerPage({ params }: { params: Promise<{ username: str
 
       {/* Skills, Slider, Likes – wie bei den Charakteren */}
       {tab === "about" && hasAbout && (
-        <div className="flex max-w-4xl flex-col gap-9">
+        <div className="flex max-w-4xl flex-col gap-5">
           <ProfileSkills c={p} />
           <ProfileSliders c={p} />
           <ProfileLikes c={p} />

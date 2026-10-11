@@ -40,6 +40,7 @@ import {
   ProfileSliders,
   ProfileTimeline,
   ProfileTraits,
+  SectionBox,
 } from "@/components/ProfileSections";
 import type { Character, RelationCategory, Scene } from "@/lib/types";
 
@@ -56,12 +57,12 @@ const btnPrimary =
 const btnQuiet = "text-[0.8125rem] text-text-tertiary hover:text-text-primary px-2";
 // Raster des Profils (siehe DESIGN.md → Profil-Raster) – überall dieselben, damit
 // die Reiter gleich aufgebaut sind:
-// schmale Textspalte + breitere Inhaltsspalte (General: Beschreibung | Facts, Looks: Angaben | Style)
+// schmale Textspalte + breitere Inhaltsspalte (General: Beschreibung | Facts)
 const SPLIT = "grid items-start gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]";
 // Karten-Listen in zwei Spalten (Scenes, Relations)
 const CARDS = "grid items-start gap-3 lg:grid-cols-2";
 // kleine Boxen nebeneinander (Facts-Gruppen)
-const BOXES = "grid items-start gap-x-5 gap-y-6 sm:grid-cols-2";
+const BOXES = "grid grid-cols-1 gap-5 sm:grid-cols-2";
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
@@ -363,14 +364,13 @@ function NpcFacts({ c }: { c: Character }) {
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mb-6" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-7 items-start max-w-4xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-4xl">
         <ProfileFacts c={c} />
         <ProfileLooks c={c} />
         <Vibes c={c} />
 
         {foundAt.length > 0 && (
-          <section>
-            <Heading>spotted here.</Heading>
+          <SectionBox title="spotted here.">
             <div className="flex flex-wrap gap-1.5">
               {foundAt.map((l) => (
                 <LocationBubble
@@ -384,7 +384,7 @@ function NpcFacts({ c }: { c: Character }) {
                 />
               ))}
             </div>
-          </section>
+          </SectionBox>
         )}
       </div>
 
@@ -414,8 +414,7 @@ function Vibes({ c }: { c: Character }) {
   const vibes = c.vibes ?? [];
   if (vibes.length === 0) return null;
   return (
-    <section className="sm:col-span-2 lg:col-span-2">
-      <Heading>vibes.</Heading>
+    <SectionBox title="vibes." className="sm:col-span-2 lg:col-span-2">
       <div className="columns-2 gap-3 sm:columns-3">
         {vibes.map((src, i) => (
           <a
@@ -430,15 +429,7 @@ function Vibes({ c }: { c: Character }) {
           </a>
         ))}
       </div>
-    </section>
-  );
-}
-
-function Heading({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="font-display lowercase text-[2rem] text-accent leading-none mb-3">
-      {children}
-    </h2>
+    </SectionBox>
   );
 }
 
@@ -471,15 +462,14 @@ function hasLooksContent(c: Character): boolean {
 function CharacterTab({ c }: { c: Character }) {
   const empty = !hasCharacterContent(c);
   return (
-    <div className="grid items-start gap-x-10 gap-y-9 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       {c.personality && (
-        <section className="lg:col-span-2">
-          <Heading>about.</Heading>
+        <SectionBox title="about." className="lg:col-span-2">
           <RichText
             html={c.personality}
             className="text-[0.875rem] leading-relaxed text-text-secondary"
           />
-        </section>
+        </SectionBox>
       )}
       <ProfileTraits c={c} />
       <ProfileSkills c={c} />
@@ -493,23 +483,23 @@ function CharacterTab({ c }: { c: Character }) {
   );
 }
 
-// Aussehen: links die Angaben, daneben das Style-Whiteboard (Collage wie bei
-// den Pockets, gepflegt über „Bearbeiten")
+// Aussehen: links das Style-Whiteboard (Collage wie bei den Pockets, gepflegt
+// über „Bearbeiten"), rechts der Fließtext über die ganze Breite und darunter
+// die Angaben. Ohne Whiteboard füllen Text und Angaben die Zeile.
 function LookTab({ c }: { c: Character }) {
   const outfit = c.profile?.outfit ?? [];
   if (!hasLooksContent(c)) {
     return <p className="text-[0.875rem] text-text-tertiary">Noch nichts zum Aussehen hinterlegt.</p>;
   }
   return (
-    <div className={SPLIT}>
-      <ProfileLooks c={c} />
+    <div className={`grid grid-cols-1 gap-5 ${outfit.length > 0 ? "lg:grid-cols-2" : ""}`}>
       {outfit.length > 0 && (
-        <section>
-          <Heading>style.</Heading>
-          {/* füllt die Spalte bis zum Rand */}
+        <SectionBox title="style.">
+          {/* füllt die Box bis zum Rand */}
           <ThingsBoard items={outfit} fill />
-        </section>
+        </SectionBox>
       )}
+      <ProfileLooks c={c} wide />
     </div>
   );
 }

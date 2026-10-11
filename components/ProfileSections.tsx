@@ -29,13 +29,21 @@ import { RichText } from "./RichText";
 // Likes/Dislikes und Timeline. Leere Abschnitte fallen weg; im Profil versteckte
 // Angaben (`profile.hidden`) ebenso.
 
-// Fakten-Kategorie: Überschrift + Liste in einer dezenten Box (Label links in
-// einer Flucht, Werte daneben)
-function FactBox({ title, children }: { title: string; children: React.ReactNode }) {
+// Abschnitt des Profils: dezente Box, die Überschrift steht mit in der Box
+// (Facts-Gruppen, Skills, Slider, Eigenschaften, Likes, About, Style …)
+export function SectionBox({
+  title,
+  className = "",
+  children,
+}: {
+  title?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <section>
-      <SectionHeading>{title}</SectionHeading>
-      <div className="rounded-lg border border-border-subtle bg-bg-surface px-3.5 py-3">{children}</div>
+    <section className={`${className} rounded-lg border border-border-subtle bg-bg-surface px-5 pb-5 pt-4`}>
+      {title && <SectionHeading>{title}</SectionHeading>}
+      {children}
     </section>
   );
 }
@@ -158,22 +166,22 @@ export function ProfileFacts({ c }: { c: Character }) {
       {groups.map(([title, rows]) =>
         rows.some(([, v]) => v !== null && v !== undefined && v !== "") ? (
           // die Beschäftigung braucht mit Ort die ganze Breite
-          <div key={title} className={title === "occupation." ? "sm:col-span-2" : ""}>
-            <FactBox title={title}>
-              <Facts>
-                {rows.map(([label, value]) => (
-                  <FactRow key={label} label={label} value={value} />
-                ))}
-              </Facts>
-            </FactBox>
-          </div>
+          <SectionBox key={title} title={title} className={title === "occupation." ? "sm:col-span-2" : ""}>
+            <Facts>
+              {rows.map(([label, value]) => (
+                <FactRow key={label} label={label} value={value} />
+              ))}
+            </Facts>
+          </SectionBox>
         ) : null,
       )}
     </>
   );
 }
 
-export function ProfileLooks({ c }: { c: Character }) {
+// `wide` (Reiter „Looks"): Fließtext über die ganze Breite, darunter – durch eine
+// Linie abgesetzt – die Angaben in zwei Spalten
+export function ProfileLooks({ c, wide = false }: { c: Character; wide?: boolean }) {
   const rows = [
     ["Height", shown(c, "height", normalizeHeight(c.height))],
     ["Figure", shown(c, "figure", c.figure)],
@@ -184,14 +192,25 @@ export function ProfileLooks({ c }: { c: Character }) {
   const note = c.profile?.looks_note;
   if (!rows.some(([, v]) => v) && !note) return null;
   return (
-    <FactBox title="looks.">
-      {note && <RichText html={note} className="mb-2 text-[0.875rem] leading-relaxed text-text-secondary" />}
-      <Facts>
+    <SectionBox title="looks.">
+      {note && (
+        <RichText
+          html={note}
+          className={`text-[0.875rem] leading-relaxed text-text-secondary ${
+            wide && rows.some(([, v]) => v) ? "mb-4 border-b border-border-subtle pb-4" : "mb-2"
+          }`}
+        />
+      )}
+      <Facts
+        className={
+          wide ? "gap-y-2.5 sm:grid-cols-[max-content_minmax(0,1fr)_max-content_minmax(0,1fr)] sm:gap-x-5" : ""
+        }
+      >
         {rows.map(([label, value]) => (
           <FactRow key={label} label={label} value={value} />
         ))}
       </Facts>
-    </FactBox>
+    </SectionBox>
   );
 }
 
@@ -217,22 +236,31 @@ export function ProfileSkills({ c }: { c: WithProfile }) {
   const skills = c.profile?.skills ?? [];
   if (skills.length === 0) return null;
   return (
-    <section>
-      <SectionHeading>skills.</SectionHeading>
-      <div className="grid grid-cols-[minmax(0,auto)_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2">
+    <SectionBox title="skills.">
+      {/* Name und Wert über dem Balken, der Balken dünn und in der Akzentfarbe */}
+      <div className="flex flex-col gap-4">
         {skills.map((s, i) => (
-          <div key={i} className="contents">
-            <div className="max-w-[14rem] text-right text-[0.6875rem] uppercase tracking-wider text-text-primary">
-              {s.name}
+          <div key={i}>
+            <div className="mb-1.5 flex items-baseline justify-between gap-3">
+              <div className="min-w-0 break-words text-[0.6875rem] uppercase tracking-wider text-text-primary">
+                {s.name}
+              </div>
+              <div className="text-[0.6875rem] tabular-nums text-text-tertiary">{s.value}%</div>
             </div>
-            <div className="h-5 min-w-24 bg-white/[0.12]" role="img" aria-label={`${s.name}: ${s.value} %`}>
-              <div className="h-full bg-text-primary/85" style={{ width: `${Math.min(100, Math.max(0, s.value))}%` }} />
+            <div
+              className="h-1 overflow-hidden rounded-full bg-white/[0.12]"
+              role="img"
+              aria-label={`${s.name}: ${s.value} %`}
+            >
+              <div
+                className="h-full rounded-full bg-accent"
+                style={{ width: `${Math.min(100, Math.max(0, s.value))}%` }}
+              />
             </div>
-            <div className="text-[0.6875rem] tabular-nums text-text-secondary">{s.value}%</div>
           </div>
         ))}
       </div>
-    </section>
+    </SectionBox>
   );
 }
 
@@ -241,8 +269,7 @@ export function ProfileTraits({ c }: { c: Character }) {
   const minus = c.profile?.traits_minus ?? [];
   if (plus.length + minus.length === 0) return null;
   return (
-    <section>
-      <SectionHeading>character.</SectionHeading>
+    <SectionBox title="character.">
       <div className="grid gap-6 sm:grid-cols-2">
         {[
           ["+", plus],
@@ -254,7 +281,7 @@ export function ProfileTraits({ c }: { c: Character }) {
           </div>
         ))}
       </div>
-    </section>
+    </SectionBox>
   );
 }
 
@@ -262,26 +289,34 @@ export function ProfileSliders({ c }: { c: WithProfile }) {
   const sliders = c.profile?.sliders ?? [];
   if (sliders.length === 0) return null;
   return (
-    <section>
-      <SectionHeading>sliders.</SectionHeading>
+    <SectionBox title="sliders.">
+      {/* Beide Pole über dem Balken; der Balken ist bis zum runden Regler gefüllt */}
       <div className="flex flex-col gap-4">
-        {sliders.map((s, i) => (
-          <div key={i} className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] items-center gap-3">
-            <div className="text-right text-[0.6875rem] uppercase leading-tight tracking-wider text-text-primary">
-              {s.left}
+        {sliders.map((s, i) => {
+          const at = `${Math.min(100, Math.max(0, s.value))}%`;
+          return (
+            <div key={i}>
+              <div className="mb-1 flex items-baseline justify-between gap-4 text-[0.6875rem] uppercase leading-tight tracking-wider text-text-primary">
+                <div className="min-w-0 break-words">{s.left}</div>
+                <div className="min-w-0 break-words text-right">{s.right}</div>
+              </div>
+              {/* seitlich eingerückt, damit der Regler an den Enden nicht übersteht */}
+              <div className="relative mx-[7px] h-4" role="img" aria-label={`${s.left} – ${s.right}: ${s.value} %`}>
+                <div className="absolute -inset-x-[7px] top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/[0.12]" />
+                <div
+                  className="absolute -left-[7px] top-1/2 h-1 -translate-y-1/2 rounded-full bg-gradient-to-r from-accent/40 to-accent"
+                  style={{ width: `calc(${at} + 7px)` }}
+                />
+                <div
+                  className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-accent bg-bg-surface"
+                  style={{ left: at }}
+                />
+              </div>
             </div>
-            <div className="relative h-5" role="img" aria-label={`${s.left} – ${s.right}: ${s.value} %`}>
-              <div className="absolute inset-x-0 top-1/2 h-px bg-text-primary/80" />
-              <div
-                className="absolute top-0 h-full w-0.5 -translate-x-1/2 bg-text-primary"
-                style={{ left: `${Math.min(100, Math.max(0, s.value))}%` }}
-              />
-            </div>
-            <div className="text-[0.6875rem] uppercase leading-tight tracking-wider text-text-primary">{s.right}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-    </section>
+    </SectionBox>
   );
 }
 
@@ -290,8 +325,7 @@ export function ProfileLikes({ c }: { c: WithProfile }) {
   const dislikes = c.profile?.dislikes ?? [];
   if (likes.length + dislikes.length === 0) return null;
   return (
-    <section>
-      <SectionHeading>likes/dislikes.</SectionHeading>
+    <SectionBox title="likes/dislikes.">
       <div className="grid gap-6 sm:grid-cols-2">
         {(
           [
@@ -307,7 +341,7 @@ export function ProfileLikes({ c }: { c: WithProfile }) {
           </div>
         ))}
       </div>
-    </section>
+    </SectionBox>
   );
 }
 

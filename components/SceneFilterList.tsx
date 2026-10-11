@@ -14,7 +14,7 @@ const STATUS: [Status, string][] = [
 const KIND_PLURAL: Record<SceneKind, string> = { scene: "Szenen", call: "Anrufe", sms: "SMS" };
 
 const pill = (active: boolean) =>
-  `rounded-full px-3 py-1 text-[0.8125rem] transition-colors ${
+  `rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
     active
       ? "bg-accent text-black font-medium"
       : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
@@ -22,20 +22,26 @@ const pill = (active: boolean) =>
 
 // Szenenliste der Profile (Charakter, Spieler*in): kompakte Karten mit einfachen
 // Filtern darüber – Art (Szenen · Anrufe · SMS, mehrere wählbar; nichts gewählt =
-// alle) und Status. Filter erscheinen nur, wenn es etwas zu unterscheiden gibt.
+// alle) und Status (Alle · Aktiv · Abgeschlossen, immer da). Die Art erscheint nur,
+// wenn es mehr als eine gibt.
 export function SceneFilterList({ scenes, className }: { scenes: Scene[]; className: string }) {
   const [kinds, setKinds] = useState<SceneKind[]>([]);
   const [status, setStatus] = useState<Status>("all");
   const present = SCENE_KINDS.filter((k) => scenes.some((s) => sceneKind(s) === k.value));
-  const mixedStatus = scenes.some((s) => s.status === "active") && scenes.some((s) => s.status === "closed");
   const shown = scenes.filter(
     (s) =>
       (kinds.length === 0 || kinds.includes(sceneKind(s))) && (status === "all" || s.status === status),
   );
   return (
     <>
-      {(present.length > 1 || mixedStatus) && (
-        <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="flex flex-wrap gap-1.5">
+            {STATUS.map(([key, label]) => (
+              <button key={key} aria-pressed={status === key} onClick={() => setStatus(key)} className={pill(status === key)}>
+                {label}
+              </button>
+            ))}
+          </div>
           {present.length > 1 && (
             <div className="flex flex-wrap gap-1.5">
               {present.map((k) => (
@@ -54,17 +60,7 @@ export function SceneFilterList({ scenes, className }: { scenes: Scene[]; classN
               ))}
             </div>
           )}
-          {mixedStatus && (
-            <div className="flex flex-wrap gap-1.5">
-              {STATUS.map(([key, label]) => (
-                <button key={key} onClick={() => setStatus(key)} className={pill(status === key)}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      </div>
       {shown.length === 0 ? (
         <p className="text-[0.875rem] text-text-tertiary">Keine Szenen für diese Filter.</p>
       ) : (

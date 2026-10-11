@@ -178,6 +178,18 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   hinterlegt). Linksbündig über die ganze Breite; der Stammbaum steht mittig.
   Das Pinterest-Board wird schon beim Öffnen des Profils unsichtbar aufgebaut. Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
+- **Abschnitte als Box** (`SectionBox`): Jeder Abschnitt des Profils (Facts-Gruppen,
+  about, character, skills, sliders, likes, looks, style, vibes) steht in einer
+  dezenten Box, die Überschrift mit in der Box – nie darüber. Boxen in einem
+  Raster haben `gap-5` und sind in einer Zeile gleich hoch.
+- **Skills & Slider:** Beschriftung über dem Balken (Skill: Name links, Prozent
+  rechts; Slider: beide Pole links und rechts), darunter ein dünner, runder
+  Balken in der Akzentfarbe; beim Slider gefüllt bis zum runden Regler.
+- **Looks:** links das Style-Whiteboard, rechts in einer Box der Fließtext über
+  die ganze Breite und darunter (durch eine Linie abgesetzt) die Angaben in zwei
+  Spalten (`ProfileLooks wide`). Ohne Whiteboard füllt die Box die Zeile.
+- **Szenen im Profil** (`SceneFilterList`): darüber immer die Status-Reiter
+  Alle · Aktiv · Abgeschlossen, daneben die Art, wenn es mehr als eine gibt.
 - **Facts:** drei kleine Boxen – identity (Name, Age, Zodiac, Gender, bei
   Supporting Characters und Statist*innen „Role"), life (Residence, Origin,
   Status = Beziehungsstatus, Sexuality, Spotify als Link), occupation (Occupation,
@@ -186,9 +198,9 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
 - **Profil-Raster** (Konstanten oben in `app/charaktere/[id]/page.tsx`; neue
   Reiter nutzen eines davon, statt eigene Spalten und Abstände zu erfinden):
   `SPLIT` – schmale Textspalte + breitere Inhaltsspalte im Verhältnis 2:3,
-  `gap-x-10 gap-y-6` (General: Beschreibung | Facts, Looks: Angaben | Style);
+  `gap-x-10 gap-y-6` (General: Beschreibung | Facts);
   `CARDS` – Karten-Listen zweispaltig, `gap-3` (Scenes, Relations);
-  `BOXES` – kleine Boxen nebeneinander, `gap-x-5 gap-y-6` (Facts-Gruppen).
+  `BOXES` – kleine Boxen nebeneinander, `gap-5` (Facts-Gruppen).
   Bereiche trennt eine Linie mit `mt-6 mb-6`, der Footer beginnt mit `mt-6`.
 - **Profil bearbeiten** (`ProfileEditPanel`): wie die Charakter-Einstellungen in
   aufklappbaren Abschnitten (`Collapsible`): Auf einen Blick (offen),
@@ -375,6 +387,15 @@ Plot-Logik (Filter, Sichtbarkeit) liegt in `lib/plots.ts`, die Plot-Zeile in
 Löschen des geöffneten Plots kommen auf beiden Seiten aus `PlotTools` (ebenfalls `PlotBar.tsx`). Off-Szenen eines Plots sind
 gestrichelt umrandet und tragen das Tag „im Off". AU-Szenen erscheinen nur, wenn
 ihr AU im Filter gewählt ist – ohne Auswahl zeigt die Timeline nur Canon.
+
+## Header – `BannerHeader` in `components/AppShell.tsx`
+
+Das Titelbild ist `h-48`, ab `sm` `h-56`. Der Seitentitel steht ganz auf dem Bild,
+mit Luft bis zur Unterkante; dort sitzt die Trennlinie zur Seite. Auf
+Detailseiten (Szene, Charakter, Spieler*in, Ort – sie zeichnen die Trennlinie
+selbst) rutscht alles über der Linie (Zitat, Szenenkopf, Bearbeiten) in diese
+Lücke, also mit auf das Bild. Der Seiteninhalt (`main`) liegt dafür über dem
+Titelbild; den Verlauf zum Hintergrundfoto zeichnet der Header.
 
 ## Seitenbreite
 

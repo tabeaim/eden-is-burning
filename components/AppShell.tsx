@@ -172,15 +172,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               navHidden={navHidden}
             />
           )}
-          {/* Der Kopfbereich ist deckend dunkel; ab der Trennlinie blendet das
-              Hintergrundfoto weich ein (Verlauf liegt hinter dem Seiteninhalt). */}
-          <main
-            className={`flex-1 min-w-0 ${
-              bare ? "" : "bg-[linear-gradient(to_bottom,var(--bg-primary),transparent_14rem)]"
-            }`}
-          >
-            {children}
-          </main>
+          {/* Der Seiteninhalt liegt über dem Titelbild: Was auf Detailseiten über der
+              Trennlinie steht (Zitat, Szenenkopf, Bearbeiten), ragt mit auf den Header. */}
+          <main className="relative flex-1 min-w-0">{children}</main>
         </div>
       </div>
     </PageMetaProvider>
@@ -255,7 +249,8 @@ function TabTitle({ pathname }: { pathname: string }) {
 }
 
 // Banner-Header: Titelbild pro Seite (Foto über Glut-Verlauf). Der Seitentitel
-// ragt halb über die Banner-Unterkante in die Seite; darunter die Aktions-Leiste.
+// steht ganz auf dem Titelbild, mit Luft bis zu dessen Unterkante – dort endet der
+// Header mit der Trennlinie; auf Detailseiten rutscht ihr Kopfbereich in die Lücke.
 function BannerHeader({
   pathname,
   noBanner = false,
@@ -298,20 +293,29 @@ function BannerHeader({
       {/* Titelbild – Foto über Glut-Verlauf. background-image statt <img>, damit ein
           fehlgeschlagener Ladevorgang kein kaputtes Icon zeigt, sondern den Verlauf. */}
       {!noBanner && (
-      <div className="relative h-40 w-full overflow-hidden" style={{ backgroundImage: EMBER_BG[theme] }}>
+      <div className="relative h-48 sm:h-56 w-full overflow-hidden" style={{ backgroundImage: EMBER_BG[theme] }}>
         <div
           className="absolute inset-0 bg-cover"
           style={bannerStyle(banner)}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/35 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/50 to-transparent" />
       </div>
       )}
+      {/* Unter dem Kopfbereich blendet das Hintergrundfoto weich ein. Der Verlauf
+          beginnt an der Unterkante des Titelbilds bzw. des Headers, je nachdem, was
+          tiefer liegt, und läuft hinter dem Seiteninhalt aus. */}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-x-0 h-56 bg-[linear-gradient(to_bottom,var(--bg-primary),transparent)] ${
+          noBanner ? "top-full" : "top-[max(100%,12rem)] sm:top-[max(100%,14rem)]"
+        }`}
+      />
 
-      {/* Titel – ragt halb über die Banner-Unterkante in die Seite (nicht beschnitten).
+      {/* Titel – steht auf dem Titelbild (nicht beschnitten).
           Container in der Seitenbreite zentriert → Titel startet bündig mit dem Inhalt. */}
       <div className={`relative ${width} mx-auto px-4 sm:px-8`}>
         <h1 className={`page-title inline-block ${
-          noBanner ? (navHidden ? "mt-7 md:mt-14" : "mt-7") : "-mt-8"
+          noBanner ? (navHidden ? "mt-7 md:mt-14" : "mt-7") : "-mt-[3.625rem] sm:-mt-[5.875rem]"
         } max-w-full break-words font-display lowercase text-[2.125rem] sm:text-[3.375rem] leading-none text-text-primary`}>
           {onThisPage && meta.avatar && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -340,7 +344,9 @@ function BannerHeader({
 
       </div>
 
-      {!ownsDivider && <div className="border-b border-border-subtle mt-2" />}
+      {!ownsDivider && (
+        <div className={`relative border-b border-border-subtle ${noBanner ? "mt-2" : "mt-6 sm:mt-10"}`} />
+      )}
     </header>
   );
 }
