@@ -228,7 +228,7 @@ function CharacterCard({
         paused ? PAUSED_CARD_CLASS : ""
       }`}
     >
-      <div className="font-display lowercase text-[1.625rem] leading-none text-text-primary">
+      <div className="card-title font-display lowercase text-[1.625rem] leading-none text-text-primary">
         <Link
           href={`/charaktere/${c.id}`}
           title={gone ? "Charakter gelöscht" : undefined}

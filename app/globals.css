@@ -552,6 +552,10 @@ html[data-env="dev"] h3.font-display {
 html[data-env="dev"] h3.font-display {
   font-size: 1.25rem;
 }
+/* Namen auf den Karten der Charakter-Übersicht: ebenfalls angenähertes 500 */
+html[data-env="dev"] .card-title.font-display {
+  -webkit-text-stroke: 0.02em currentColor;
+}
 /* die Schreibmaschinen-Schrift läuft breiter: Wortmarke etwas kleiner, damit sie
    in der Seitenleiste in einer Zeile bleibt */
 html[data-env="dev"] .site-logo {
