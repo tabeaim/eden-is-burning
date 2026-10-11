@@ -40,7 +40,8 @@ Tokens stehen in `app/globals.css` (`--accent`, `--olive`, `--bg-*`, `--text-*`,
 `--border-*`). Display-Schrift (`font-display`, Computer Modern Typewriter – lokal eingebunden
 aus `app/fonts`, nur der normale Schnitt) nur für Logo, Seitentitel und die
 kleingeschriebenen Abschnitts-Überschriften mit Punkt („facts.", „scenes.").
-Abschnitts-Überschriften sind `1.625rem` (Unter-Überschriften `1.25rem`), etwas
+Abschnitts-Überschriften sind `1.625rem`, in den Profilen (`SectionHeading`)
+`1.75rem` (Unter-Überschriften `1.25rem`), etwas
 enger gesetzt und eine Spur kräftiger: Ein Gewicht 500 hat die Schrift nicht, es
 ist per hauchdünner Kontur angenähert (`h2`/`h3` mit `font-display` und
 `.card-title` in `globals.css`). Schriftgrößen immer aus der vorhandenen Skala
@@ -259,13 +260,16 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Größe an den Ecken, Drehung am Griff oben, Stapelfolge); gespeichert
   liegen die Bilder frei auf durchsichtigem Grund. Beim Hinzufügen kann ein
   einfarbiger Hintergrund entfernt werden (`lib/cutout.ts`).
-- **Facts:** Label fett in Großbuchstaben (0.75rem, grau, ohne Doppelpunkt), Wert
+- **Facts:** Label fett in Großbuchstaben (0.75rem, gedämpftes Grau
+  `text-text-tertiary/80`, ohne Doppelpunkt), Wert
   mit `gap-x-6` Abstand daneben in normaler
   Schreibweise (0.875rem) – `Facts`/`FactRow`. Im Profil steht jede Kategorie
   („facts.", „studies.", „work.") in einer dezenten Box
   (`rounded-lg border bg-bg-surface`); die Facts-Spalte ist breit genug für lange
   Namen. Looks (samt kurzem Beschreibungstext) stehen nur im Hover über dem
   Hochkant-Banner. Lange Reiter scrollen ab `md` in sich.
+- **Timeline im Profil** (`ProfileTimeline`): Jahreszahl in der Display-Schrift
+  (`1.5rem`), der Titel des Abschnitts als Kachel rechts daneben, darunter der Text.
 - **Jeder Reiter hat eine Überschrift:** auch Scenes, Relations, Timeline
   („timeline."), Family Tree, Pockets, Moodboard und das Style-Whiteboard
   („style.") – frei über dem Inhalt, wo es keine Box gibt. Im Spieler*innen-Profil

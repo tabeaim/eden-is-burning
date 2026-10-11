@@ -23,7 +23,7 @@ export function FactRow({ label, value }: { label: string; value: React.ReactNod
   const shown = typeof value === "string" ? value.charAt(0).toUpperCase() + value.slice(1) : value;
   return (
     <>
-      <dt className="text-[0.75rem] font-bold uppercase tracking-wider text-text-tertiary">
+      <dt className="text-[0.75rem] font-bold uppercase tracking-wider text-text-tertiary/80">
         {label}
       </dt>
       <dd className="break-words text-text-primary">{shown}</dd>

@@ -50,7 +50,7 @@ export function SectionBox({
 
 export function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="mb-3 font-display lowercase text-[1.625rem] leading-none text-accent">{children}</h2>
+    <h2 className="mb-3 font-display lowercase text-[1.75rem] leading-none text-accent">{children}</h2>
   );
 }
 
@@ -355,12 +355,15 @@ export function ProfileTimeline({ c, bare = false }: { c: Character; bare?: bool
         {items.map((t, i) => (
           <li key={i} className="relative pb-7 last:pb-0">
             <span className="absolute -left-[2.2rem] top-1.5 h-4 w-4 rounded-full bg-white/30" />
-            <div className="text-[1.5rem] font-bold leading-tight text-text-primary">{t.year}</div>
-            {t.title && (
-              <div className="mt-1 inline-block rounded-md bg-white/[0.1] px-2 py-1 text-[0.75rem] font-bold uppercase tracking-wider text-text-primary">
-                {t.title}
-              </div>
-            )}
+            {/* Jahreszahl in der Display-Schrift, der Titel des Abschnitts daneben */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <div className="font-display text-[1.5rem] leading-tight text-text-primary">{t.year}</div>
+              {t.title && (
+                <div className="rounded-md bg-white/[0.1] px-2 py-1 text-[0.75rem] font-bold uppercase tracking-wider text-text-primary">
+                  {t.title}
+                </div>
+              )}
+            </div>
             {t.text && (
               <RichText html={t.text} className="mt-2 text-[0.875rem] leading-relaxed text-text-secondary" />
             )}
