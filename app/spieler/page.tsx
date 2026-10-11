@@ -85,7 +85,7 @@ function PlayerRow({
           <img
             src={playerImage(player)}
             alt=""
-            className="h-14 w-14 rounded-full object-cover bg-bg-primary ring-1 ring-border-subtle group-hover:ring-accent/50"
+            className="h-14 w-14 rounded-full object-cover bg-bg-primary ring-1 ring-border-subtle"
           />
           {presence && (
             <span
