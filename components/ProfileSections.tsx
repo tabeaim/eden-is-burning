@@ -308,7 +308,7 @@ export function ProfileSliders({ c }: { c: WithProfile }) {
                   style={{ width: `calc(${at} + 7px)` }}
                 />
                 <div
-                  className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-accent bg-bg-surface"
+                  className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent"
                   style={{ left: at }}
                 />
               </div>

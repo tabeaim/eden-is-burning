@@ -179,14 +179,14 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Das Pinterest-Board wird schon beim Öffnen des Profils unsichtbar aufgebaut. Bausteine in
   `components/ProfileSections.tsx`; leere Abschnitte fallen weg.
 - **Abschnitte als Box** (`SectionBox`): Jeder Abschnitt des Profils (Facts-Gruppen,
-  about, character, skills, sliders, likes, looks, style, vibes) steht in einer
+  about, character, skills, sliders, likes, looks, vibes) steht in einer
   dezenten Box, die Überschrift mit in der Box – nie darüber. Boxen in einem
   Raster haben `gap-5` und sind in einer Zeile gleich hoch.
 - **Skills & Slider:** Beschriftung über dem Balken (Skill: Name links, Prozent
   rechts; Slider: beide Pole links und rechts; 0.75rem, normale
   Schreibweise statt Großbuchstaben), darunter ein dünner, runder
-  Balken in der Akzentfarbe; beim Slider gefüllt bis zum runden Regler.
-- **Looks:** links das Style-Whiteboard, rechts in einer Box der Fließtext über
+  Balken in der Akzentfarbe; beim Slider gefüllt bis zum runden, orange gefüllten Regler.
+- **Looks:** links das Style-Whiteboard (frei, ohne Box und Überschrift), rechts in einer Box der Fließtext über
   die ganze Breite und darunter (durch eine Linie abgesetzt) die Angaben in zwei
   Spalten (`ProfileLooks wide`). Ohne Whiteboard füllt die Box die Zeile.
 - **Szenen im Profil** (`SceneFilterList`): darüber immer die Status-Reiter

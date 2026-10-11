@@ -494,10 +494,8 @@ function LookTab({ c }: { c: Character }) {
   return (
     <div className={`grid grid-cols-1 gap-5 ${outfit.length > 0 ? "lg:grid-cols-2" : ""}`}>
       {outfit.length > 0 && (
-        <SectionBox title="style.">
-          {/* füllt die Box bis zum Rand */}
-          <ThingsBoard items={outfit} fill />
-        </SectionBox>
+        // ohne Box und Überschrift – die Collage steht frei und füllt die Spalte
+        <ThingsBoard items={outfit} fill />
       )}
       <ProfileLooks c={c} wide />
     </div>
