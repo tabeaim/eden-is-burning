@@ -516,3 +516,25 @@ label:has(input[type="file"]) {
     box-shadow: 0 0 0 2px var(--accent);
   }
 }
+
+/* NUR LOKAL (next dev, `data-env="dev"` setzt app/layout.tsx): Probe-Akzent in
+   gedecktem Grün statt Orange. Stage und Live bleiben orange. Zum Verwerfen
+   diesen Block und das Attribut im Layout entfernen; zum Übernehmen die Werte
+   oben in die Tokens schreiben. */
+html[data-env="dev"] {
+  --accent: #9fb88a;
+  --accent-soft: rgba(159, 184, 138, 0.16);
+  --map-campus: #7fa06a;
+}
+html[data-env="dev"][data-theme="light"] {
+  --accent: #a9c193;
+  --accent-ink: #3f5a2c;
+  --accent-soft: rgba(140, 170, 115, 0.32);
+}
+html[data-env="dev"] .on-dark {
+  --accent: #9fb88a;
+  --accent-ink: #9fb88a;
+}
+html[data-env="dev"] ::selection {
+  background: rgba(159, 184, 138, 0.35);
+}

@@ -31,6 +31,8 @@ export default function RootLayout({
   return (
     <html
       lang="de"
+      // nur lokal: schaltet den Probe-Akzent in globals.css ein
+      data-env={process.env.NODE_ENV === "development" ? "dev" : undefined}
       className={`${sans.variable} ${display.variable} h-full`}
       suppressHydrationWarning
     >
