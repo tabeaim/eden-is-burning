@@ -126,6 +126,8 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   der Charakter lässt sich im Feld immer wechseln, und wer mit einem neuen
   Charakter schreibt, wird als Teilnehmer*in eingetragen. „Antworten",
   „Weitergeben" und „Beenden" stehen im Szenenkopf und noch einmal unter den Posts.
+  Im Szenenkopf bleiben die Knöpfe ab `md` immer rechts oben; viele Charaktere
+  brechen links daneben in sich um.
   Auf dem Handy stehen sie nur unter den Posts.
 - **Rechtsklick auf eine Szenenbox** (`SceneCard`, `SceneRow`): kleines Menü an
   der Maus (`components/ContextMenu.tsx`) – „Als ungelesen/gelesen markieren".

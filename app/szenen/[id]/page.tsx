@@ -480,9 +480,11 @@ function SceneHeader({
 
   return (
     <div className="mb-6">
-      {/* Status + Charaktere links, Aktions-Buttons rechts (gleiche Höhe) */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5">
+      {/* Status + Charaktere links, Aktions-Buttons rechts (gleiche Höhe). Ab `md`
+          bleiben die Buttons immer rechts oben – viele Charaktere brechen links
+          in sich um, statt die Buttons in die nächste Zeile zu schieben. */}
+      <div className="flex flex-wrap items-start justify-between gap-3 md:flex-nowrap">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 md:flex-1">
         <StatusBadge status={scene.status} sceneId={scene.id} />
         {scene.draft && (
           <span
@@ -517,7 +519,7 @@ function SceneHeader({
         </div>
 
         {(isParticipant || canReply || isAdmin) && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2 md:shrink-0 md:flex-nowrap">
             {/* Antworten, Weitergeben, Beenden: auf dem Handy nur unter den Posts */}
             {canReply && (
               <button
