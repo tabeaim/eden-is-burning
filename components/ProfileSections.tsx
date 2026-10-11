@@ -50,7 +50,7 @@ export function SectionBox({
 
 export function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="mb-3 font-display lowercase text-[2rem] leading-none text-accent">{children}</h2>
+    <h2 className="mb-3 font-display lowercase text-[1.625rem] leading-none text-accent">{children}</h2>
   );
 }
 

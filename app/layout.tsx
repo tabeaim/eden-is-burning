@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Montserrat, Barriecito } from "next/font/google";
+import { Montserrat } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
@@ -12,10 +13,13 @@ const sans = Montserrat({
 });
 
 // Display-Schrift – Bildmarke (Logo) und Seiten-Überschriften
-const display = Barriecito({
+// (Computer Modern Typewriter, SIL Open Font License – siehe app/fonts/cmu-OFL.txt)
+const display = localFont({
+  src: "./fonts/cmuntt.ttf",
   variable: "--font-display",
-  subsets: ["latin"],
   weight: "400",
+  style: "normal",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -31,8 +35,6 @@ export default function RootLayout({
   return (
     <html
       lang="de"
-      // nur lokal: schaltet die Probe-Schrift in globals.css ein
-      data-env={process.env.NODE_ENV === "development" ? "dev" : undefined}
       className={`${sans.variable} ${display.variable} h-full`}
       suppressHydrationWarning
     >

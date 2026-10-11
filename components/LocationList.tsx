@@ -321,7 +321,7 @@ export function LocationList() {
       {kin.length > 0 && (
         <>
           <h2
-            className={`font-display lowercase text-[1.5rem] leading-none text-text-primary mb-3 ${
+            className={`font-display lowercase text-[1.25rem] leading-none text-text-primary mb-3 ${
               direct.length > 0 ? "mt-8" : ""
             }`}
           >

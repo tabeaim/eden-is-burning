@@ -37,8 +37,14 @@ eigenes Bild zeigen alle den Silhouetten-Avatar (`characterImage`).
 ## Farben & Schrift
 
 Tokens stehen in `app/globals.css` (`--accent`, `--olive`, `--bg-*`, `--text-*`,
-`--border-*`). Display-Schrift (`font-display`, Barriecito) nur für Logo, Seitentitel und die
+`--border-*`). Display-Schrift (`font-display`, Computer Modern Typewriter – lokal eingebunden
+aus `app/fonts`, nur der normale Schnitt) nur für Logo, Seitentitel und die
 kleingeschriebenen Abschnitts-Überschriften mit Punkt („facts.", „scenes.").
+Abschnitts-Überschriften sind `1.625rem` (Unter-Überschriften `1.25rem`), etwas
+enger gesetzt und eine Spur kräftiger: Ein Gewicht 500 hat die Schrift nicht, es
+ist per hauchdünner Kontur angenähert (`h2`/`h3` mit `font-display` und
+`.card-title` in `globals.css`). Schriftgrößen immer aus der vorhandenen Skala
+nehmen, keine krummen Zwischenwerte.
 Alles andere ist Montserrat. Standard-Textgröße `0.875rem`, Bubbles/Buttons
 `0.8125rem`.
 
@@ -665,7 +671,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   die Linie selbst (`ownsDivider` in `components/AppShell.tsx`).
 - Button-Stil: `rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5
   text-[0.8125rem]`; Primär-Aktion `bg-accent/90 text-black`.
-- Abschnitte mit `font-display lowercase text-[2rem] text-accent` überschreiben;
+- Abschnitte mit `font-display lowercase text-[1.625rem] text-accent` überschreiben;
   leere Abschnitte ausblenden statt Platzhaltertext zu zeigen.
 - **Fakten** („facts.", „looks.", Steckbrief der Karte): immer `Facts` + `FactRow`
   aus `components/Facts.tsx` – graues Label fett in Großbuchstaben (`0.75rem`) samt

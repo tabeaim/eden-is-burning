@@ -168,7 +168,7 @@ function ProfileTab() {
 
   const primary =
     "rounded-md bg-accent/90 hover:bg-accent px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40";
-  const heading = "font-display lowercase text-[2rem] leading-none text-accent";
+  const heading = "font-display lowercase text-[1.625rem] leading-none text-accent";
 
   return (
     <div className="flex flex-col gap-5">
@@ -478,7 +478,7 @@ function CharactersTab() {
   // Selbst angelegte Statist*innen stehen erst hier, wenn ich sie auch bespiele.
   const mine = npcs.filter((c) => playsAs(c, currentPlayer.id));
 
-  const heading = "font-display lowercase text-[2rem] leading-none text-accent";
+  const heading = "font-display lowercase text-[1.625rem] leading-none text-accent";
   return (
     <div className="flex flex-col gap-3">
       <h2 className={heading}>main characters.</h2>

@@ -248,7 +248,7 @@ export default function LocationPage({
 
 function Heading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="font-display lowercase text-[2rem] text-accent leading-none mb-3">
+    <h2 className="font-display lowercase text-[1.625rem] text-accent leading-none mb-3">
       {children}
     </h2>
   );

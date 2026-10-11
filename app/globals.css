@@ -55,8 +55,8 @@
   --font-sans: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
   /* Georgia-Serifenschrift entfernt -> serifenlos (Content-Titel, Prosa, Zitate) */
   --font-serif: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
-  /* Display-Font (Barriecito) für Bildmarke & Seiten-Überschriften */
-  --font-display: var(--font-display), "Barriecito", sans-serif;
+  /* Display-Font (Computer Modern Typewriter) für Bildmarke & Seiten-Überschriften */
+  --font-display: var(--font-display), "Courier New", ui-monospace, monospace;
 }
 
 * {
@@ -250,11 +250,22 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
   display: none;
 }
 
-/* Display-Font (Barriecito) – Bildmarke & Seiten-Überschriften */
+/* Display-Font (Computer Modern Typewriter, app/fonts) – Bildmarke & Seiten-Überschriften */
 .font-display {
-  font-family: var(--font-display), "Barriecito", sans-serif;
-  font-weight: 400; /* die Schrift hat nur einen Schnitt */
-  letter-spacing: 0.01em;
+  font-family: var(--font-display), "Courier New", ui-monospace, monospace;
+  font-weight: 400; /* eingebunden ist nur der normale Schnitt */
+}
+/* Abschnitts-Überschriften („identity.", „skills." …) und die Namen auf den
+   Charakterkarten: etwas enger und kräftiger. Ein Gewicht 500 hat die Schrift
+   nicht – angenähert durch eine hauchdünne Kontur in der Schriftfarbe. */
+h2.font-display,
+h3.font-display,
+.card-title.font-display {
+  -webkit-text-stroke: 0.02em currentColor;
+}
+h2.font-display,
+h3.font-display {
+  letter-spacing: -0.04em;
 }
 
 /* Seitentitel im Banner: Buchstaben minimal enger */
@@ -515,52 +526,6 @@ label:has(input[type="file"]) {
     animation: none;
     box-shadow: 0 0 0 2px var(--accent);
   }
-}
-
-/* NUR LOKAL (next dev, `data-env="dev"` setzt app/layout.tsx): Probe-Display-Schrift
-   Computer Modern Typewriter statt Barriecito. Stage und Live behalten Barriecito.
-   Die Datei liegt unter public/fonts/cmuntt.(woff2|woff|ttf|otf) – eine davon
-   genügt; ist die Schrift auf dem Rechner installiert, greift sie auch ohne
-   Datei. Fehlt beides, bleibt Barriecito. */
-@font-face {
-  font-family: "CMU Typewriter Probe";
-  src:
-    local("CMU Typewriter Text"),
-    local("CMUTypewriter-Regular"),
-    url("/fonts/cmuntt.woff2") format("woff2"),
-    url("/fonts/cmuntt.woff") format("woff"),
-    url("/fonts/cmuntt.ttf") format("truetype"),
-    url("/fonts/cmuntt.otf") format("opentype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-html[data-env="dev"] .font-display {
-  font-family: "CMU Typewriter Probe", var(--font-display), "Barriecito", sans-serif;
-}
-/* Abschnitts-Überschriften („identity.", „skills." …): die Schreibmaschinen-Schrift
-   läuft breit, deshalb kleiner und enger als Barriecito */
-html[data-env="dev"] h2.font-display,
-html[data-env="dev"] h3.font-display {
-  /* Größen aus der vorhandenen Skala (1.625rem wie „brought to you by", 1.25rem) */
-  font-size: 1.625rem;
-  letter-spacing: -0.04em;
-  /* Gewicht 500: Die Schrift gibt es nur in 400 (dazu Light und Bold), deshalb
-     angenähert durch eine hauchdünne Kontur in der Schriftfarbe */
-  -webkit-text-stroke: 0.02em currentColor;
-}
-html[data-env="dev"] h3.font-display {
-  font-size: 1.25rem;
-}
-/* Namen auf den Karten der Charakter-Übersicht: ebenfalls angenähertes 500 */
-html[data-env="dev"] .card-title.font-display {
-  -webkit-text-stroke: 0.02em currentColor;
-}
-/* die Schreibmaschinen-Schrift läuft breiter: Wortmarke etwas kleiner, damit sie
-   in der Seitenleiste in einer Zeile bleibt */
-html[data-env="dev"] .site-logo {
-  font-size: 1.0625rem;
-  white-space: nowrap;
 }
 
 /* Dashboard: blinkender Schreibstrich hinter dem Seitentitel – als würde dort

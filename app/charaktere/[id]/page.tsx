@@ -588,7 +588,7 @@ function RelationsTab({
             if (rows.length === 0) return null;
             return (
               <div key={title} className="mb-6">
-                <h3 className="mb-2 font-display lowercase text-[1.5rem] leading-none text-text-primary">
+                <h3 className="mb-2 font-display lowercase text-[1.25rem] leading-none text-text-primary">
                   {title}
                 </h3>
                 <div className={CARDS}>
