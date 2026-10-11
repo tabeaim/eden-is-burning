@@ -409,9 +409,14 @@ function Activity({
               {e.kind === "like" && "gefällt dein Beitrag."}
               {e.kind === "follow" && "folgt dir jetzt."}
               {e.kind === "accept" && "hat deine Folgeanfrage angenommen."}
-              {e.kind === "comment" && (
+              {e.kind === "tag" && "hat dich auf einem Bild markiert."}
+              {e.kind === "mention" && !e.comment_id && "hat dich in einem Beitrag erwähnt."}
+              {(e.kind === "comment" || e.kind === "comment_like" || (e.kind === "mention" && e.comment_id)) && (
                 <>
-                  hat kommentiert{comment ? ": " : "."}
+                  {e.kind === "comment" && "hat kommentiert"}
+                  {e.kind === "comment_like" && "gefällt dein Kommentar"}
+                  {e.kind === "mention" && "hat dich in einem Kommentar erwähnt"}
+                  {comment ? ": " : "."}
                   {comment && <span className="text-text-primary">{comment.content}</span>}
                 </>
               )}
@@ -436,7 +441,7 @@ function Activity({
       })}
       {all.length === 0 && (
         <p className="px-8 py-10 text-center text-[0.875rem] text-text-tertiary">
-          Noch keine Aktivität. Hier steht, wer {me.name.split(" ")[0]} folgt, Beiträge liket oder
+          Noch keine Aktivität. Hier steht, wer {me.name.split(" ")[0]} folgt, markiert, Beiträge liket oder
           kommentiert.
         </p>
       )}

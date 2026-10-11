@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { CapticKind, CapticPost, Character, ThingCrop } from "@/lib/types";
+import type { CapticKind, CapticPost, CapticTag, Character, ThingCrop } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import {
   IMAGE_SIZES,
@@ -12,13 +12,14 @@ import {
   uploadImage,
   uploadVideo,
 } from "@/lib/images";
-import { parseCount } from "@/lib/captic";
+import { capticHandle, parseCount } from "@/lib/captic";
 import { Icon } from "@/components/Icon";
 import { CropDialog } from "@/components/CropDialog";
 import { DatePicker } from "@/components/DatePicker";
 import { EmojiPicker } from "../EmojiPicker";
 import { GifPicker } from "../GifPicker";
-import { CapticMedia } from "./CapticPost";
+import { CapticAvatar } from "./CapticAvatar";
+import { CapticMedia, tagPill, tagStyle } from "./CapticPost";
 import { MentionSuggest, normalizeMentions, useCapticProfiles } from "./CapticMentions";
 
 type Media = Pick<CapticPost, "kind" | "url" | "poster_url" | "ar">;
@@ -63,6 +64,11 @@ export function CapticCompose({
   const [likes, setLikes] = useState(post ? String(post.likes) : "");
   const [date, setDate] = useState(post?.inplay_date ?? "");
   const [place, setPlace] = useState(post?.location ?? "");
+  // Markierungen auf dem Bild: erst die Stelle antippen, dann das Profil wählen
+  const [tags, setTags] = useState<CapticTag[]>(post?.tags ?? []);
+  const [tagging, setTagging] = useState(false);
+  const [point, setPoint] = useState<{ x: number; y: number } | null>(null);
+  const [who, setWho] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [panel, setPanel] = useState<null | "gif" | "emoji">(null);
@@ -181,12 +187,32 @@ export function CapticCompose({
     // nur mitschicken, wenn es etwas zu speichern gibt
     const location = place.trim() || null;
     if (post) {
-      updateCapticPost(post.id, location === (post.location ?? null) ? fields : { ...fields, location });
+      updateCapticPost(post.id, {
+        ...fields,
+        ...(location === (post.location ?? null) ? {} : { location }),
+        ...(JSON.stringify(tags) === JSON.stringify(post.tags ?? []) ? {} : { tags }),
+      });
       onDone(post.id);
     } else {
-      onDone(addCapticPost({ character_id: me.id, ...media, ...fields, ...(location ? { location } : {}) }));
+      onDone(
+        addCapticPost({
+          character_id: me.id,
+          ...media,
+          ...fields,
+          ...(location ? { location } : {}),
+          ...(tags.length ? { tags } : {}),
+        }),
+      );
     }
   }
+
+  // Vorschläge fürs Markieren: wer Captic hat und noch nicht auf dem Bild ist
+  const q = who.trim().replace(/^@/, "").toLowerCase();
+  const taggable = profiles
+    .filter((c) => !tags.some((t) => t.character_id === c.id))
+    .filter((c) => !q || capticHandle(c).toLowerCase().includes(q) || c.name.toLowerCase().includes(q))
+    .sort((a, b) => capticHandle(a).localeCompare(capticHandle(b)))
+    .slice(0, 6);
 
   const source =
     "flex flex-1 flex-col items-center gap-1.5 rounded-xl bg-white/[0.05] px-2 py-5 text-[0.8125rem] text-text-secondary hover:bg-white/[0.09] disabled:opacity-50";
@@ -196,23 +222,124 @@ export function CapticCompose({
     <div className="min-h-0 flex-1 overflow-y-auto">
       {media ? (
         <div>
-          <CapticMedia
-            post={{
-              ...media,
-              id: "preview",
-              character_id: me.id,
-              caption: "",
-              likes: 0,
-              created_at: "",
-            }}
-          />
-          {!post && (
-            <button
-              onClick={() => setMedia(null)}
-              className="px-3 pt-2 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
-            >
-              Anderes Medium wählen
-            </button>
+          <div className="relative">
+            <CapticMedia
+              post={{
+                ...media,
+                id: "preview",
+                character_id: me.id,
+                caption: "",
+                likes: 0,
+                created_at: "",
+              }}
+            />
+            {tagging && (
+              <button
+                type="button"
+                aria-label="Stelle auf dem Bild wählen"
+                onClick={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  const part = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 1000) / 1000;
+                  setPoint({ x: part((e.clientX - r.left) / r.width), y: part((e.clientY - r.top) / r.height) });
+                }}
+                className="absolute inset-0 cursor-crosshair"
+              />
+            )}
+            {point && (
+              <span
+                aria-hidden
+                style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%` }}
+                className="pointer-events-none absolute z-10 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-accent shadow"
+              />
+            )}
+            {tags.map((t) => {
+              const c = profiles.find((p) => p.id === t.character_id);
+              if (!c) return null;
+              return (
+                <button
+                  key={t.character_id}
+                  type="button"
+                  onClick={() => setTags(tags.filter((x) => x !== t))}
+                  title="Markierung entfernen"
+                  aria-label={`Markierung ${capticHandle(c)} entfernen`}
+                  style={tagStyle(t)}
+                  className={tagPill}
+                >
+                  {capticHandle(c)} ×
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 px-3 pt-2 text-[0.8125rem]">
+            {!post && (
+              <button
+                onClick={() => {
+                  setMedia(null);
+                  setTags([]);
+                  setPoint(null);
+                  setTagging(false);
+                }}
+                className="text-text-tertiary hover:text-text-primary"
+              >
+                Anderes Medium wählen
+              </button>
+            )}
+            {!story && (
+              <button
+                onClick={() => {
+                  setTagging((v) => !v);
+                  setPoint(null);
+                  setWho("");
+                }}
+                aria-pressed={tagging}
+                className={`flex items-center gap-1.5 ${tagging ? "text-accent" : "text-text-tertiary hover:text-text-primary"}`}
+              >
+                <Icon name="users" size={14} />
+                {tagging ? "Fertig markiert" : tags.length ? `Personen markieren (${tags.length})` : "Personen markieren"}
+              </button>
+            )}
+          </div>
+          {tagging && !point && (
+            <p className="px-3 pt-2 text-[0.75rem] leading-snug text-text-tertiary">
+              Tippe aufs Bild, wo die Person zu sehen ist. Ein Klick auf einen Namen entfernt die Markierung.
+            </p>
+          )}
+          {tagging && point && (
+            <div className="px-3 pt-2">
+              <input
+                value={who}
+                onChange={(e) => setWho(e.target.value)}
+                autoFocus
+                placeholder="Wer ist das? Name oder Nutzername …"
+                aria-label="Profil suchen"
+                className={capticField}
+              />
+              <div className="mt-2 overflow-hidden rounded-xl border border-border-subtle bg-bg-surface-2">
+                {taggable.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => {
+                      setTags([...tags, { character_id: c.id, ...point }]);
+                      setPoint(null);
+                      setWho("");
+                    }}
+                    className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left hover:bg-white/[0.06]"
+                  >
+                    <CapticAvatar character={c} size={28} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[0.8125rem] font-semibold text-text-primary">
+                        {capticHandle(c)}
+                      </span>
+                      <span className="block truncate text-[0.75rem] text-text-tertiary">{c.name}</span>
+                    </span>
+                  </button>
+                ))}
+                {taggable.length === 0 && (
+                  <p className="px-3 py-2 text-[0.8125rem] text-text-tertiary">Niemand gefunden.</p>
+                )}
+              </div>
+            </div>
           )}
         </div>
       ) : (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CapticPost, Character } from "@/lib/types";
+import type { CapticPost, CapticTag, Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { CAPTIC_PINK, capticHandle, feedRatio, formatCount, likeCount } from "@/lib/captic";
 import { formatInplayDate } from "@/lib/format";
@@ -12,11 +12,79 @@ import { EmojiPicker } from "../EmojiPicker";
 import { Sheet, SheetButton, SheetList } from "../Sheet";
 import { MentionSuggest, MentionText, normalizeMentions, useCapticProfiles } from "./CapticMentions";
 
+// Lage einer Markierung: der Name hängt unter dem Punkt und rutscht zum Rand hin
+// nach innen (ganz links linksbündig, ganz rechts rechtsbündig); weit unten
+// steht er über dem Punkt.
+export function tagStyle(t: Pick<CapticTag, "x" | "y">): React.CSSProperties {
+  return {
+    left: `${t.x * 100}%`,
+    top: `${t.y * 100}%`,
+    transform: `translate(${-t.x * 100}%, ${t.y > 0.85 ? "calc(-100% - 4px)" : "4px"})`,
+  };
+}
+
+export const tagPill =
+  "absolute z-10 max-w-[70%] truncate rounded-md bg-black/75 px-2 py-1 text-[0.75rem] font-semibold leading-none text-white";
+
+// Markierte Profile auf dem Bild: erscheinen beim Hovern; auf Touch-Geräten (und
+// per Tastatur) über das Personen-Zeichen unten links. Der Name führt aufs Profil.
+function TagLayer({ tags, onProfile }: { tags: CapticTag[]; onProfile?: (characterId: string) => void }) {
+  const { character } = useStore();
+  const [open, setOpen] = useState(false);
+  const shown = tags.flatMap((t) => {
+    const c = character(t.character_id);
+    return c && !c.deleted_at ? [{ t, c }] : [];
+  });
+  if (shown.length === 0) return null;
+  return (
+    <>
+      {shown.map(({ t, c }) => (
+        <button
+          key={t.character_id}
+          onClick={(e) => {
+            e.stopPropagation();
+            onProfile?.(c.id);
+          }}
+          tabIndex={open ? 0 : -1}
+          style={tagStyle(t)}
+          className={`${tagPill} transition-opacity ${
+            open
+              ? "opacity-100"
+              : "pointer-events-none opacity-0 [@media(hover:hover)]:group-hover/media:pointer-events-auto [@media(hover:hover)]:group-hover/media:opacity-100"
+          }`}
+        >
+          {capticHandle(c)}
+        </button>
+      ))}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+        aria-label={open ? "Markierungen ausblenden" : "Markierte Personen anzeigen"}
+        aria-pressed={open}
+        title="Markierte Personen"
+        className="absolute bottom-2.5 left-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white"
+      >
+        <Icon name="users" size={15} />
+      </button>
+    </>
+  );
+}
+
 // Bild, GIF oder Video eines Beitrags. Videos laufen stumm los, sobald sie im
 // Bild sind, und halten an, wenn man weiterscrollt; Antippen schaltet den Ton.
 // Doppelklick bzw. doppeltes Antippen meldet `onDoubleTap` (liken bzw. Like
 // zurücknehmen); gibt es `true` zurück, ploppt ein Herz auf.
-export function CapticMedia({ post, onDoubleTap }: { post: CapticPost; onDoubleTap?: () => boolean }) {
+export function CapticMedia({
+  post,
+  onDoubleTap,
+  onProfile,
+}: {
+  post: CapticPost;
+  onDoubleTap?: () => boolean;
+  onProfile?: (characterId: string) => void; // Klick auf eine Markierung
+}) {
   const ratio = feedRatio(post.ar);
   const lastTap = useRef(0);
   const [pop, setPop] = useState(false);
@@ -38,6 +106,7 @@ export function CapticMedia({ post, onDoubleTap }: { post: CapticPost; onDoubleT
       <Icon name="heart" size={92} fill="currentColor" />
     </span>
   );
+  const tags = post.tags?.length ? <TagLayer tags={post.tags} onProfile={onProfile} /> : null;
   const ref = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
 
@@ -57,7 +126,7 @@ export function CapticMedia({ post, onDoubleTap }: { post: CapticPost; onDoubleT
 
   if (post.kind !== "video") {
     return (
-      <div onClick={tap} className="relative touch-manipulation select-none">
+      <div onClick={tap} className="group/media relative touch-manipulation select-none">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={post.url}
@@ -67,12 +136,13 @@ export function CapticMedia({ post, onDoubleTap }: { post: CapticPost; onDoubleT
           style={{ aspectRatio: ratio }}
           className="block w-full bg-black object-cover"
         />
+        {tags}
         {heart}
       </div>
     );
   }
   return (
-    <div onClick={tap} className="relative touch-manipulation select-none">
+    <div onClick={tap} className="group/media relative touch-manipulation select-none">
       <video
         ref={ref}
         src={post.url}
@@ -91,6 +161,7 @@ export function CapticMedia({ post, onDoubleTap }: { post: CapticPost; onDoubleT
       >
         <Icon name={muted ? "mute" : "volume"} size={15} />
       </span>
+      {tags}
       {heart}
     </div>
   );
@@ -122,6 +193,7 @@ export function CapticPostCard({
     canWriteAs,
     isAdmin,
     toggleCapticLike,
+    toggleCapticCommentLike,
     addCapticComment,
     deleteCapticComment,
     deleteCapticPost,
@@ -179,7 +251,7 @@ export function CapticPostCard({
         )}
       </div>
 
-      <CapticMedia post={post} onDoubleTap={() => {
+      <CapticMedia post={post} onProfile={onProfile} onDoubleTap={() => {
           toggleCapticLike(post.id, me.id);
           return !liked;
         }} />
@@ -227,6 +299,8 @@ export function CapticPostCard({
             {shown.map((c) => {
               const by = character(c.character_id);
               const canDelete = canManage || canWriteAs(c.character_id);
+              const hearts = c.liked_by?.length ?? 0;
+              const hearted = (c.liked_by ?? []).includes(me.id);
               return (
                 <li key={c.id} className="flex items-start gap-2">
                   {full && by && <CapticAvatar character={by} size={26} className="mt-0.5" />}
@@ -236,6 +310,16 @@ export function CapticPostCard({
                     </button>{" "}
                     <MentionText text={c.content} onProfile={onProfile} />
                   </p>
+                  <button
+                    onClick={() => toggleCapticCommentLike(c.id, me.id)}
+                    aria-label={hearted ? "Kommentar gefällt mir nicht mehr" : "Kommentar gefällt mir"}
+                    aria-pressed={hearted}
+                    style={hearted ? { color: CAPTIC_PINK } : undefined}
+                    className="mt-0.5 flex shrink-0 items-center gap-1 text-[0.6875rem] leading-none text-text-tertiary"
+                  >
+                    {hearts > 0 && formatCount(hearts)}
+                    <Icon name="heart" size={13} fill={hearted ? "currentColor" : "none"} />
+                  </button>
                   {full && canDelete && (
                     <button
                       onClick={() => deleteCapticComment(c.id)}

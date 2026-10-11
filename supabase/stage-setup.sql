@@ -1398,3 +1398,12 @@ alter table locations add column if not exists category text;
 -- Im Supabase SQL-Editor ausführen (Run). Wiederholbar.
 
 alter table scenes add column if not exists format text;
+
+
+
+-- ## schema-captic-tags.sql
+-- Captic: Markierungen auf Bildern und Likes an Kommentaren.
+-- Im Supabase SQL-Editor ausführen (Run). Wiederholbar.
+
+alter table captic_posts add column if not exists tags jsonb not null default '[]'::jsonb;
+alter table captic_comments add column if not exists liked_by jsonb not null default '[]'::jsonb;

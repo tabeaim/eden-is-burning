@@ -98,6 +98,12 @@ export default function ScenePage({
     store;
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
+  const postsTop = useRef<HTMLDivElement>(null);
+  // Seitenwechsel: an den Anfang der neuen Seite springen (sonst bliebe man unten)
+  function goPage(i: number) {
+    setPage(i);
+    requestAnimationFrame(() => postsTop.current?.scrollIntoView({ block: "start" }));
+  }
   // Antwortfeld erscheint erst nach Klick auf „Antworten"
   const [replyOpen, setReplyOpen] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -267,7 +273,7 @@ export default function ScenePage({
       {searchTerm && <PostSearchBar term={searchTerm} />}
 
       {/* Posts (Ping-Pong), getrennt durch eine Akzentlinie */}
-      <div className="flex flex-col">
+      <div ref={postsTop} className="flex scroll-mt-24 flex-col">
         {pagePosts.map((post, i) => {
           const c = character(post.character_id);
           if (!c) return null;
@@ -296,7 +302,7 @@ export default function ScenePage({
         <div className="mt-8 flex flex-wrap items-center justify-center gap-1.5">
           <button
             disabled={safePage === 0}
-            onClick={() => setPage(safePage - 1)}
+            onClick={() => goPage(safePage - 1)}
             className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary disabled:opacity-40"
           >
             ‹ Zurück
@@ -304,7 +310,7 @@ export default function ScenePage({
           {pages.map((_, i) => (
             <button
               key={i}
-              onClick={() => setPage(i)}
+              onClick={() => goPage(i)}
               className={`rounded-md px-3 py-1.5 text-[0.8125rem] ${
                 i === safePage
                   ? "bg-accent text-black font-medium"
@@ -316,7 +322,7 @@ export default function ScenePage({
           ))}
           <button
             disabled={safePage === pages.length - 1}
-            onClick={() => setPage(safePage + 1)}
+            onClick={() => goPage(safePage + 1)}
             className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary disabled:opacity-40"
           >
             Weiter ›
@@ -583,7 +589,7 @@ function SceneHeader({
       </div>
 
       {/* Beschreibungssatz */}
-      {scene.summary ? (
+      {scene.summary && (
         <p className="mt-3 font-serif text-[0.875rem] italic text-text-secondary leading-relaxed">
           {scene.summary}
         </p>

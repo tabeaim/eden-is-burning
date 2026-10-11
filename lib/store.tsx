@@ -36,7 +36,7 @@ import { setDefaultAvatars } from "./avatar";
 import { setAreaTexts } from "./world";
 import { supabase, supabaseConfigured } from "./supabase";
 import { rememberPhone } from "./phone";
-import { replaceHandle, requestId } from "./captic";
+import { mentionedIds, postNotices, replaceHandle, requestId } from "./captic";
 import { orderMessages, smsAsScene, type DatedMessage } from "./chats";
 import { playsAs, tierOf } from "./characters";
 
@@ -227,6 +227,7 @@ interface StoreValue extends PersistedState {
   // Löscht den Beitrag samt Kommentaren
   deleteCapticPost: (id: string) => void;
   toggleCapticLike: (postId: string, characterId: string) => void;
+  toggleCapticCommentLike: (commentId: string, characterId: string) => void;
   addCapticComment: (postId: string, characterId: string, content: string) => void;
   deleteCapticComment: (id: string) => void;
   // Captic-Name geändert: alle Verlinkungen („@alt") in Beiträgen und Kommentaren mitziehen
@@ -1931,17 +1932,39 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       created_at: new Date().toISOString(),
     };
     rememberPhone(post.character_id);
-    persist("addCapticPost", supabase.from("captic_posts").insert(row));
-    setState((s) => ({ ...s, capticPosts: [...s.capticPosts, row] }));
+    const saved = Promise.resolve(supabase.from("captic_posts").insert(row));
+    persist("addCapticPost", saved);
+    setState((s) => {
+      // wer markiert oder verlinkt ist, erfährt davon – erst nach dem Beitrag,
+      // die Aktivität verweist auf ihn
+      const notices = postNotices(row, s.characters);
+      if (notices.length) persist("capticEvent", saved.then(() => supabase.from("captic_events").upsert(notices)));
+      return { ...s, capticPosts: [...s.capticPosts, row], capticEvents: [...s.capticEvents, ...notices] };
+    });
     return row.id;
   }, []);
 
   const updateCapticPost = useCallback((id: string, patch: Partial<CapticPost>) => {
     persist("updateCapticPost", supabase.from("captic_posts").update(patch).eq("id", id));
-    setState((s) => ({
-      ...s,
-      capticPosts: s.capticPosts.map((p) => (p.id === id ? { ...p, ...patch } : p)),
-    }));
+    setState((s) => {
+      const before = s.capticPosts.find((p) => p.id === id);
+      if (!before) return s;
+      const post = { ...before, ...patch };
+      const capticPosts = s.capticPosts.map((p) => (p.id === id ? post : p));
+      if (!("caption" in patch) && !("tags" in patch)) return { ...s, capticPosts };
+      // neu Markierte/Verlinkte benachrichtigen, Entfernte nicht länger
+      const was = postNotices(before, s.characters);
+      const now = postNotices(post, s.characters);
+      const added = now.filter((e) => !was.some((w) => w.id === e.id));
+      const gone = was.filter((w) => !now.some((e) => e.id === w.id)).map((w) => w.id);
+      if (added.length) persist("capticEvent", supabase.from("captic_events").upsert(added));
+      if (gone.length) persist("capticEvent", supabase.from("captic_events").delete().in("id", gone));
+      return {
+        ...s,
+        capticPosts,
+        capticEvents: [...s.capticEvents.filter((e) => !gone.includes(e.id)), ...added],
+      };
+    });
   }, []);
 
   const deleteCapticPost = useCallback((id: string) => {
@@ -2007,22 +2030,66 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     persist("addCapticComment", saved);
     setState((s) => {
       const target = s.capticPosts.find((p) => p.id === postId)?.character_id;
-      if (!target || target === characterId) return { ...s, capticComments: [...s.capticComments, row] };
-      const event: CapticEvent = {
-        id: `cape_c_${row.id}`,
-        kind: "comment",
+      const event = (kind: "comment" | "mention", id: string, to: string): CapticEvent => ({
+        id,
+        kind,
         actor_id: characterId,
-        target_id: target,
+        target_id: to,
         post_id: postId,
         comment_id: row.id,
         created_at: row.created_at,
-      };
+      });
+      const events: CapticEvent[] = [];
+      if (target && target !== characterId) events.push(event("comment", `cape_c_${row.id}`, target));
+      // im Kommentar Verlinkte – wem der Beitrag gehört, erfährt es schon als Kommentar
+      for (const id of mentionedIds(text, s.characters)) {
+        if (id !== characterId && id !== target) events.push(event("mention", `cape_cm_${row.id}_${id}`, id));
+      }
       // erst nach dem Kommentar – die Aktivität verweist auf ihn
-      persist("capticEvent", saved.then(() => supabase.from("captic_events").upsert(event)));
+      if (events.length) persist("capticEvent", saved.then(() => supabase.from("captic_events").upsert(events)));
       return {
         ...s,
         capticComments: [...s.capticComments, row],
-        capticEvents: [...s.capticEvents.filter((e) => e.id !== event.id), event],
+        capticEvents: [...s.capticEvents.filter((e) => !events.some((n) => n.id === e.id)), ...events],
+      };
+    });
+  }, []);
+
+  const toggleCapticCommentLike = useCallback((commentId: string, characterId: string) => {
+    setState((s) => {
+      const comment = s.capticComments.find((c) => c.id === commentId);
+      if (!comment) return s;
+      const before = comment.liked_by ?? [];
+      const had = before.includes(characterId);
+      const liked_by = had ? before.filter((x) => x !== characterId) : [...before, characterId];
+      persist(
+        "toggleCapticCommentLike",
+        supabase.from("captic_comments").update({ liked_by }).eq("id", commentId),
+      );
+      // Aktivität für die Person, die kommentiert hat (nicht fürs eigene Herz)
+      const event: CapticEvent = {
+        id: `cape_cl_${commentId}_${characterId}`,
+        kind: "comment_like",
+        actor_id: characterId,
+        target_id: comment.character_id,
+        post_id: comment.post_id,
+        comment_id: commentId,
+        created_at: new Date().toISOString(),
+      };
+      const notify = comment.character_id !== characterId;
+      if (notify) {
+        persist(
+          "capticEvent",
+          had
+            ? supabase.from("captic_events").delete().eq("id", event.id)
+            : supabase.from("captic_events").upsert(event),
+        );
+      }
+      const rest = s.capticEvents.filter((e) => e.id !== event.id);
+      return {
+        ...s,
+        capticComments: s.capticComments.map((c) => (c.id === commentId ? { ...c, liked_by } : c)),
+        capticEvents: notify && !had ? [...rest, event] : rest,
       };
     });
   }, []);
@@ -2373,6 +2440,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updateCapticPost,
       deleteCapticPost,
       toggleCapticLike,
+      toggleCapticCommentLike,
       addCapticComment,
       deleteCapticComment,
       renameCapticHandle,
@@ -2499,6 +2567,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updateCapticPost,
       deleteCapticPost,
       toggleCapticLike,
+      toggleCapticCommentLike,
       addCapticComment,
       deleteCapticComment,
       renameCapticHandle,

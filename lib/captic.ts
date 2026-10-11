@@ -1,5 +1,6 @@
 // Captic – das fiktive Foto-Netzwerk auf den Handys (siehe DESIGN.md).
-import type { CapticPost, Character } from "./types";
+import type { CapticEvent, CapticPost, Character } from "./types";
+import { resolvePhone } from "./phone";
 
 export const CAPTIC_PINK = "#e8457a";
 
@@ -31,6 +32,43 @@ export function replaceHandle(text: string, from: string, to: string): string {
     new RegExp(`@${escaped}(?![A-Za-z0-9_]|\\.[A-Za-z0-9_])`, "gi"),
     `@${to}`,
   );
+}
+
+// Wen verlinkt dieser Text („@nutzername")? Liefert die Charakter-IDs – gleiche
+// Regeln wie die Anzeige (`MentionText`): Satzzeichen am Ende gehören nicht dazu.
+export function mentionedIds(text: string, characters: Character[]): string[] {
+  if (!text.includes("@")) return [];
+  const byHandle = new Map(
+    characters
+      .filter((c) => !c.deleted_at && resolvePhone(c).captic)
+      .map((c) => [capticHandle(c).toLowerCase(), c.id]),
+  );
+  const out = new Set<string>();
+  for (const m of text.matchAll(/@([A-Za-z0-9._]+)/g)) {
+    const id = byHandle.get(m[1].replace(/[._]+$/, "").toLowerCase()) ?? byHandle.get(m[1].toLowerCase());
+    if (id) out.add(id);
+  }
+  return [...out];
+}
+
+// Aktivitäten, die ein Beitrag auslöst: wer auf dem Bild markiert ist (`tag`), wer
+// in der Bildunterschrift verlinkt ist (`mention`) – jede Person nur einmal, nie
+// die Person, der der Beitrag gehört.
+export function postNotices(post: CapticPost, characters: Character[]): CapticEvent[] {
+  const notice = (kind: "tag" | "mention", id: string): CapticEvent => ({
+    id: `cape_${kind}_${post.id}_${id}`,
+    kind,
+    actor_id: post.character_id,
+    target_id: id,
+    post_id: post.id,
+    created_at: new Date().toISOString(),
+  });
+  const tagged = new Set((post.tags ?? []).map((t) => t.character_id));
+  tagged.delete(post.character_id);
+  const mentioned = mentionedIds(post.caption, characters).filter(
+    (id) => id !== post.character_id && !tagged.has(id),
+  );
+  return [...[...tagged].map((id) => notice("tag", id)), ...mentioned.map((id) => notice("mention", id))];
 }
 
 // Wem folgt dieser Charakter in der App?

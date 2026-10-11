@@ -549,8 +549,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
     sonst weiter, läuft von selbst); der Text steht als dunkle Glas-Blase über
     dem Bild. Anlegen über das eigene Profilbild mit kleinem Plus
     (`OwnStoryAvatar`) – in der Story-Zeile und im eigenen Profil.
-  - **Aktivitäten** (Glocke oben rechts): neue Likes, Kommentare, Follower
-    (`captic_events`). Neues zeigt sich als oranger Zähler an Glocke, Captic-App,
+  - **Aktivitäten** (Glocke oben rechts): neue Likes, Kommentare, Follower,
+    Verlinkungen, Markierungen und Kommentar-Likes (`captic_events`). Neues zeigt sich als oranger Zähler an Glocke, Captic-App,
     Handy-Wechsel und „Handy" im Menü sowie im Dashboard als „Neue Aktivität auf
     Captic" je Charakter. Der Dashboard-Hinweis verschwindet beim Öffnen der
     Aktivitäten; ungelesen (Punkt, Zähler) bleibt ein Eintrag, bis er angeklickt
@@ -559,7 +559,14 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   - **Verlinkungen** (`CapticMentions.tsx`): „@nutzername" in Bildunterschrift und
     Kommentar führt aufs Profil. Beim Tippen von „@" kommen Vorschläge (Nutzer-
     oder Charaktername); ein getippter Charaktername wird beim Abschicken in den
-    Nutzernamen umgewandelt.
+    Nutzernamen umgewandelt. Wer verlinkt wird, bekommt eine Aktivität.
+  - **Markierungen auf dem Bild** (`tags` am Beitrag, Lage als Anteil 0–1): beim
+    Posten/Bearbeiten „Personen markieren" → Stelle antippen → Profil wählen.
+    Am Beitrag erscheinen die Namen beim Hovern, auf Touch-Geräten über das
+    Personen-Zeichen unten links (`TagLayer`); der Name führt aufs Profil. Wer
+    markiert wird, bekommt eine Aktivität.
+  - **Kommentare liken:** kleines Herz rechts am Kommentar (Captic-Pink, Zahl
+    davor); die Person, die kommentiert hat, bekommt eine Aktivität.
   - **Doppelklick** bzw. doppeltes Antippen auf das Bild liket (Herz ploppt auf).
   - **Profil:** Beiträge im Dreier-Raster (quadratisch; Videos/GIFs als Standbild
     mit Zeichen). Eigenes Profil: „Profil bearbeiten" (Nutzername, Bio, Follower-

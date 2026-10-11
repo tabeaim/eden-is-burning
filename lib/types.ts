@@ -439,7 +439,15 @@ export interface CapticPost {
   liked_by?: string[] | null; // Charaktere, die zusätzlich geliket haben
   inplay_date?: string | null; // ISO-Datum (optional)
   location?: string | null; // Ortsangabe über dem Bild (optional)
+  tags?: CapticTag[] | null; // auf dem Bild markierte Profile
   created_at: string; // echte Zeit – bestimmt nur die Reihenfolge
+}
+
+// Markierung auf dem Bild: wer, und wo (Anteil der Bildbreite/-höhe, 0–1)
+export interface CapticTag {
+  character_id: string;
+  x: number;
+  y: number;
 }
 
 // Story: liegt bildschirmfüllend hinter dem Profilbild (ohne Likes/Kommentare)
@@ -474,10 +482,12 @@ export interface CapticHighlight {
 }
 
 // Aktivität für `target_id`: jemand hat geliket, kommentiert, folgt jetzt, möchte
-// folgen (`request`, privates Profil) oder hat die Anfrage angenommen (`accept`).
+// folgen (`request`, privates Profil) oder hat die Anfrage angenommen (`accept`);
+// hat einen in Bildunterschrift oder Kommentar verlinkt (`mention`), auf dem Bild
+// markiert (`tag`) oder einen Kommentar geliket (`comment_like`).
 export interface CapticEvent {
   id: string;
-  kind: "like" | "comment" | "follow" | "request" | "accept";
+  kind: "like" | "comment" | "follow" | "request" | "accept" | "mention" | "tag" | "comment_like";
   actor_id: string;
   target_id: string;
   post_id?: string | null;
@@ -490,6 +500,7 @@ export interface CapticComment {
   post_id: string;
   character_id: string;
   content: string;
+  liked_by?: string[] | null; // Charaktere, die den Kommentar geliket haben
   created_at: string;
 }
 
