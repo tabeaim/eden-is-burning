@@ -219,6 +219,7 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Spalten (`ProfileLooks wide`). Ohne Whiteboard füllt die Box die Zeile.
 - **Szenen im Profil** (`SceneFilterList`): darüber immer die Status-Reiter
   Alle · Aktiv · Abgeschlossen, daneben die Art, wenn es mehr als eine gibt.
+  Sortiert nach In-Game-Datum, das Neueste zuerst.
 - **Facts:** drei kleine Boxen – identity (Name, Age, Zodiac, Gender, bei
   Supporting Characters und Statist*innen „Role"), life (Residence, Origin,
   Status = Beziehungsstatus, Sexuality, Spotify als Link), occupation (Occupation,

@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Scene } from "@/lib/types";
 import { SCENE_KINDS, sceneKind, type SceneKind } from "@/lib/chats";
 import { SceneCard } from "./SceneCard";
+import { compareInplay } from "@/lib/format";
 
 type Status = "all" | "active" | "closed";
 const STATUS: [Status, string][] = [
@@ -22,16 +23,21 @@ const pill = (active: boolean) =>
 
 // Szenenliste der Profile (Charakter, Spieler*in): kompakte Karten mit einfachen
 // Filtern darüber – Art (Szenen · Anrufe · SMS, mehrere wählbar; nichts gewählt =
-// alle) und Status (Alle · Aktiv · Abgeschlossen, immer da). Die Art erscheint nur,
+// alle) und Status (Alle · Aktiv · Abgeschlossen, immer da); sortiert nach
+// In-Game-Datum, das Neueste zuerst. Die Art erscheint nur,
 // wenn es mehr als eine gibt.
 export function SceneFilterList({ scenes, className }: { scenes: Scene[]; className: string }) {
   const [kinds, setKinds] = useState<SceneKind[]>([]);
   const [status, setStatus] = useState<Status>("all");
   const present = SCENE_KINDS.filter((k) => scenes.some((s) => sceneKind(s) === k.value));
-  const shown = scenes.filter(
-    (s) =>
-      (kinds.length === 0 || kinds.includes(sceneKind(s))) && (status === "all" || s.status === status),
-  );
+  // Das Aktuellste zuerst (In-Game: Datum, dann Tageszeit) – die beiden neuesten
+  // stehen so in der ersten Zeile nebeneinander
+  const shown = scenes
+    .filter(
+      (s) =>
+        (kinds.length === 0 || kinds.includes(sceneKind(s))) && (status === "all" || s.status === status),
+    )
+    .sort((a, b) => compareInplay(b, a));
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
