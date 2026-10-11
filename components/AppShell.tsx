@@ -347,6 +347,8 @@ function BannerHeader({
             </span>
           )}
           <span className="text-accent">.</span>
+          {/* Dashboard: Schreibstrich hinter dem Titel */}
+          {pathname === "/dashboard" && <span aria-hidden className="type-caret" />}
         </h1>
 
       </div>

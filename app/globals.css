@@ -517,29 +517,8 @@ label:has(input[type="file"]) {
   }
 }
 
-/* NUR LOKAL (next dev, `data-env="dev"` setzt app/layout.tsx): Probe-Akzent in
-   orangigem Rot statt Orange. Stage und Live bleiben orange. Zum Verwerfen
-   diesen Block und das Attribut im Layout entfernen; zum Übernehmen die Werte
-   oben in die Tokens schreiben. */
-html[data-env="dev"] {
-  --accent: #e36f4c;
-  --accent-soft: rgba(227, 111, 76, 0.16);
-  --map-campus: #d95f3f;
-}
-html[data-env="dev"][data-theme="light"] {
-  --accent: #e58563;
-  --accent-ink: #8f2f10;
-  --accent-soft: rgba(227, 120, 88, 0.32);
-}
-html[data-env="dev"] .on-dark {
-  --accent: #e36f4c;
-  --accent-ink: #e36f4c;
-}
-html[data-env="dev"] ::selection {
-  background: rgba(227, 111, 76, 0.35);
-}
-
-/* NUR LOKAL: Probe-Display-Schrift Computer Modern Typewriter statt Barriecito.
+/* NUR LOKAL (next dev, `data-env="dev"` setzt app/layout.tsx): Probe-Display-Schrift
+   Computer Modern Typewriter statt Barriecito. Stage und Live behalten Barriecito.
    Die Datei liegt unter public/fonts/cmuntt.(woff2|woff|ttf|otf) – eine davon
    genügt; ist die Schrift auf dem Rechner installiert, greift sie auch ohne
    Datei. Fehlt beides, bleibt Barriecito. */
@@ -578,4 +557,26 @@ html[data-env="dev"] h3.font-display {
 html[data-env="dev"] .site-logo {
   font-size: 1.0625rem;
   white-space: nowrap;
+}
+
+/* Dashboard: blinkender Schreibstrich hinter dem Seitentitel – als würde dort
+   gleich weitergetippt */
+.type-caret {
+  display: inline-block;
+  width: 0.06em;
+  min-width: 2px;
+  height: 0.82em;
+  margin-left: 0.14em;
+  vertical-align: -0.06em;
+  border-radius: 1px;
+  background: var(--accent);
+  animation: type-caret 1.15s ease-in-out infinite;
+}
+@keyframes type-caret {
+  0%, 45% { opacity: 1; }
+  60%, 90% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .type-caret { animation: none; }
 }

@@ -197,7 +197,7 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   rechts; Slider: beide Pole links und rechts; 0.75rem, normale
   Schreibweise statt Großbuchstaben), darunter ein dünner, runder
   Balken in der Akzentfarbe; beim Slider gefüllt bis zum runden, orange gefüllten Regler.
-- **Looks:** links das Style-Whiteboard (frei, ohne Box und Überschrift), rechts in einer Box der Fließtext über
+- **Looks:** links das Style-Whiteboard (frei, ohne Box, mit Überschrift „style."), rechts in einer Box der Fließtext über
   die ganze Breite und darunter (durch eine Linie abgesetzt) die Angaben in zwei
   Spalten (`ProfileLooks wide`). Ohne Whiteboard füllt die Box die Zeile.
 - **Szenen im Profil** (`SceneFilterList`): darüber immer die Status-Reiter
@@ -256,8 +256,10 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   (`rounded-lg border bg-bg-surface`); die Facts-Spalte ist breit genug für lange
   Namen. Looks (samt kurzem Beschreibungstext) stehen nur im Hover über dem
   Hochkant-Banner. Lange Reiter scrollen ab `md` in sich.
-- **Reiter ohne doppelte Überschrift:** Pockets, Moodboard, Scenes und Relations
-  tragen keine eigene Abschnitts-Überschrift – der Reiter genügt.
+- **Jeder Reiter hat eine Überschrift:** auch Scenes, Relations, Timeline
+  („timeline."), Family Tree, Pockets, Moodboard und das Style-Whiteboard
+  („style.") – frei über dem Inhalt, wo es keine Box gibt. Im Spieler*innen-Profil
+  entsprechend „characters." und „scenes.".
 - **Fact-Werte** beginnen immer mit einem Großbuchstaben (macht `FactRow`).
   Faceclaim steht bei den Looks (Banner-Hover), nicht bei den Facts.
 - **Schlagwort-Kacheln** (Eigenschaften, Likes/Dislikes): klein (0.6875rem,

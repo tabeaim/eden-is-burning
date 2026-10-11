@@ -262,6 +262,7 @@ export default function CharacterPage({
           aria-hidden={tab !== "moodboard"}
           className={tab === "moodboard" ? "" : "invisible h-0 overflow-hidden"}
         >
+          <SectionHeading>moodboard.</SectionHeading>
           <PinterestBoard url={c.pinterest_url} />
         </section>
       )}
@@ -269,6 +270,8 @@ export default function CharacterPage({
           (Look, Startbildschirm, Kontaktliste), daneben die Collage der
           Gegenstände; mittig, mobil untereinander */}
       {tab === "personal" && tierOf(c) !== "extra" && (
+        <>
+        <SectionHeading>pockets.</SectionHeading>
         <section className="flex flex-col items-center justify-center gap-10 md:flex-row md:items-start">
           {/* ohne Handy (Einstellungen) nur die Gegenstände */}
           {hasPhone(c) && (
@@ -281,18 +284,22 @@ export default function CharacterPage({
             <p className="text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>
           )}
         </section>
+        </>
       )}
       {tab === "character" && <CharacterTab c={c} />}
       {tab === "look" && <LookTab c={c} />}
       {tab === "biography" &&
         (c.profile?.timeline?.length ? (
-          <ProfileTimeline c={c} bare />
+          <ProfileTimeline c={c} />
         ) : (
           <p className="text-[0.875rem] text-text-tertiary">Noch keine Timeline hinterlegt.</p>
         ))}
       {tab === "family" &&
         (c.profile?.family?.length ? (
-          <ProfileFamilyTree c={c} />
+          <>
+            <SectionHeading>family tree.</SectionHeading>
+            <ProfileFamilyTree c={c} />
+          </>
         ) : (
           <p className="text-[0.875rem] text-text-tertiary">Noch kein Stammbaum hinterlegt.</p>
         ))}
@@ -520,8 +527,11 @@ function LookTab({ c }: { c: Character }) {
   return (
     <div className={`grid grid-cols-1 items-start gap-5 ${outfit.length > 0 ? "lg:grid-cols-2" : ""}`}>
       {outfit.length > 0 && (
-        // ohne Box und Überschrift – die Collage steht frei und füllt die Spalte
-        <ThingsBoard items={outfit} fill />
+        // ohne Box – die Collage steht frei unter ihrer Überschrift und füllt die Spalte
+        <section>
+          <SectionHeading>style.</SectionHeading>
+          <ThingsBoard items={outfit} fill />
+        </section>
       )}
       <ProfileLooks c={c} wide />
     </div>
@@ -531,6 +541,7 @@ function LookTab({ c }: { c: Character }) {
 function InplayTab({ inScenes }: { inScenes: Scene[] }) {
   return (
     <section>
+      <SectionHeading>scenes.</SectionHeading>
       {inScenes.length === 0 ? (
         <p className="text-[0.875rem] text-text-tertiary">Noch in keiner Szene.</p>
       ) : (
@@ -557,6 +568,7 @@ function RelationsTab({
   const showHint = canEdit && (currentPlayer?.profile?.relation_uses ?? 0) < RELATION_HINT_USES;
   return (
     <section>
+      <SectionHeading>relations.</SectionHeading>
       {coChars.length === 0 ? (
         <p className="text-[0.875rem] text-text-tertiary">
           Noch keine Verbindungen – sobald zwei Charaktere eine gemeinsame Szene
