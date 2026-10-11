@@ -454,14 +454,18 @@ function Sidebar({
   // Orange Zähler im Menü: Szenen = alle ungelesenen; Dashboard = Bewegung bei
   // den eigenen Charakteren (eigene Szenen, Chats, Anrufe)
   const myIds = new Set(myChars.map((c) => c.id));
-  // bespielte Nebenfiguren zählen nur in abonnierten Szenen
+  // zugeordnete Supporting Characters zählen in all ihren Szenen (wie auf dem
+  // Dashboard), zeitweise bespielte Statist*innen nur in abonnierten
+  const mySupportingIds = new Set(myNpcs.filter((c) => tierOf(c) === "supporting").map((c) => c.id));
   const myNpcIds = new Set(myNpcs.map((c) => c.id));
   const newScenes = scenes.filter((s) => isSceneNew(s.id));
   const badges: Record<string, number> = {
     "/szenen": newScenes.length,
     "/dashboard":
       newScenes.filter((s) =>
-        s.participant_ids.some((id) => myIds.has(id) || (myNpcIds.has(id) && isSubscribed(s.id))),
+        s.participant_ids.some(
+          (id) => myIds.has(id) || mySupportingIds.has(id) || (myNpcIds.has(id) && isSubscribed(s.id)),
+        ),
       ).length +
       // wie die Hinweise auf dem Dashboard: Captic nur, bis man die Aktivitäten
       // geöffnet hat (am Handy bleibt der Zähler, bis alles gelesen ist)

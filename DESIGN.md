@@ -370,7 +370,8 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   vor. Ist ein Ort gewählt, steht der Charakter im Ortsprofil unter „works here."
   bzw. „studies here.".
 - **Zähler im Seitenmenü** (orange Pill): „Szenen" = alle ungelesenen Szenen,
-  „Dashboard" = Bewegung bei den eigenen Charakteren (Szenen, Chats, Anrufe),
+  „Dashboard" = Bewegung bei den eigenen Charakteren (Szenen, Chats, Anrufe;
+  Szenen zugeordneter Supporting Characters zählen mit),
   „Handy" = ungelesene Chats und klingelnde Anrufe.
 - **„Neu anlegen" in einer Bubble-Reihe:** gestrichelte Pill mit Plus und Text
   („+ Neuer Ort", „+ Als Plot speichern").
