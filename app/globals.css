@@ -563,11 +563,11 @@ html[data-env="dev"] .font-display {
    läuft breit, deshalb kleiner und enger als Barriecito */
 html[data-env="dev"] h2.font-display,
 html[data-env="dev"] h3.font-display {
-  font-size: 1.5rem;
+  font-size: 1.6875rem;
   letter-spacing: -0.04em;
 }
 html[data-env="dev"] h3.font-display {
-  font-size: 1.25rem;
+  font-size: 1.375rem;
 }
 /* die Schreibmaschinen-Schrift läuft breiter: Wortmarke etwas kleiner, damit sie
    in der Seitenleiste in einer Zeile bleibt */
