@@ -55,8 +55,8 @@
   --font-sans: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
   /* Georgia-Serifenschrift entfernt -> serifenlos (Content-Titel, Prosa, Zitate) */
   --font-serif: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
-  /* Display-Font (Lacquer) für Bildmarke & Seiten-Überschriften */
-  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  /* Display-Font (Computer Modern Typewriter) für Bildmarke & Seiten-Überschriften */
+  --font-display: var(--font-display), "Courier New", ui-monospace, monospace;
 }
 
 * {
@@ -250,12 +250,21 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
   display: none;
 }
 
-/* Display-Font (Lacquer) – Bildmarke & Seiten-Überschriften: die Schrift gibt es
-   nur in einem Schnitt, deshalb 400 (sonst würde der Browser sie künstlich fetten). */
+/* Display-Font (Computer Modern Typewriter, app/fonts) – Bildmarke & Seiten-Überschriften.
+   Eingebunden ist nur der normale Schnitt (400) – ohne künstliche Verstärkung. */
 .font-display {
-  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-display), "Courier New", ui-monospace, monospace;
   font-weight: 400;
-  letter-spacing: 0;
+}
+/* Abschnitts-Überschriften („identity.", „skills." …): etwas enger gesetzt */
+h2.font-display,
+h3.font-display {
+  letter-spacing: -0.04em;
+}
+
+/* Seitentitel im Banner: Buchstaben minimal enger */
+.font-display.page-title {
+  letter-spacing: -0.015em;
 }
 
 /* Sektions-Bar-Überschrift wie im Forum (GENERAL / INPLAY) */
