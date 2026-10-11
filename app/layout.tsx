@@ -13,9 +13,14 @@ const sans = Montserrat({
 });
 
 // Display-Schrift – Bildmarke (Logo) und Seiten-Überschriften
-// (Computer Modern Typewriter, SIL Open Font License – siehe app/fonts/cmu-OFL.txt)
+// (My Type of Font, Freeware – siehe app/fonts/mytype-readme.txt. Aus der Datei
+// ist die leere, defekte Kerning-Tabelle entfernt, sonst lehnt der Browser sie ab.
+// Die frühere Computer Modern Typewriter liegt noch als cmuntt.ttf daneben.)
 const display = localFont({
-  src: "./fonts/cmuntt.ttf",
+  src: "./fonts/mytype.ttf",
+  // Die Schrift läuft groß und breit – überall etwas kleiner zeichnen, ohne die
+  // Schriftgrößen der Skala anzufassen.
+  declarations: [{ prop: "size-adjust", value: "80%" }],
   variable: "--font-display",
   weight: "400",
   style: "normal",

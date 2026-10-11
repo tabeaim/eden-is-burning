@@ -37,9 +37,9 @@ eigenes Bild zeigen alle den Silhouetten-Avatar (`characterImage`).
 ## Farben & Schrift
 
 Tokens stehen in `app/globals.css` (`--accent`, `--olive`, `--bg-*`, `--text-*`,
-`--border-*`). Display-Schrift (`font-display`, Computer Modern Typewriter – lokal eingebunden
-aus `app/fonts`, nur der normale Schnitt 400, ohne künstliche Verstärkung; `h2`/`h3`
-etwas enger gesetzt) nur für Logo, Seitentitel und die
+`--border-*`). Display-Schrift (`font-display`, My Type of Font – lokal eingebunden aus
+`app/fonts/mytype.ttf`, nur ein Schnitt 400; per `size-adjust: 80%` in `app/layout.tsx`
+überall etwas kleiner gezeichnet, die Größen der Skala bleiben unverändert) nur für Logo, Seitentitel und die
 kleingeschriebenen Abschnitts-Überschriften mit Punkt („facts.", „scenes."). Abschnitts-Überschriften sind `1.625rem`, auf dem Dashboard
 (`DashHeading`) `1.5rem`, in den Profilen (`SectionHeading`) `1.75rem`
 (Unter-Überschriften `1.25rem`). Schriftgrößen immer aus der vorhandenen Skala
