@@ -241,11 +241,12 @@ function CharacterCard({
       {/* Avatar im Originalformat, nie größer als das Bild selbst; mt-auto hält die
           Bilder einer Reihe auf gleicher Höhe, auch bei umbrechenden Namen */}
       <div className="mt-auto w-full pt-3">
+        <div className="relative mx-auto w-full max-w-[600px]">
         <Link
           href={`/charaktere/${c.id}`}
           aria-label={c.name}
           tabIndex={-1}
-          className="relative mx-auto block aspect-[600/502] w-full max-w-[600px] overflow-hidden rounded-lg bg-bg-primary"
+          className="relative block aspect-[600/502] w-full overflow-hidden rounded-lg bg-bg-primary"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -266,9 +267,16 @@ function CharacterCard({
             </div>
           )}
         </Link>
+        {/* Tagline als Pilltag auf der Unterkante des Avatars – halb auf dem Bild */}
+        {c.tagline && (
+          <span className="pointer-events-none absolute bottom-0 left-1/2 max-w-[90%] -translate-x-1/2 translate-y-1/2 truncate rounded-full border border-border-subtle bg-bg-surface px-3 py-0.5 text-[0.6875rem] uppercase tracking-wider text-text-secondary">
+            {c.tagline}
+          </span>
+        )}
+        </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[0.8125rem] uppercase tracking-wider text-text-secondary">
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[0.8125rem] uppercase tracking-wider text-text-secondary">
         <span>
           <span className="font-bold text-text-primary">{postCount}</span>{" "}
           {postCount === 1 ? "Post" : "Posts"}
