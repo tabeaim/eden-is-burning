@@ -8,7 +8,6 @@ import { characterImage } from "@/lib/avatar";
 import { joinNames } from "@/lib/format";
 import { useStore, whoseTurn } from "@/lib/store";
 import {
-  formatDateTime,
   formatDateTimeShort,
   formatInplayDate,
   formatInplayDateShort,
@@ -16,7 +15,7 @@ import {
 import type { Character, Scene } from "@/lib/types";
 import { chatHref, newestMessage, sceneHref, scenePlace } from "@/lib/chats";
 import { Icon } from "./Icon";
-import { SceneTurnBar } from "./SceneTurnBar";
+import { Bubble } from "./Bubble";
 
 // Szenen-Boxen – es gibt genau zwei Varianten (siehe DESIGN.md):
 //  1. SceneCard – ausführliche Karte: Szenen-Übersicht, Dashboard, Ortsprofil,
@@ -144,8 +143,8 @@ function SceneLocation({ scene }: { scene: Scene }) {
   );
 }
 
-// Ausführliche Karte: Streichholz, Titel, darunter in einer Reihe die Beteiligten
-// (anklickbar; wer dran ist, ist markiert) und Ort · Datum, letzter Post mit Datum und
+// Ausführliche Karte, zweizeilig: Streichholz, Titel; darunter links alle Beteiligten
+// in einer Bubble (wer dran ist, ist markiert) und Ort · Datum; rechts daneben der letzte Post mit Datum und
 // Uhrzeit (Klick springt zum neuesten Post).
 export function SceneCard({
   scene,
@@ -166,6 +165,21 @@ export function SceneCard({
     .filter(Boolean) as Character[];
   const { posts, last: lastPost, lastHref, what, none } = useLastEntry(scene);
   const { onContextMenu, menu } = useSceneMenu(scene);
+  // wer am Zug ist (nur in aktiven Szenen markiert)
+  const turnId = scene.status === "active" ? whoseTurn(scene, posts) : null;
+  const info = (
+    <div className="truncate text-[0.875rem] text-text-tertiary">
+      <SceneLocation scene={scene} />
+      {formatInplayDate(scene.inplay_date)}
+      {scene.inplay_time && `, ${scene.inplay_time}`}
+      {scene.au && (
+        <>
+          {" · "}
+          <AuTag scene={scene} />
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div
@@ -206,64 +220,79 @@ export function SceneCard({
           </div>
         </div>
 
-        {/* Ort · Datum; in der ausführlichen Karte steht die Zeile neben den
-            Beteiligten (bricht in schmalen Spalten darunter um) */}
-        <div className={compact ? "mt-1" : "mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5"}>
-          {!compact && (
-            <SceneTurnBar
-              participants={participants}
-              activeCharId={whoseTurn(scene, posts)}
-              active={scene.status === "active"}
-              firstNameOnly
-              linked
-            />
-          )}
-          <div className="text-[0.875rem] text-text-tertiary">
-            <SceneLocation scene={scene} />
-            {formatInplayDate(scene.inplay_date)}
-            {scene.inplay_time && `, ${scene.inplay_time}`}
-            {scene.au && (
-              <>
-                {" · "}
-                <AuTag scene={scene} />
-              </>
-            )}
-          </div>
-        </div>
-
         {compact ? (
-          <div className="mt-2 flex items-center gap-2 text-[0.8125rem] text-text-tertiary">
-            <span className="flex shrink-0 -space-x-2">
-              {participants.map((c) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={c.id}
-                  src={characterImage(c)}
-                  alt=""
-                  className="h-6 w-6 rounded-full object-cover ring-2 ring-bg-surface"
-                />
-              ))}
-            </span>
-            <span className="min-w-0 truncate">{joinNames(participants.map((c) => c.name.split(" ")[0]))}</span>
-          </div>
-        ) : (
           <>
-        <div className="mt-2 text-[0.8125rem] text-text-tertiary">
+            <div className="mt-1">{info}</div>
+            <div className="mt-2 flex items-center gap-2 text-[0.8125rem] text-text-tertiary">
+              <span className="flex shrink-0 -space-x-2">
+                {participants.map((c) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={c.id}
+                    src={characterImage(c)}
+                    alt=""
+                    className="h-6 w-6 rounded-full object-cover ring-2 ring-bg-surface"
+                  />
+                ))}
+              </span>
+              <span className="min-w-0 truncate">{joinNames(participants.map((c) => c.name.split(" ")[0]))}</span>
+            </div>
+          </>
+        ) : (
+          // Zweite Zeile: alle Beteiligten in einer Bubble und Ort · Datum – bricht
+          // nicht um; was nicht passt, wird mit … gekürzt
+          <div className="mt-2 flex min-w-0 items-center gap-3">
+            <Bubble
+              className="max-w-[65%] shrink-0 overflow-hidden whitespace-nowrap"
+              leading={
+                <span className="flex shrink-0 -space-x-1.5">
+                  {participants.map((c) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={c.id}
+                      src={characterImage(c)}
+                      alt=""
+                      className={`h-5 w-5 rounded-full object-cover ring-2 ${
+                        c.id === turnId ? "ring-accent" : "ring-bg-surface"
+                      }`}
+                    />
+                  ))}
+                </span>
+              }
+            >
+              {/* wer dran ist: Name in der Akzentfarbe mit Flamme */}
+              {participants.map((c, n) => (
+                <span key={c.id} className={c.id === turnId ? "inline-flex items-center gap-0.5 text-accent" : undefined}>
+                  {n > 0 && n === participants.length - 1 && <span className="text-text-secondary">&amp;&nbsp;</span>}
+                  {c.name.split(" ")[0]}
+                  {c.id === turnId && <Icon name="flame" size={12} />}
+                  {participants.length > 2 && n < participants.length - 2 && (
+                    <span className="text-text-secondary">,</span>
+                  )}
+                </span>
+              ))}
+            </Bubble>
+            <div className="min-w-0 flex-1 truncate">{info}</div>
+          </div>
+        )}
+      </div>
+      {/* rechts, über beide Zeilen: der letzte Post (Klick springt dorthin) */}
+      {!compact && (
+        <div className="shrink-0 text-right text-[0.8125rem] leading-snug text-text-tertiary">
           {lastPost ? (
             <Link
               href={lastHref}
               title="Zum neuesten Beitrag springen"
-              className="relative z-10 hover:text-accent hover:underline"
+              className="group/last relative z-10 block hover:text-accent"
             >
-              {what} am {formatDateTime(lastPost.created_at)}
+              <div className="text-text-secondary group-hover/last:text-accent group-hover/last:underline">{what}</div>
+              <div className="group-hover/last:underline">{formatDateTimeShort(lastPost.created_at)}</div>
             </Link>
           ) : (
             none
           )}
         </div>
-          </>
-        )}
-      </div>
+      )}
     </div>
   );
 }

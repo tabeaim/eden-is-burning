@@ -83,9 +83,12 @@ Genau zwei Varianten:
 
 Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden").
 
-1. **`SceneCard`** – ausführliche Karte: Titel; darunter in einer Reihe die
-   Beteiligten als anklickbare Bubbles (wer dran ist, markiert) und Ort (reiner
-   Text, führt aufs Ortsprofil) · Datum – so bleibt die Karte flach; letzter Post. Szenen-Übersicht, Dashboard,
+1. **`SceneCard`** – ausführliche Karte, zweizeilig: oben der Titel; darunter
+   links alle Beteiligten in **einer** Bubble (zusammengerückte Avatare + Vornamen;
+   wer dran ist: Avatar mit Akzent-Ring, Name in der Akzentfarbe mit Flamme) und
+   Ort (reiner Text, führt aufs Ortsprofil) · Datum. Rechts neben beiden Zeilen
+   der letzte Post („Letzter Post" + Datum und Uhrzeit numerisch). Die zweite Zeile
+   bricht nie um – was nicht passt, wird mit … gekürzt. Szenen-Übersicht, Dashboard,
    Ortsprofil, Charakterprofil.
    Die ganze Box führt zur Szene; „Letzter Post" springt zum neuesten Post.
 2. **`SceneRow`** – kompakte Zeile für schmale Spalten, überall identisch
