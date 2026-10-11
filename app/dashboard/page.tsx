@@ -359,7 +359,7 @@ export default function DashboardPage() {
               aria-expanded={dranOpen}
               className={`flex w-full items-center gap-2 text-left ${dranOpen ? "mb-4" : ""}`}
             >
-              <DashHeading note={`${dranCount}/${totalOpen}`}>du bist dran.</DashHeading>
+              <DashHeading note={`${dranCount}/${totalOpen}`} ticker>du bist dran.</DashHeading>
               <span
                 className={`text-text-tertiary transition-transform ${
                   dranOpen ? "rotate-180" : ""
@@ -389,7 +389,7 @@ export default function DashboardPage() {
               aria-expanded={showWarten}
               className={`flex w-full items-center gap-2 text-left ${showWarten ? "mb-4" : ""}`}
             >
-              <DashHeading note={`${wartenCount}/${totalOpen}`}>wartet auf andere.</DashHeading>
+              <DashHeading note={`${wartenCount}/${totalOpen}`} ticker>wartet auf andere.</DashHeading>
               <span
                 className={`text-text-tertiary transition-transform ${
                   showWarten ? "rotate-180" : ""
@@ -618,17 +618,23 @@ function ChatItem({
 function DashHeading({
   children,
   note,
+  ticker = false,
   className = "",
 }: {
   children: React.ReactNode;
   note?: string;
+  ticker?: boolean; // Zähler („8/15"): ebenfalls in der Display-Schrift
   className?: string;
 }) {
   return (
     <h2 className={`${className} flex items-baseline gap-2.5 font-display lowercase text-[1.625rem] leading-none text-accent`}>
       {children}
       {note && (
-        <span className="font-sans text-[0.8125rem] normal-case tracking-normal text-text-tertiary [-webkit-text-stroke:0]">
+        <span
+          className={`normal-case tracking-normal text-text-tertiary [-webkit-text-stroke:0] ${
+            ticker ? "text-[1rem]" : "font-sans text-[0.8125rem]"
+          }`}
+        >
           {note}
         </span>
       )}
