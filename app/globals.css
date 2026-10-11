@@ -55,8 +55,8 @@
   --font-sans: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
   /* Georgia-Serifenschrift entfernt -> serifenlos (Content-Titel, Prosa, Zitate) */
   --font-serif: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
-  /* Display-Font (Computer Modern Typewriter) für Bildmarke & Seiten-Überschriften */
-  --font-display: var(--font-display), "Courier New", ui-monospace, monospace;
+  /* Display-Font (Bebas Neue) für Bildmarke & Seiten-Überschriften */
+  --font-display: var(--font-display), "Arial Narrow", Impact, sans-serif;
 }
 
 * {
@@ -250,27 +250,13 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
   display: none;
 }
 
-/* Display-Font (Computer Modern Typewriter, app/fonts) – Bildmarke & Seiten-Überschriften */
+/* Display-Font (Bebas Neue) – Bildmarke & Seiten-Überschriften. Die Schrift kennt
+   nur Großbuchstaben und einen Schnitt; sie läuft schmal, deshalb etwas Luft
+   zwischen den Buchstaben. */
 .font-display {
-  font-family: var(--font-display), "Courier New", ui-monospace, monospace;
-  font-weight: 400; /* eingebunden ist nur der normale Schnitt */
-}
-/* Abschnitts-Überschriften („identity.", „skills." …) und die Namen auf den
-   Charakterkarten: etwas enger und kräftiger. Ein Gewicht 500 hat die Schrift
-   nicht – angenähert durch eine hauchdünne Kontur in der Schriftfarbe. */
-h2.font-display,
-h3.font-display,
-.card-title.font-display {
-  -webkit-text-stroke: 0.02em currentColor;
-}
-h2.font-display,
-h3.font-display {
-  letter-spacing: -0.04em;
-}
-
-/* Seitentitel im Banner: Buchstaben minimal enger */
-.font-display.page-title {
-  letter-spacing: -0.015em;
+  font-family: var(--font-display), "Arial Narrow", Impact, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.03em;
 }
 
 /* Sektions-Bar-Überschrift wie im Forum (GENERAL / INPLAY) */

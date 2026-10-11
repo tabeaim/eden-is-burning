@@ -821,7 +821,7 @@ function PostRow({
           alt=""
           loading="lazy"
           draggable={false}
-          className={`${character.profile.signature_text ? "mt-2" : "mt-6"} ${signatureAlign(character.profile.signature_align).image} block max-h-40 max-w-full select-none`}
+          className={`${character.profile.signature_text ? "mt-2" : "mt-6"} ${signatureAlign(character.profile.signature_align).image} block max-w-full select-none`}
         />
       )}
       {quoteBtn && (

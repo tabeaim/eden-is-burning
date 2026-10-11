@@ -37,15 +37,12 @@ eigenes Bild zeigen alle den Silhouetten-Avatar (`characterImage`).
 ## Farben & Schrift
 
 Tokens stehen in `app/globals.css` (`--accent`, `--olive`, `--bg-*`, `--text-*`,
-`--border-*`). Display-Schrift (`font-display`, Computer Modern Typewriter – lokal eingebunden
-aus `app/fonts`, nur der normale Schnitt) nur für Logo, Seitentitel und die
-kleingeschriebenen Abschnitts-Überschriften mit Punkt („facts.", „scenes.").
-Abschnitts-Überschriften sind `1.625rem`, auf dem Dashboard (`DashHeading`)
-`1.5rem`, in den Profilen (`SectionHeading`)
-`1.75rem` (Unter-Überschriften `1.25rem`), etwas
-enger gesetzt und eine Spur kräftiger: Ein Gewicht 500 hat die Schrift nicht, es
-ist per hauchdünner Kontur angenähert (`h2`/`h3` mit `font-display` und
-`.card-title` in `globals.css`). Schriftgrößen immer aus der vorhandenen Skala
+`--border-*`). Display-Schrift (`font-display`, Bebas Neue über `next/font/google` – nur
+Großbuchstaben, ein Schnitt, leicht gesperrt) nur für Logo, Seitentitel und die
+Abschnitts-Überschriften mit Punkt („FACTS.", „SCENES."; im Code weiter klein
+geschrieben). Abschnitts-Überschriften sind `1.625rem`, auf dem Dashboard
+(`DashHeading`) `1.5rem`, in den Profilen (`SectionHeading`) `1.75rem`
+(Unter-Überschriften `1.25rem`). Schriftgrößen immer aus der vorhandenen Skala
 nehmen, keine krummen Zwischenwerte.
 Alles andere ist Montserrat. Standard-Textgröße `0.875rem`, Bubbles/Buttons
 `0.8125rem`.
@@ -295,7 +292,9 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Charakters, sonst nirgends. Der Text darf HTML enthalten; angezeigt wird er
   immer über `SignatureText` (entschärft durch `signatureHtml`, lib/html.ts).
   Text und Bild stehen zentriert; die Ausrichtung (links/zentriert/rechts) lässt
-  sich dort umstellen (`profile.signature_align`, `signatureAlign`).
+  sich dort umstellen (`profile.signature_align`, `signatureAlign`). Die Höhe
+  ist nicht begrenzt – Signaturen dürfen so hoch sein wie gewollt (nur die Breite
+  passt sich dem Post an).
 - **Freie Profiltexte** (Kurzbeschreibung, About, Looks-Beschreibung, Zitat,
   Timeline-Text, Relations-Erläuterung; bei Spieler*innen Zitat und
   Beschreibung) dürfen ebenfalls HTML enthalten. Angezeigt werden sie immer über

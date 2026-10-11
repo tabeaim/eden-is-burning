@@ -14,7 +14,7 @@ export function signatureAlign(align: SignatureAlign | null | undefined) {
 }
 
 // Text-Signatur eines Charakters (reiner Text oder HTML) – klein und grau, sofern
-// das HTML nichts anderes vorgibt; sehr hohe Signaturen werden abgeschnitten.
+// das HTML nichts anderes vorgibt. Die Höhe ist nicht begrenzt.
 export function SignatureText({
   html,
   align,
@@ -27,7 +27,7 @@ export function SignatureText({
   const inner = useMemo(() => ({ __html: signatureHtml(html) }), [html]);
   return (
     <div
-      className={`${className} ${signatureAlign(align).text} max-h-60 overflow-hidden break-words text-[0.8125rem] leading-relaxed text-text-tertiary [&_a]:underline [&_a:hover]:text-accent [&_img]:inline-block [&_img]:max-h-40 [&_img]:max-w-full`}
+      className={`${className} ${signatureAlign(align).text} break-words text-[0.8125rem] leading-relaxed text-text-tertiary [&_a]:underline [&_a:hover]:text-accent [&_img]:inline-block [&_img]:max-w-full`}
       dangerouslySetInnerHTML={inner}
     />
   );

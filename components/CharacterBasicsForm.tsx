@@ -601,7 +601,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
           <img
             src={signature}
             alt="Signatur"
-            className={`${signatureAlign(p.signature_align).image} block max-h-40 max-w-full rounded-md`}
+            className={`${signatureAlign(p.signature_align).image} block max-w-full rounded-md`}
           />
         )}
         {F({

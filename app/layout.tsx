@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
-import localFont from "next/font/local";
+import { Montserrat, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
@@ -13,12 +12,12 @@ const sans = Montserrat({
 });
 
 // Display-Schrift – Bildmarke (Logo) und Seiten-Überschriften
-// (Computer Modern Typewriter, SIL Open Font License – siehe app/fonts/cmu-OFL.txt)
-const display = localFont({
-  src: "./fonts/cmuntt.ttf",
+// (Bebas Neue: nur Großbuchstaben, ein Schnitt. Die frühere Schreibmaschinen-Schrift
+// liegt noch unter app/fonts.)
+const display = Bebas_Neue({
   variable: "--font-display",
+  subsets: ["latin"],
   weight: "400",
-  style: "normal",
   display: "swap",
 });
 
