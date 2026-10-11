@@ -558,9 +558,16 @@ html[data-env="dev"] ::selection {
 }
 html[data-env="dev"] .font-display {
   font-family: "CMU Typewriter Probe", var(--font-display), "Barriecito", sans-serif;
-  /* Die Schrift gibt es nur in 400 (und Light/Bold) – „500" entsteht durch eine
-     hauchdünne Kontur in der Schriftfarbe. */
-  -webkit-text-stroke: 0.02em currentColor;
+}
+/* Abschnitts-Überschriften („identity.", „skills." …): die Schreibmaschinen-Schrift
+   läuft breit, deshalb kleiner und enger als Barriecito */
+html[data-env="dev"] h2.font-display,
+html[data-env="dev"] h3.font-display {
+  font-size: 1.5rem;
+  letter-spacing: -0.04em;
+}
+html[data-env="dev"] h3.font-display {
+  font-size: 1.25rem;
 }
 /* die Schreibmaschinen-Schrift läuft breiter: Wortmarke etwas kleiner, damit sie
    in der Seitenleiste in einer Zeile bleibt */
