@@ -144,8 +144,8 @@ function SceneLocation({ scene }: { scene: Scene }) {
   );
 }
 
-// Ausführliche Karte: Streichholz, Titel, Ort · Datum in einer Zeile,
-// Beteiligte (anklickbar; wer dran ist, ist markiert), letzter Post mit Datum und
+// Ausführliche Karte: Streichholz, Titel, darunter in einer Reihe die Beteiligten
+// (anklickbar; wer dran ist, ist markiert) und Ort · Datum, letzter Post mit Datum und
 // Uhrzeit (Klick springt zum neuesten Post).
 export function SceneCard({
   scene,
@@ -206,16 +206,29 @@ export function SceneCard({
           </div>
         </div>
 
-        <div className="mt-1 text-[0.875rem] text-text-tertiary">
-          <SceneLocation scene={scene} />
-          {formatInplayDate(scene.inplay_date)}
-          {scene.inplay_time && `, ${scene.inplay_time}`}
-          {scene.au && (
-            <>
-              {" · "}
-              <AuTag scene={scene} />
-            </>
+        {/* Ort · Datum; in der ausführlichen Karte steht die Zeile neben den
+            Beteiligten (bricht in schmalen Spalten darunter um) */}
+        <div className={compact ? "mt-1" : "mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5"}>
+          {!compact && (
+            <SceneTurnBar
+              participants={participants}
+              activeCharId={whoseTurn(scene, posts)}
+              active={scene.status === "active"}
+              firstNameOnly
+              linked
+            />
           )}
+          <div className="text-[0.875rem] text-text-tertiary">
+            <SceneLocation scene={scene} />
+            {formatInplayDate(scene.inplay_date)}
+            {scene.inplay_time && `, ${scene.inplay_time}`}
+            {scene.au && (
+              <>
+                {" · "}
+                <AuTag scene={scene} />
+              </>
+            )}
+          </div>
         </div>
 
         {compact ? (
@@ -235,16 +248,6 @@ export function SceneCard({
           </div>
         ) : (
           <>
-        <div className="mt-2.5">
-          <SceneTurnBar
-            participants={participants}
-            activeCharId={whoseTurn(scene, posts)}
-            active={scene.status === "active"}
-            firstNameOnly
-            linked
-          />
-        </div>
-
         <div className="mt-2 text-[0.8125rem] text-text-tertiary">
           {lastPost ? (
             <Link

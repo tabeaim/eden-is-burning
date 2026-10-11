@@ -145,7 +145,19 @@ export default function DashboardPage() {
         g.dran.length > 0 || g.warten.length > 0 || g.chatsDran.length > 0 || g.chatsWarten.length > 0,
     );
 
-  const hasDran = grouped.some((g) => g.dran.length > 0 || g.chatsDran.length > 0);
+  // „Du bist dran": eine Liste über alle Charaktere, das Neueste zuerst – jede
+  // Szene und jeder Chat-Strang einmal (Chats mit dem Charakter, der antworten soll)
+  const dranItems = [
+    ...grouped.flatMap((g) =>
+      g.dran.map((s) => ({ key: s.id, at: lastPostAt(s.id) ?? s.created_at, scene: s, unit: null, char: g.char })),
+    ),
+    ...grouped.flatMap((g) =>
+      g.chatsDran.map((u) => ({ key: unitKey(u), at: u.last.created_at, scene: null, unit: u, char: g.char })),
+    ),
+  ]
+    .filter((x, i, all) => all.findIndex((y) => y.key === x.key) === i)
+    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  const hasDran = dranItems.length > 0;
   const hasWarten = grouped.some((g) => g.warten.length > 0 || g.chatsWarten.length > 0);
 
   // Numerische Übersicht über distinkte offene Szenen des Spielers
@@ -216,14 +228,10 @@ export default function DashboardPage() {
         bannerImage={currentPlayer.dashboard_header_url ?? undefined}
       />
 
-      {/* Zitat über die volle Breite, über allem anderen */}
-      <div className="mb-8">
-        <QuoteRotator />
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-8 lg:gap-16 items-start">
-        {/* LINKS: Szenenübersicht, nach Charakteren gruppiert */}
+        {/* LINKS: Zitat über allem, darunter die Szenenübersicht */}
         <div className="flex flex-col gap-6 lg:gap-10">
+          <QuoteRotator />
           {/* Klingelnde Anrufe an eigene Charaktere – führen aufs Handy zum Abheben */}
           {incomingCalls.length > 0 && (
             <section className="flex flex-col gap-2">
@@ -352,12 +360,7 @@ export default function DashboardPage() {
               aria-expanded={dranOpen}
               className={`flex w-full items-center gap-2 text-left ${dranOpen ? "mb-4" : ""}`}
             >
-              <h2 className="section-bar text-[0.875rem] text-text-primary">
-                Du bist dran{" "}
-                <span className="text-accent">
-                  {dranCount}/{totalOpen}
-                </span>
-              </h2>
+              <DashHeading note={`${dranCount}/${totalOpen}`}>du bist dran.</DashHeading>
               <span
                 className={`text-text-tertiary transition-transform ${
                   dranOpen ? "rotate-180" : ""
@@ -369,18 +372,14 @@ export default function DashboardPage() {
             {!dranOpen ? null : !hasDran ? (
               <Empty>Gerade bist du in keiner Szene und keinem Chat am Zug.</Empty>
             ) : (
-              <div className="flex flex-col gap-6">
-                {grouped
-                  .filter((g) => g.dran.length > 0 || g.chatsDran.length > 0)
-                  .map((g) => (
-                    <CharacterGroup
-                      key={g.char.id}
-                      char={g.char}
-                      scenes={g.dran}
-                      chats={g.chatsDran}
-                      canLeaveOnRead
-                    />
-                  ))}
+              <div className="flex flex-col gap-2">
+                {dranItems.map((item) =>
+                  item.scene ? (
+                    <SceneCard key={item.key} scene={item.scene} />
+                  ) : (
+                    <ChatItem key={item.key} unit={item.unit!} char={item.char} canLeaveOnRead />
+                  ),
+                )}
               </div>
             )}
           </section>
@@ -391,12 +390,7 @@ export default function DashboardPage() {
               aria-expanded={showWarten}
               className={`flex w-full items-center gap-2 text-left ${showWarten ? "mb-4" : ""}`}
             >
-              <h2 className="section-bar text-[0.875rem] text-text-tertiary">
-                Wartet auf andere{" "}
-                <span className="text-text-secondary">
-                  {wartenCount}/{totalOpen}
-                </span>
-              </h2>
+              <DashHeading note={`${wartenCount}/${totalOpen}`}>wartet auf andere.</DashHeading>
               <span
                 className={`text-text-tertiary transition-transform ${
                   showWarten ? "rotate-180" : ""
@@ -426,15 +420,13 @@ export default function DashboardPage() {
           </section>
         </div>
 
-        {/* RECHTS: Zitate, 24h-Aktivität, Online */}
+        {/* RECHTS: 24h-Aktivität, Online */}
         <div className="flex flex-col gap-8 lg:sticky lg:top-6">
 
           {/* nur, wenn in den letzten 24h etwas los war */}
           {recentItems.length > 0 && (
           <section>
-            <h2 className="section-bar text-[0.875rem] text-text-secondary mb-3">
-              Aktive Szenen · letzte 24h
-            </h2>
+            <DashHeading note="letzte 24h" className="mb-3">aktive szenen.</DashHeading>
             <div className="flex flex-col gap-2">
               {recentItems.map((item) =>
                 item.scene ? (
@@ -448,9 +440,7 @@ export default function DashboardPage() {
           )}
 
           <section>
-            <h2 className="section-bar text-[0.875rem] text-text-secondary mb-3">
-              Spieler online · jetzt
-            </h2>
+            <DashHeading note="jetzt" className="mb-3">online.</DashHeading>
             <PlayerPresenceList
               players={onlineNow}
               now
@@ -461,9 +451,7 @@ export default function DashboardPage() {
 
           {onlineRecent.length > 0 && (
             <section>
-              <h2 className="section-bar text-[0.875rem] text-text-secondary mb-3">
-                Spieler online · letzte 24h
-              </h2>
+              <DashHeading note="letzte 24h" className="mb-3">online.</DashHeading>
               <PlayerPresenceList players={onlineRecent} />
             </section>
           )}
@@ -548,7 +536,6 @@ function CharacterGroup({
   muted?: boolean;
   canLeaveOnRead?: boolean; // unbeantwortete Chats lassen sich pausieren
 }) {
-  const { leaveOnRead, updateChatScene } = useStore();
   return (
     <div>
       <div className="flex items-center gap-2.5 mb-2.5">
@@ -578,33 +565,73 @@ function CharacterGroup({
           <SceneCard key={s.id} scene={s} muted={muted} />
         ))}
         {chats.map((u) => (
-          <ChatRow
-            key={unitKey(u)}
-            chat={u.chat}
-            scene={u.scene}
-            forCharacter={char.id}
-            muted={muted}
-            action={
-              canLeaveOnRead ? (
-                <button
-                  onClick={() => {
-                    leaveOnRead(u.chat.id, char.id, u.last.id);
-                    if (u.scene) updateChatScene(u.scene.id, { status: "closed" });
-                  }}
-                  title={
-                    u.scene
-                      ? "Nachricht unbeantwortet lassen – beendet die SMS-Szene"
-                      : "Nachricht unbeantwortet lassen – der Chat pausiert, bis jemand wieder schreibt"
-                  }
-                  className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
-                >
-                  Leave on read
-                </button>
-              ) : undefined
-            }
-          />
+          <ChatItem key={unitKey(u)} unit={u} char={char} muted={muted} canLeaveOnRead={canLeaveOnRead} />
         ))}
       </div>
     </div>
+  );
+}
+
+// Ein Chat-Strang in den Listen des Dashboards, aus Sicht des eigenen Charakters
+function ChatItem({
+  unit: u,
+  char,
+  muted = false,
+  canLeaveOnRead = false,
+}: {
+  unit: ChatUnit;
+  char: Character;
+  muted?: boolean;
+  canLeaveOnRead?: boolean; // unbeantwortete Chats lassen sich pausieren
+}) {
+  const { leaveOnRead, updateChatScene } = useStore();
+  return (
+    <ChatRow
+      chat={u.chat}
+      scene={u.scene}
+      forCharacter={char.id}
+      muted={muted}
+      action={
+        canLeaveOnRead ? (
+          <button
+            onClick={() => {
+              leaveOnRead(u.chat.id, char.id, u.last.id);
+              if (u.scene) updateChatScene(u.scene.id, { status: "closed" });
+            }}
+            title={
+              u.scene
+                ? "Nachricht unbeantwortet lassen – beendet die SMS-Szene"
+                : "Nachricht unbeantwortet lassen – der Chat pausiert, bis jemand wieder schreibt"
+            }
+            className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary"
+          >
+            Leave on read
+          </button>
+        ) : undefined
+      }
+    />
+  );
+}
+
+// Abschnitts-Überschrift des Dashboards: wie überall in der Display-Schrift, klein
+// geschrieben mit Punkt; dahinter klein der Zähler bzw. der Zeitraum
+function DashHeading({
+  children,
+  note,
+  className = "",
+}: {
+  children: React.ReactNode;
+  note?: string;
+  className?: string;
+}) {
+  return (
+    <h2 className={`${className} flex items-baseline gap-2.5 font-display lowercase text-[1.625rem] leading-none text-accent`}>
+      {children}
+      {note && (
+        <span className="font-sans text-[0.8125rem] normal-case tracking-normal text-text-tertiary [-webkit-text-stroke:0]">
+          {note}
+        </span>
+      )}
+    </h2>
   );
 }

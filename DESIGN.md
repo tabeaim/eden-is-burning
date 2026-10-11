@@ -83,8 +83,9 @@ Genau zwei Varianten:
 
 Zeitangaben zu Posts immer als Datum + Uhrzeit, nie relativ („vor 18 Stunden").
 
-1. **`SceneCard`** – ausführliche Karte: Titel, Ort (reiner Text, führt aufs Ortsprofil) · Datum in einer Zeile,
-   Beteiligte als anklickbare Bubbles (wer dran ist, markiert), letzter Post. Szenen-Übersicht, Dashboard,
+1. **`SceneCard`** – ausführliche Karte: Titel; darunter in einer Reihe die
+   Beteiligten als anklickbare Bubbles (wer dran ist, markiert) und Ort (reiner
+   Text, führt aufs Ortsprofil) · Datum – so bleibt die Karte flach; letzter Post. Szenen-Übersicht, Dashboard,
    Ortsprofil, Charakterprofil.
    Die ganze Box führt zur Szene; „Letzter Post" springt zum neuesten Post.
 2. **`SceneRow`** – kompakte Zeile für schmale Spalten, überall identisch
@@ -438,6 +439,15 @@ Parameter `kicker` von `useSetPageMeta`.
 
 **Charakter- und Spieler*innen-Profil sind gleich aufgebaut:** Jede Änderung am
 einen gilt auch fürs andere.
+
+## Dashboard – `app/dashboard/page.tsx`
+
+Zwei Spalten: links das Zitat über allem, darunter Hinweise (Anrufe, Mailbox,
+Captic), „du bist dran." und „wartet auf andere."; rechts „aktive szenen." und
+„online.". Abschnitts-Überschriften wie überall in der Display-Schrift
+(`DashHeading`), dahinter klein Zähler bzw. Zeitraum. „Du bist dran" ist eine
+einzige Liste über alle Charaktere – Szenen und Chats gemischt, das Neueste
+zuerst; „Wartet auf andere" bleibt nach Charakter gruppiert.
 
 ## Seitenbreite
 
