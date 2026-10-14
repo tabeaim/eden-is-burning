@@ -117,7 +117,7 @@ export function CharacterBubble({
 
 // Ort: Kategorie-Icon + Name. Mit `id` verlinkt aufs Ortsprofil; mit `onClick`
 // (Ort ohne Eintrag: Ortsseite anlegen und öffnen) wird sie zur Taste. Bespielte
-// Orte haben ein oranges Icon, noch unbespielte (`played={false}`) ein blasses
+// Orte haben ein blaues Icon, noch unbespielte (`played={false}`) ein blasses
 // graues. Das Icon zeigt die Kategorie (`category`, sonst aus dem Namen erraten).
 export function LocationBubble({
   name,

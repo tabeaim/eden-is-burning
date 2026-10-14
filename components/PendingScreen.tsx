@@ -12,7 +12,7 @@ export function PendingScreen() {
         className="absolute inset-0 -z-10"
         style={{
           backgroundImage:
-            "radial-gradient(80% 60% at 50% 0%, rgba(232,154,60,0.10), transparent 60%)",
+            "radial-gradient(80% 60% at 50% 0%, rgba(137,207,240,0.10), transparent 60%)",
         }}
       />
       <div className="w-full max-w-sm text-center">

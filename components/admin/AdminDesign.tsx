@@ -150,7 +150,7 @@ export function AdminDesign() {
         </div>
         <p className={`${hint} mt-2`}>
           Gilt für alle, die unter Einstellungen → Darstellung keinen eigenen Modus gewählt haben. Der helle Stil nutzt
-          Creme- und Orange-Töne.
+          Creme-Töne und Baby-Blau.
         </p>
       </div>
 

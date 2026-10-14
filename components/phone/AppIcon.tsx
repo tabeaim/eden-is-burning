@@ -38,7 +38,7 @@ export function AppIcon({
   );
 }
 
-export const MESSENGER_BG = "linear-gradient(#f2b25a, #d97a1e)";
+export const MESSENGER_BG = "linear-gradient(#b3e0f6, #5aaee0)";
 export function MessengerGlyph() {
   return <Icon name="message" size={28} className="text-black" fill="currentColor" stroke="none" />;
 }

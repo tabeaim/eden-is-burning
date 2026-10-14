@@ -58,7 +58,7 @@ Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schre
 | Baustein | Inhalt | Einsatz |
 | --- | --- | --- |
 | `CharacterBubble` | Avatar + Name, bei NPCs „NPC" hinter dem Namen | Charaktere und NPCs überall |
-| `LocationBubble` | Karten-Icon + Ortsname; Icon orange bei bespielten Orten, grau bei „Weiteren Orten" (`played={false}`) | Orte auf der Karte und in der Szene |
+| `LocationBubble` | Karten-Icon + Ortsname; Icon blau bei bespielten Orten, grau bei „Weiteren Orten" (`played={false}`) | Orte auf der Karte und in der Szene |
 | `Bubble` | freier Inhalt | Basis für neue Bubble-Arten |
 
 - **Avatare:** rund (Charaktere, NPCs und Spieler*innen), als mittiger Ausschnitt
@@ -69,7 +69,7 @@ Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schre
 
 ## Szenen-Boxen – `components/SceneCard.tsx`
 
-Status steht links als Streichholz (`SceneMatch`): brennend/orange bei ungelesenem
+Status steht links als Streichholz (`SceneMatch`): brennend/blau bei ungelesenem
 neuestem Post, grau ohne Flamme wenn gelesen, abgebrannt mit Rauch bei geschlossener
 Szene. Die Tags „aktiv"/„geschlossen" (`StatusBadge`) gibt es nur in der Szene selbst.
 Szenen-Boxen nennen nur den Ort, nie die Gegend. Ausnahme: Szenen ohne Ortsnamen
@@ -212,7 +212,7 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
 - **Skills & Slider:** Beschriftung über dem Balken (Skill: Name links, Prozent
   rechts; Slider: beide Pole links und rechts; 0.75rem, normale
   Schreibweise statt Großbuchstaben), darunter ein dünner, runder
-  Balken in der Akzentfarbe; beim Slider gefüllt bis zum runden, orange gefüllten Regler.
+  Balken in der Akzentfarbe; beim Slider gefüllt bis zum runden, blau gefüllten Regler.
 - **Looks:** links das Style-Whiteboard (frei, ohne Box, mit Überschrift „style."), rechts in einer Box der Fließtext über
   die ganze Breite und darunter (durch eine Linie abgesetzt) die Angaben in zwei
   Spalten (`ProfileLooks wide`). Ohne Whiteboard füllt die Box die Zeile.
@@ -304,7 +304,7 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Charakterliste und Szene. Nie roh als `{c.bio}` ausgeben.
 - **Geburtsdatum nachtragen:** Hat ein (importierter) Charakter nur eine
   Alterszahl (`needsBirthdate`), klappen die Grunddaten „Identität" auf, das
-  Feld ist orange markiert und bittet um ein Geburtsdatum; das Alter bleibt bis
+  Feld ist blau markiert und bittet um ein Geburtsdatum; das Alter bleibt bis
   dahin stehen.
 - **GIF in Szenen** (`profile.scene_gif_url`, ebenda): steht in der Szene unter
   dem Avatar (`SceneCharacterCard`), höchstens so breit wie der Avatar und halb
@@ -315,7 +315,7 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
 - **Stammbaum** (`ProfileFamilyTree`, Reiter Family Tree): Verwandte nach
   Generation in Reihen (jede Generation bleibt auch mobil in einer Zeile, die
   Karten schrumpfen; alle Karten gleich groß, ohne Etikett). Verlinkte Karten
-  (Charaktere im Verzeichnis) heben sich beim Hover an und werden orange – so
+  (Charaktere im Verzeichnis) heben sich beim Hover an und werden blau – so
   ist klar, dass man sie anklicken kann. Neben der direkten Linie die
   Seitenlinien (`side`): Geschwister der Großeltern, Tanten & Onkel, Cousinen &
   Cousins (`FAMILY_SLOTS`). Verstorbene (`deceased`) tragen ein kleines Kreuz oben
@@ -325,7 +325,7 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   die Eltern des Charakters stehen in `profile.family_parents`) und „Partner*in
   von" (`partner_of`, `partner_status`: getrennt = gestrichelt mit leerem Herz,
   geschieden = zusätzlich durchgestrichen). Geschwister sind, wer dieselben
-  Eltern hat. Partner*innen stehen direkt neben ihrer Person; Linien (orange,
+  Eltern hat. Partner*innen stehen direkt neben ihrer Person; Linien (blau,
   `useFamilyLines`) führen von den Eltern zu den Kindern, ein Paar bekommt eine
   Klammer. Sobald es Verbindungen gibt, entfallen die grauen Trennlinien
   zwischen den Generationen. Ketten und Kreise gelten nicht (`familyPartners`,
@@ -370,7 +370,7 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
 - **Arbeitgeber / Universität = Ort:** Beide Felder schlagen Orte und Gegenden
   vor. Ist ein Ort gewählt, steht der Charakter im Ortsprofil unter „works here."
   bzw. „studies here.".
-- **Zähler im Seitenmenü** (orange Pill): „Szenen" = alle ungelesenen Szenen,
+- **Zähler im Seitenmenü** (blau Pill): „Szenen" = alle ungelesenen Szenen,
   „Dashboard" = Bewegung bei den eigenen Charakteren (Szenen, Chats, Anrufe;
   Szenen zugeordneter Supporting Characters zählen mit),
   „Handy" = ungelesene Chats und klingelnde Anrufe.
@@ -390,7 +390,7 @@ dem Inhalt (seit dem Umbau der Seitenleiste: ab `lg` oben rechts, darunter über
   Filterleiste (Wortsuche, Gegend, Charaktere), darüber „Neuer Ort" und die
   Sortierung. Die Ortskarte zeigt Bild (eigenes Titelbild, sonst erstes
   Vibes-Foto, sonst Bild der Gegend), Name, Kurzbeschreibung und die Anzahl
-  Szenen mit Streichholz (orange, wenn dort eine Szene aktiv ist); die ganze
+  Szenen mit Streichholz (blau, wenn dort eine Szene aktiv ist); die ganze
   Karte führt aufs Ortsprofil.
 - **Wortsuche:** oben, was das Wort im Namen trägt; darunter „verwandt." – das
   Wort in der Beschreibung oder ein Wort derselben Gruppe (Café → Diner). Die
@@ -480,7 +480,7 @@ für den Banner-Titel), damit Titel und Inhalt beim Seitenwechsel nicht springen
 Alles Anklickbare zeigt die Hand – das regelt `app/globals.css` für Knöpfe und
 anklickbare Rollen (`role="button"`, `link`, `option` …). Anklickbare `<div>`/
 `<span>` deshalb immer mit passender Rolle (oder `cursor-pointer`) versehen.
-Zähler für Neues sind überall orange (`bg-accent text-black`), auch an den Apps.
+Zähler für Neues sind überall baby-blau (`bg-accent text-black`), auch an den Apps.
 
 ## Responsive
 
@@ -601,7 +601,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Dashboard** nennt Charaktere immer mit echtem Namen, nie mit Kontaktnamen.
 - **Langes Drücken** ersetzt am Handy den Rechtsklick (`useLongPress`).
 - **Handy wechseln:** Das Aufklappmenü zeigt nur Vornamen und je Handy einen
-  orangen Zähler, wenn dort etwas Neues wartet (Punkt an der Taste, wenn es ein
+  blauen Zähler, wenn dort etwas Neues wartet (Punkt an der Taste, wenn es ein
   anderes Handy betrifft).
 - **Anrufliste:** Rechtsklick auf einen Eintrag: „Anruf abbrechen" (eigener,
   klingelnder) und „Aus der Anrufliste löschen" (nur auf diesem Handy).
@@ -618,7 +618,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Klingeln:** alles, was einen eingehenden Anruf meldet (Dashboard-Zeile,
   Banner im Display, Zähler im Menü, Telefon-App), vibriert mit `.phone-ring`
   (globals.css).
-- **Gelesen/ungelesen:** Das Handy-Icon der `ChatRow` ist orange bei neuen
+- **Gelesen/ungelesen:** Das Handy-Icon der `ChatRow` ist blau bei neuen
   Nachrichten und grau, sobald der Chat geöffnet wurde (wie das Streichholz).
 - **Nachrichtentext ist markier- und kopierbar** – die Blase ist deshalb kein
   `<button>`; ist Text markiert, öffnen weder Klick noch Rechtsklick das Blatt.
@@ -640,7 +640,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
     niemand.
   - **Avatare in Captic** immer `CapticAvatar` (eigenes Captic-Profilbild, sonst
     Handy-, sonst Charakterbild; änderbar unter „Profil bearbeiten"). Hat der
-    Charakter eine Story, liegt überall ein Ring darum: orange und langsam
+    Charakter eine Story, liegt überall ein Ring darum: blau und langsam
     pulsierend, bis man sie angesehen hat, danach grau. Ein Klick auf einen
     Avatar mit Ring öffnet die Story (auch das kleine Bild am Kommentar); der
     Name daneben führt aufs Captic-Profil.
@@ -650,7 +650,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
     dem Bild. Anlegen über das eigene Profilbild mit kleinem Plus
     (`OwnStoryAvatar`) – in der Story-Zeile und im eigenen Profil.
   - **Aktivitäten** (Glocke oben rechts): neue Likes, Kommentare, Follower,
-    Verlinkungen, Markierungen und Kommentar-Likes (`captic_events`). Neues zeigt sich als oranger Zähler an Glocke, Captic-App,
+    Verlinkungen, Markierungen und Kommentar-Likes (`captic_events`). Neues zeigt sich als blauer Zähler an Glocke, Captic-App,
     Handy-Wechsel und „Handy" im Menü sowie im Dashboard als „Neue Aktivität auf
     Captic" je Charakter. Der Dashboard-Hinweis verschwindet beim Öffnen der
     Aktivitäten; ungelesen (Punkt, Zähler) bleibt ein Eintrag, bis er angeklickt
@@ -807,7 +807,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 ## Farbmodi (dunkel / hell)
 
 - **Dunkel** ist der Standard und das Design, auf dem alles andere in dieser Datei
-  beruht. **Hell** ist ein zweiter Stil mit Creme-Tönen und sandigem Orange (nach dem
+  beruht. **Hell** ist ein zweiter Stil mit Creme-Tönen und Baby-Blau (nach dem
   Vorbild klassischer Foren); Schrift, Abstände, Radien und alle Bausteine bleiben
   gleich. Es gibt nur diese zwei Modi.
 - **Umschalten** per `data-theme="light"` am `<html>` (siehe `lib/theme.tsx`,
@@ -816,13 +816,13 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Layout setzt den Modus vor dem ersten Zeichnen.
 - **Farben nur über Tokens** (`globals.css`, Block `html[data-theme="light"]`):
   `--bg-primary #fbf5ea`, `--bg-sidebar #dcd8c6`, `--bg-surface #f1ebdd`,
-  `--bg-surface-2 #e7dfcc`, Text `#17140f`, `--accent #e8a95a`. Neue Komponenten
+  `--bg-surface-2 #e7dfcc`, Text `#17140f`, `--accent #89cff0`. Neue Komponenten
   nutzen weiter `bg-bg-surface`, `text-text-primary`, `border-border-subtle`,
   `bg-accent` usw. und funktionieren dann in beiden Modi. Weiße Überlagerungen
   (`bg-white/[0.04]`, `border-white/20`, `hover:bg-white/[0.08]`) sind erlaubt: Im
   hellen Stil ist `--color-white` dunkel getönt. Schwarze Schrift auf `bg-accent` bleibt.
 - **Akzent als Schrift** (`text-accent`, `hover:text-accent`) nutzt im hellen Stil
-  `--accent-ink` (kräftigeres Orange), weil das helle Orange auf Creme zu blass wäre.
+  `--accent-ink` (dunkles Blau), weil das helle Baby-Blau auf Creme zu blass wäre.
 - **Header** je Stil: Ohne eigenes Bild gilt der Standard-Banner der Admins
   (`fallbackHeader`), ohne den `standardHeader(segment, modus)` – das
   gemeinsame Standardbild `public/headers/standard.webp` mit je Stil und Seite

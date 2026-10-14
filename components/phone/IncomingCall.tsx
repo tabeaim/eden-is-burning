@@ -123,7 +123,7 @@ export function IncomingCall({ characterId, always = false }: { characterId: str
   const callee = character(characterId); // dessen Kontaktname und -foto gelten
   return (
     <div className="absolute inset-0 z-20 flex items-center bg-black/60 p-4">
-      <div className="on-dark w-full rounded-2xl border border-accent/60 bg-[#2a211b] p-4 text-center">
+      <div className="on-dark w-full rounded-2xl border border-accent/60 bg-[#1b242a] p-4 text-center">
         <div className="flex justify-center">
           {caller && <ContactAvatar owner={callee} character={caller} size={64} className="phone-ring" />}
         </div>
