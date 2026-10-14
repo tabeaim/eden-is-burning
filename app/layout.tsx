@@ -13,14 +13,14 @@ const sans = Montserrat({
 });
 
 // Display-Schrift – Bildmarke (Logo) und Seiten-Überschriften
-// (My Type of Font, Freeware – siehe app/fonts/mytype-readme.txt. Aus der Datei
-// ist die leere, defekte Kerning-Tabelle entfernt, sonst lehnt der Browser sie ab.
-// Die frühere Computer Modern Typewriter liegt noch als cmuntt.ttf daneben.)
+// (Averia Regular, SIL Open Font License – siehe app/fonts/averia-OFL.txt.
+// Die frühere My Type of Font liegt als mytype.ttf daneben, Computer Modern
+// Typewriter als cmuntt.ttf.)
 const display = localFont({
-  src: "./fonts/mytype.ttf",
-  // Die Schrift läuft groß und breit – überall etwas kleiner zeichnen, ohne die
-  // Schriftgrößen der Skala anzufassen.
-  declarations: [{ prop: "size-adjust", value: "80%" }],
+  src: "./fonts/averia.ttf",
+  // Die Schrift läuft etwas klein – überall einen Ticken größer zeichnen, ohne
+  // die Schriftgrößen der Skala anzufassen.
+  declarations: [{ prop: "size-adjust", value: "108%" }],
   variable: "--font-display",
   weight: "400",
   style: "normal",
