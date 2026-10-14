@@ -21,7 +21,7 @@ export const CapticStoryContext = createContext<((characterId: string) => void) 
 export const CapticViewerContext = createContext<Pick<Character, "id" | "phone"> | null>(null);
 
 // Avatar überall in Captic. Hat der Charakter eine Story, liegt ein Ring darum:
-// grün und langsam pulsierend, solange man sie nicht angesehen hat, danach grau.
+// orange und langsam pulsierend, solange man sie nicht angesehen hat, danach grau.
 // Ein Klick auf einen Avatar mit Ring öffnet die Story; `onOpen` legt stattdessen
 // eine eigene Aktion fest.
 export function CapticAvatar({

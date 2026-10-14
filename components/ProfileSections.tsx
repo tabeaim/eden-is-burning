@@ -610,7 +610,7 @@ export function ProfileFamilyTree({ c }: { c: Character }) {
     "line-clamp-2 w-full break-all text-center text-[0.5625rem] uppercase tracking-wider text-text-tertiary sm:line-clamp-1 sm:break-normal sm:text-[0.6875rem]";
 
   // Verlinkte Karten (Charaktere im Verzeichnis) lassen sich anklicken: sie heben sich
-  // beim Darüberfahren an, der Rahmen und der Name werden grün
+  // beim Darüberfahren an, der Rahmen und der Name werden orange
   const memberCard = (m: FamilyMember) => {
     const linked = m.character_id ? character(m.character_id) : undefined;
     const body = (

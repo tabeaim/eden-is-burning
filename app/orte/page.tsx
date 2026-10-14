@@ -327,7 +327,7 @@ function LocationSection({
   played?: boolean;
   defaultOpen?: boolean;
   onAdd?: () => void; // zeigt den „+"-Button am Listenende (neuen Ort erstellen)
-  adding?: boolean; // Formular offen → „+" in blassem Grün
+  adding?: boolean; // Formular offen → „+" in blassem Orange
 }) {
   const openPlace = useOpenPlace();
   return (

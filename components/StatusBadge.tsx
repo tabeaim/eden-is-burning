@@ -4,7 +4,7 @@ import { useStore } from "@/lib/store";
 import { Icon } from "./Icon";
 
 // Status einer Szene als Tag. Aktiv = Flamme, geschlossen = Haken. Die Flamme ist
-// nur grün, solange der neueste Post der Szene noch ungelesen ist (dafür
+// nur orange, solange der neueste Post der Szene noch ungelesen ist (dafür
 // `sceneId` mitgeben), sonst grau. Optional ein "neu"-Tag bei ungelesenen Posts.
 export function StatusBadge({
   status,

@@ -184,8 +184,8 @@ function MenuIcon() {
 
 // Glut-/Rauch-Verlauf als verlässlicher Banner-Hintergrund (auch ohne Foto)
 const EMBER_BG: Record<Theme, string> = {
-  dark: "radial-gradient(120% 140% at 20% -40%, rgba(57, 255, 20,0.22), transparent 55%), radial-gradient(80% 120% at 100% 0%, rgba(120,130,90,0.14), transparent 60%), linear-gradient(180deg, #0e140c, #0a0a0b)",
-  light: "radial-gradient(120% 140% at 20% -40%, rgba(57, 255, 20,0.55), transparent 55%), linear-gradient(180deg, #d6f5c8, #fbf5ea)",
+  dark: "radial-gradient(120% 140% at 20% -40%, rgba(232,154,60,0.22), transparent 55%), radial-gradient(80% 120% at 100% 0%, rgba(120,130,90,0.14), transparent 60%), linear-gradient(180deg, #16130f, #0a0a0b)",
+  light: "radial-gradient(120% 140% at 20% -40%, rgba(232,169,90,0.55), transparent 55%), linear-gradient(180deg, #f3dcb0, #fbf5ea)",
 };
 
 // Titel im Browser-Tab: „Seite – Eden Is Burning". Detailseiten (Szene, Charakter,
@@ -451,7 +451,7 @@ function Sidebar({
   ];
   const phoneBadge =
     unreadChatCount + incomingCalls.length + capticUnread.reduce((n, a) => n + a.count, 0);
-  // Grüne Zähler im Menü: Szenen = alle ungelesenen; Dashboard = Bewegung bei
+  // Orange Zähler im Menü: Szenen = alle ungelesenen; Dashboard = Bewegung bei
   // den eigenen Charakteren (eigene Szenen, Chats, Anrufe)
   const myIds = new Set(myChars.map((c) => c.id));
   // zugeordnete Supporting Characters zählen in all ihren Szenen (wie auf dem

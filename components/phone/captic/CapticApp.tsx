@@ -306,7 +306,7 @@ function Feed({
 }
 
 // Aktivitäten (Glocke): wer geliket, kommentiert hat oder neu folgt. Das Öffnen
-// nimmt nur den Dashboard-Hinweis weg; ungelesen (grüner Punkt, Zähler) bleibt
+// nimmt nur den Dashboard-Hinweis weg; ungelesen (oranger Punkt, Zähler) bleibt
 // ein Eintrag, bis er angeklickt wurde – oder „Alle gelesen".
 function Activity({
   me,

@@ -94,7 +94,7 @@ export function LoginScreen() {
         className="absolute inset-0 -z-10"
         style={{
           backgroundImage:
-            "radial-gradient(80% 60% at 50% 0%, rgba(57, 255, 20,0.10), transparent 60%), radial-gradient(60% 50% at 80% 100%, rgba(120,130,90,0.08), transparent 60%)",
+            "radial-gradient(80% 60% at 50% 0%, rgba(232,154,60,0.10), transparent 60%), radial-gradient(60% 50% at 80% 100%, rgba(120,130,90,0.08), transparent 60%)",
         }}
       />
       <div className="w-full max-w-sm">
