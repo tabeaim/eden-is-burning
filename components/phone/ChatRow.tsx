@@ -65,7 +65,7 @@ export function ChatRow({
           muted ? "bg-bg-surface/60" : "bg-bg-surface"
         }`}
       >
-        {/* an der Stelle des Streichholzes: blau bei Ungelesenem, sonst grau */}
+        {/* an der Stelle des Streichholzes: grün bei Ungelesenem, sonst grau */}
         <span
           className={`flex h-[38px] w-[38px] shrink-0 items-center justify-center ${
             isChatFresh(chat.id, scene === undefined ? undefined : (scene?.id ?? null))
@@ -151,7 +151,7 @@ export function ChatRow({
         muted ? "opacity-70" : ""
       }`}
     >
-      {/* wie das Streichholz der Szenen: blau bei Ungelesenem, sonst grau */}
+      {/* wie das Streichholz der Szenen: grün bei Ungelesenem, sonst grau */}
       <span
         className={`flex h-6 w-6 shrink-0 items-center justify-center ${
           isChatFresh(chat.id, scene === undefined ? undefined : (scene?.id ?? null))

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Dunkles, moody Theme – Schwarz/Grau mit Baby-Blau + Olive */
+  /* Dunkles, moody Theme – Schwarz/Grau mit Neongrün + Olive */
   --bg-primary: #0a0a0b;
   --bg-sidebar: #060607;
   --bg-surface: #141416;
@@ -14,14 +14,14 @@
   --text-secondary: rgba(236, 232, 224, 0.88);
   --text-tertiary: rgba(236, 232, 224, 0.72);
   /* Akzente */
-  --accent: #89cff0; /* Baby-Blau */
-  --accent-soft: rgba(137, 207, 240, 0.14);
+  --accent: #39ff14; /* Neongrün */
+  --accent-soft: rgba(57, 255, 20, 0.14);
   --olive: #a3a380; /* Military-Olive */
   --olive-soft: rgba(163, 163, 128, 0.16);
   /* Karte (components/EdenMap.tsx) */
   --map-land: #2b2e27;
   --map-land-stroke: #445130;
-  --map-land-sel: #11232e;
+  --map-land-sel: #10250b;
   --map-label: #b8c4a0;
   --map-water: #192438;
   --map-water-stroke: #4a6080;
@@ -29,7 +29,7 @@
   --map-beach: #7f8263;
   --map-muted: #9e9e9e;
   --map-umland: #8a8a8a;
-  --map-campus: #5fb8e8;
+  --map-campus: #2ee80c;
   --map-pill: #1e1e23;
   --map-pill-stroke: #4f4f54;
   --map-pill-text: #dedede;
@@ -76,7 +76,7 @@
   border-radius: 3px;
 }
 /* Textfelder (Antwortfeld, SMS, Kommentare …) gelten beim Schreiben immer als
-   „Tastatur-Fokus" – dort kein blauer Rand, die Felder zeigen den Fokus selbst. */
+   „Tastatur-Fokus" – dort kein grüner Rand, die Felder zeigen den Fokus selbst. */
 textarea:focus-visible,
 [contenteditable]:focus-visible,
 input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="button"], [type="submit"], [type="color"]):focus-visible {
@@ -140,7 +140,7 @@ html:not([data-theme="light"]) .post-box {
 }
 
 /* Heller Stil (Einstellungen → Darstellung / Admin → Design): Creme-Töne und ein
-   ein helles Baby-Blau; Schrift, Abstände und Bausteine
+   ein helles Neongrün; Schrift, Abstände und Bausteine
    bleiben wie im dunklen Stil. `--color-white` wird dunkel getönt, damit alle weißen
    Überlagerungen (bg-white/[…], border-white/…) auf hellem Grund sichtbar bleiben. */
 html[data-theme="light"] {
@@ -154,10 +154,10 @@ html[data-theme="light"] {
   --text-primary: #0f0d09;
   --text-secondary: rgba(15, 13, 9, 0.92);
   --text-tertiary: rgba(15, 13, 9, 0.78);
-  --accent: #89cff0; /* Baby-Blau (Flächen, Knöpfe) */
+  --accent: #39ff14; /* Neongrün (Flächen, Knöpfe) */
   /* dasselbe als Schriftfarbe: kräftiger, mind. 4,5:1 auf allen Creme-Flächen */
-  --accent-ink: #1d5c80;
-  --accent-soft: rgba(137, 207, 240, 0.35);
+  --accent-ink: #1f6b0d;
+  --accent-soft: rgba(57, 255, 20, 0.35);
   --olive: #58583a;
   --olive-soft: rgba(111, 111, 77, 0.16);
   --color-white: #3a2a10;
@@ -168,7 +168,7 @@ html[data-theme="light"] {
   /* Karte: helles Salbeigrün und Wasserblau, Beschriftung dunkel */
   --map-land: #b3b68c;
   --map-land-stroke: #84875c;
-  --map-land-sel: #d6ecf8;
+  --map-land-sel: #d9f7cc;
   --map-label: #1e2009;
   --map-water: #cfe3f1;
   --map-water-stroke: #86a6c2;
@@ -176,7 +176,7 @@ html[data-theme="light"] {
   --map-beach: #ead9ad;
   --map-muted: #4d483d;
   --map-umland: #4d483d;
-  --map-campus: #2a78a6;
+  --map-campus: #23800c;
   --map-pill: #f1ebdd;
   --map-pill-stroke: #958b78;
   --map-pill-text: #0f0d09;
@@ -218,8 +218,8 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
   --text-primary: #ece8e0;
   --text-secondary: rgba(236, 232, 224, 0.88);
   --text-tertiary: rgba(236, 232, 224, 0.72);
-  --accent: #89cff0;
-  --accent-ink: #89cff0;
+  --accent: #39ff14;
+  --accent-ink: #39ff14;
   --border: rgba(255, 255, 255, 0.14);
   --border-strong: rgba(255, 255, 255, 0.24);
   --color-white: #fff;

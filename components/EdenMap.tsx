@@ -10,7 +10,7 @@ import { customAreaName } from "@/lib/world";
 // Neu ggü. der alten Karte: eigene Gegend "Central" (Downtown-Fläche), abgesetzter
 // "Industrial District & Eden Port", Byron University als Highlight in Rivers Edge.
 // Die Auswahl-, Bespielt- und Aktive-Szenen-Logik der App liegt darüber.
-// Pro Bereich zeigt ein blauer Ticker die Zahl der aktiven Szenen:
+// Pro Bereich zeigt ein grüner Ticker die Zahl der aktiven Szenen:
 // zentriert unter dem Namen der Gegend bzw. rechts neben dem Label in den Pills.
 
 interface District {
@@ -277,7 +277,7 @@ export function EdenMap({
         <g transform={BYRON.transform}>
           <path
             d={BYRON.d}
-            fill={byronSel ? "rgba(137,207,240,0.14)" : "transparent"}
+            fill={byronSel ? "rgba(57, 255, 20,0.14)" : "transparent"}
             stroke="var(--map-campus)"
             strokeWidth={byronSel ? 2.6 : 2}
             strokeDasharray="7 4"
@@ -326,7 +326,7 @@ export function EdenMap({
   );
 }
 
-// Runder blauer Zähler aktiver Szenen; der Ring dahinter pulsiert langsam (globals.css).
+// Runder grüner Zähler aktiver Szenen; der Ring dahinter pulsiert langsam (globals.css).
 function Ticker({ x, y, count }: { x: number; y: number; count: number }) {
   if (count <= 0) return null;
   return (

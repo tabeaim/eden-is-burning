@@ -344,9 +344,9 @@ const PAGE_THEMES: Record<string, Theme> = {
   },
 };
 
-// Heller Stil: dieselben Motive, aber baby-blauer Himmel mit blaugrauen Silhouetten
-const LIGHT_SKY: [number, string][] = [[0, "#dcf0fb"], [0.5, "#b6def4"], [0.8, "#89cff0"], [0.93, "#b9d6e6"], [1, "#fbf5ea"]];
-const lightOf = (t: Theme): Theme => ({ ...t, sky: LIGHT_SKY, glow: "#a8dcf5", silhouette: "#4f6a80", windows: "#f0f8ff" });
+// Heller Stil: dieselben Motive, aber neongrüner Himmel mit graugrünen Silhouetten
+const LIGHT_SKY: [number, string][] = [[0, "#e4fbdc"], [0.5, "#bdf7a8"], [0.8, "#7cf55a"], [0.93, "#c4e3b6"], [1, "#fbf5ea"]];
+const lightOf = (t: Theme): Theme => ({ ...t, sky: LIGHT_SKY, glow: "#9ef880", silhouette: "#3e6338", windows: "#f3fff0" });
 
 /** Generierter Header-Hintergrund für eine Seite (nur noch Rückfall, siehe `standardHeader`). */
 function pageHeader(segment: string | undefined, mode: "dark" | "light" = "dark"): string {

@@ -22,7 +22,7 @@ import { Bubble } from "./Bubble";
 //  2. SceneRow  – kompakte Zeile für schmale Spalten (Dashboard „letzte 24h", Karte)
 // Beide tragen links das Streichholz als Status (statt „aktiv"/„geschlossen"-Tags).
 
-// Status als Streichholz: brennt blau, solange der neueste Post ungelesen ist;
+// Status als Streichholz: brennt grün, solange der neueste Post ungelesen ist;
 // sonst grau und ohne Flamme; bei geschlossenen Szenen abgebrannt mit Rauch.
 export function SceneMatch({ scene, size = 20 }: { scene: Scene; size?: number }) {
   const { isSceneNew, isChatFresh } = useStore();
