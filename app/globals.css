@@ -294,6 +294,25 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
   }
 }
 
+/* Roman-Satz (siehe renderNovel in lib/format.ts): einfacher Umbruch = Absatz mit
+   Erstzeileneinzug, doppelter = Leerzeile; Silbentrennung, damit der Blocksatz keine Löcher reißt */
+.prose-serif {
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  hanging-punctuation: first;
+}
+.prose-serif .para-indent {
+  display: inline-block;
+  width: 1.5em;
+}
+.prose-serif .scene-break {
+  display: block;
+  margin: 0.9em 0;
+  text-align: center;
+  letter-spacing: 0.4em;
+  color: var(--text-tertiary);
+}
+
 .prose-serif em {
   font-style: italic;
   color: var(--text-secondary);
@@ -308,9 +327,15 @@ html:not([data-theme="light"]) .prose-serif {
 html:not([data-theme="light"]) .prose-serif em {
   color: inherit;
 }
-/* Seitentitel im dunklen Stil ebenso gedämpft wie der Szenentext */
+/* Seitentitel im dunklen Stil leicht gedämpft – heller als der Szenentext,
+   aber nicht mehr Fast-Weiß (#dedad2 ≈ 14:1 auf dem Grund) */
 html:not([data-theme="light"]) .page-title {
-  color: #cecac2;
+  color: #dedad2;
+}
+
+/* Szenen eingeklappt: Signaturen unter den Posts weg – auf dem Handy wie am Desktop */
+[data-avatars="hidden"] .post-signature {
+  display: none;
 }
 
 /* Szenen: Avatare weggeklappt (Schalter über den Posts, nur ab md). Statt der

@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
-import { escapeHtml, formatDateTime, formatInplayDate, renderPost } from "@/lib/format";
+import { escapeHtml, formatDateTime, formatInplayDate, renderPost, renderNovel } from "@/lib/format";
 import { copyRich, useProseEditor } from "@/lib/editor";
 import { FormatBar } from "@/components/RichEditor";
 import { useSetPageMeta } from "@/lib/page-meta";
@@ -109,7 +109,8 @@ export default function ScenePage({
   const [closing, setClosing] = useState(false);
   // Entwurf, der gerade im Antwortfeld weitergeschrieben wird
   const [draftId, setDraftId] = useState<string | null>(null);
-  // Desktop: große Avatare neben den Posts wegklappen (pro Gerät gemerkt)
+  // große Avatare neben den Posts (Desktop) und Signaturen (überall) wegklappen,
+  // pro Gerät gemerkt
   const [avatarsHidden, setAvatarsHidden] = useState(false);
   useEffect(() => {
     try {
@@ -127,6 +128,7 @@ export default function ScenePage({
       /* ignore */
     }
   }
+  const avatarToggle = { hidden: avatarsHidden, toggle: toggleAvatars };
 
   const scene = scenes.find((s) => s.id === id);
   const posts = scene ? postsOf(scene.id) : [];
@@ -274,7 +276,7 @@ export default function ScenePage({
       className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-8"
       data-avatars={avatarsHidden ? "hidden" : undefined}
     >
-      <SceneAvatarToggle.Provider value={toggleAvatars}>
+      <SceneAvatarToggle.Provider value={avatarToggle}>
       {/* Szenenkopf: Status + Charaktere + Aktions-Buttons, Datum/Ort/AU, Beschreibung */}
       <SceneHeader
         scene={scene}
@@ -775,7 +777,7 @@ function PostRow({
   // Gleiches Objekt über Renderings hinweg: React fasst das HTML dann nicht an und
   // die Textauswahl geht beim Einblenden des Zitat-Knopfs nicht verloren.
   const html = useMemo(
-    () => ({ __html: highlightTerm(renderPost(post.content), term ?? "") }),
+    () => ({ __html: highlightTerm(renderNovel(post.content), term ?? "") }),
     [post.content, term],
   );
   const card = <SceneCharacterCard character={character} player={player} at={at} />;
@@ -837,7 +839,7 @@ function PostRow({
         <SignatureText
           html={character.profile.signature_text}
           align={character.profile.signature_align}
-          className="mt-6 select-none"
+          className="post-signature mt-6 select-none"
         />
       )}
       {character.profile?.signature_url && (
@@ -847,7 +849,7 @@ function PostRow({
           alt=""
           loading="lazy"
           draggable={false}
-          className={`${character.profile.signature_text ? "mt-2" : "mt-6"} ${signatureAlign(character.profile.signature_align).image} block max-w-full select-none`}
+          className={`post-signature ${character.profile.signature_text ? "mt-2" : "mt-6"} ${signatureAlign(character.profile.signature_align).image} block max-w-full select-none`}
         />
       )}
       {quoteBtn && (
@@ -960,7 +962,7 @@ function DraftRow({
   const lastOfDraftScene =
     !!scene.draft && drafts.filter((d) => d.scene_id === scene.id).length <= 1;
   const c = character(draft.character_id);
-  const html = useMemo(() => ({ __html: renderPost(draft.content) }), [draft.content]);
+  const html = useMemo(() => ({ __html: renderNovel(draft.content) }), [draft.content]);
   const script = useMemo(() => parseScript(draft.content), [draft.content]);
   const viewer = useScriptViewer(scene.id);
   if (!c) return null;
@@ -1118,7 +1120,7 @@ function ReplyBox({
                 className="prose-serif min-w-0 flex-1 text-text-primary"
                 dangerouslySetInnerHTML={{
                   __html:
-                    renderPost(preview) ||
+                    renderNovel(preview) ||
                     "<span style='opacity:.5'>(noch nichts geschrieben)</span>",
                 }}
               />

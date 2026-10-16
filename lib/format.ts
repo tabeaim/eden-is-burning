@@ -129,6 +129,48 @@ export function renderPost(content: string): string {
   return content.replace(/\*([^*]+)\*/g, "<em>$1</em>");
 }
 
+// Szenentext wie im Roman setzen: ein einfacher Umbruch beginnt einen neuen
+// Absatz mit Erstzeileneinzug (der erste Absatz nicht), ein doppelter lässt eine
+// Leerzeile – danach geht es wie nach einem Abschnittswechsel ohne Einzug weiter.
+// Eine Zeile nur aus *, ~ oder # (z. B. „***") wird zum zentrierten Szenenwechsel,
+// auch danach ohne Einzug. Gestaltung: .prose-serif in globals.css.
+const PARA_BREAK = /((?:<br\s*\/?>(?:\s|&nbsp;)*)+)/i;
+const SCENE_BREAK = /^(?:\s|&nbsp;)*(?:[*~#](?:\s|&nbsp;)*){3,}$/;
+
+export function renderNovel(content: string): string {
+  const html = content
+    // Zeilen aus dem Editor als <div>/<p>: in Umbrüche übersetzen
+    .replace(/<(div|p)>/gi, "<br>")
+    .replace(/<\/(div|p)>/gi, "");
+  const parts = html.split(PARA_BREAK); // Text, Umbrüche, Text, Umbrüche, …
+  let out = "";
+  let started = false; // schon ein Absatz gesetzt?
+  let afterBreak = false; // zuletzt ein Szenenwechsel – der setzt seinen eigenen Abstand
+  let gap = false; // seit dem letzten Absatz ein doppelter Umbruch?
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    if (i % 2 === 1) {
+      if ((part.match(/<br/gi) ?? []).length >= 2) gap = true;
+      continue;
+    }
+    const text = part.replace(/<[^>]+>/g, "");
+    if (!text.replace(/&nbsp;/g, " ").trim() && !/<img/i.test(part)) continue;
+    if (SCENE_BREAK.test(text)) {
+      out += '<span class="scene-break">&#42; &#42; &#42;</span>';
+      started = afterBreak = true;
+      gap = false;
+      continue;
+    }
+    if (afterBreak) out += part;
+    else if (!started) out += part;
+    else if (gap) out += `<br><br>${part}`;
+    else out += `<br><span class="para-indent"></span>${part}`;
+    started = true;
+    afterBreak = gap = false;
+  }
+  return renderPost(out);
+}
+
 export { escapeHtml };
 
 export function placeholderImg(seed: string, w = 400, h = 600) {

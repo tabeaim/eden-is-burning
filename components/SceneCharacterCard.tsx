@@ -17,10 +17,11 @@ import { GONE_CLASS, GONE_PLAYER_CLASS, PAUSED_CLASS, useCharacterGone } from "@
 // Tagline und Spieler*in. Hat jemand in der Szene die Avatare weggeklappt
 // (`data-avatars="hidden"`, siehe globals.css), gilt die Kopfzeile auch am Desktop.
 
-// Avatare ein-/ausklappen (nur Desktop): die Szenenseite reicht den Umschalter
+// Avatare/Signaturen ein-/ausklappen: die Szenenseite reicht Zustand und Umschalter
 // herein, die Karte zeigt ihn als kleinen Pfeil – unter der großen Karte zum
-// Einklappen, in der Kopfzeile zum Ausklappen.
-export const SceneAvatarToggle = createContext<(() => void) | null>(null);
+// Einklappen, in der Kopfzeile zum Aus- (Desktop) bzw. Ein-/Ausklappen (Handy).
+// Eingeklappt sind überall auch die Signaturen weg (siehe globals.css).
+export const SceneAvatarToggle = createContext<{ hidden: boolean; toggle: () => void } | null>(null);
 
 export function SceneCharacterCard({
   character,
@@ -51,7 +52,7 @@ export function SceneCharacterCard({
     </>
   );
   const gif = character.profile?.scene_gif_url;
-  const toggleAvatars = useContext(SceneAvatarToggle);
+  const avatars = useContext(SceneAvatarToggle);
   const toggleBtn = "rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-accent";
   return (
     <>
@@ -87,15 +88,15 @@ export function SceneCharacterCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={gif} alt="" loading="lazy" draggable={false} className="max-h-14 max-w-[30%] shrink-0 rounded-md" />
         )}
-        {/* weggeklappt am Desktop: Pfeil zum Ausklappen (auf dem Handy nie sichtbar) */}
-        {toggleAvatars && (
+        {/* Pfeil zum Ein-/Ausklappen – am Desktop steht die Kopfzeile nur eingeklappt */}
+        {avatars && (
           <button
-            onClick={toggleAvatars}
-            title="Avatare ausklappen"
-            aria-label="Avatare ausklappen"
-            className={`hidden shrink-0 self-start md:block ${toggleBtn}`}
+            onClick={avatars.toggle}
+            title={avatars.hidden ? "Ausklappen" : "Einklappen"}
+            aria-label={avatars.hidden ? "Ausklappen" : "Einklappen"}
+            className={`shrink-0 self-start ${toggleBtn}`}
           >
-            <Icon name="chevron-right" size={14} />
+            <Icon name="chevron-right" size={14} className={avatars.hidden ? "" : "rotate-180"} />
           </button>
         )}
       </div>
@@ -161,10 +162,10 @@ export function SceneCharacterCard({
         {player && <div className="mt-1.5 text-center font-display text-[1rem] text-text-tertiary">{byPlayer}</div>}
 
         {/* Pfeil zum Einklappen der Avatare */}
-        {toggleAvatars && (
+        {avatars && (
           <div className="mt-1 flex justify-center">
             <button
-              onClick={toggleAvatars}
+              onClick={avatars.toggle}
               title="Avatare einklappen"
               aria-label="Avatare einklappen"
               className={toggleBtn}
