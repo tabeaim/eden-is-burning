@@ -282,8 +282,8 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
 /* Szenen-Prosa – jetzt serifenlos, größer und linksbündig (bessere Lesbarkeit) */
 .prose-serif {
   font-family: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.875rem; /* 14px @ Basis 16px – skaliert mit Browser-Schriftgröße */
-  line-height: 1.8;
+  font-size: 0.9375rem; /* 15px @ Basis 16px – skaliert mit Browser-Schriftgröße */
+  line-height: 1.9;
   text-align: justify;
 }
 
@@ -297,6 +297,40 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
 .prose-serif em {
   font-style: italic;
   color: var(--text-secondary);
+}
+
+/* Szenentext im dunklen Stil: gedämpftes, leicht warmes Grau statt Fast-Weiß –
+   sehr helle Schrift „strahlt" auf Schwarz und ermüdet bei langen Posts
+   (#cecac2 ≈ 12:1 auf dem Grund, weiter über AAA). Kursives bleibt gleich hell. */
+html:not([data-theme="light"]) .prose-serif {
+  color: #cecac2;
+}
+html:not([data-theme="light"]) .prose-serif em {
+  color: inherit;
+}
+/* Seitentitel im dunklen Stil ebenso gedämpft wie der Szenentext */
+html:not([data-theme="light"]) .page-title {
+  color: #cecac2;
+}
+
+/* Szenen: Avatare weggeklappt (Schalter über den Posts, nur ab md). Statt der
+   großen Karte neben dem Post steht – wie auf dem Handy – die schmale Kopfzeile
+   darüber, der Text wird breiter. */
+@media (min-width: 48rem) {
+  [data-avatars="hidden"] .post-layout {
+    flex-direction: column;
+  }
+  [data-avatars="hidden"] .scene-card-full {
+    display: none;
+  }
+  [data-avatars="hidden"] .scene-card-compact {
+    display: flex;
+  }
+  /* volle Breite wäre zu lang zum Lesen: Posts mittig auf ~80 Zeichen begrenzen */
+  [data-avatars="hidden"] :is(.post-row, .post-layout) {
+    max-width: 52rem;
+    margin-inline: auto;
+  }
 }
 
 @keyframes fadein {

@@ -146,6 +146,14 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Social-Icons. Auf dem Handy eine Kopfzeile über dem Post: kleiner Avatar,
   daneben Name, Tagline, Spieler*in. Dort ist die Prosa linksbündig statt im
   Blocksatz, und die Post-Aktionen sind ohne Hover sichtbar.
+  Am Desktop lassen sich die Karten über einen kleinen Pfeil unter der Karte
+  wegklappen (`SceneAvatarToggle`, pro Gerät gemerkt, `data-avatars="hidden"`):
+  dann steht auch dort die Kopfzeile über dem Post (mit Pfeil zum Ausklappen),
+  und die Posts sind mittig auf `52rem` begrenzt.
+- **Szenentext** (`.prose-serif`): `0.9375rem` bei Zeilenhöhe `1.9` – bewusst
+  etwas größer als der Standardtext. Im dunklen Stil gedämpftes, warmes Grau
+  `#cecac2` (≈ 12:1) statt der fast weißen Textfarbe: sehr helle Schrift
+  „strahlt" auf Schwarz und ermüdet bei langen Posts. Kursives ist gleich hell.
 - **Text-Editoren der Szenen** (Antwortfeld, Post bearbeiten) nutzen
   `useProseEditor` (`lib/editor.ts`): deutsche Typografie beim Tippen („…",
   ‚…', Apostroph, `--` → –, `...` → …) und Einfügen aus Schreibprogrammen, bei

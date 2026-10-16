@@ -3,6 +3,8 @@
 import { capFirst } from "@/lib/format";
 import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
+import { createContext, useContext } from "react";
+import { Icon } from "./Icon";
 import { RichText } from "./RichText";
 import type { Character, Player } from "@/lib/types";
 import { ageAt, isPaused } from "@/lib/characters";
@@ -12,7 +14,14 @@ import { GONE_CLASS, GONE_PLAYER_CLASS, PAUSED_CLASS, useCharacterGone } from "@
 // 600×502; die Bio erscheint als Overlay, solange die Maus über dem Bild ist –
 // benannte Gruppe `ava`, nicht schon beim Hovern über dem ganzen Post). Auf dem
 // Handy eine schmale Kopfzeile über dem Post: kleiner Avatar, daneben Name,
-// Tagline und Spieler*in.
+// Tagline und Spieler*in. Hat jemand in der Szene die Avatare weggeklappt
+// (`data-avatars="hidden"`, siehe globals.css), gilt die Kopfzeile auch am Desktop.
+
+// Avatare ein-/ausklappen (nur Desktop): die Szenenseite reicht den Umschalter
+// herein, die Karte zeigt ihn als kleinen Pfeil – unter der großen Karte zum
+// Einklappen, in der Kopfzeile zum Ausklappen.
+export const SceneAvatarToggle = createContext<(() => void) | null>(null);
+
 export function SceneCharacterCard({
   character,
   player,
@@ -42,10 +51,12 @@ export function SceneCharacterCard({
     </>
   );
   const gif = character.profile?.scene_gif_url;
+  const toggleAvatars = useContext(SceneAvatarToggle);
+  const toggleBtn = "rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-accent";
   return (
     <>
       {/* Handy: Kopfzeile über dem Post */}
-      <div className="flex w-full items-center gap-3 md:hidden">
+      <div className="scene-card-compact flex w-full items-center gap-3 md:hidden">
         <Link href={href} className="shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -76,10 +87,21 @@ export function SceneCharacterCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={gif} alt="" loading="lazy" draggable={false} className="max-h-14 max-w-[30%] shrink-0 rounded-md" />
         )}
+        {/* weggeklappt am Desktop: Pfeil zum Ausklappen (auf dem Handy nie sichtbar) */}
+        {toggleAvatars && (
+          <button
+            onClick={toggleAvatars}
+            title="Avatare ausklappen"
+            aria-label="Avatare ausklappen"
+            className={`hidden shrink-0 self-start md:block ${toggleBtn}`}
+          >
+            <Icon name="chevron-right" size={14} />
+          </button>
+        )}
       </div>
 
       {/* ab md: große Karte neben dem Post */}
-      <div className="hidden w-[280px] shrink-0 [container-type:inline-size] md:block">
+      <div className="scene-card-full hidden w-[280px] shrink-0 [container-type:inline-size] md:block">
         <div className="group/ava relative aspect-[600/502] w-full overflow-hidden rounded-lg border border-border-subtle bg-bg-surface">
           <Link href={href} className="block h-full w-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -137,6 +159,20 @@ export function SceneCharacterCard({
 
         {/* by player */}
         {player && <div className="mt-1.5 text-center font-display text-[1rem] text-text-tertiary">{byPlayer}</div>}
+
+        {/* Pfeil zum Einklappen der Avatare */}
+        {toggleAvatars && (
+          <div className="mt-1 flex justify-center">
+            <button
+              onClick={toggleAvatars}
+              title="Avatare einklappen"
+              aria-label="Avatare einklappen"
+              className={toggleBtn}
+            >
+              <Icon name="chevron-right" size={14} className="rotate-180" />
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

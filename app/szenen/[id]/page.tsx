@@ -14,7 +14,7 @@ import { copyRich, useProseEditor } from "@/lib/editor";
 import { FormatBar } from "@/components/RichEditor";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { SignatureText, signatureAlign } from "@/components/SignatureText";
-import { SceneCharacterCard } from "@/components/SceneCharacterCard";
+import { SceneAvatarToggle, SceneCharacterCard } from "@/components/SceneCharacterCard";
 import { SceneEditPanel } from "@/components/SceneEditPanel";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Icon } from "@/components/Icon";
@@ -109,6 +109,24 @@ export default function ScenePage({
   const [closing, setClosing] = useState(false);
   // Entwurf, der gerade im Antwortfeld weitergeschrieben wird
   const [draftId, setDraftId] = useState<string | null>(null);
+  // Desktop: große Avatare neben den Posts wegklappen (pro Gerät gemerkt)
+  const [avatarsHidden, setAvatarsHidden] = useState(false);
+  useEffect(() => {
+    try {
+      setAvatarsHidden(localStorage.getItem("eden:scene-avatars-hidden") === "1");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  function toggleAvatars() {
+    const hidden = !avatarsHidden;
+    setAvatarsHidden(hidden);
+    try {
+      localStorage.setItem("eden:scene-avatars-hidden", hidden ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }
 
   const scene = scenes.find((s) => s.id === id);
   const posts = scene ? postsOf(scene.id) : [];
@@ -252,7 +270,11 @@ export default function ScenePage({
     "flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-8">
+    <div
+      className="max-w-6xl mx-auto px-4 sm:px-8 pt-4 pb-8"
+      data-avatars={avatarsHidden ? "hidden" : undefined}
+    >
+      <SceneAvatarToggle.Provider value={toggleAvatars}>
       {/* Szenenkopf: Status + Charaktere + Aktions-Buttons, Datum/Ort/AU, Beschreibung */}
       <SceneHeader
         scene={scene}
@@ -268,6 +290,7 @@ export default function ScenePage({
 
       {/* Trennlinie zur Seite */}
       <div className="border-b border-border-subtle mb-4" />
+
 
       {/* Trefferleiste der Post-Text-Suche */}
       {searchTerm && <PostSearchBar term={searchTerm} />}
@@ -390,6 +413,7 @@ export default function ScenePage({
           )}
         </div>
       )}
+      </SceneAvatarToggle.Provider>
     </div>
   );
 }
@@ -844,7 +868,7 @@ function PostRow({
   );
 
   return (
-    <div className="group/post">
+    <div className="post-row group/post">
       {confirmDelete && (
         <ConfirmDialog
           title="Post löschen?"
@@ -889,7 +913,7 @@ function PostRow({
           )}
         </div>
       )}
-      <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start">
+      <div className="post-layout flex flex-col md:flex-row gap-3 md:gap-5 items-start">
         {/* Drehbuch-Format: nur die Zeilen, ohne die große Charakter-Karte */}
         {!script && card}
         {prose}
@@ -993,7 +1017,7 @@ function DraftRow({
           </button>
         </div>
       </div>
-      <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start">
+      <div className="post-layout flex flex-col md:flex-row gap-3 md:gap-5 items-start">
         {!script && <SceneCharacterCard character={c} player={player(c.player_id)} at={scene.inplay_date} />}
         {script ? (
           <div className="post-box min-w-0 flex-1">
@@ -1078,7 +1102,7 @@ function ReplyBox({
           <div className="mb-3 text-[0.875rem] uppercase tracking-wider text-accent">
             Vorschau
           </div>
-          <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start">
+          <div className="post-layout flex flex-col md:flex-row gap-3 md:gap-5 items-start">
             {!script && (
               <SceneCharacterCard
                 character={activeChar}
@@ -1153,7 +1177,7 @@ function ReplyBox({
           lang="de"
           spellCheck
           data-placeholder={`Schreibe als ${activeChar?.name}…`}
-          className="reply-editor prose-serif min-h-[160px] w-full rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-[0.875rem] leading-[1.8] text-text-primary outline-none focus:border-white/20"
+          className="reply-editor prose-serif min-h-[160px] w-full rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-[0.9375rem] leading-[1.9] text-text-primary outline-none focus:border-white/20"
         />
         </>
       )}
