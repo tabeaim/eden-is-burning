@@ -4,7 +4,7 @@ import { ScriptEditor, ScriptView, useScriptViewer, useSpeaker } from "@/compone
 import { isScript, parseScript, scriptPlain, serializeScript, type ScriptLine } from "@/lib/script";
 import { useOpenPlace } from "@/components/LocationCategoryPicker";
 import { useMyPhone } from "@/components/phone/PhoneFrame";
-import { use, useEffect, useMemo, useRef, useState } from "react";
+import { use, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useStore, whoseTurn } from "@/lib/store";
@@ -706,6 +706,8 @@ function PostRow({
   const [editing, setEditing] = useState(false);
   useProseEditor(editRef, editing);
   const [copied, setCopied] = useState(false);
+  // Avatare/Signaturen ein-/ausklappen (Zustand liegt auf der Szenenseite)
+  const avatars = useContext(SceneAvatarToggle);
 
   // Ganzen Post samt Formatierung kopieren – so, wie er im Editor steht
   async function copy() {
@@ -887,6 +889,16 @@ function PostRow({
         <div className="mb-1 flex items-center justify-end gap-0.5 transition-opacity focus-within:opacity-100 group-hover/post:opacity-100 [@media(hover:hover)]:opacity-0">
           {/* wann der Post wirklich geschrieben wurde (nicht das Inplay-Datum) */}
           <span className="mr-1.5 text-[0.75rem] text-text-tertiary">gepostet {formatDateTime(post.created_at)}</span>
+          {avatars && (
+            <button
+              onClick={avatars.toggle}
+              title={avatars.hidden ? "Avatare ausklappen" : "Avatare einklappen"}
+              aria-label={avatars.hidden ? "Avatare ausklappen" : "Avatare einklappen"}
+              className="rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-accent"
+            >
+              <Icon name="chevron-right" size={14} className={avatars.hidden ? "" : "rotate-180"} />
+            </button>
+          )}
           <button
             onClick={copy}
             title={copied ? "Kopiert" : "Post kopieren (mit Formatierung)"}
@@ -915,7 +927,7 @@ function PostRow({
           )}
         </div>
       )}
-      <div className="post-layout flex flex-col md:flex-row gap-3 md:gap-5 items-start">
+      <div className="post-layout flex flex-col md:flex-row gap-3 md:gap-7 items-start">
         {/* Drehbuch-Format: nur die Zeilen, ohne die große Charakter-Karte */}
         {!script && card}
         {prose}
@@ -1019,7 +1031,7 @@ function DraftRow({
           </button>
         </div>
       </div>
-      <div className="post-layout flex flex-col md:flex-row gap-3 md:gap-5 items-start">
+      <div className="post-layout flex flex-col md:flex-row gap-3 md:gap-7 items-start">
         {!script && <SceneCharacterCard character={c} player={player(c.player_id)} at={scene.inplay_date} />}
         {script ? (
           <div className="post-box min-w-0 flex-1">
@@ -1104,7 +1116,7 @@ function ReplyBox({
           <div className="mb-3 text-[0.875rem] uppercase tracking-wider text-accent">
             Vorschau
           </div>
-          <div className="post-layout flex flex-col md:flex-row gap-3 md:gap-5 items-start">
+          <div className="post-layout flex flex-col md:flex-row gap-3 md:gap-7 items-start">
             {!script && (
               <SceneCharacterCard
                 character={activeChar}

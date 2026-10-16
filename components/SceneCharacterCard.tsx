@@ -3,8 +3,7 @@
 import { capFirst } from "@/lib/format";
 import { characterImage } from "@/lib/avatar";
 import Link from "next/link";
-import { createContext, useContext } from "react";
-import { Icon } from "./Icon";
+import { createContext } from "react";
 import { RichText } from "./RichText";
 import type { Character, Player } from "@/lib/types";
 import { ageAt, isPaused } from "@/lib/characters";
@@ -18,9 +17,8 @@ import { GONE_CLASS, GONE_PLAYER_CLASS, PAUSED_CLASS, useCharacterGone } from "@
 // (`data-avatars="hidden"`, siehe globals.css), gilt die Kopfzeile auch am Desktop.
 
 // Avatare/Signaturen ein-/ausklappen: die Szenenseite reicht Zustand und Umschalter
-// herein, die Karte zeigt ihn als kleinen Pfeil – unter der großen Karte zum
-// Einklappen, in der Kopfzeile zum Aus- (Desktop) bzw. Ein-/Ausklappen (Handy).
-// Eingeklappt sind überall auch die Signaturen weg (siehe globals.css).
+// herein, die Posts zeigen ihn als kleinen Pfeil in ihrer Hover-Leiste (neben
+// Kopieren/Bearbeiten). Eingeklappt sind überall auch die Signaturen weg (siehe globals.css).
 export const SceneAvatarToggle = createContext<{ hidden: boolean; toggle: () => void } | null>(null);
 
 export function SceneCharacterCard({
@@ -52,8 +50,6 @@ export function SceneCharacterCard({
     </>
   );
   const gif = character.profile?.scene_gif_url;
-  const avatars = useContext(SceneAvatarToggle);
-  const toggleBtn = "rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-accent";
   return (
     <>
       {/* Handy: Kopfzeile über dem Post */}
@@ -87,17 +83,6 @@ export function SceneCharacterCard({
         {gif && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={gif} alt="" loading="lazy" draggable={false} className="max-h-14 max-w-[30%] shrink-0 rounded-md" />
-        )}
-        {/* Pfeil zum Ein-/Ausklappen – am Desktop steht die Kopfzeile nur eingeklappt */}
-        {avatars && (
-          <button
-            onClick={avatars.toggle}
-            title={avatars.hidden ? "Ausklappen" : "Einklappen"}
-            aria-label={avatars.hidden ? "Ausklappen" : "Einklappen"}
-            className={`shrink-0 self-start ${toggleBtn}`}
-          >
-            <Icon name="chevron-right" size={14} className={avatars.hidden ? "" : "rotate-180"} />
-          </button>
         )}
       </div>
 
@@ -160,20 +145,6 @@ export function SceneCharacterCard({
 
         {/* by player */}
         {player && <div className="mt-1.5 text-center font-display text-[1rem] text-text-tertiary">{byPlayer}</div>}
-
-        {/* Pfeil zum Einklappen der Avatare */}
-        {avatars && (
-          <div className="mt-1 flex justify-center">
-            <button
-              onClick={avatars.toggle}
-              title="Avatare einklappen"
-              aria-label="Avatare einklappen"
-              className={toggleBtn}
-            >
-              <Icon name="chevron-right" size={14} className="rotate-180" />
-            </button>
-          </div>
-        )}
       </div>
     </>
   );
