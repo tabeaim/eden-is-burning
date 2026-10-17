@@ -266,6 +266,18 @@ function PlayerEditPanel({ player, onClose }: { player: Player; onClose: () => v
   const [dislikes, setDislikes] = useState((prof.dislikes ?? []).join(", "));
   const [uploading, setUploading] = useState(false);
   const file = useRef<HTMLInputElement>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarFile = useRef<HTMLInputElement>(null);
+
+  async function onAvatar(f: File | undefined) {
+    if (!f) return;
+    setUploadingAvatar(true);
+    try {
+      updatePlayer(player.id, { avatar_url: await uploadImage(f, "avatars", IMAGE_SIZES.avatar) });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
 
   async function onHeader(f: File | undefined) {
     if (!f) return;
@@ -303,8 +315,27 @@ function PlayerEditPanel({ player, onClose }: { player: Player; onClose: () => v
   return (
     <div className="mb-6 flex flex-col gap-4 rounded-xl border border-border-subtle bg-bg-surface p-4 sm:p-5">
       <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">Profil bearbeiten</div>
+      {/* Avatar – wird wie in den Einstellungen sofort gespeichert */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={playerImage(player)} alt="" className="h-14 w-14 rounded-full object-cover bg-bg-primary" />
+        <button disabled={uploadingAvatar} onClick={() => avatarFile.current?.click()} className={uploadBtn}>
+          <Icon name="upload" size={13} /> {uploadingAvatar ? "Lädt…" : "Avatar hochladen"}
+        </button>
+        <input
+          ref={avatarFile}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            void onAvatar(f);
+          }}
+        />
+      </div>
       <p className="-mt-2 text-[0.8125rem] text-text-tertiary">
-        Avatar und Username änderst du unter{" "}
+        Den Username änderst du unter{" "}
         <Link href="/einstellungen" className="text-accent hover:underline">
           Einstellungen → Mein Profil
         </Link>

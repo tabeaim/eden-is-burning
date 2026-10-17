@@ -1,7 +1,7 @@
 "use client";
 
 import { playerImage } from "@/lib/avatar";
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { useSetPageMeta } from "@/lib/page-meta";
@@ -90,13 +90,15 @@ export default function CharacterPage({
   const [tabState, setTab] = useState<Tab>("character");
 
   const [editing, setEditing] = useState(false);
+  useEditFromUrl(setEditing);
 
   // Charaktername als Unterseiten-Titel in den Banner-Header heben
   useSetPageMeta(
     c ? c.name : "Charakter",
     undefined,
-    // eigenes Header-Bild des Charakters (sonst das der Seite)
-    c?.banner_url ?? undefined,
+    // eigenes Header-Bild des Charakters (sonst das der Seite); Statist*innen
+    // haben keins (auch nicht als frühere Supporting Characters)
+    (c && tierOf(c) !== "extra" ? c.banner_url : null) ?? undefined,
     "max-w-6xl",
     undefined,
     undefined,
@@ -118,19 +120,10 @@ export default function CharacterPage({
     );
   }
 
-  // NPC ohne ausgefülltes Profil → nur die wichtigsten Facts
-  const prof = c.profile ?? {};
-  const hasMore =
-    !!prof.skills?.length ||
-    !!prof.sliders?.length ||
-    !!prof.timeline?.length ||
-    !!prof.traits_plus?.length ||
-    !!prof.traits_minus?.length ||
-    !!prof.likes?.length ||
-    !!prof.dislikes?.length;
-  // Nur Statist*innen ohne ausgefülltes Profil bekommen die Kompaktansicht; Supporting
-  // Characters haben dasselbe Profil wie Main Characters.
-  if (tierOf(c) === "extra" && !c.bio && !c.personality && !c.banner_url && !c.quote && !hasMore) {
+  // Statist*innen haben nur die Grundangaben → Kompaktansicht. Was ein früherer
+  // Supporting Character darüber hinaus ausgefüllt hat (Beschreibung, Skills …),
+  // bleibt gespeichert, erscheint aber erst wieder, wenn er hochgestuft wird.
+  if (tierOf(c) === "extra") {
     return <NpcFacts c={c} />;
   }
 
@@ -356,12 +349,12 @@ export default function CharacterPage({
   );
 }
 
-// Kompaktansicht für NPCs ohne ausgefülltes Profil: Facts + Orte, an denen der
-// NPC hinterlegt ist. Wer ihn angelegt hat (oder Admin ist), kann das Profil in
-// den Einstellungen ausfüllen – dann erscheint die volle Profilansicht.
+// Kompaktansicht für Statist*innen: Facts, Looks, Vibes und die Orte, an denen
+// sie hinterlegt sind. Bearbeitet wird direkt hier (nur die Grundangaben).
 function NpcFacts({ c }: { c: Character }) {
   const { locations, scenes, player, canEditCharacter } = useStore();
   const [editing, setEditing] = useState(false);
+  useEditFromUrl(setEditing);
   const p = player(c.player_id);
   const foundAt = locations.filter((l) => l.people?.some((x) => x.id === c.id));
 
@@ -414,6 +407,16 @@ function NpcFacts({ c }: { c: Character }) {
       )}
     </div>
   );
+}
+
+// Frisch angelegter Charakter (…?bearbeiten): Profil gleich mit offener
+// Bearbeitung zeigen, danach den Zusatz aus der Adresse nehmen
+function useEditFromUrl(setEditing: (on: boolean) => void) {
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has("bearbeiten")) return;
+    setEditing(true);
+    window.history.replaceState(window.history.state, "", window.location.pathname);
+  }, [setEditing]);
 }
 
 // Zitat anzeigen/hinzufügen – volle Breite über "facts".

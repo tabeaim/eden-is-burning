@@ -71,7 +71,9 @@ Es gibt genau eine Pill-Form. Nie eigene `rounded-full border …`-Klassen schre
 
 Status steht links als Streichholz (`SceneMatch`): brennend/orange bei ungelesenem
 neuestem Post, grau ohne Flamme wenn gelesen, abgebrannt mit Rauch bei geschlossener
-Szene. Die Tags „aktiv"/„geschlossen" (`StatusBadge`) gibt es nur in der Szene selbst.
+Szene. Anruf-Szenen tragen an derselben Stelle einen Telefonhörer: orange mit
+Schallwellen bei neuem Post, grau wenn gelesen, durchgestrichen wenn geschlossen.
+Die Tags „aktiv"/„geschlossen" (`StatusBadge`) gibt es nur in der Szene selbst.
 Szenen-Boxen nennen nur den Ort, nie die Gegend. Ausnahme: Szenen ohne Ortsnamen
 zeigen stattdessen die Gegend (`scenePlace` in `lib/chats.ts`; „Eden" für den
 neutralen Bereich „Eden (ohne Bezirk)"). Fehlt eine Angabe (Ort, Tageszeit),

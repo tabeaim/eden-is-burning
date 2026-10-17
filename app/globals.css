@@ -333,15 +333,14 @@ html:not([data-theme="light"]) .page-title {
   color: #dedad2;
 }
 
-/* Szenen eingeklappt: Signaturen unter den Posts weg – auf dem Handy wie am Desktop */
-[data-avatars="hidden"] .post-signature {
-  display: none;
-}
-
-/* Szenen: Avatare weggeklappt (Schalter über den Posts, nur ab md). Statt der
-   großen Karte neben dem Post steht – wie auf dem Handy – die schmale Kopfzeile
-   darüber, der Text wird breiter. */
+/* Szenen: Avatare weggeklappt (Schalter über den Posts, nur ab md – auf dem
+   Handy gibt es nichts zu klappen). Statt der großen Karte neben dem Post steht –
+   wie auf dem Handy – die schmale Kopfzeile darüber, der Text wird breiter, die
+   Signaturen unter den Posts fallen weg. */
 @media (min-width: 48rem) {
+  [data-avatars="hidden"] .post-signature {
+    display: none;
+  }
   [data-avatars="hidden"] .post-layout {
     flex-direction: column;
   }

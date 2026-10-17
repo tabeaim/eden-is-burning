@@ -1,6 +1,5 @@
 "use client";
 
-import { capFirst } from "@/lib/format";
 import { BannerPosition } from "./BannerPosition";
 import { bannerStyle } from "@/lib/headers";
 import { useRef, useState } from "react";
@@ -9,14 +8,12 @@ import { ThingsBoard } from "./ThingsBoard";
 import { FamilyEditor } from "./FamilyEditor";
 import { normalizeFamily } from "./ProfileSections";
 import { useStore } from "@/lib/store";
-import { normalizeHeight, tierOf } from "@/lib/characters";
-import { AREA_ORDER, areaName } from "@/lib/world";
+import { tierOf } from "@/lib/characters";
+import { useCharacterBasics } from "./CharacterBasicsForm";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
-import { characterImage } from "@/lib/avatar";
 import { Icon } from "./Icon";
 import { Collapsible } from "./Collapsible";
 import { RichEditor } from "./RichEditor";
-import { plainText } from "@/lib/html";
 
 const MAX_VIBES = 12;
 
@@ -30,15 +27,17 @@ const toList = (text: string) =>
     .map((t) => t.trim())
     .filter(Boolean);
 
-// Profil direkt im Profil bearbeiten: alles Beschreibende – Zitat, Header-Bild,
-// ausführliche Beschreibung, Eigenschaften, Skills, Slider, Likes/Dislikes,
-// Stammbaum, Timeline, der Style („Looks") und die Gegenstände („Pockets"); bei Supporting Characters und Statist*innen dazu „Vibes"
-// (Inspo-Bilder). Die Grunddaten stehen unter Einstellungen → Meine Charaktere –
-// außer bei Statist*innen: Die darf jede*r bearbeiten, deshalb stehen ihre
-// Grunddaten gleich hier mit.
+// Profil direkt im Profil bearbeiten – alles, was im Profil zu sehen ist: die
+// Grunddaten (dieselben Felder wie unter Einstellungen → Meine Charaktere, siehe
+// useCharacterBasics) und alles Beschreibende – Zitat, Header-Bild, ausführliche
+// Beschreibung, Eigenschaften, Skills, Slider, Likes/Dislikes, Stammbaum,
+// Timeline, der Style („Looks") und die Gegenstände („Pockets").
+// Statist*innen haben nur die Grundangaben, dazu „Vibes" (Inspo-Bilder).
 export function ProfileEditPanel({ character, onClose }: { character: Character; onClose: () => void }) {
   const { updateCharacter } = useStore();
   const tier = tierOf(character);
+  const full = tier !== "extra";
+  const basics = useCharacterBasics(character, "profile");
   const [d, setD] = useState(character);
   const prof = character.profile ?? {};
   const [skills, setSkills] = useState(prof.skills ?? []);
@@ -54,9 +53,8 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   const [minus, setMinus] = useState((prof.traits_minus ?? []).join(", "));
   const [likes, setLikes] = useState((prof.likes ?? []).join(", "));
   const [dislikes, setDislikes] = useState((prof.dislikes ?? []).join(", "));
-  const [uploading, setUploading] = useState<null | "banner" | "photo" | "vibes">(null);
+  const [uploading, setUploading] = useState<null | "banner" | "vibes">(null);
   const bannerFile = useRef<HTMLInputElement>(null);
-  const photoFile = useRef<HTMLInputElement>(null);
   const vibesFile = useRef<HTMLInputElement>(null);
   const vibes = d.vibes ?? [];
 
@@ -67,14 +65,12 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       set(key, (e.target.value || null) as never),
     className: field,
   });
-  const nameMissing = !d.name.trim();
 
-  async function upload(kind: "banner" | "photo", f: File | undefined) {
+  async function upload(f: File | undefined) {
     if (!f) return;
-    setUploading(kind);
+    setUploading("banner");
     try {
-      if (kind === "banner") set("banner_url", await uploadImage(f, "characters", IMAGE_SIZES.banner));
-      else set("faceclaim_image_url", await uploadImage(f, "characters", IMAGE_SIZES.portrait));
+      set("banner_url", await uploadImage(f, "characters", IMAGE_SIZES.banner));
     } finally {
       setUploading(null);
     }
@@ -93,11 +89,17 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   }
 
   function save() {
-    if (nameMissing) return;
-    // Nur die beschreibenden Schlüssel des erweiterten Profils überschreiben –
-    // die Grunddaten darin (Geburtsdatum, Studium …) pflegen die Einstellungen.
+    if (basics.invalid) return;
+    const base = basics.patch();
+    // Statist*innen: nur die Grundangaben (und Vibes)
+    if (!full) {
+      updateCharacter(character.id, { ...base, vibes });
+      onClose();
+      return;
+    }
+    // Grunddaten und die beschreibenden Schlüssel des erweiterten Profils zusammen
     const profile: CharacterProfile = {
-      ...(character.profile ?? {}),
+      ...(base.profile ?? {}),
       skills: skills.filter((s) => s.name.trim()).map((s) => ({ name: s.name.trim(), value: s.value })),
       sliders: sliders.filter((s) => s.left.trim() || s.right.trim()),
       timeline: timeline
@@ -118,30 +120,13 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       dislikes: toList(dislikes),
     };
     const patch: Partial<Character> = {
+      ...base,
       quote: d.quote,
       personality: d.personality,
       banner_url: d.banner_url,
+      pinterest_url: d.pinterest_url,
       profile,
     };
-    if (tier !== "extra") patch.pinterest_url = d.pinterest_url;
-    // Vibes (Inspo-Bilder) nur Supporting Characters und Statist*innen
-    if (tier === "extra") patch.vibes = vibes;
-    if (tier === "extra") {
-      Object.assign(patch, {
-        name: d.name.trim(),
-        full_name: d.full_name,
-        tagline: d.tagline,
-        bio: d.bio,
-        role: capFirst(d.role) || null,
-        age: d.age,
-        area: d.area,
-        faceclaim_image_url: d.faceclaim_image_url,
-        height: normalizeHeight(d.height),
-        figure: d.figure,
-        hair: d.hair,
-        eyes: d.eyes,
-      });
-    }
     updateCharacter(character.id, patch);
     onClose();
   }
@@ -160,82 +145,11 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
     <div className="mb-6 flex flex-col gap-4 rounded-xl border border-border-subtle bg-bg-surface p-4 sm:p-5">
       <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">Profil bearbeiten</div>
 
-      {tier === "extra" && (
-        <Collapsible title="Grunddaten" defaultOpen forceOpen={nameMissing}>
-          <div className="flex flex-wrap items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={characterImage(d)} alt="" className="h-14 w-14 rounded-full object-cover bg-bg-primary" />
-            <button disabled={uploading !== null} onClick={() => photoFile.current?.click()} className={uploadBtn}>
-              <Icon name="upload" size={13} /> {uploading === "photo" ? "Lädt…" : "Bild hochladen"}
-            </button>
-            <input ref={photoFile} type="file" accept="image/*" hidden onChange={(e) => void upload("photo", e.target.files?.[0])} />
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className={label}>
-              Anzeigename <span className="text-accent">*</span>
-              <input
-                value={d.name}
-                onChange={(e) => set("name", e.target.value)}
-                className={`mt-1 ${field} ${nameMissing ? "!border-red-400/70" : ""}`}
-              />
-            </label>
-            <label className={label}>
-              Voller Name
-              <input {...text("full_name")} placeholder={d.name} className={`mt-1 ${field}`} />
-            </label>
-            <label className={label}>
-              Beschäftigung
-              <input {...text("role")} className={`mt-1 ${field}`} />
-            </label>
-            <label className={label}>
-              Alter
-              <input
-                type="number"
-                value={d.age ?? ""}
-                onChange={(e) => set("age", e.target.value ? parseInt(e.target.value, 10) : null)}
-                className={`mt-1 ${field}`}
-              />
-            </label>
-            <label className={label}>
-              Wohngegend
-              <select value={d.area} onChange={(e) => set("area", e.target.value)} className={`mt-1 ${field}`}>
-                <option value="" className="bg-bg-surface">
-                  –
-                </option>
-                {AREA_ORDER.map((k) => (
-                  <option key={k} value={k} className="bg-bg-surface">
-                    {areaName(k)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className={label}>
-              Tagline ({(d.tagline ?? "").length}/60)
-              <input {...text("tagline")} maxLength={60} className={`mt-1 uppercase ${field}`} />
-            </label>
-          </div>
-          <div className={label}>
-            Kurzbeschreibung ({plainText(d.bio).length}/1000)
-            <RichEditor value={d.bio ?? ""} onChange={(v) => set("bio", v || null)} maxLength={1000} className="mt-1" />
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {(
-              [
-                ["height", "Größe"],
-                ["figure", "Figur"],
-                ["hair", "Haare"],
-                ["eyes", "Augen"],
-              ] as [keyof Character, string][]
-            ).map(([key, name]) => (
-              <label key={key} className={label}>
-                {name}
-                <input {...text(key)} className={`mt-1 ${field}`} />
-              </label>
-            ))}
-          </div>
-        </Collapsible>
-      )}
+      {/* Grunddaten – dieselben Felder wie in den Einstellungen */}
+      {basics.form}
 
+      {full && (
+        <>
       <Collapsible title="Auf einen Blick" defaultOpen>
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-[0.875rem] text-text-secondary">Header-Bild (oben über dem Namen)</span>
@@ -256,7 +170,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
           onChange={(e) => {
             const f = e.target.files?.[0];
             e.target.value = "";
-            void upload("banner", f);
+            void upload(f);
           }}
         />
       </div>
@@ -441,6 +355,9 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
 
       </Collapsible>
 
+        </>
+      )}
+
       {tier !== "extra" && (
         <Collapsible title="Pockets – Gegenstände">
           <p className={hint}>
@@ -509,7 +426,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
         </button>
         <button
           onClick={save}
-          disabled={nameMissing || uploading !== null}
+          disabled={basics.invalid || uploading !== null}
           className="rounded-md bg-accent/90 hover:bg-accent px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
         >
           Speichern

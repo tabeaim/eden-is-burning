@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { ageAt } from "@/lib/characters";
+import { AREA_ORDER, areaName } from "@/lib/world";
 import { DatePicker } from "./DatePicker";
 import { Icon } from "./Icon";
 
@@ -19,40 +20,33 @@ const field =
 // „Neu anlegen" für alle drei Stufen: gestrichelte Pill (siehe DESIGN.md), die erst
 // die Pflichtangaben abfragt – ohne sie wird nichts angelegt. Supporting
 // Characters und Statist*innen brauchen nur einen Namen; ein Main Character dazu
-// Geburtsdatum (daraus das Alter), Faceclaim und Beschäftigung. Danach geht es in
-// den Editor (Main/Supporting Character) bzw. ins Profil (Statist*in).
+// Geburtsdatum (daraus das Alter) und Wohngegend. Danach geht es ins Profil, wo
+// gleich die Bearbeitung offen ist – dort wird alles Weitere ausgefüllt.
 export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
   const router = useRouter();
   const { addNpc, addCharacter, currentPlayer } = useStore();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [birthdate, setBirthdate] = useState("");
-  const [faceclaim, setFaceclaim] = useState("");
-  const [role, setRole] = useState("");
+  const [area, setArea] = useState("");
   const main = kind === "character";
-  const ready = !!name.trim() && (!main || (!!birthdate && !!faceclaim.trim() && !!role.trim()));
+  const ready = !!name.trim() && (!main || (!!birthdate && !!area));
 
   function create() {
     if (!ready || !currentPlayer) return;
-    if (kind === "extra") {
-      router.push(`/charaktere/${addNpc({ name, role: null, age: null }, "extra")}`);
-    } else if (kind === "sc") {
-      router.push(`/einstellungen#charakter-${addNpc({ name, role: null, age: null }, "supporting")}`);
-    } else {
-      const profile = { birthdate };
-      const id = addCharacter(currentPlayer.id, name, {
-        faceclaim: faceclaim.trim(),
-        role: role.trim(),
-        age: ageAt({ age: null, profile }),
-        profile,
-      });
-      router.push(`/einstellungen#charakter-${id}`);
-    }
+    const id =
+      kind === "character"
+        ? addCharacter(currentPlayer.id, name, {
+            area,
+            age: ageAt({ age: null, profile: { birthdate } }),
+            profile: { birthdate },
+          })
+        : addNpc({ name, role: null, age: null }, kind === "sc" ? "supporting" : "extra");
+    router.push(`/charaktere/${id}?bearbeiten`);
     setOpen(false);
     setName("");
     setBirthdate("");
-    setFaceclaim("");
-    setRole("");
+    setArea("");
   }
 
   if (!open) {
@@ -102,7 +96,7 @@ export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
   return (
     <div className="flex w-full max-w-xl flex-col gap-2 self-start rounded-xl border border-border-subtle bg-bg-surface p-3 text-left">
       <div className="text-[0.8125rem] text-text-secondary">
-        Neuer Main Character <span className="text-text-tertiary">– alle vier Angaben sind Pflicht</span>
+        Neuer Main Character <span className="text-text-tertiary">– alle drei Angaben sind Pflicht</span>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <input
@@ -114,23 +108,24 @@ export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
           className={`${field} py-2`}
         />
         <DatePicker value={birthdate} onChange={setBirthdate} />
-        <input
-          value={faceclaim}
-          onChange={(e) => setFaceclaim(e.target.value)}
-          onKeyDown={onKey}
-          placeholder="Faceclaim"
-          className={`${field} py-2`}
-        />
-        <input
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          onKeyDown={onKey}
-          placeholder="Beschäftigung"
-          className={`${field} py-2`}
-        />
+        <select
+          value={area}
+          onChange={(e) => setArea(e.target.value)}
+          className={`${field} py-2 sm:col-span-2 ${area ? "" : "text-text-tertiary"}`}
+        >
+          <option value="" className="bg-bg-surface">
+            Wohngegend …
+          </option>
+          {AREA_ORDER.map((k) => (
+            <option key={k} value={k} className="bg-bg-surface text-text-primary">
+              {areaName(k)}
+            </option>
+          ))}
+        </select>
       </div>
       <p className="text-[0.8125rem] text-text-tertiary">
-        Das zweite Feld ist das Geburtsdatum – daraus wird das Alter berechnet.
+        Das zweite Feld ist das Geburtsdatum – daraus wird das Alter berechnet. Alles Weitere
+        trägst du danach direkt im Profil ein.
       </p>
       <div className="flex items-center justify-end gap-1.5">{buttons}</div>
     </div>

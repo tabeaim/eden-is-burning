@@ -109,7 +109,7 @@ export default function ScenePage({
   const [closing, setClosing] = useState(false);
   // Entwurf, der gerade im Antwortfeld weitergeschrieben wird
   const [draftId, setDraftId] = useState<string | null>(null);
-  // große Avatare neben den Posts (Desktop) und Signaturen (überall) wegklappen,
+  // große Avatare neben den Posts und Signaturen wegklappen (nur am Desktop),
   // pro Gerät gemerkt
   const [avatarsHidden, setAvatarsHidden] = useState(false);
   useEffect(() => {
@@ -894,7 +894,7 @@ function PostRow({
               onClick={avatars.toggle}
               title={avatars.hidden ? "Avatare ausklappen" : "Avatare einklappen"}
               aria-label={avatars.hidden ? "Avatare ausklappen" : "Avatare einklappen"}
-              className="rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-accent"
+              className="hidden rounded p-1 text-text-tertiary md:inline-block hover:bg-white/[0.06] hover:text-accent"
             >
               <Icon name="chevron-right" size={14} className={avatars.hidden ? "" : "rotate-180"} />
             </button>

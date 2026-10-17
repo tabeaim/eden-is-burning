@@ -36,30 +36,28 @@ const BYRON = "Byron University";
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20";
 
-// Grunddaten („hard facts") eines Charakters – Einstellungen → Meine Charaktere.
+// Grunddaten („hard facts") eines Charakters: alles, was im Profil unter
+// identity / life / occupation / looks steht. Dieselben Felder gibt es an zwei
+// Stellen – in den Einstellungen (Meine Charaktere) und beim Bearbeiten direkt im
+// Profil (ProfileEditPanel); beide nutzen diesen Baustein.
 // Formular-Beschriftungen deutsch; im Profil erscheinen die Facts mit englischen
-// Labels. Einzelne Angaben lassen sich im Profil verstecken (Auge-Schalter am
-// Feld). Main Characters brauchen Name, Geburtsdatum (bzw. Alter), Faceclaim und
-// Beschäftigung. Alles Beschreibende wird direkt im Profil bearbeitet.
-export function CharacterBasicsForm({ character }: { character: Character }) {
+// Labels. Einzelne Angaben lassen sich im Profil verstecken (Schalter am Feld).
+// Main Characters brauchen Name, Geburtsdatum (bzw. Alter) und Wohngegend, alle
+// anderen nur einen Namen. Statist*innen haben nur die Grundangaben (Name, Alter,
+// Wohngegend, Beschäftigung, Aussehen …); was ein früherer Supporting Character
+// darüber hinaus ausgefüllt hat, bleibt in den Einstellungen stehen, erscheint
+// aber nicht im Profil.
+export function useCharacterBasics(character: Character, mode: "settings" | "profile") {
   const { updateCharacter, locations } = useStore();
   const main = tierOf(character) === "main";
-  // Supporting Characters können dasselbe ausfüllen wie Main Characters – nur
-  // die Pflichtangaben gelten allein für Mains.
-  const full = tierOf(character) !== "extra";
+  const extra = tierOf(character) === "extra";
+  // Angabe über die Grundangaben hinaus: für Statist*innen nur in den
+  // Einstellungen und nur, wenn dort schon etwas eingetragen ist
+  const more = (filled: boolean) => !extra || (mode === "settings" && filled);
   const [d, setD] = useState(character);
   const [p, setP] = useState<CharacterProfile>(character.profile ?? {});
-  const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
   const file = useRef<HTMLInputElement>(null);
-  const [signature, setSignature] = useState(character.profile?.signature_url ?? null);
-  const [uploadingSig, setUploadingSig] = useState(false);
-  const sigFile = useRef<HTMLInputElement>(null);
-  const [gif, setGif] = useState(character.profile?.scene_gif_url ?? null);
-  const [gifBusy, setGifBusy] = useState(false);
-  const [gifError, setGifError] = useState<string | null>(null);
-  const [gifSearch, setGifSearch] = useState(false);
-  const gifFile = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof Character>(key: K, value: Character[K]) =>
     setD((x) => ({ ...x, [key]: value }));
@@ -80,12 +78,28 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
   const missing = {
     name: !d.name.trim(),
     age: main && !p.birthdate && d.age == null,
-    faceclaim: main && !(d.faceclaim ?? "").trim(),
-    role: main && !(d.role ?? "").trim(),
+    area: main && !d.area,
   };
   const invalid = Object.values(missing).some(Boolean);
   // Importiert: nur eine Alterszahl, kein Geburtsdatum – Feld markieren und darum bitten
-  const askBirthdate = needsBirthdate({ age: d.age, profile: p });
+  const askBirthdate = !extra && needsBirthdate({ age: d.age, profile: p });
+  const student = isStudent({ profile: p });
+  const working = isWorking({ profile: p });
+  const zodiac = zodiacOf(p.birthdate);
+  // Universität: Byron (die Uni von Eden) oder eine andere als reiner Text
+  const otherUni = p.university != null && p.university !== BYRON;
+  // Statist*in mit Angaben aus früheren Zeiten (z.B. ehemaliger Supporting Character)
+  const leftovers =
+    extra &&
+    mode === "settings" &&
+    !!(
+      character.bio ||
+      character.origin ||
+      character.status ||
+      character.sexuality ||
+      isStudent(character) ||
+      isWorking(character)
+    );
 
   async function onPhoto(f: File | undefined) {
     if (!f) return;
@@ -99,51 +113,13 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
     }
   }
 
-  // Signatur wird (wie der Avatar) sofort gespeichert
-  function saveSignature(url: string | null) {
-    setSignature(url);
-    updateCharacter(character.id, { profile: { ...(character.profile ?? {}), signature_url: url } });
-  }
-  async function onSignature(f: File | undefined) {
-    if (!f) return;
-    setUploadingSig(true);
-    try {
-      saveSignature(await uploadImage(f, "characters", IMAGE_SIZES.signature));
-    } finally {
-      setUploadingSig(false);
-    }
-  }
-
-  // GIF unter dem Avatar in Szenen – ebenfalls sofort gespeichert
-  function saveGif(url: string | null) {
-    setGif(url);
-    setGifError(null);
-    setGifSearch(false);
-    updateCharacter(character.id, { profile: { ...(character.profile ?? {}), scene_gif_url: url } });
-  }
-  async function onGif(f: File | undefined) {
-    if (!f) return;
-    setGifBusy(true);
-    setGifError(null);
-    try {
-      saveGif(await uploadAnimation(f, "characters"));
-    } catch (e) {
-      setGifError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setGifBusy(false);
-    }
-  }
-
-  function save() {
-    if (invalid) return;
-    // Die beschreibenden Teile des Profils (Skills, Timeline …) pflegt das Profil
-    // selbst – hier nur die Grunddaten-Schlüssel überschreiben.
+  // Die Änderungen als Patch für updateCharacter. Die beschreibenden Teile des
+  // Profils (Skills, Timeline …) bleiben, wie sie sind – hier nur die
+  // Grunddaten-Schlüssel überschreiben. `extraProfile`: weitere Schlüssel, die die
+  // Einstellungen mitschreiben (Signatur, GIF).
+  function patch(extraProfile: Partial<CharacterProfile> = {}): Partial<Character> {
     const profile: CharacterProfile = {
       ...(character.profile ?? {}),
-      signature_url: signature,
-      signature_text: p.signature_text?.trim() || null,
-      signature_align: p.signature_align ?? null,
-      scene_gif_url: gif,
       spotify_url: webUrl(p.spotify_url),
       gpa: p.gpa?.trim() || null,
       birthdate: p.birthdate ?? null,
@@ -159,8 +135,9 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       study_start: p.study_start ?? null,
       employer: p.employer ?? null,
       employer_location_id: p.employer_location_id ?? null,
+      ...extraProfile,
     };
-    updateCharacter(character.id, {
+    return {
       name: d.name.trim(),
       full_name: d.full_name,
       faceclaim: d.faceclaim,
@@ -178,16 +155,8 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       // Alter zum Standard-Stichtag mitschreiben, damit Listen es ohne Rechnen haben
       age: p.birthdate ? ageAt({ age: d.age, profile }) : d.age,
       profile,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
+    };
   }
-
-  const student = isStudent({ profile: p });
-  const working = isWorking({ profile: p });
-  const zodiac = zodiacOf(p.birthdate);
-  // Universität: Byron (die Uni von Eden) oder eine andere als reiner Text
-  const otherUni = p.university != null && p.university !== BYRON;
 
   // Universität und Arbeitgeber: Orte und ganze Gegenden (z.B. „Byron University")
   // werden vorgeschlagen. Ein Ort wird verknüpft („works here" / „studies here"),
@@ -268,10 +237,17 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
   );
   const grid = "grid grid-cols-1 gap-3 sm:grid-cols-2";
 
-  return (
-    <div className="flex flex-col gap-4 pt-4">
+  const form = (
+    <>
+      {leftovers && (
+        <p className="rounded-md border border-dashed border-border-subtle px-3 py-2 text-[0.8125rem] text-text-tertiary">
+          Statist*innen zeigen im Profil nur die Grundangaben. Was {character.name} darüber hinaus
+          eingetragen hat (Kurzbeschreibung, Herkunft, Studium …), bleibt hier gespeichert, erscheint
+          aber nicht im Profil – als Supporting Character wieder schon.
+        </p>
+      )}
       {/* --- Wer --- */}
-      <Collapsible title="Identität" forceOpen={missing.name || missing.age || missing.faceclaim || askBirthdate}>
+      <Collapsible title="Identität" defaultOpen={mode === "profile"} forceOpen={missing.name || missing.age || askBirthdate}>
       <div className="flex items-start gap-4">
         <div className="w-[110px] shrink-0">
           <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-border-subtle bg-bg-primary">
@@ -336,8 +312,6 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
           })}
           {F({
             label: "Faceclaim",
-            required: main,
-            error: missing.faceclaim,
             children: <input {...text("faceclaim")} />,
           })}
           {F({
@@ -350,19 +324,22 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         Alter und Sternzeichen werden aus dem Geburtsdatum berechnet: das Alter im Profil zum{" "}
         {formatInplayDate("2022-01-01")}, in einer Szene zum Datum der Szene.
       </p>
-      {F({
-        label: `Kurzbeschreibung (${plainText(d.bio).length}/1000)`,
-        children: <RichEditor value={d.bio ?? ""} onChange={(v) => set("bio", (v || null) as never)} maxLength={1000} />,
-      })}
+      {more(!!character.bio) &&
+        F({
+          label: `Kurzbeschreibung (${plainText(d.bio).length}/1000)`,
+          children: <RichEditor value={d.bio ?? ""} onChange={(v) => set("bio", (v || null) as never)} maxLength={1000} />,
+        })}
 
       </Collapsible>
 
       {/* --- Leben --- */}
-      <Collapsible title="Leben">
+      <Collapsible title="Leben" forceOpen={missing.area}>
       <div className={grid}>
         {F({
           label: "Wohngegend",
+          required: main,
           hideKey: "area",
+          error: missing.area,
           children: (
             <select value={d.area} onChange={(e) => set("area", e.target.value)} className={field}>
               {!AREA_ORDER.includes(d.area as (typeof AREA_ORDER)[number]) && (
@@ -378,9 +355,9 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
             </select>
           ),
         })}
-        {full && F({ label: "Herkunft", hideKey: "origin", children: <input {...text("origin")} /> })}
-        {full && F({ label: "Beziehungsstatus", hideKey: "status", children: <input {...text("status")} /> })}
-        {full &&
+        {more(!!character.origin) && F({ label: "Herkunft", hideKey: "origin", children: <input {...text("origin")} /> })}
+        {more(!!character.status) && F({ label: "Beziehungsstatus", hideKey: "status", children: <input {...text("status")} /> })}
+        {more(!!character.sexuality) &&
           F({ label: "Sexuelle Orientierung", hideKey: "sexuality", children: <input {...text("sexuality")} /> })}
         {F({
           label: "Spotify-Link",
@@ -399,15 +376,13 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       </Collapsible>
 
       {/* --- Beschäftigung --- */}
-      <Collapsible title="Beschäftigung" forceOpen={missing.role}>
+      <Collapsible title="Beschäftigung">
       {F({
         label: "Beschäftigung",
-        required: main,
         hideKey: "role",
-        error: missing.role,
         children: <input {...text("role")} placeholder="z. B. Journalist, Studentin & Barista" />,
       })}
-      {full && (
+      {more(isStudent(character) || isWorking(character)) && (
         <>
           {/* beides zugleich möglich */}
           <div className="flex flex-wrap gap-x-6 gap-y-2">
@@ -571,6 +546,81 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
 
       </Collapsible>
 
+    </>
+  );
+
+  return { form, invalid, patch, p, setProfile, F };
+}
+
+// Einstellungen → Meine Charaktere: die Grunddaten plus das, was nur hier steht
+// (Signatur, GIF in Szenen), mit eigenem Speichern-Knopf.
+export function CharacterBasicsForm({ character }: { character: Character }) {
+  const { updateCharacter } = useStore();
+  const { form, invalid, patch, p, setProfile, F } = useCharacterBasics(character, "settings");
+  const [saved, setSaved] = useState(false);
+  const [signature, setSignature] = useState(character.profile?.signature_url ?? null);
+  const [uploadingSig, setUploadingSig] = useState(false);
+  const sigFile = useRef<HTMLInputElement>(null);
+  const [gif, setGif] = useState(character.profile?.scene_gif_url ?? null);
+  const [gifBusy, setGifBusy] = useState(false);
+  const [gifError, setGifError] = useState<string | null>(null);
+  const [gifSearch, setGifSearch] = useState(false);
+  const gifFile = useRef<HTMLInputElement>(null);
+
+  // Signatur wird (wie der Avatar) sofort gespeichert
+  function saveSignature(url: string | null) {
+    setSignature(url);
+    updateCharacter(character.id, { profile: { ...(character.profile ?? {}), signature_url: url } });
+  }
+  async function onSignature(f: File | undefined) {
+    if (!f) return;
+    setUploadingSig(true);
+    try {
+      saveSignature(await uploadImage(f, "characters", IMAGE_SIZES.signature));
+    } finally {
+      setUploadingSig(false);
+    }
+  }
+
+  // GIF unter dem Avatar in Szenen – ebenfalls sofort gespeichert
+  function saveGif(url: string | null) {
+    setGif(url);
+    setGifError(null);
+    setGifSearch(false);
+    updateCharacter(character.id, { profile: { ...(character.profile ?? {}), scene_gif_url: url } });
+  }
+  async function onGif(f: File | undefined) {
+    if (!f) return;
+    setGifBusy(true);
+    setGifError(null);
+    try {
+      saveGif(await uploadAnimation(f, "characters"));
+    } catch (e) {
+      setGifError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setGifBusy(false);
+    }
+  }
+
+  function save() {
+    if (invalid) return;
+    updateCharacter(
+      character.id,
+      patch({
+        signature_url: signature,
+        signature_text: p.signature_text?.trim() || null,
+        signature_align: p.signature_align ?? null,
+        scene_gif_url: gif,
+      }),
+    );
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  }
+
+  return (
+    <div className="flex flex-col gap-4 pt-4">
+      {form}
+
       {/* --- Signatur --- */}
       <Collapsible title="Signatur">
         <p className="text-[0.8125rem] text-text-tertiary">
@@ -718,11 +768,11 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
       </Collapsible>
 
       <p className="text-[0.8125rem] text-text-tertiary">
-        Alles Beschreibende (Ausführliche Beschreibung, Timeline …) bearbeitest du direkt im{" "}
+        Die Grunddaten und alles Beschreibende (Ausführliche Beschreibung, Timeline …) kannst du auch direkt im{" "}
         <Link href={`/charaktere/${character.id}`} className="text-accent hover:underline">
           Profil
-        </Link>
-        .
+        </Link>{" "}
+        bearbeiten.
       </p>
 
       <div className="flex items-center gap-3">

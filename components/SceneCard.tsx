@@ -12,7 +12,7 @@ import {
   formatInplayDateShort,
 } from "@/lib/format";
 import type { Character, Scene } from "@/lib/types";
-import { chatHref, newestMessage, sceneHref, scenePlace } from "@/lib/chats";
+import { chatHref, newestMessage, sceneHref, sceneKind, scenePlace } from "@/lib/chats";
 import { Icon } from "./Icon";
 import { Bubble } from "./Bubble";
 
@@ -24,19 +24,30 @@ import { Bubble } from "./Bubble";
 
 // Status als Streichholz: brennt orange, solange der neueste Post ungelesen ist;
 // sonst grau und ohne Flamme; bei geschlossenen Szenen abgebrannt mit Rauch.
+// Anruf-Szenen tragen stattdessen einen Telefonhörer (klingelt bei neuem Post,
+// durchgestrichen, wenn geschlossen).
 export function SceneMatch({ scene, size = 20 }: { scene: Scene; size?: number }) {
   const { isSceneNew, isChatFresh } = useStore();
   const closed = scene.status === "closed";
   const unread =
     !closed && (scene.chat_id ? isChatFresh(scene.chat_id, scene.id) : isSceneNew(scene.id));
+  const call = sceneKind(scene) === "call";
+  // Hörer wirkt bei gleicher Größe wuchtiger als das schlanke Streichholz
+  const iconSize = call ? Math.round(size * 0.8) : size;
   return (
     <span
-      title={closed ? "geschlossen" : unread ? "aktiv · neuer Post" : "aktiv"}
+      title={`${call ? "Anruf · " : ""}${closed ? "geschlossen" : unread ? "aktiv · neuer Post" : "aktiv"}`}
       className={`shrink-0 ${unread ? "text-accent" : "text-text-tertiary"} ${
         closed ? "opacity-70" : ""
       }`}
     >
-      <Icon name={closed ? "match-burnt" : unread ? "match-lit" : "match"} size={size} />
+      {call ? (
+        <span className="flex items-center justify-center" style={{ width: size, height: size }}>
+          <Icon name={closed ? "call-ended" : unread ? "call-ringing" : "call"} size={iconSize} />
+        </span>
+      ) : (
+        <Icon name={closed ? "match-burnt" : unread ? "match-lit" : "match"} size={size} />
+      )}
     </span>
   );
 }

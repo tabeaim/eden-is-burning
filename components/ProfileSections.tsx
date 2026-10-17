@@ -144,9 +144,10 @@ export function ProfileFacts({ c }: { c: Character }) {
       "life.",
       [
         ["Residence", shown(c, "area", c.area ? areaName(c.area) : null)],
-        ["Origin", shown(c, "origin", c.origin)],
-        ["Status", shown(c, "status", c.status)],
-        ["Sexuality", shown(c, "sexuality", c.sexuality)],
+        // nicht bei Statist*innen (nur Grundangaben, siehe useCharacterBasics)
+        ["Origin", full ? shown(c, "origin", c.origin) : null],
+        ["Status", full ? shown(c, "status", c.status) : null],
+        ["Sexuality", full ? shown(c, "sexuality", c.sexuality) : null],
         ["Spotify", spotify],
       ],
     ],
