@@ -42,7 +42,7 @@ const field =
 // Profil (ProfileEditPanel); beide nutzen diesen Baustein.
 // Formular-Beschriftungen deutsch; im Profil erscheinen die Facts mit englischen
 // Labels. Einzelne Angaben lassen sich im Profil verstecken (Schalter am Feld).
-// Main Characters brauchen Name, Geburtsdatum (bzw. Alter) und Wohngegend, alle
+// Main Characters brauchen Name, Geburtsdatum (bzw. Alter), Faceclaim und Wohngegend, alle
 // anderen nur einen Namen. Statist*innen haben nur die Grundangaben (Name, Alter,
 // Wohngegend, Beschäftigung, Aussehen …); was ein früherer Supporting Character
 // darüber hinaus ausgefüllt hat, bleibt in den Einstellungen stehen, erscheint
@@ -79,6 +79,7 @@ export function useCharacterBasics(character: Character, mode: "settings" | "pro
     name: !d.name.trim(),
     age: main && !p.birthdate && d.age == null,
     area: main && !d.area,
+    faceclaim: main && !(d.faceclaim ?? "").trim(),
   };
   const invalid = Object.values(missing).some(Boolean);
   // Importiert: nur eine Alterszahl, kein Geburtsdatum – Feld markieren und darum bitten
@@ -247,7 +248,7 @@ export function useCharacterBasics(character: Character, mode: "settings" | "pro
         </p>
       )}
       {/* --- Wer --- */}
-      <Collapsible title="Identität" defaultOpen={mode === "profile"} forceOpen={missing.name || missing.age || askBirthdate}>
+      <Collapsible title="Identität" defaultOpen={mode === "profile"} forceOpen={missing.name || missing.age || missing.faceclaim || askBirthdate}>
       <div className="flex items-start gap-4">
         <div className="w-[110px] shrink-0">
           <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-border-subtle bg-bg-primary">
@@ -312,6 +313,8 @@ export function useCharacterBasics(character: Character, mode: "settings" | "pro
           })}
           {F({
             label: "Faceclaim",
+            required: main,
+            error: missing.faceclaim,
             children: <input {...text("faceclaim")} />,
           })}
           {F({

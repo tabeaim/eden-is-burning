@@ -20,7 +20,7 @@ const field =
 // „Neu anlegen" für alle drei Stufen: gestrichelte Pill (siehe DESIGN.md), die erst
 // die Pflichtangaben abfragt – ohne sie wird nichts angelegt. Supporting
 // Characters und Statist*innen brauchen nur einen Namen; ein Main Character dazu
-// Geburtsdatum (daraus das Alter) und Wohngegend. Danach geht es ins Profil, wo
+// Geburtsdatum (daraus das Alter), Faceclaim und Wohngegend. Danach geht es ins Profil, wo
 // gleich die Bearbeitung offen ist – dort wird alles Weitere ausgefüllt.
 export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
   const router = useRouter();
@@ -28,9 +28,10 @@ export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [birthdate, setBirthdate] = useState("");
+  const [faceclaim, setFaceclaim] = useState("");
   const [area, setArea] = useState("");
   const main = kind === "character";
-  const ready = !!name.trim() && (!main || (!!birthdate && !!area));
+  const ready = !!name.trim() && (!main || (!!birthdate && !!faceclaim.trim() && !!area));
 
   function create() {
     if (!ready || !currentPlayer) return;
@@ -38,6 +39,7 @@ export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
       kind === "character"
         ? addCharacter(currentPlayer.id, name, {
             area,
+            faceclaim: faceclaim.trim(),
             age: ageAt({ age: null, profile: { birthdate } }),
             profile: { birthdate },
           })
@@ -46,6 +48,7 @@ export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
     setOpen(false);
     setName("");
     setBirthdate("");
+    setFaceclaim("");
     setArea("");
   }
 
@@ -96,7 +99,7 @@ export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
   return (
     <div className="flex w-full max-w-xl flex-col gap-2 self-start rounded-xl border border-border-subtle bg-bg-surface p-3 text-left">
       <div className="text-[0.8125rem] text-text-secondary">
-        Neuer Main Character <span className="text-text-tertiary">– alle drei Angaben sind Pflicht</span>
+        Neuer Main Character <span className="text-text-tertiary">– alle vier Angaben sind Pflicht</span>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <input
@@ -108,10 +111,17 @@ export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
           className={`${field} py-2`}
         />
         <DatePicker value={birthdate} onChange={setBirthdate} />
+        <input
+          value={faceclaim}
+          onChange={(e) => setFaceclaim(e.target.value)}
+          onKeyDown={onKey}
+          placeholder="Faceclaim"
+          className={`${field} py-2`}
+        />
         <select
           value={area}
           onChange={(e) => setArea(e.target.value)}
-          className={`${field} py-2 sm:col-span-2 ${area ? "" : "text-text-tertiary"}`}
+          className={`${field} py-2 ${area ? "" : "text-text-tertiary"}`}
         >
           <option value="" className="bg-bg-surface">
             Wohngegend …

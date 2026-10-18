@@ -32,7 +32,8 @@ const toList = (text: string) =>
 // useCharacterBasics) und alles Beschreibende – Zitat, Header-Bild, ausführliche
 // Beschreibung, Eigenschaften, Skills, Slider, Likes/Dislikes, Stammbaum,
 // Timeline, der Style („Looks") und die Gegenstände („Pockets").
-// Statist*innen haben nur die Grundangaben, dazu „Vibes" (Inspo-Bilder).
+// Statist*innen haben nur die Grundangaben, dazu „Vibes": hochgeladene
+// Inspo-Bilder oder ein eingebundenes Pinterest-Board.
 export function ProfileEditPanel({ character, onClose }: { character: Character; onClose: () => void }) {
   const { updateCharacter } = useStore();
   const tier = tierOf(character);
@@ -57,6 +58,10 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   const bannerFile = useRef<HTMLInputElement>(null);
   const vibesFile = useRef<HTMLInputElement>(null);
   const vibes = d.vibes ?? [];
+  // Vibes von Statist*innen: entweder Bilder oder ein Pinterest-Board
+  const [vibesMode, setVibesMode] = useState<"images" | "pinterest">(
+    character.pinterest_url ? "pinterest" : "images",
+  );
 
   const set = <K extends keyof Character>(key: K, value: Character[K]) => setD((x) => ({ ...x, [key]: value }));
   const text = (key: keyof Character) => ({
@@ -93,7 +98,12 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
     const base = basics.patch();
     // Statist*innen: nur die Grundangaben (und Vibes)
     if (!full) {
-      updateCharacter(character.id, { ...base, vibes });
+      // Pinterest-Modus: die Bilder bleiben gespeichert, gezeigt wird das Board
+      updateCharacter(character.id, {
+        ...base,
+        vibes,
+        pinterest_url: vibesMode === "pinterest" ? d.pinterest_url?.trim() || null : null,
+      });
       onClose();
       return;
     }
@@ -378,7 +388,39 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       )}
 
       {tier === "extra" && (
-        <Collapsible title={`Vibes (${vibes.length}/${MAX_VIBES} Inspo-Bilder)`}>
+        <Collapsible title="Vibes">
+          <div className="flex gap-1.5">
+            {(
+              [
+                ["images", "Bilder hochladen"],
+                ["pinterest", "Pinterest-Board"],
+              ] as const
+            ).map(([value, name]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={vibesMode === value}
+                onClick={() => setVibesMode(value)}
+                className={`rounded-md border px-3 py-1.5 text-[0.8125rem] ${
+                  vibesMode === value
+                    ? "border-accent/70 bg-accent-soft text-text-primary"
+                    : "border-border-subtle bg-white/[0.04] text-text-secondary hover:bg-white/[0.08] hover:text-text-primary"
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+          {vibesMode === "pinterest" ? (
+            <label className={label}>
+              Pinterest-URL
+              <input {...text("pinterest_url")} placeholder="https://pinterest.com/…" className={`mt-1 ${field}`} />
+            </label>
+          ) : (
+          <>
+          <p className={hint}>
+            {vibes.length}/{MAX_VIBES} Inspo-Bilder
+          </p>
           {vibes.length > 0 && (
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {vibes.map((src, i) => (
@@ -417,6 +459,8 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
               }}
             />
           </div>
+          </>
+          )}
         </Collapsible>
       )}
 

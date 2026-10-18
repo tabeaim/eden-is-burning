@@ -431,9 +431,17 @@ function QuoteBlock({ c }: { c: Character }) {
   );
 }
 
-// Vibes: Inspo-Bilder (Supporting Characters und Statist*innen)
+// Vibes: Inspo-Bilder (Supporting Characters und Statist*innen); Statist*innen
+// können stattdessen ein Pinterest-Board einbinden
 function Vibes({ c }: { c: Character }) {
   const vibes = c.vibes ?? [];
+  if (tierOf(c) === "extra" && c.pinterest_url) {
+    return (
+      <SectionBox title="vibes." className="sm:col-span-2 lg:col-span-2">
+        <PinterestBoard url={c.pinterest_url} />
+      </SectionBox>
+    );
+  }
   if (vibes.length === 0) return null;
   return (
     <SectionBox title="vibes." className="sm:col-span-2 lg:col-span-2">
