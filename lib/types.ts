@@ -87,7 +87,7 @@ export interface Character {
   // im Pool), "supporting" = Supporting Character (zugeordnet und bespielt).
   // Ohne Angabe gilt eine Nebenfigur als Supporting Character (Altbestand).
   npc_tier?: "extra" | "supporting" | null;
-  vibes?: string[] | null; // Inspo-Bilder im Profil (SCs und Statist*innen)
+  vibes?: string[] | null; // Inspo-Bilder fürs Moodboard im Profil (Statist*innen)
   // Erweitertes Profil (siehe CharacterProfile)
   profile?: CharacterProfile | null;
   // Im Papierkorb seit … (aus allen Listen verschwunden, aber wiederherstellbar)

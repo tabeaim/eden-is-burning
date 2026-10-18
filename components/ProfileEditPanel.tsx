@@ -32,7 +32,7 @@ const toList = (text: string) =>
 // useCharacterBasics) und alles Beschreibende – Zitat, Header-Bild, ausführliche
 // Beschreibung, Eigenschaften, Skills, Slider, Likes/Dislikes, Stammbaum,
 // Timeline, der Style („Looks") und die Gegenstände („Pockets").
-// Statist*innen haben nur die Grundangaben, dazu „Vibes": hochgeladene
+// Statist*innen haben nur die Grundangaben, dazu ein Moodboard: hochgeladene
 // Inspo-Bilder oder ein eingebundenes Pinterest-Board.
 export function ProfileEditPanel({ character, onClose }: { character: Character; onClose: () => void }) {
   const { updateCharacter } = useStore();
@@ -58,7 +58,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   const bannerFile = useRef<HTMLInputElement>(null);
   const vibesFile = useRef<HTMLInputElement>(null);
   const vibes = d.vibes ?? [];
-  // Vibes von Statist*innen: entweder Bilder oder ein Pinterest-Board
+  // Moodboard von Statist*innen: entweder Bilder oder ein Pinterest-Board
   const [vibesMode, setVibesMode] = useState<"images" | "pinterest">(
     character.pinterest_url ? "pinterest" : "images",
   );
@@ -96,7 +96,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   function save() {
     if (basics.invalid) return;
     const base = basics.patch();
-    // Statist*innen: nur die Grundangaben (und Vibes)
+    // Statist*innen: nur die Grundangaben (und das Moodboard)
     if (!full) {
       // Pinterest-Modus: die Bilder bleiben gespeichert, gezeigt wird das Board
       updateCharacter(character.id, {
@@ -388,7 +388,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       )}
 
       {tier === "extra" && (
-        <Collapsible title="Vibes">
+        <Collapsible title="Moodboard">
           <div className="flex gap-1.5">
             {(
               [

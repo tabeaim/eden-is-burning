@@ -349,7 +349,7 @@ export default function CharacterPage({
   );
 }
 
-// Kompaktansicht für Statist*innen: Facts, Looks, Vibes und die Orte, an denen
+// Kompaktansicht für Statist*innen: Facts, Looks, Moodboard und die Orte, an denen
 // sie hinterlegt sind. Bearbeitet wird direkt hier (nur die Grundangaben).
 function NpcFacts({ c }: { c: Character }) {
   const { locations, scenes, player, canEditCharacter } = useStore();
@@ -431,20 +431,21 @@ function QuoteBlock({ c }: { c: Character }) {
   );
 }
 
-// Vibes: Inspo-Bilder (Supporting Characters und Statist*innen); Statist*innen
-// können stattdessen ein Pinterest-Board einbinden
+// Moodboard aus Inspo-Bildern (Feld `vibes`) – vor allem bei Statist*innen, die
+// alternativ ein Pinterest-Board einbinden können. „Vibes" heißen nur die Fotos
+// der Orte.
 function Vibes({ c }: { c: Character }) {
   const vibes = c.vibes ?? [];
   if (tierOf(c) === "extra" && c.pinterest_url) {
     return (
-      <SectionBox title="vibes." className="sm:col-span-2 lg:col-span-2">
+      <SectionBox title="moodboard." className="sm:col-span-2 lg:col-span-2">
         <PinterestBoard url={c.pinterest_url} />
       </SectionBox>
     );
   }
   if (vibes.length === 0) return null;
   return (
-    <SectionBox title="vibes." className="sm:col-span-2 lg:col-span-2">
+    <SectionBox title="moodboard." className="sm:col-span-2 lg:col-span-2">
       <div className="columns-2 gap-3 sm:columns-3">
         {vibes.map((src, i) => (
           <a

@@ -185,7 +185,8 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
 - **Profil bearbeiten:** Im Profil gibt es genau einen Knopf „Bearbeiten"; er
   öffnet `ProfileEditPanel` mit allem Beschreibenden: Zitat, Banner, ausführliche
   Beschreibung, Eigenschaften (+/–), Skills (Prozent), Slider, Likes/Dislikes,
-  Timeline; bei Supporting Characters und Statist*innen dazu „Vibes". Die
+  Timeline. Statist*innen haben nur Grunddaten und ein Moodboard (Bilder oder
+  Pinterest-Board); „Vibes" heißen nur die Fotos der Orte. Die
   Relations lassen sich bearbeiten, solange das Formular offen ist.
 - **Sprache der Labels:** Formulare (Eingabe) deutsch, Facts im Profil englisch
   (Name, Age, Gender, Residence, Origin, Status, Sexuality, Occupation …).
@@ -198,7 +199,7 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   (`banner_url`, über „Bearbeiten"), das oben über dem Namen steht.
 - **Profil-Reiter unten** (englisch, wie die Facts-Labels):
   Character (Beschreibung, Eigenschaften, Skills,
-  Slider, Likes, Vibes) · Looks (Angaben zum Aussehen, daneben das
+  Slider, Likes) · Looks (Angaben zum Aussehen, daneben das
   Style-Whiteboard `profile.outfit`) · Biography (Timeline) · Family Tree ·
   Pockets (Handy und Gegenstände, nicht bei Statist*innen) · Moodboard (falls
   hinterlegt). Linksbündig über die ganze Breite; der Stammbaum steht mittig.
@@ -244,7 +245,7 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
 - **Profil bearbeiten** (`ProfileEditPanel`): wie die Charakter-Einstellungen in
   aufklappbaren Abschnitten (`Collapsible`): Auf einen Blick (offen),
   Eigenschaften, Skills & Slider, Stammbaum, Timeline, Looks – Style, Pockets,
-  Moodboard, Vibes (nur Statist*innen); Statist*innen zusätzlich Grunddaten.
+  Moodboard; Statist*innen nur Grunddaten und Moodboard (Bilder oder Pinterest).
 - **Whiteboards** (`ThingsBoard`: Pockets, Style) sind Querformat (4:3) und
   höchstens 28rem breit – beim Bearbeiten genauso wie im Profil. Ältere
   Hochformat-Collagen werden beim Anzeigen verkleinert und mittig gesetzt
