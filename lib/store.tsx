@@ -305,6 +305,8 @@ async function fetchAll<T>(table: string, columns = "*"): Promise<T[]> {
   return rows;
 }
 
+const NO_POSTS: Post[] = [];
+
 // Posts ohne Text: genug für Zähler, „wer ist dran" und „zuletzt aktiv"
 const POST_HEAD = "id,scene_id,character_id,post_number,created_at";
 
@@ -532,6 +534,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setReady(true);
         return;
       }
+      // Die Welt gleich mitladen statt erst nach dem eigenen Eintrag – ohne
+      // Freischaltung liefert die Datenbank ohnehin nichts (RLS)
+      const world = loadWorld();
       const { data: me, error: meError } = await supabase
         .from("players")
         .select("*")
@@ -554,11 +559,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             : `Angemeldet als ${session.user.email ?? "?"}, aber in dieser Datenbank gibt es keinen Spieler-Eintrag zu diesem Konto.`,
       );
       setCurrentPlayer(player);
-      if (player?.approved) {
-        await loadWorld();
-      } else {
-        setState(EMPTY);
-      }
+      await world.catch(() => {});
+      if (!player?.approved) setState(EMPTY);
       setReady(true);
     },
     [loadWorld],
@@ -934,12 +936,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     (playerId: string) => playable.filter((c) => c.player_id === playerId),
     [playable],
   );
+  // Posts je Szene (sortiert) und jüngster Post je Szene – einmal pro Postsstand
+  // berechnet, statt bei jedem Aufruf alle Posts zu durchsuchen (seit dem
+  // Forum-Import sind das Tausende, und Dashboard & Co. fragen jede Szene ab)
+  const postIndex = useMemo(() => {
+    const byScene = new Map<string, Post[]>();
+    const newest = new Map<string, string>();
+    for (const p of state.posts) {
+      const list = byScene.get(p.scene_id);
+      if (list) list.push(p);
+      else byScene.set(p.scene_id, [p]);
+      const n = newest.get(p.scene_id);
+      if (!n || new Date(p.created_at).getTime() > new Date(n).getTime()) newest.set(p.scene_id, p.created_at);
+    }
+    for (const list of byScene.values()) list.sort((a, b) => a.post_number - b.post_number);
+    return { byScene, newest };
+  }, [state.posts]);
   const postsOf = useCallback(
-    (sceneId: string) =>
-      state.posts
-        .filter((p) => p.scene_id === sceneId)
-        .sort((a, b) => a.post_number - b.post_number),
-    [state.posts],
+    (sceneId: string) => postIndex.byScene.get(sceneId) ?? NO_POSTS,
+    [postIndex],
   );
   const character = useCallback(
     (id: string) => state.characters.find((c) => c.id === id),
@@ -1539,17 +1554,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const isSceneNew = useCallback(
     (sceneId: string) => {
       if (!currentPlayer) return false;
-      let newest = 0;
-      for (const p of state.posts) {
-        if (p.scene_id !== sceneId) continue;
-        const t = new Date(p.created_at).getTime();
-        if (t > newest) newest = t;
-      }
-      if (!newest) return false;
+      const last = postIndex.newest.get(sceneId);
+      if (!last) return false;
       const ref = reads[sceneId] ? new Date(reads[sceneId]).getTime() : 0;
-      return newest > ref;
+      return new Date(last).getTime() > ref;
     },
-    [state.posts, reads, currentPlayer?.id],
+    [postIndex, reads, currentPlayer?.id],
   );
 
   // --- Messenger -------------------------------------------------------------
