@@ -45,15 +45,48 @@ export function removeBackground(source: HTMLCanvasElement, tolerance: number): 
   const image = ctx.getImageData(0, 0, w, h);
   const px = image.data;
 
-  // Hintergrundfarbe: Mittel der vier Ecken
-  const corners = [0, w - 1, (h - 1) * w, h * w - 1];
-  const bg = [0, 0, 0];
-  for (const i of corners) for (let c = 0; c < 3; c++) bg[c] += px[i * 4 + c] / corners.length;
-  // Abstand im RGB-Raum (max. ~441). Quadratisch, damit der Regler im unteren
-  // Bereich fein arbeitet: kleine Schritte nehmen nur wenig mehr weg.
+  // Hintergrundfarben: die häufigsten Farben am Bildrand (grob gruppiert). Nicht
+  // der Mittelwert – bei z.B. weißem Grund mit schwarzem Streifen unten ergäbe
+  // der ein Grau, das es im Bild gar nicht gibt.
+  const buckets = new Map<number, { n: number; r: number; g: number; b: number }>();
+  let borderCount = 0;
+  const addBorder = (i: number) => {
+    if (px[i * 4 + 3] === 0) return;
+    const r = px[i * 4], g = px[i * 4 + 1], b = px[i * 4 + 2];
+    const key = ((r >> 5) << 6) | ((g >> 5) << 3) | (b >> 5);
+    const e = buckets.get(key) ?? { n: 0, r: 0, g: 0, b: 0 };
+    e.n++;
+    e.r += r;
+    e.g += g;
+    e.b += b;
+    buckets.set(key, e);
+    borderCount++;
+  };
+  for (let x = 0; x < w; x++) {
+    addBorder(x);
+    addBorder((h - 1) * w + x);
+  }
+  for (let y = 1; y < h - 1; y++) {
+    addBorder(y * w);
+    addBorder(y * w + w - 1);
+  }
+  const bgs = [...buckets.values()]
+    .filter((e) => e.n >= borderCount * 0.05)
+    .sort((a, b) => b.n - a.n)
+    .slice(0, 4)
+    .map((e) => [e.r / e.n, e.g / e.n, e.b / e.n]);
+  if (!bgs.length) return source;
+  // Abstand im RGB-Raum (max. ~441) zur nächsten Hintergrundfarbe. Quadratisch,
+  // damit der Regler im unteren Bereich fein arbeitet.
   const limit = 2 + (tolerance / 100) ** 2 * 260;
-  const dist = (i: number) =>
-    Math.hypot(px[i * 4] - bg[0], px[i * 4 + 1] - bg[1], px[i * 4 + 2] - bg[2]);
+  const dist = (i: number) => {
+    let best = Infinity;
+    for (const bg of bgs) {
+      const d = Math.hypot(px[i * 4] - bg[0], px[i * 4 + 1] - bg[1], px[i * 4 + 2] - bg[2]);
+      if (d < best) best = d;
+    }
+    return best;
+  };
 
   // Füllen vom Rand her
   const gone = new Uint8Array(w * h);

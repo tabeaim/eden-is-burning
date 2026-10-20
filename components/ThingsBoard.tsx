@@ -72,7 +72,9 @@ export function ThingsBoard({
   const preview = useMemo(() => {
     if (!pending) return null;
     const small = toCanvas(pending, 360);
-    return (cut ? removeBackground(small, tolerance) : small).toDataURL("image/png");
+    const result = cut ? removeBackground(small, tolerance) : small;
+    // removeBackground gibt das Original zurück, wenn sonst nichts übrig bliebe
+    return { src: result.toDataURL("image/png"), tooMuch: cut && result === small };
   }, [pending, cut, tolerance]);
 
   // Bilder per Kopieren & Einfügen (Strg/Cmd+V) – solange das Whiteboard offen ist
@@ -371,7 +373,7 @@ export function ThingsBoard({
               <div className="flex items-start gap-3">
                 <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md [background-color:#2a2a2e] [background-image:linear-gradient(45deg,#3a3a40_25%,transparent_25%,transparent_75%,#3a3a40_75%),linear-gradient(45deg,#3a3a40_25%,transparent_25%,transparent_75%,#3a3a40_75%)] [background-position:0_0,8px_8px] [background-size:16px_16px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {preview && <img src={preview} alt="Vorschau" className="max-h-full max-w-full" />}
+                  {preview && <img src={preview.src} alt="Vorschau" className="max-h-full max-w-full" />}
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                   <Toggle checked={cut} onChange={setCut}>
@@ -390,6 +392,11 @@ export function ThingsBoard({
                         className={`mt-1 block ${range}`}
                       />
                     </label>
+                  )}
+                  {preview?.tooMuch && (
+                    <p className="text-[0.75rem] leading-snug text-text-secondary">
+                      So würde alles wegfallen – Regler etwas zurücknehmen.
+                    </p>
                   )}
                   <p className="text-[0.75rem] leading-snug text-text-tertiary">
                     Klappt am besten bei einem Gegenstand vor einfarbigem Hintergrund. Schon

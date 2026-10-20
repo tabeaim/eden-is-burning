@@ -603,12 +603,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Zusätzlich wird beim Zurückkehren in den Tab alles frisch geladen.
   const [presenceIds, setPresenceIds] = useState<string[]>([]);
   const [presenceIdleIds, setPresenceIdleIds] = useState<string[]>([]);
+  // Wer die App bewusst geschlossen hat (letzter Tab zu) – zählt sofort als offline,
+  // auch wenn last_seen noch frisch ist. Erneutes Auftauchen hebt das auf.
+  const [goneIds, setGoneIds] = useState<string[]>([]);
   const [mobileIds, setMobileIds] = useState<string[]>([]);
   const approvedId = currentPlayer?.approved ? currentPlayer.id : null;
   useEffect(() => {
     if (!approvedId) {
       setPresenceIds([]);
       setPresenceIdleIds([]);
+      setGoneIds([]);
       setMobileIds([]);
       return;
     }
@@ -680,7 +684,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       .subscribe();
 
     const presence = supabase.channel("eden-online", {
-      config: { presence: { key: approvedId } },
+      config: { presence: { key: approvedId }, broadcast: { self: false } },
     });
     // Aktiv = Tab sichtbar, Fenster im Vordergrund und in den letzten 15 Minuten
     // etwas getan (Maus, Tastatur, Scrollen, Tippen); sonst „anderswo". Bei
@@ -731,6 +735,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         >;
         const ids = Object.keys(st);
         setPresenceIds(ids);
+        setGoneIds((g) => (g.some((id) => ids.includes(id)) ? g.filter((id) => !ids.includes(id)) : g));
         setPresenceIdleIds(ids.filter((id) => !st[id].some((m) => m.active)));
         setMobileIds(
           ids.filter((id) => {
@@ -738,6 +743,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             return (act.length ? act : st[id]).every((m) => m.mobile);
           }),
         );
+      })
+      // Tab geschlossen: der andere Tab meldet „tschüss" – ist danach kein Tab
+      // dieser Person mehr live, gilt sie sofort als offline (ohne Nachlaufzeit).
+      .on("broadcast", { event: "bye" }, ({ payload }) => {
+        const id = (payload as { id?: string } | undefined)?.id;
+        if (id) setGoneIds((g) => (g.includes(id) ? g : [...g, id]));
       })
       .subscribe((status) => {
         if (status !== "SUBSCRIBED") return;
@@ -757,9 +768,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       void loadWorld();
     };
     document.addEventListener("visibilitychange", onVisible);
+    // Echtes Schließen/Verlassen (nicht bloß Tab-Wechsel oder App im Hintergrund)
+    const onPageHide = (e: PageTransitionEvent) => {
+      if (e.persisted || !subscribed) return;
+      void presence.send({ type: "broadcast", event: "bye", payload: { id: approvedId } });
+    };
+    window.addEventListener("pagehide", onPageHide);
 
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pagehide", onPageHide);
       for (const ev of ACTIVITY) window.removeEventListener(ev, onActivity, { capture: true });
       window.clearInterval(idleTimer);
       window.removeEventListener("focus", trackNow);
@@ -2393,11 +2411,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!approvedId) return { onlineIds: [] as string[], idleIds: [] as string[] };
     const cutoff = presenceNow - ONLINE_GRACE;
     const recent = activePlayers
-      .filter((p) => p.approved && new Date(p.last_seen).getTime() > cutoff)
+      .filter((p) => p.approved && !goneIds.includes(p.id) && new Date(p.last_seen).getTime() > cutoff)
       .map((p) => p.id);
     const ids = [...new Set([...presenceIds, ...recent])];
     return { onlineIds: ids, idleIds: presenceIdleIds };
-  }, [approvedId, activePlayers, presenceIds, presenceIdleIds, presenceNow]);
+  }, [approvedId, activePlayers, presenceIds, presenceIdleIds, goneIds, presenceNow]);
   const value = useMemo<StoreValue>(
     () => ({
       ...state,
