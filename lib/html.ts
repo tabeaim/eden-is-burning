@@ -1,4 +1,4 @@
-import { escapeHtml } from "./format";
+import { escapeHtml, renderNovel } from "./format";
 
 // Von Hand geschriebenes HTML (Text-Signatur) entschärfen: nur gestaltende Tags
 // und Attribute bleiben, Skripte, Einbettungen und Event-Handler fallen weg.
@@ -6,13 +6,18 @@ import { escapeHtml } from "./format";
 const TAGS = new Set([
   "a", "b", "big", "blockquote", "br", "center", "div", "em", "font", "h1", "h2", "h3", "h4", "h5", "h6",
   "hr", "i", "img", "li", "ol", "p", "s", "small", "span", "strike", "strong", "sub", "sup", "u", "ul",
+  "table", "thead", "tbody", "tr", "td", "th", "del", "ins", "mark", "code", "pre", "abbr", "cite", "q",
 ]);
 // samt Inhalt entfernen
 const DROP = new Set([
   "script", "style", "iframe", "object", "embed", "form", "input", "button", "textarea", "select", "link",
   "meta", "base", "svg", "math", "template", "noscript", "audio", "video", "frame", "frameset",
 ]);
-const ATTRS = new Set(["style", "color", "size", "face", "align", "width", "height", "alt", "title"]);
+const ATTRS = new Set([
+  "style", "color", "size", "face", "align", "valign", "width", "height", "alt", "title", "colspan", "rowspan",
+]);
+// Klassen nur, die der Roman-Satz selbst setzt (siehe renderNovel)
+const CLASSES = new Set(["para-indent", "scene-break"]);
 const BAD_STYLE = /url\s*\(|expression|javascript:|@import|behavior|position\s*:|z-index/i;
 
 function safeStyle(style: string): string {
@@ -40,6 +45,12 @@ function clean(node: Element) {
       const value = attr.value.trim();
       if (name === "href" && tag === "a" && /^(https?:|mailto:)/i.test(value)) continue;
       if (name === "src" && tag === "img" && /^https?:/i.test(value)) continue;
+      if (name === "class") {
+        const cls = value.split(/\s+/).filter((c) => CLASSES.has(c)).join(" ");
+        if (cls) el.setAttribute("class", cls);
+        else el.removeAttribute("class");
+        continue;
+      }
       if (name === "style") {
         const style = safeStyle(value);
         if (style) el.setAttribute("style", style);
@@ -79,4 +90,15 @@ export function plainText(input: string | null | undefined): string {
   doc.body.querySelectorAll("br").forEach((br) => br.replaceWith("\n"));
   doc.body.querySelectorAll("div, p, li, h1, h2, h3, h4, h5, h6, blockquote").forEach((el) => el.append("\n"));
   return (doc.body.textContent ?? "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+// Szenen-Post als HTML: Roman-Satz (renderNovel), im Editor getipptes HTML wird
+// umgesetzt und wie die Signatur entschärft. Ohne Browser (Server) bleibt es beim
+// Roman-Satz.
+export function postHtml(content: string | null | undefined): string {
+  const html = renderNovel(content ?? "");
+  if (!html || typeof DOMParser === "undefined") return html;
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, "text/html");
+  clean(doc.body);
+  return doc.body.innerHTML;
 }

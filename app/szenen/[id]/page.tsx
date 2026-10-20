@@ -9,7 +9,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
-import { escapeHtml, formatDateTime, formatInplayDate, renderPost, renderNovel } from "@/lib/format";
+import { escapeHtml, formatDateTime, formatInplayDate, renderPost } from "@/lib/format";
+import { postHtml } from "@/lib/html";
 import { copyRich, useProseEditor } from "@/lib/editor";
 import { FormatBar } from "@/components/RichEditor";
 import { useSetPageMeta } from "@/lib/page-meta";
@@ -779,7 +780,7 @@ function PostRow({
   // Gleiches Objekt über Renderings hinweg: React fasst das HTML dann nicht an und
   // die Textauswahl geht beim Einblenden des Zitat-Knopfs nicht verloren.
   const html = useMemo(
-    () => ({ __html: highlightTerm(renderNovel(post.content), term ?? "") }),
+    () => ({ __html: highlightTerm(postHtml(post.content), term ?? "") }),
     [post.content, term],
   );
   const card = <SceneCharacterCard character={character} player={player} at={at} />;
@@ -974,7 +975,7 @@ function DraftRow({
   const lastOfDraftScene =
     !!scene.draft && drafts.filter((d) => d.scene_id === scene.id).length <= 1;
   const c = character(draft.character_id);
-  const html = useMemo(() => ({ __html: renderNovel(draft.content) }), [draft.content]);
+  const html = useMemo(() => ({ __html: postHtml(draft.content) }), [draft.content]);
   const script = useMemo(() => parseScript(draft.content), [draft.content]);
   const viewer = useScriptViewer(scene.id);
   if (!c) return null;
@@ -1132,7 +1133,7 @@ function ReplyBox({
                 className="prose-serif min-w-0 flex-1 text-text-primary"
                 dangerouslySetInnerHTML={{
                   __html:
-                    renderNovel(preview) ||
+                    postHtml(preview) ||
                     "<span style='opacity:.5'>(noch nichts geschrieben)</span>",
                 }}
               />

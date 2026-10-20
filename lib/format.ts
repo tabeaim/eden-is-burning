@@ -137,11 +137,24 @@ export function renderPost(content: string): string {
 const PARA_BREAK = /((?:<br\s*\/?>(?:\s|&nbsp;)*)+)/i;
 const SCENE_BREAK = /^(?:\s|&nbsp;)*(?:[*~#](?:\s|&nbsp;)*){3,}$/;
 
+// Im Editor als Text getipptes HTML („<center>…</center>") steht im gespeicherten
+// Inhalt maskiert (&lt;center&gt;). Solche Tags werden wieder zu echtem HTML –
+// entschärft wird danach (siehe postHtml in lib/html.ts). Ein „<3" o. Ä. bleibt Text.
+const TYPED_TAG = /&lt;(\/?[a-z][a-z0-9]*(?:\s[^<>]*?)?\/?)&gt;/gi;
+export function decodeTypedHtml(html: string): string {
+  return html.replace(TYPED_TAG, (_, inner: string) => `<${inner.replace(/&nbsp;/g, " ")}>`);
+}
+
+const BLOCK_TAG =
+  /^<\/?(?:center|div|p|blockquote|h[1-6]|ul|ol|li|table|thead|tbody|tr|td|th|hr|pre)\b/i;
+
 export function renderNovel(content: string): string {
-  const html = content
-    // Zeilen aus dem Editor als <div>/<p>: in Umbrüche übersetzen
-    .replace(/<(div|p)>/gi, "<br>")
-    .replace(/<\/(div|p)>/gi, "");
+  const html = decodeTypedHtml(
+    content
+      // Zeilen aus dem Editor als <div>/<p>: in Umbrüche übersetzen
+      .replace(/<(div|p)>/gi, "<br>")
+      .replace(/<\/(div|p)>/gi, ""),
+  );
   const parts = html.split(PARA_BREAK); // Text, Umbrüche, Text, Umbrüche, …
   let out = "";
   let started = false; // schon ein Absatz gesetzt?
@@ -154,19 +167,31 @@ export function renderNovel(content: string): string {
       continue;
     }
     const text = part.replace(/<[^>]+>/g, "");
-    if (!text.replace(/&nbsp;/g, " ").trim() && !/<img/i.test(part)) continue;
+    if (!text.replace(/&nbsp;/g, " ").trim() && !/<img/i.test(part)) {
+      // Zeile nur aus (getippten) Tags, z. B. „<center>": die Tags übernehmen, ohne
+      // eigenen Absatz
+      const tags = part.split(/(<[^>]+>)/).filter((seg) => seg.startsWith("<"));
+      if (tags.length) {
+        out += tags.join("");
+        if (tags.some((t) => BLOCK_TAG.test(t))) afterBreak = true;
+      }
+      continue;
+    }
     if (SCENE_BREAK.test(text)) {
       out += '<span class="scene-break">&#42; &#42; &#42;</span>';
       started = afterBreak = true;
       gap = false;
       continue;
     }
-    if (afterBreak) out += part;
+    // Vor und nach Block-Tags (<center>, <div align=…>, <blockquote> …) bricht der
+    // Browser die Zeile selbst – ein zusätzlicher Umbruch wäre eine Leerzeile.
+    if (afterBreak || BLOCK_TAG.test(part.match(/^\s*(<[^>]+>)/)?.[1] ?? "")) out += part;
     else if (!started) out += part;
     else if (gap) out += `<br><br>${part}`;
     else out += `<br><span class="para-indent"></span>${part}`;
     started = true;
-    afterBreak = gap = false;
+    afterBreak = BLOCK_TAG.test(part.match(/(<[^>]+>)\s*$/)?.[1] ?? "");
+    gap = false;
   }
   return renderPost(out);
 }
