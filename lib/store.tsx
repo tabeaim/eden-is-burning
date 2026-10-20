@@ -406,6 +406,9 @@ function persist(label: string, p: unknown) {
   );
 }
 
+// So lange gilt man nach dem letzten Lebenszeichen noch als online
+const ONLINE_GRACE = 5 * 60_000;
+
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<PersistedState>(EMPTY);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
@@ -598,14 +601,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Neue/aktualisierte Posts, Szenen, Zitate und Spieler kommen per Supabase
   // Realtime herein; wer gerade online ist, läuft über einen Presence-Kanal.
   // Zusätzlich wird beim Zurückkehren in den Tab alles frisch geladen.
-  const [onlineIds, setOnlineIds] = useState<string[]>([]);
-  const [idleIds, setIdleIds] = useState<string[]>([]);
+  const [presenceIds, setPresenceIds] = useState<string[]>([]);
+  const [presenceIdleIds, setPresenceIdleIds] = useState<string[]>([]);
   const [mobileIds, setMobileIds] = useState<string[]>([]);
   const approvedId = currentPlayer?.approved ? currentPlayer.id : null;
   useEffect(() => {
     if (!approvedId) {
-      setOnlineIds([]);
-      setIdleIds([]);
+      setPresenceIds([]);
+      setPresenceIdleIds([]);
       setMobileIds([]);
       return;
     }
@@ -703,8 +706,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
     const ACTIVITY = ["pointerdown", "pointermove", "keydown", "wheel", "touchstart", "scroll"] as const;
     for (const ev of ACTIVITY) window.addEventListener(ev, onActivity, { passive: true, capture: true });
+    // Lebenszeichen: solange jemand aktiv ist, alle 2 Minuten last_seen setzen.
+    // Reißt die Live-Verbindung ab (Tab-/App-Wechsel am Handy, Ruhezustand),
+    // gilt man darüber noch ONLINE_GRACE lang als online (siehe unten).
+    let lastBeat = 0;
+    const beat = () => {
+      if (!isActive() || Date.now() - lastBeat < 2 * 60_000) return;
+      lastBeat = Date.now();
+      persist(
+        "touchPresence",
+        supabase.from("players").update({ last_seen: new Date().toISOString() }).eq("id", approvedId),
+      );
+    };
+    lastBeat = Date.now(); // beim Laden setzt die AppShell last_seen schon
     const idleTimer = window.setInterval(() => {
       if (sentActive === true && !isActive()) trackNow();
+      beat();
     }, 60_000);
     presence
       .on("presence", { event: "sync" }, () => {
@@ -713,8 +730,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           { active?: boolean; mobile?: boolean }[]
         >;
         const ids = Object.keys(st);
-        setOnlineIds(ids);
-        setIdleIds(ids.filter((id) => !st[id].some((m) => m.active)));
+        setPresenceIds(ids);
+        setPresenceIdleIds(ids.filter((id) => !st[id].some((m) => m.active)));
         setMobileIds(
           ids.filter((id) => {
             const act = st[id].filter((m) => m.active);
@@ -733,6 +750,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     let lastLoad = Date.now();
     const onVisible = () => {
       trackNow();
+      beat();
       if (document.visibilityState !== "visible") return;
       if (Date.now() - lastLoad < 30_000) return;
       lastLoad = Date.now();
@@ -2363,6 +2381,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     () => state.scenes.filter((s) => !s.draft || drafts.some((d) => d.scene_id === s.id)),
     [state.scenes, drafts],
   );
+  // Online = live im Presence-Kanal ODER in den letzten ONLINE_GRACE Minuten
+  // aktiv gewesen (last_seen). So fliegt niemand sofort raus, nur weil kurz der
+  // Tab gewechselt wurde oder die Verbindung kurz weg war.
+  const [presenceNow, setPresenceNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = window.setInterval(() => setPresenceNow(Date.now()), 30_000);
+    return () => window.clearInterval(t);
+  }, []);
+  const { onlineIds, idleIds } = useMemo(() => {
+    if (!approvedId) return { onlineIds: [] as string[], idleIds: [] as string[] };
+    const cutoff = presenceNow - ONLINE_GRACE;
+    const recent = activePlayers
+      .filter((p) => p.approved && new Date(p.last_seen).getTime() > cutoff)
+      .map((p) => p.id);
+    const ids = [...new Set([...presenceIds, ...recent])];
+    return { onlineIds: ids, idleIds: presenceIdleIds };
+  }, [approvedId, activePlayers, presenceIds, presenceIdleIds, presenceNow]);
   const value = useMemo<StoreValue>(
     () => ({
       ...state,
