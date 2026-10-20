@@ -5,6 +5,7 @@
  *   npm run import-mybb -- --dump="/pfad/zum/backup.sql" --apply    schreibt in die Datenbank
  *
  *   … --richtext [--apply]   nur das HTML der freien Profiltexte nachziehen (siehe unten)
+ *   … --scenes [--apply]     nur Szenen und Posts auf den Stand des Forums bringen (siehe syncScenes)
  *
  * Der Probelauf schreibt nichts in die Datenbank: Er zeigt Zahlen und Hinweise und
  * legt das Ergebnis zum Ansehen unter backups/import-preview_<Datum>_<Projekt>/ ab.
@@ -294,7 +295,7 @@ interface Existing {
   locations: Row[];
 }
 
-function build(dump: Record<string, DumpRow[]>, existing: Existing) {
+export function build(dump: Record<string, DumpRow[]>, existing: Existing) {
   const users = dump.users;
   const fields = new Map(dump.userfields.map((f) => [f.ufid, f]));
   const userById = new Map(users.map((u) => [u.uid, u]));
@@ -889,6 +890,148 @@ async function upsert(table: string, rows: Row[], size = 200) {
   console.log(`✓ ${table}: ${rows.length}`);
 }
 
+// --scenes: nur Szenen und Posts nachziehen, alles andere bleibt. Neue Szenen und
+// Posts kommen dazu; geänderte Felder und im Forum bearbeitete Posts werden nur
+// übernommen, wenn sie in der App seit dem letzten Abgleich niemand angefasst hat
+// (Vergleich mit dem Stand des letzten Laufs unter backups/scenes-sync_* bzw.
+// import-preview_*). Was in der App geändert wurde, geht vor.
+const SCENE_FIELDS = ["title", "location_area", "location_name", "inplay_date", "status", "summary", "au"] as const;
+
+async function lastForumState(): Promise<{ dir: string; scenes: Map<string, Row>; posts: Map<string, Row> } | null> {
+  const names = (await fs.readdir(BACKUP_ROOT).catch(() => [] as string[]))
+    .filter((n) => n.endsWith(`_${projectRef}`) && /^(scenes-sync|import-preview)_/.test(n))
+    .sort((a, b) => a.replace(/^\D+_/, "").localeCompare(b.replace(/^\D+_/, "")));
+  for (const name of names.reverse()) {
+    try {
+      const dir = path.join(BACKUP_ROOT, name);
+      const read = async (t: string) => JSON.parse(await fs.readFile(path.join(dir, `${t}.json`), "utf8")) as Row[];
+      const [scenes, posts] = await Promise.all([read("scenes"), read("posts")]);
+      return { dir: name, scenes: new Map(scenes.map((r) => [String(r.id), r])), posts: new Map(posts.map((r) => [String(r.id), r])) };
+    } catch {
+      /* unvollständiger Ordner */
+    }
+  }
+  return null;
+}
+
+async function syncScenes(out: ReturnType<typeof build>, APPLY: boolean) {
+  const [liveScenes, livePosts, liveChars] = await Promise.all([fetchAll("scenes"), fetchAll("posts"), fetchAll("characters")]);
+  const scenes = new Map(liveScenes.map((r) => [String(r.id), r]));
+  const posts = new Map(livePosts.map((r) => [String(r.id), r]));
+  const chars = new Set(liveChars.map((c) => String(c.id)));
+  const base = await lastForumState();
+  console.log(`\nNur Szenen und Posts. Letzter Forum-Stand zum Vergleich: ${base?.dir ?? "–"}`);
+  const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+
+  const newScenes: Row[] = [];
+  const scenePatches: { id: string; patch: Row; note: string }[] = [];
+  const kept: string[] = [];
+  for (const s of out.scenes) {
+    const live = scenes.get(String(s.id));
+    if (!live) {
+      newScenes.push(s);
+      continue;
+    }
+    const was = base?.scenes.get(String(s.id));
+    const patch: Row = {};
+    for (const k of SCENE_FIELDS) {
+      if (same(s[k], live[k]) || !was || same(s[k], was[k])) continue;
+      if (same(live[k], was[k])) patch[k] = s[k];
+      else kept.push(`${s.id}.${k} (App: ${JSON.stringify(live[k])}, Forum: ${JSON.stringify(s[k])})`);
+    }
+    // wer im Forum neu mitschreibt, wird Teilnehmer*in; niemand wird entfernt
+    const part = (live.participant_ids as string[] | null) ?? [];
+    const add = (s.participant_ids as string[]).filter((c) => !part.includes(c));
+    if (add.length) patch.participant_ids = [...part, ...add];
+    if (Object.keys(patch).length) scenePatches.push({ id: String(s.id), patch, note: Object.keys(patch).join(", ") });
+    // Status nur in der App geändert: zur Info, falls im Forum noch weitergeschrieben wird
+    if (!same(s.status, live.status) && same(s.status, was?.status) && out.posts.some((p) => p.scene_id === s.id && !posts.has(String(p.id)))) {
+      kept.push(`${s.id}.status (in der App „${live.status}", im Forum „${s.status}" mit neuen Posts)`);
+    }
+  }
+
+  // Posts: neue anhängen (Nummer nach dem letzten vorhandenen Post der Szene)
+  const lastNumber = new Map<string, number>();
+  for (const p of livePosts) lastNumber.set(String(p.scene_id), Math.max(lastNumber.get(String(p.scene_id)) ?? 0, Number(p.post_number)));
+  const newPosts: Row[] = [];
+  const postPatches: { id: string; content: string }[] = [];
+  for (const p of out.posts) {
+    const live = posts.get(String(p.id));
+    if (!live) {
+      const n = (lastNumber.get(String(p.scene_id)) ?? 0) + 1;
+      lastNumber.set(String(p.scene_id), n);
+      newPosts.push({ ...p, post_number: n });
+      continue;
+    }
+    const was = base?.posts.get(String(p.id));
+    if (p.content === live.content || !was || p.content === was.content) continue;
+    if (live.content === was.content) postPatches.push({ id: String(p.id), content: String(p.content) });
+    else kept.push(`${p.id} (im Forum bearbeitet, in der App auch – App-Fassung bleibt)`);
+  }
+
+  const missing = [...new Set([...newScenes.flatMap((s) => s.participant_ids as string[]), ...newPosts.map((p) => String(p.character_id)), ...scenePatches.flatMap((s) => (s.patch.participant_ids as string[] | undefined) ?? [])])].filter(
+    (c) => !chars.has(c),
+  );
+  if (missing.length) throw new Error(`Charaktere fehlen in der App: ${missing.join(", ")} – erst den vollen Import laufen lassen.`);
+
+  console.log(`\nNeue Szenen (${newScenes.length}):`);
+  for (const s of newScenes) console.log(`  + ${s.id} „${s.title}" (${s.inplay_date}, ${s.location_name || s.location_area}, ${(s.participant_ids as string[]).join(", ")})`);
+  const perScene = new Map<string, number>();
+  for (const p of newPosts) perScene.set(String(p.scene_id), (perScene.get(String(p.scene_id)) ?? 0) + 1);
+  console.log(`Neue Posts (${newPosts.length}):`);
+  for (const [id, n] of perScene) console.log(`  + ${id.padEnd(8)} ${n}  „${out.scenes.find((s) => s.id === id)?.title}"`);
+  console.log(`Geänderte Szenen (${scenePatches.length}):`);
+  for (const p of scenePatches) console.log(`  ~ ${p.id}: ${p.note}`);
+  console.log(`Im Forum bearbeitete Posts (${postPatches.length}): ${postPatches.map((p) => p.id).join(", ") || "–"}`);
+  if (kept.length) {
+    console.log(`In der App geändert, bleibt so (${kept.length}):`);
+    for (const k of kept) console.log(`  = ${k}`);
+  }
+
+  const dir = path.join(BACKUP_ROOT, `${APPLY ? "scenes-sync" : "import-preview"}_${stamp()}_${projectRef}`);
+  const save = async () => {
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(path.join(dir, "scenes.json"), JSON.stringify(out.scenes, null, 1));
+    await fs.writeFile(path.join(dir, "posts.json"), JSON.stringify(out.posts, null, 1));
+  };
+  if (!APPLY) {
+    console.log(`\nProbelauf – nichts geschrieben.`);
+    return;
+  }
+  await requireBackup();
+  const phrase = `SZENEN ${projectRef}`;
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const answer = await rl.question(`\nZum Bestätigen exakt eintippen: ${phrase}\n> `);
+  rl.close();
+  if (answer.trim() !== phrase) {
+    console.log("Nicht bestätigt – nichts geschrieben.");
+    return;
+  }
+  for (const s of newScenes) {
+    const { error } = await db.from("scenes").insert(s);
+    if (error) throw new Error(`scenes (${s.id}): ${error.message}`);
+  }
+  console.log(`✓ neue Szenen: ${newScenes.length}`);
+  for (const p of scenePatches) {
+    const { error } = await db.from("scenes").update(p.patch).eq("id", p.id);
+    if (error) throw new Error(`scenes (${p.id}): ${error.message}`);
+  }
+  console.log(`✓ geänderte Szenen: ${scenePatches.length}`);
+  for (let i = 0; i < newPosts.length; i += 100) {
+    const { error } = await db.from("posts").insert(newPosts.slice(i, i + 100));
+    if (error) throw new Error(`posts: ${error.message}`);
+  }
+  console.log(`✓ neue Posts: ${newPosts.length}`);
+  for (const p of postPatches) {
+    const { error } = await db.from("posts").update({ content: p.content }).eq("id", p.id);
+    if (error) throw new Error(`posts (${p.id}): ${error.message}`);
+  }
+  console.log(`✓ bearbeitete Posts: ${postPatches.length}`);
+  // Forum-Stand für den nächsten Abgleich festhalten
+  await save();
+  console.log(`✅ Szenen abgeglichen. Forum-Stand gespeichert: ${path.basename(dir)}`);
+}
+
 async function main() {
   const dumpFile = option("dump");
   if (!dumpFile) throw new Error('Bitte den Dump angeben: --dump="/pfad/zum/backup.sql"');
@@ -907,6 +1050,7 @@ async function main() {
     locations: await fetchAll("locations"),
   };
   const out = build(dump, existing);
+  if (flag("scenes")) return syncScenes(out, APPLY);
 
   // --- Bericht ------------------------------------------------------------------
   const tables = ["players", "characters", "locations", "scenes", "posts", "quotes", "chats", "chat_scenes", "chat_messages", "calls", "captic_posts", "captic_comments", "captic_highlights"] as const;
@@ -1100,7 +1244,9 @@ async function main() {
   console.log("✅ Import fertig. Als Nächstes: npm run migrate-images");
 }
 
-main().catch((e) => {
-  console.error("❌", e instanceof Error ? e.message : e);
-  process.exit(1);
-});
+if (process.argv[1]?.endsWith("import-mybb.ts")) {
+  main().catch((e) => {
+    console.error("❌", e instanceof Error ? e.message : e);
+    process.exit(1);
+  });
+}
