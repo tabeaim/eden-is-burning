@@ -8,18 +8,6 @@ type Mode = "signin" | "signup";
 // Username: kein @ (sonst nicht von einer E-Mail zu unterscheiden), keine Leerzeichen
 const USERNAME_OK = /^[\p{L}\p{N}._-]{1,24}$/u;
 
-// Vorübergehender Testzugang: bestehende Spieler*innen können ohne Registrierung
-// per Klick rein (alle mit demselben Test-Passwort). Später entfernen.
-const TEST_PASSWORD = "Eden1234!";
-const TEST_PLAYERS: { label: string; email: string }[] = [
-  { label: "tabs", email: "tabeaim@gmail.com" },
-  { label: "V", email: "vera@example.com" },
-  { label: "envy", email: "liz@example.com" },
-  { label: "abby", email: "abby@example.com" },
-  { label: "jule", email: "jule@example.com" },
-  { label: "kat", email: "kat@example.com" },
-];
-
 export function LoginScreen() {
   const { signIn, signUp, signOut, configured, loginProblem } = useStore();
   const [mode, setMode] = useState<Mode>("signin");
@@ -68,20 +56,6 @@ export function LoginScreen() {
       }
     } catch (e) {
       // z. B. Datenbank nicht erreichbar oder falsch konfiguriert
-      setError(`Anmeldung fehlgeschlagen: ${e instanceof Error ? e.message : String(e)}`);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function quickLogin(email: string) {
-    setError(null);
-    setNotice(null);
-    setBusy(true);
-    try {
-      const { error } = await signIn(email, TEST_PASSWORD);
-      if (error) setError(uebersetze(error));
-    } catch (e) {
       setError(`Anmeldung fehlgeschlagen: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setBusy(false);
@@ -195,27 +169,6 @@ export function LoginScreen() {
                 : "Registrieren"}
           </button>
         </form>
-
-        {mode === "signin" && (
-          <div className="mt-5">
-            <div className="text-[0.875rem] uppercase tracking-[0.16em] text-text-tertiary mb-2 text-center">
-              Test-Zugang
-            </div>
-            <div className="flex flex-wrap justify-center gap-2">
-              {TEST_PLAYERS.map((p) => (
-                <button
-                  key={p.email}
-                  type="button"
-                  disabled={busy}
-                  onClick={() => quickLogin(p.email)}
-                  className="bg-bg-surface hover:bg-white/[0.06] border border-border-subtle rounded-lg px-3 py-1.5 text-[0.8125rem] text-text-primary transition-colors disabled:opacity-50"
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         <p className="text-[0.75rem] text-text-tertiary text-center mt-4 leading-relaxed">
           {mode === "signin"
