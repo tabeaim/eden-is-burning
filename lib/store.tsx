@@ -34,7 +34,7 @@ import type {
 import { withinHours } from "./format";
 import { setDefaultAvatars } from "./avatar";
 import { setAreaTexts } from "./world";
-import { supabase, supabaseConfigured } from "./supabase";
+import { openedFromRecoveryLink, supabase, supabaseConfigured } from "./supabase";
 import { rememberPhone } from "./phone";
 import { mentionedIds, postNotices, replaceHandle, requestId } from "./captic";
 import { orderMessages, smsAsScene, type DatedMessage } from "./chats";
@@ -87,6 +87,11 @@ interface StoreValue extends PersistedState {
   // Konto: neues Passwort bzw. neue E-Mail-Adresse für die Anmeldung
   changePassword: (password: string) => Promise<{ error: string | null }>;
   changeEmail: (email: string) => Promise<{ error: string | null }>;
+  // Passwort vergessen: Link per Mail anfordern (Username oder E-Mail) …
+  requestPasswordReset: (identifier: string) => Promise<{ error: string | null }>;
+  // … und nach dem Klick auf den Link ein neues Passwort setzen
+  passwordRecovery: boolean;
+  endPasswordRecovery: () => void;
   logout: () => Promise<void>; // Alias für signOut (bestehende Aufrufe)
   refresh: () => Promise<void>;
   // selectors
@@ -405,6 +410,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<PersistedState>(EMPTY);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [ready, setReady] = useState(false);
+  const [passwordRecovery, setPasswordRecovery] = useState(openedFromRecoveryLink);
   const [appSettings, setAppSettings] = useState<AppSettings>({});
   // Standard-Avatare gelten überall, wo `characterImage`/`playerImage` rechnen
   setDefaultAvatars(appSettings.defaultAvatars);
@@ -581,7 +587,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       void loadForSession(session);
     };
     supabase.auth.getSession().then(({ data }) => onSession(data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => onSession(session));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
+      onSession(session);
+    });
     return () => sub.subscription.unsubscribe();
   }, [loadForSession]);
 
@@ -910,6 +919,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.updateUser({ email: email.trim() });
     return { error: error?.message ?? null };
   }, []);
+
+  const requestPasswordReset = useCallback(async (identifier: string) => {
+    const id = identifier.trim();
+    let email = id;
+    const { data } = await supabase.rpc("email_for_login", { identifier: id });
+    if (typeof data === "string" && data) email = data;
+    if (!email.includes("@")) return { error: "unknown user" };
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    return { error: error?.message ?? null };
+  }, []);
+
+  const endPasswordRecovery = useCallback(() => setPasswordRecovery(false), []);
 
   const refresh = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
@@ -2366,6 +2389,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       logout: signOut,
       changePassword,
       changeEmail,
+      requestPasswordReset,
+      passwordRecovery,
+      endPasswordRecovery,
       refresh,
       appSettings,
       deletePlayer,
@@ -2485,6 +2511,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       signOut,
       changePassword,
       changeEmail,
+      requestPasswordReset,
+      passwordRecovery,
+      endPasswordRecovery,
       refresh,
       appSettings,
       deletePlayer,

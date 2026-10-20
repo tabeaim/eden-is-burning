@@ -16,6 +16,11 @@ if (!url || !anonKey) {
   );
 }
 
+// Kommt man über den Link aus der „Passwort vergessen"-Mail, steht type=recovery
+// im Adress-Hash. Supabase räumt den Hash beim Start weg, darum hier vorher merken.
+export const openedFromRecoveryLink =
+  typeof window !== "undefined" && /(^|[#&])type=recovery(&|$)/.test(window.location.hash);
+
 export const supabase = createClient(url ?? "", anonKey ?? "", {
   auth: {
     persistSession: true,

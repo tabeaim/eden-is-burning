@@ -12,6 +12,7 @@ import { PageMetaProvider, usePageMeta } from "@/lib/page-meta";
 import { Icon, type IconName } from "./Icon";
 import { LoginScreen } from "./LoginScreen";
 import { PendingScreen } from "./PendingScreen";
+import { NewPasswordScreen } from "./NewPasswordScreen";
 import { defaultHeader } from "@/lib/headers";
 import { useTheme } from "@/lib/theme";
 import { GONE_CLASS, PAUSED_CLASS } from "@/lib/gone";
@@ -32,7 +33,7 @@ const NAV: { href: string; label: string; icon: IconName; title?: string }[] = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { ready, currentPlayer, isApproved, touchPresence, saveError, clearSaveError, refresh } =
+  const { ready, currentPlayer, isApproved, touchPresence, saveError, clearSaveError, refresh, passwordRecovery } =
     useStore();
   const pathname = usePathname();
   // Schmale Fenster (unter `lg`, also auch ein halbes Bildschirmfenster): Navigation
@@ -69,7 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Der Messenger füllt den Bildschirm wie ein Handy: kein Banner, keine Kopfleiste.
   const bare = pathname === "/handy" || pathname.startsWith("/handy/");
   // Titel im Browser-Tab vor der Anmeldung (danach übernimmt `TabTitle`)
-  const gate = !ready ? null : !currentPlayer ? "Anmelden" : !isApproved ? "Warten auf Freischaltung" : null;
+  const gate = !ready ? null : passwordRecovery ? "Neues Passwort" : !currentPlayer ? "Anmelden" : !isApproved ? "Warten auf Freischaltung" : null;
   useEffect(() => {
     if (gate) document.title = `${gate} – ${SITE_TITLE}`;
   }, [gate]);
@@ -80,6 +81,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         …
       </div>
     );
+  }
+
+  // Über den Link aus der „Passwort vergessen"-Mail gekommen
+  if (passwordRecovery) {
+    return <NewPasswordScreen />;
   }
 
   if (!currentPlayer) {

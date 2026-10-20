@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 
-type Mode = "signin" | "signup";
+type Mode = "signin" | "signup" | "reset";
 
 // Username: kein @ (sonst nicht von einer E-Mail zu unterscheiden), keine Leerzeichen
 const USERNAME_OK = /^[\p{L}\p{N}._-]{1,24}$/u;
 
 export function LoginScreen() {
-  const { signIn, signUp, signOut, configured, loginProblem } = useStore();
+  const { signIn, signUp, signOut, requestPasswordReset, configured, loginProblem } = useStore();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -24,6 +24,26 @@ export function LoginScreen() {
     setNotice(null);
     if (!configured) {
       setError("Backend nicht konfiguriert (.env.local fehlt).");
+      return;
+    }
+    if (mode === "reset") {
+      if (!email.trim()) {
+        setError("Bitte Username oder E-Mail eingeben.");
+        return;
+      }
+      setBusy(true);
+      try {
+        const { error } = await requestPasswordReset(email);
+        if (error) setError(uebersetze(error));
+        else
+          setNotice(
+            "Falls es dazu ein Konto gibt, ist eine Mail mit einem Link unterwegs. Darüber setzt du ein neues Passwort.",
+          );
+      } catch (e) {
+        setError(`Anfrage fehlgeschlagen: ${e instanceof Error ? e.message : String(e)}`);
+      } finally {
+        setBusy(false);
+      }
       return;
     }
     if (!email.trim() || !password) {
@@ -90,9 +110,7 @@ export function LoginScreen() {
                 setNotice(null);
               }}
               className={`flex-1 rounded-md py-1.5 text-[0.8125rem] transition-colors ${
-                mode === m
-                  ? "bg-white/[0.06] text-text-primary"
-                  : "text-text-secondary hover:text-text-primary"
+                mode === m ? "bg-white/[0.06] text-text-primary" : "text-text-secondary hover:text-text-primary"
               }`}
             >
               {m === "signin" ? "Anmelden" : "Registrieren"}
@@ -128,22 +146,35 @@ export function LoginScreen() {
                 maxLength={24}
                 className="mt-1 w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
               />
-              <span className="mt-1 block text-[0.75rem] text-text-tertiary">
-                Damit meldest du dich später an.
-              </span>
+              <span className="mt-1 block text-[0.75rem] text-text-tertiary">Damit meldest du dich später an.</span>
             </label>
           )}
-          <label className="text-[0.875rem] text-text-secondary">
-            Passwort
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={mode === "signup" ? "mind. 6 Zeichen" : "••••••••"}
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
-              className="mt-1 w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
-            />
-          </label>
+          {mode !== "reset" && (
+            <label className="text-[0.875rem] text-text-secondary">
+              Passwort
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === "signup" ? "mind. 6 Zeichen" : "••••••••"}
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                className="mt-1 w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+              />
+              {mode === "signin" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("reset");
+                    setError(null);
+                    setNotice(null);
+                  }}
+                  className="mt-1 block text-[0.75rem] text-text-tertiary hover:text-text-primary transition-colors"
+                >
+                  Passwort vergessen?
+                </button>
+              )}
+            </label>
+          )}
 
           {error && <p className="text-[0.875rem] text-red-400/80">{error}</p>}
           {/* Anmeldung hat geklappt, aber es fehlt der Spieler-Eintrag */}
@@ -166,14 +197,30 @@ export function LoginScreen() {
               ? "…"
               : mode === "signin"
                 ? "Anmelden"
-                : "Registrieren"}
+                : mode === "signup"
+                  ? "Registrieren"
+                  : "Link zum Zurücksetzen schicken"}
           </button>
         </form>
 
         <p className="text-[0.75rem] text-text-tertiary text-center mt-4 leading-relaxed">
-          {mode === "signin"
-            ? "Neu hier? Wechsle oben zu Registrieren – ein Admin schaltet dich frei."
-            : "Nach der Registrierung wirst du von einem Admin freigeschaltet und meldest dich dann mit Username und Passwort an."}
+          {mode === "reset" ? (
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signin");
+                setError(null);
+                setNotice(null);
+              }}
+              className="underline hover:text-text-primary"
+            >
+              Zurück zur Anmeldung
+            </button>
+          ) : mode === "signin" ? (
+            "Neu hier? Wechsle oben zu Registrieren – ein Admin schaltet dich frei."
+          ) : (
+            "Nach der Registrierung wirst du von einem Admin freigeschaltet und meldest dich dann mit Username und Passwort an."
+          )}
         </p>
       </div>
     </div>
@@ -181,14 +228,18 @@ export function LoginScreen() {
 }
 
 // Häufige Supabase-Fehlermeldungen ins Deutsche übersetzen
-function uebersetze(msg: string): string {
+export function uebersetze(msg: string): string {
   const m = msg.toLowerCase();
   if (m.includes("invalid login")) return "Username oder Passwort stimmt nicht.";
   if (m.includes("username taken")) return "Dieser Username ist schon vergeben.";
   if (m.includes("already registered") || m.includes("already been registered"))
     return "Diese E-Mail ist bereits registriert. Melde dich an.";
+  if (m.includes("unknown user")) return "Zu diesem Username gibt es kein Konto.";
+  if (m.includes("rate limit") || m.includes("security purposes"))
+    return "Gerade wurden zu viele Mails verschickt. Bitte versuch es in ein paar Minuten noch einmal.";
+  if (m.includes("same password") || m.includes("different from the old"))
+    return "Das neue Passwort muss sich vom alten unterscheiden.";
   if (m.includes("password should be")) return "Passwort zu kurz (mind. 6 Zeichen).";
-  if (m.includes("email") && m.includes("confirm"))
-    return "Bitte bestätige zuerst deine E-Mail.";
+  if (m.includes("email") && m.includes("confirm")) return "Bitte bestätige zuerst deine E-Mail.";
   return msg;
 }
