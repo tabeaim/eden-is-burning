@@ -395,13 +395,15 @@ export default function ScenesPage() {
         )}
         {/* Geöffneter Plot: umbenennen / löschen (wie in der Timeline) */}
         {plot && canEditPlot(plot) && (
-          <PlotTools key={plot.id} plot={plot} onDeleted={() => togglePlot(plot)} />
+          <div className="ml-auto mr-2 flex flex-wrap items-center gap-1.5">
+            <PlotTools key={plot.id} plot={plot} onDeleted={() => togglePlot(plot)} />
+          </div>
         )}
         <select
           value={sortKey}
           onChange={(e) => setSortKey(e.target.value as SortKey)}
           aria-label="Sortieren nach"
-          className="ml-auto bg-bg-primary border border-border-subtle rounded-md px-2.5 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+          className={`${plot && canEditPlot(plot) ? "" : "ml-auto "}bg-bg-primary border border-border-subtle rounded-md px-2.5 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20`}
         >
           {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
             <option key={k} value={k} className="bg-bg-surface">

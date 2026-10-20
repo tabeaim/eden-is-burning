@@ -70,10 +70,10 @@ export function ChatRow({
           className={`flex h-[38px] w-[38px] shrink-0 items-center justify-center ${
             isChatFresh(chat.id, scene === undefined ? undefined : (scene?.id ?? null))
               ? "text-accent"
-              : "text-text-tertiary opacity-60"
+              : "text-text-tertiary"
           }`}
         >
-          <Icon name="phone" size={26} />
+          <Icon name="message" size={26} />
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="font-serif text-[1rem] leading-tight text-text-primary">
@@ -156,10 +156,10 @@ export function ChatRow({
         className={`flex h-6 w-6 shrink-0 items-center justify-center ${
           isChatFresh(chat.id, scene === undefined ? undefined : (scene?.id ?? null))
             ? "text-accent"
-            : "text-text-tertiary opacity-60"
+            : "text-text-tertiary"
         }`}
       >
-        <Icon name="phone" size={20} />
+        <Icon name="message" size={20} />
       </span>
       <div className="min-w-0 flex-1">
         <div className="font-serif text-[0.875rem] leading-snug text-text-primary">

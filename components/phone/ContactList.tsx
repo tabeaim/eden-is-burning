@@ -148,7 +148,7 @@ export function ContactList({
             className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left active:bg-white/[0.06]"
           >
             {body}
-            <Icon name="phone" size={18} className="shrink-0 text-accent" />
+            <Icon name="call" size={17} className="shrink-0 text-accent" />
           </button>
         ) : (
           <div className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2">{body}</div>

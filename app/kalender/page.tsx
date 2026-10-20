@@ -68,6 +68,9 @@ export default function TimelinePage() {
   const [yearSel, setYearSel] = useSessionState<string[]>("timeline:yearsel", []); // leer = alle Jahre
   const [plotId, setPlotId] = useSessionState<string | null>("timeline:plotid", null);
   const [addingOff, setAddingOff] = useState(false);
+  // Von Hand hinzugefügte Szenen bleiben sichtbar, auch wenn die gerade gewählten
+  // Filter (Charakter, AU, Gegend, Jahr, Art) sie sonst ausblenden würden
+  const [justAdded, setJustAdded] = useState<{ plot: string; ids: string[] }>({ plot: "", ids: [] });
 
   const plot = plots.find((p) => p.id === plotId) ?? null;
   const editable = plot ? canEditPlot(plot) : false;
@@ -92,13 +95,14 @@ export default function TimelinePage() {
 
   // Sichtbare Szenen: der offene Plot bringt seine eigenen Filter mit; was
   // darüber hinaus gewählt ist, grenzt seine Szenen weiter ein
+  const added = new Set(plot && justAdded.plot === plot.id ? justAdded.ids : []);
   const shownScenes = (
     plot
-      ? plotScenes(plot, scenes, plotFilters(plot), character).filter((s) =>
-          narrowsTo(s, filters, character),
+      ? plotScenes(plot, scenes, plotFilters(plot), character).filter(
+          (s) => added.has(s.id) || narrowsTo(s, filters, character),
         )
       : scenes.filter((s) => matchesFilters(s, filters, character))
-  ).filter((s) => kinds.length === 0 || kinds.includes(sceneKind(s)));
+  ).filter((s) => added.has(s.id) || kinds.length === 0 || kinds.includes(sceneKind(s)));
 
   const myId = currentPlayer?.id ?? "";
   const myPlots = visiblePlots(
@@ -120,7 +124,11 @@ export default function TimelinePage() {
   const activeYears = yearSel.filter((y) => years.includes(y));
   const entries =
     activeYears.length > 0
-      ? allEntries.filter((e) => activeYears.includes(e.date.slice(0, 4)))
+      ? allEntries.filter(
+          (e) =>
+            activeYears.includes(e.date.slice(0, 4)) ||
+            (e.kind === "scene" && added.has(e.scene.id)),
+        )
       : allEntries;
 
   // nach Monat gruppieren (neueste zuerst)
@@ -173,6 +181,10 @@ export default function TimelinePage() {
       include_ids: [...plot.include_ids.filter((x) => x !== id), id],
       exclude_ids: plot.exclude_ids.filter((x) => x !== id),
     });
+    setJustAdded((prev) => ({
+      plot: plot.id,
+      ids: [...(prev.plot === plot.id ? prev.ids : []), id],
+    }));
   }
 
   return (
