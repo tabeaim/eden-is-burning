@@ -45,6 +45,7 @@ import {
   SectionHeading,
 } from "@/components/ProfileSections";
 import type { Character, RelationCategory, Scene } from "@/lib/types";
+import { applyVersion } from "@/lib/versions";
 
 // oben neben dem Avatar …
 type TopTab = "general" | "inplay" | "relations";
@@ -86,6 +87,18 @@ export default function CharacterPage({
     canEditCharacter,
   } = store;
   const c = character(id);
+  // Version (AU oder Szene), die gerade gezeigt wird – aus `?version=au:<Name>`
+  // bzw. `scene:<ID>` (Links aus Szenen) oder über die Pills oben
+  const [versionRef, setVersionRef] = useState<string | null>(null);
+  useEffect(() => {
+    const v = new URLSearchParams(window.location.search).get("version");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (v) setVersionRef(v);
+  }, []);
+  const versionList = c ? listVersions(c, scenes) : [];
+  const activeVersion = versionList.find((v) => v.ref === versionRef) ?? null;
+  // nur zur Anzeige (General-Reiter, Titel) – bearbeitet wird immer das normale Profil
+  const cv = c && activeVersion ? applyVersion(c, activeVersion.version, activeVersion.label, activeVersion.ref) : c;
   const [topTabState, setTopTab] = useState<TopTab>("general");
   const [tabState, setTab] = useState<Tab>("character");
 
@@ -94,7 +107,7 @@ export default function CharacterPage({
 
   // Charaktername als Unterseiten-Titel in den Banner-Header heben
   useSetPageMeta(
-    c ? c.name : "Charakter",
+    cv ? cv.name : "Charakter",
     undefined,
     // eigenes Header-Bild des Charakters (sonst das der Seite); Statist*innen
     // haben keins (auch nicht als frühere Supporting Characters)
@@ -126,6 +139,8 @@ export default function CharacterPage({
   if (tierOf(c) === "extra") {
     return <NpcFacts c={c} />;
   }
+  // angezeigte Fassung: gewählte Version oder das normale Profil
+  const view = cv ?? c;
 
   // Wer den Charakter spielt: Ersteller*in plus alle Zugeordneten (Supporting
   // Characters und zeitweise bespielte Statist*innen können mehrere haben)
@@ -192,6 +207,25 @@ export default function CharacterPage({
           </div>
         )}
         <QuoteBlock c={c} />
+        {/* Versionen: normales Profil oder wie der Charakter in einem AU / einer Szene auftritt */}
+        {versionList.length > 0 && !editing && (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">Version</span>
+            {[{ ref: null as string | null, label: "Profil" }, ...versionList].map((v) => (
+              <button
+                key={v.ref ?? "base"}
+                onClick={() => {
+                  setVersionRef(v.ref);
+                  const url = v.ref ? `?version=${encodeURIComponent(v.ref)}` : window.location.pathname;
+                  window.history.replaceState(window.history.state, "", url);
+                }}
+                className={`max-w-[18rem] truncate ${tabBtn((activeVersion?.ref ?? null) === v.ref)}`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       {editing && (
         <div className="mt-4">
@@ -216,16 +250,25 @@ export default function CharacterPage({
         <div className={SPLIT}>
           {/* Kurzbeschreibung, darüber „meet <Vorname>." */}
           <section>
-            <SectionHeading>meet {c.name.split(" ")[0]}.</SectionHeading>
-            {c.bio ? (
-              <RichText html={c.bio} className="text-[0.875rem] leading-relaxed text-text-secondary" />
+            <SectionHeading>meet {view.name.split(" ")[0]}.</SectionHeading>
+            {/* in einer Version: deren Bild über der Beschreibung */}
+            {activeVersion?.version.image && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={activeVersion.version.image}
+                alt={view.name}
+                className="mb-4 aspect-[600/502] w-full max-w-[280px] rounded-lg border border-border-subtle object-cover"
+              />
+            )}
+            {view.bio ? (
+              <RichText html={view.bio} className="text-[0.875rem] leading-relaxed text-text-secondary" />
             ) : (
               <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
             )}
           </section>
           {/* Facts (Looks stehen im Reiter „Looks") */}
           <div className={BOXES}>
-            <ProfileFacts c={c} />
+            <ProfileFacts c={view} />
           </div>
         </div>
       )}
@@ -800,4 +843,18 @@ function RelationRow({
       </div>
     </div>
   );
+}
+
+// Alle Versionen eines Charakters für die Pills im Profil: AUs alphabetisch, dann
+// die Szenen-Versionen (mit Szenentitel)
+function listVersions(c: Character, scenes: Scene[]) {
+  const vs = c.profile?.versions;
+  const au = Object.entries(vs?.au ?? {})
+    .sort(([a], [b]) => a.localeCompare(b, "de"))
+    .map(([name, version]) => ({ ref: `au:${name}`, label: `AU · ${name}`, version }));
+  const scene = Object.entries(vs?.scene ?? {}).map(([id, version]) => {
+    const s = scenes.find((x) => x.id === id);
+    return { ref: `scene:${id}`, label: s ? `Szene · ${s.title}` : "Szene", version };
+  });
+  return [...au, ...scene];
 }

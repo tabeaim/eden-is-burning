@@ -5,6 +5,7 @@ import { PHONE_AREA } from "@/lib/phone";
 import Link from "next/link";
 import { useContextMenu } from "./ContextMenu";
 import { characterImage } from "@/lib/avatar";
+import { useCharacterIn } from "@/lib/use-versions";
 import { joinNamesAnd } from "@/lib/format";
 import { useStore, whoseTurn } from "@/lib/store";
 import {
@@ -169,7 +170,7 @@ export function SceneCard({
   // Vornamen, ohne Bubbles und ohne die Zeile zum letzten Post
   compact?: boolean;
 }) {
-  const { character } = useStore();
+  const character = useCharacterIn(scene);
   const participants = scene.participant_ids
     .map((id) => character(id))
     .filter(Boolean) as Character[];
@@ -314,7 +315,7 @@ export function SceneCard({
 // (numerisch); rechts wer zuletzt gepostet hat und wann (Klick springt zum
 // neuesten Post).
 export function SceneRow({ scene }: { scene: Scene }) {
-  const { character } = useStore();
+  const character = useCharacterIn(scene);
   const { last: lastPost, lastHref } = useLastEntry(scene);
   const lastChar = lastPost ? character(lastPost.character_id) : undefined;
   const { onContextMenu, menu } = useSceneMenu(scene);

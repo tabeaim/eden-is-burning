@@ -2,6 +2,7 @@
 
 import { capFirst } from "@/lib/format";
 import { characterImage } from "@/lib/avatar";
+import { characterHref } from "@/lib/versions";
 import Link from "next/link";
 import { createContext } from "react";
 import { RichText } from "./RichText";
@@ -33,7 +34,7 @@ export function SceneCharacterCard({
   const age = ageAt(character, at);
   const gone = useCharacterGone(character);
   const paused = isPaused(character);
-  const href = `/charaktere/${character.id}`;
+  const href = characterHref(character);
   const byPlayer = player && (
     <>
       by{" "}
@@ -145,6 +146,13 @@ export function SceneCharacterCard({
 
         {/* by player */}
         {player && <div className="mt-1.5 text-center font-display text-[1rem] text-text-tertiary">{byPlayer}</div>}
+
+        {/* andere Version (AU oder nur diese Szene) */}
+        {character.version_label && (
+          <div className="mt-1 text-center text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
+            Version · {character.version_label}
+          </div>
+        )}
       </div>
     </>
   );

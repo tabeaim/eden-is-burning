@@ -97,6 +97,10 @@ export interface Character {
   purged_at?: string | null;
   // Look des Handys im Messenger (Modell, Abnutzung, Hintergrund, Apps)
   phone?: PhoneSettings | null;
+  // nur zur Anzeige, nie gespeichert: der Charakter tritt hier in einer anderen
+  // Version auf (AU oder Szene, siehe lib/versions.ts)
+  version_label?: string;
+  version_ref?: string;
 }
 
 export interface FamilyMember {
@@ -193,9 +197,24 @@ export interface CharacterProfile {
   // Eltern des Charakters selbst (ids von Stammbaum-Einträgen); bei den Einträgen
   // steht dasselbe als `parent_ids`
   family_parents?: string[];
+  // Versionen für AUs (Schlüssel: AU-Name) und einzelne Szenen (Schlüssel: Szenen-ID)
+  versions?: { au?: Record<string, CharacterVersion>; scene?: Record<string, CharacterVersion> } | null;
 }
 
 // Alle Felder optional – Fehlendes füllt `resolvePhone` (lib/phone.ts) mit Standards.
+// Abweichende Angaben eines Charakters in einem AU oder einer Szene (lib/versions.ts)
+export interface CharacterVersion {
+  image?: string | null;
+  name?: string | null;
+  age?: number | null;
+  role?: string | null;
+  tagline?: string | null;
+  job?: string | null;
+  bio?: string | null;
+  scene_gif_url?: string | null;
+  signature_url?: string | null;
+}
+
 export interface PhoneSettings {
   disabled?: boolean; // der Charakter hat kein Handy
   avatar?: string | null; // eigenes Profilbild im Messenger (sonst das Charakterbild)

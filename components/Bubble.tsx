@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Character } from "@/lib/types";
 import { Icon, type IconName } from "./Icon";
 import { characterImage } from "@/lib/avatar";
+import { characterHref } from "@/lib/versions";
 import { isPaused, tierLabel } from "@/lib/characters";
 import { categoryIcon, categoryOf } from "@/lib/places";
 import { GONE_CLASS, PAUSED_CLASS, useCharacterGone } from "@/lib/gone";
@@ -83,9 +84,17 @@ export function CharacterBubble({
   const paused = isPaused(c);
   return (
     <Bubble
-      href={linked ? `/charaktere/${c.id}` : undefined}
+      href={linked ? characterHref(c) : undefined}
       tone={tone}
-      title={gone ? `${c.name} (gelöscht)` : paused ? `${c.name} (pausiert)` : c.name}
+      title={
+        gone
+          ? `${c.name} (gelöscht)`
+          : paused
+            ? `${c.name} (pausiert)`
+            : c.version_label
+              ? `${c.name} (${c.version_label})`
+              : c.name
+      }
       className={className}
       leading={
         c.faceclaim_image_url || c.is_npc ? (

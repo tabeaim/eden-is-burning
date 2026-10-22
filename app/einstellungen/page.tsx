@@ -38,6 +38,7 @@ import {
   readCustomPing,
 } from "@/components/AlertPing";
 import { AdminPanel } from "@/components/admin/AdminPanel";
+import { CharacterVersions } from "@/components/VersionEditor";
 import type { Character } from "@/lib/types";
 
 type SettingsTab = "profile" | "characters" | "appearance" | "notifications" | "admin";
@@ -738,6 +739,9 @@ function CharacterEditor({ character }: { character: Character }) {
               </Collapsible>
             </div>
           )}
+          <Collapsible title="Versionen (AU & Szenen)">
+            <CharacterVersions character={character} />
+          </Collapsible>
           {tierOf(character) === "main" && (
             <Collapsible title="Pausieren">
               <Toggle
