@@ -24,11 +24,23 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MultiSelect } from "@/components/MultiSelect";
 import { Icon } from "@/components/Icon";
 import { useTheme } from "@/lib/theme";
-import { PING_KEY, pingEnabled, playPing } from "@/components/AlertPing";
+import {
+  MAX_CUSTOM_PING_SECONDS,
+  PING_CUSTOM_KEY,
+  PING_CUSTOM_NAME_KEY,
+  PING_KEY,
+  PING_SOUNDS,
+  PING_SOUND_KEY,
+  type PingSound,
+  pingEnabled,
+  pingSound,
+  playPing,
+  readCustomPing,
+} from "@/components/AlertPing";
 import { AdminPanel } from "@/components/admin/AdminPanel";
 import type { Character } from "@/lib/types";
 
-type SettingsTab = "profile" | "characters" | "appearance" | "admin";
+type SettingsTab = "profile" | "characters" | "appearance" | "notifications" | "admin";
 
 export default function SettingsPage() {
   const { currentPlayer, isAdmin } = useStore();
@@ -45,6 +57,7 @@ export default function SettingsPage() {
   const tabs: [SettingsTab, string][] = [
     ["characters", "Meine Charaktere"],
     ["appearance", "Darstellung"],
+    ["notifications", "Benachrichtigungen"],
     ["profile", "Meine Daten"],
   ];
   if (isAdmin) tabs.push(["admin", "Admin"]);
@@ -76,6 +89,7 @@ export default function SettingsPage() {
       {tab === "profile" && <ProfileTab />}
       {tab === "characters" && <CharactersTab />}
       {tab === "appearance" && <AppearanceTab />}
+      {tab === "notifications" && <NotificationsTab />}
       {tab === "admin" && isAdmin && <AdminPanel />}
       </div>
     </div>
@@ -335,11 +349,6 @@ function ProfileTab() {
 function AppearanceTab() {
   const { currentPlayer, updatePlayer, appSettings } = useStore();
   const { theme, chosen, setTheme } = useTheme();
-  const [ping, setPing] = useState(true);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPing(pingEnabled());
-  }, []);
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   // Entwurf, solange der Ausschnitt-Regler bewegt wird (gespeichert beim Loslassen)
@@ -444,27 +453,153 @@ function AppearanceTab() {
         </div>
       </div>
 
-      {/* Ton bei Neuem – gilt nur auf diesem Gerät */}
-      <div>
-        <Toggle
-          checked={ping}
-          onChange={(on) => {
-            setPing(on);
-            try {
-              localStorage.setItem(PING_KEY, on ? "1" : "0");
-            } catch {
-              /* ignore */
-            }
-            if (on) playPing();
-          }}
-        >
-          Ton bei Neuem{" "}
-          <span className="text-text-tertiary">
-            (neuer Post in deinen Szenen, Nachricht, Anruf, Mailbox, Captic – solange Eden in einem Tab offen
-            ist; gilt nur auf diesem Gerät)
-          </span>
-        </Toggle>
+    </div>
+  );
+}
+
+// Benachrichtigungen: Ton bei Neuem an/aus, Ton wählen oder eigenen hochladen.
+// Alles gilt nur auf diesem Gerät (liegt im Browser).
+function NotificationsTab() {
+  const [ping, setPing] = useState(true);
+  const [sound, setSound] = useState<PingSound>("chime");
+  const [customName, setCustomName] = useState<string | null>(null);
+  const [hasCustom, setHasCustom] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setPing(pingEnabled());
+    setSound(pingSound());
+    try {
+      setHasCustom(!!localStorage.getItem(PING_CUSTOM_KEY));
+      setCustomName(localStorage.getItem(PING_CUSTOM_NAME_KEY));
+    } catch {
+      /* ignore */
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+
+  function store(key: string, value: string | null) {
+    try {
+      if (value === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function choose(next: PingSound) {
+    setSound(next);
+    store(PING_SOUND_KEY, next);
+    playPing(next);
+  }
+
+  async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setError(null);
+    setBusy(true);
+    try {
+      const url = await readCustomPing(file);
+      if (!store(PING_CUSTOM_KEY, url)) throw new Error("Der Browser hat keinen Platz für diese Datei.");
+      store(PING_CUSTOM_NAME_KEY, file.name);
+      setHasCustom(true);
+      setCustomName(file.name);
+      choose("custom");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload fehlgeschlagen.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function removeCustom() {
+    store(PING_CUSTOM_KEY, null);
+    store(PING_CUSTOM_NAME_KEY, null);
+    setHasCustom(false);
+    setCustomName(null);
+    if (sound === "custom") {
+      setSound("chime");
+      store(PING_SOUND_KEY, "chime");
+    }
+  }
+
+  const pill = (active: boolean) =>
+    `rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
+      active ? "bg-accent text-black font-medium" : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
+    }`;
+
+  return (
+    <div className="flex flex-col gap-8">
+      {/* Ton an/aus */}
+      <Toggle
+        checked={ping}
+        onChange={(on) => {
+          setPing(on);
+          store(PING_KEY, on ? "1" : "0");
+          if (on) playPing();
+        }}
+      >
+        Ton bei Neuem{" "}
+        <span className="text-text-tertiary">
+          (neuer Post in deinen Szenen, Nachricht, Anruf, Mailbox, Captic – solange Eden in einem Tab offen ist)
+        </span>
+      </Toggle>
+
+      {/* Tonauswahl */}
+      <div className={ping ? "" : "opacity-50"}>
+        <div className="text-[0.875rem] text-text-secondary mb-2">Ton</div>
+        <div className="flex flex-wrap items-center gap-2">
+          {(Object.keys(PING_SOUNDS) as (keyof typeof PING_SOUNDS)[]).map((key) => (
+            <button key={key} onClick={() => choose(key)} aria-pressed={sound === key} className={pill(sound === key)}>
+              {PING_SOUNDS[key].label}
+            </button>
+          ))}
+          {hasCustom && (
+            <button
+              onClick={() => choose("custom")}
+              aria-pressed={sound === "custom"}
+              className={`${pill(sound === "custom")} max-w-[16rem] truncate`}
+              title={customName ?? undefined}
+            >
+              Eigener Ton{customName ? `: ${customName}` : ""}
+            </button>
+          )}
+        </div>
+        <p className="mt-1.5 text-[0.8125rem] text-text-tertiary">Antippen spielt den Ton zur Probe ab.</p>
       </div>
+
+      {/* Eigener Ton */}
+      <div>
+        <div className="text-[0.875rem] text-text-secondary mb-2">Eigener Ton</div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.04] hover:bg-white/[0.08] border border-border-subtle px-3 py-1.5 text-[0.8125rem] text-text-primary disabled:opacity-50"
+          >
+            <Icon name="upload" size={14} /> {busy ? "Prüft…" : hasCustom ? "Anderen Ton hochladen" : "Ton hochladen"}
+          </button>
+          {hasCustom && (
+            <button onClick={removeCustom} className="text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+              Eigenen Ton entfernen
+            </button>
+          )}
+        </div>
+        <input ref={fileRef} type="file" accept="audio/*" onChange={onUpload} className="hidden" />
+        {error && <p className="mt-1.5 text-[0.8125rem] text-red-300">{error}</p>}
+        <p className="mt-1.5 text-[0.8125rem] text-text-tertiary">
+          MP3, WAV, OGG o.ä., höchstens 1 MB und {MAX_CUSTOM_PING_SECONDS} Sekunden.
+        </p>
+      </div>
+
+      <p className="text-[0.8125rem] text-text-tertiary">
+        Diese Einstellungen gelten nur auf diesem Gerät und in diesem Browser.
+      </p>
     </div>
   );
 }

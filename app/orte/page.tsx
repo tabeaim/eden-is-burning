@@ -199,6 +199,32 @@ function MapView() {
                 </Facts>
               )}
 
+              {/* Aktive Szenen hier */}
+              <AccordionSection key={`scenes-${selected}`} title="Aktive Szenen hier">
+                {activeScenes.length === 0 ? (
+                  <p className="text-[0.875rem] text-text-tertiary">
+                    Keine aktive Szene an diesem Ort.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-1.5">
+                    {activeScenes.map((s) => (
+                      <SceneRow key={s.id} scene={s} />
+                    ))}
+                  </div>
+                )}
+
+                {/* Alle Szenen → gefilterte Szenensuche */}
+                {scenesHere.length > 0 && (
+                  <Link
+                    href={`/szenen?area=${selected}`}
+                    className="mt-2.5 inline-flex items-center gap-1 text-[0.875rem] text-text-secondary hover:text-accent transition-colors"
+                  >
+                    Alle {scenesHere.length} {scenesHere.length === 1 ? "Szene" : "Szenen"} an diesem Ort
+                    <Icon name="arrow-right" size={12} />
+                  </Link>
+                )}
+              </AccordionSection>
+
               {/* Bewohner*innen (echte Charaktere) */}
               {residents.length > 0 && (
                 <AccordionSection key={`res-${selected}`} title="Bewohner*innen" defaultOpen>
@@ -239,31 +265,6 @@ function MapView() {
                 />
               )}
 
-              {/* Aktive Szenen hier */}
-              <AccordionSection key={`scenes-${selected}`} title="Aktive Szenen hier">
-                {activeScenes.length === 0 ? (
-                  <p className="text-[0.875rem] text-text-tertiary">
-                    Keine aktive Szene an diesem Ort.
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-1.5">
-                    {activeScenes.map((s) => (
-                      <SceneRow key={s.id} scene={s} />
-                    ))}
-                  </div>
-                )}
-
-                {/* Alle Szenen → gefilterte Szenensuche */}
-                {scenesHere.length > 0 && (
-                  <Link
-                    href={`/szenen?area=${selected}`}
-                    className="mt-2.5 inline-flex items-center gap-1 text-[0.875rem] text-text-secondary hover:text-accent transition-colors"
-                  >
-                    Alle {scenesHere.length} {scenesHere.length === 1 ? "Szene" : "Szenen"} an diesem Ort
-                    <Icon name="arrow-right" size={12} />
-                  </Link>
-                )}
-              </AccordionSection>
               </div>
             </>
           ) : (
