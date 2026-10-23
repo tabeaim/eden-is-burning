@@ -26,25 +26,32 @@ import { Bubble } from "./Bubble";
 // Status als Streichholz: brennt orange, solange der neueste Post ungelesen ist;
 // sonst grau und ohne Flamme; bei geschlossenen Szenen abgebrannt mit Rauch.
 // Anruf-Szenen tragen stattdessen einen Telefonhörer (klingelt bei neuem Post,
-// durchgestrichen, wenn geschlossen).
+// durchgestrichen, wenn geschlossen), SMS-Szenen eine Sprechblase wie in der
+// Szenenübersicht.
 export function SceneMatch({ scene, size = 20 }: { scene: Scene; size?: number }) {
   const { isSceneNew, isChatFresh } = useStore();
   const closed = scene.status === "closed";
   const unread =
     !closed && (scene.chat_id ? isChatFresh(scene.chat_id, scene.id) : isSceneNew(scene.id));
-  const call = sceneKind(scene) === "call";
-  // Hörer wirkt bei gleicher Größe wuchtiger als das schlanke Streichholz
-  const iconSize = call ? Math.round(size * 0.8) : size;
+  const kind = sceneKind(scene);
+  const call = kind === "call";
+  const sms = kind === "sms";
+  // Hörer und Sprechblase wirken bei gleicher Größe wuchtiger als das schlanke
+  // Streichholz (Sprechblase im Verhältnis wie in der Szenenübersicht: 26 zu 38)
+  const iconSize = call ? Math.round(size * 0.8) : sms ? Math.round(size * 0.68) : size;
   return (
     <span
-      title={`${call ? "Anruf · " : ""}${closed ? "geschlossen" : unread ? "aktiv · neuer Post" : "aktiv"}`}
+      title={`${call ? "Anruf · " : sms ? "SMS · " : ""}${closed ? "geschlossen" : unread ? "aktiv · neuer Post" : "aktiv"}`}
       className={`shrink-0 ${unread ? "text-accent" : "text-text-tertiary"} ${
         closed ? "opacity-70" : ""
       }`}
     >
-      {call ? (
+      {call || sms ? (
         <span className="flex items-center justify-center" style={{ width: size, height: size }}>
-          <Icon name={closed ? "call-ended" : unread ? "call-ringing" : "call"} size={iconSize} />
+          <Icon
+            name={sms ? "message" : closed ? "call-ended" : unread ? "call-ringing" : "call"}
+            size={iconSize}
+          />
         </span>
       ) : (
         <Icon name={closed ? "match-burnt" : unread ? "match-lit" : "match"} size={size} />
