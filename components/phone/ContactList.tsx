@@ -31,7 +31,7 @@ export function ContactList({
   onEdit?: (c: Character) => void;
   // Favoriten / von Hand als relevant markierte Kontakte ändern (Rechtsklick
   // bzw. langes Drücken auf einen Kontakt)
-  onMark?: (patch: { favorites?: string[]; relevant?: string[] }) => void;
+  onMark?: (patch: { favorites?: string[]; relevant?: string[]; not_relevant?: string[] }) => void;
   // Vorschau im Profil: Klick aufs Profilbild zeigt es groß (statt aufs Profil zu führen)
   onAvatar?: (src: string, c: Character) => void;
 }) {
@@ -78,6 +78,10 @@ export function ContactList({
   // Favoriten: nur, was von Hand markiert wurde
   const favoriteIds = owner.phone?.favorites ?? [];
   const manualRelevant = owner.phone?.relevant ?? [];
+  const excluded = owner.phone?.not_relevant ?? [];
+  // relevant: von Hand hinzugefügt, oder es gab Kontakt und niemand hat ihn entfernt
+  const isRelevant = (c: Character) =>
+    manualRelevant.includes(c.id) || (known(c) && !excluded.includes(c.id));
   const top = everyone.filter((c) => favoriteIds.includes(c.id)).sort(byName);
   const matches = everyone
     .filter(
@@ -89,7 +93,7 @@ export function ContactList({
   const rest = query
     ? matches
     : matches.filter(
-        (c) => !top.includes(c) && (scope === "all" || known(c) || manualRelevant.includes(c.id)),
+        (c) => !top.includes(c) && (scope === "all" || isRelevant(c)),
       );
 
   const row = (c: Character) => {
@@ -233,22 +237,27 @@ export function ContactList({
             >
               {favoriteIds.includes(menuFor.id) ? "Aus den Favoriten entfernen" : "Als Favorit markieren"}
             </SheetButton>
-            {/* wer ohnehin Kontakt hatte, ist automatisch relevant */}
-            {(manualRelevant.includes(menuFor.id) || !known(menuFor)) && (
-              <SheetButton
-                onClick={() => {
-                  const on = manualRelevant.includes(menuFor.id);
+            {/* zu „Relevante" hinzufügen bzw. daraus entfernen – auch wer schon
+                Kontakt hatte, lässt sich ausblenden (z. B. Nummer noch nicht bekannt) */}
+            <SheetButton
+              onClick={() => {
+                const id = menuFor.id;
+                if (isRelevant(menuFor)) {
                   onMark({
-                    relevant: on ? manualRelevant.filter((id) => id !== menuFor.id) : [...manualRelevant, menuFor.id],
+                    relevant: manualRelevant.filter((x) => x !== id),
+                    not_relevant: known(menuFor) ? [...excluded.filter((x) => x !== id), id] : excluded,
                   });
-                  setMenuFor(null);
-                }}
-              >
-                {manualRelevant.includes(menuFor.id)
-                  ? "Nicht mehr als relevant markieren"
-                  : "Als relevanten Kontakt markieren"}
-              </SheetButton>
-            )}
+                } else {
+                  onMark({
+                    relevant: known(menuFor) ? manualRelevant : [...manualRelevant, id],
+                    not_relevant: excluded.filter((x) => x !== id),
+                  });
+                }
+                setMenuFor(null);
+              }}
+            >
+              {isRelevant(menuFor) ? "Aus „Relevante“ entfernen" : "Zu „Relevante“ hinzufügen"}
+            </SheetButton>
             <SheetButton onClick={() => setMenuFor(null)}>Abbrechen</SheetButton>
           </SheetList>
         </Sheet>

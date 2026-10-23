@@ -228,9 +228,11 @@ export interface PhoneSettings {
   contacts?: Record<string, { name?: string; photo?: string }> | null;
   hidden_calls?: string[] | null; // aus der Anrufliste dieses Handys gelöschte Anrufe
   // Von Hand gesetzte Favoriten (ohne Angabe: ein zufälliger) und zusätzlich als
-  // „relevant" markierte Kontakte
+  // „relevant" markierte Kontakte; `not_relevant`: von Hand aus „Relevante"
+  // entfernt, obwohl es schon Kontakt gab (z. B. Nummer noch nicht bekannt)
   favorites?: string[] | null;
   relevant?: string[] | null;
+  not_relevant?: string[] | null;
   // Captic ist optional: erst nach dem Aktivieren liegt die App auf dem Handy.
   // Profilangaben werden in der App selbst bearbeitet.
   captic?: CapticProfile | null;
