@@ -52,6 +52,7 @@ export default function NewScenePage() {
   const [tw, setTw] = useState(false);
   const [au, setAu] = useState(false);
   const [auName, setAuName] = useState("");
+  const [versions, setVersions] = useState(false);
   const [summary, setSummary] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   // Ohne eigenen Titel heißt ein Telefonat „A & B on the phone"
@@ -110,6 +111,8 @@ export default function NewScenePage() {
       ...(asDraft ? { draft: true } : {}),
       // nur mitschicken, wenn gewählt – die Spalte kommt mit schema-scene-format.sql
       ...(script ? { format: "script" as const } : {}),
+      // ebenso – Spalte aus schema-scene-versions.sql
+      ...(versions ? { versions: true } : {}),
     });
     if (asDraft) saveDraft(id, firstChar, firstContent);
     else addPost(id, firstChar, firstContent);
@@ -212,6 +215,14 @@ export default function NewScenePage() {
         {au && (
           <AuNameField value={auName} onChange={setAuName} names={auNames(scenes)} />
         )}
+
+        <Toggle checked={versions} onChange={setVersions}>
+          Versionen erlauben{" "}
+          <span className="text-text-tertiary">
+            – Beteiligte können ihren Charakter in dieser Szene anders zeigen (Bild, Name, Grunddaten). Das geht
+            dann in den Einstellungen der Szene.
+          </span>
+        </Toggle>
 
         <div>
           <div className="text-[0.875rem] text-text-secondary mb-2">

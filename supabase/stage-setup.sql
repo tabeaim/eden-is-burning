@@ -1407,3 +1407,11 @@ alter table scenes add column if not exists format text;
 
 alter table captic_posts add column if not exists tags jsonb not null default '[]'::jsonb;
 alter table captic_comments add column if not exists liked_by jsonb not null default '[]'::jsonb;
+
+
+-- ## schema-scene-versions.sql
+-- Charakters anlegen (anderes Bild, Name, Grunddaten – siehe lib/versions.ts)?
+-- Die Versionen selbst stehen im Charakterprofil (characters.profile → versions).
+-- Im Supabase SQL-Editor ausführen (Run). Wiederholbar.
+
+alter table scenes add column if not exists versions boolean not null default false;

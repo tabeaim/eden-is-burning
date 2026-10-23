@@ -15,6 +15,7 @@ import { Icon } from "@/components/Icon";
 import { CharacterPicker } from "@/components/CharacterPicker";
 import { AuNameField, auNames } from "@/components/AuNameField";
 import { DatePicker } from "@/components/DatePicker";
+import { SceneVersions } from "@/components/VersionEditor";
 import type { Scene } from "@/lib/types";
 
 const field =
@@ -64,6 +65,7 @@ export function SceneEditPanel({
   const [auName, setAuName] = useState(scene.au_name ?? "");
   const [headerUrl, setHeaderUrl] = useState(scene.header_url ?? "");
   const [script, setScript] = useState(scene.format === "script");
+  const [versions, setVersions] = useState(Boolean(scene.versions));
   const [selected, setSelected] = useState<string[]>(scene.participant_ids);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -99,6 +101,8 @@ export function SceneEditPanel({
       header_url: headerUrl || null,
       // Format nur anfassen, wenn es sich ändert (Spalte: schema-scene-format.sql)
       ...(postCount === 0 && script !== (scene.format === "script") ? { format: script ? ("script" as const) : null } : {}),
+      // nur anfassen, wenn es sich ändert (Spalte: schema-scene-versions.sql)
+      ...(versions !== Boolean(scene.versions) ? { versions } : {}),
       participant_ids: selected,
       summary: summary.trim() || null,
     });
@@ -237,6 +241,16 @@ export function SceneEditPanel({
         <span className="italic">AU</span> – Alternate Universe
       </Toggle>
       {au && <AuNameField value={auName} onChange={setAuName} names={auNames(scenes)} />}
+
+      <Toggle checked={versions} onChange={setVersions}>
+        Versionen erlauben{" "}
+        <span className="text-text-tertiary">
+          – Beteiligte können ihren Charakter in dieser Szene anders zeigen (Bild, Name, Grunddaten)
+        </span>
+      </Toggle>
+      {versions && (
+        <SceneVersions scene={{ ...scene, au, au_name: au ? auName.trim() || null : null }} participantIds={selected} />
+      )}
 
       <div>
         <div className="text-[0.875rem] text-text-secondary mb-2">

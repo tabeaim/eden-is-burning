@@ -28,7 +28,6 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { CharacterSelect } from "@/components/CharacterSelect";
 import type { Character, Post, PostDraft, Scene } from "@/lib/types";
 import { useCharacterIn } from "@/lib/use-versions";
-import { VersionForm } from "@/components/VersionEditor";
 import { characterIn } from "@/lib/versions";
 
 function focusReplyEditor() {
@@ -452,7 +451,6 @@ function SceneHeader({
 }) {
   const { updateScene, locationsOf, isAdmin } = useStore();
   const character = useCharacterIn(scene);
-  const [versions, setVersions] = useState(false);
   // Ortsprofil zum Szenen-Ort (falls ein Eintrag existiert) → Ort anklickbar
   const loc = scene.location_name
     ? locationsOf(scene.location_area).find((l) => l.name === scene.location_name)
@@ -475,9 +473,6 @@ function SceneHeader({
 
   if (editing) {
     return <SceneEditPanel scene={scene} onClose={() => setEditing(false)} />;
-  }
-  if (versions) {
-    return <SceneVersionsPanel scene={scene} onClose={() => setVersions(false)} />;
   }
 
   if (closing) {
@@ -589,12 +584,6 @@ function SceneHeader({
                 <Icon name="flame" size={14} /> Wieder eröffnen
               </button>
             )}
-            {/* Versionen: eigene Charaktere in dieser Szene (oder im AU) anders zeigen */}
-            {isParticipant && (
-              <button onClick={() => setVersions(true)} className={btn} title="Bild und Grunddaten für diese Szene oder das AU">
-                <Icon name="users" size={14} /> Versionen
-              </button>
-            )}
             {/* Bearbeiten: Beteiligte und Admins – auch bei geschlossenen Szenen */}
             {(isParticipant || isAdmin) && (
               <button onClick={() => setEditing(true)} className={btn}>
@@ -638,72 +627,6 @@ function SceneHeader({
         <p className="mt-3 font-serif text-[0.875rem] italic text-text-secondary leading-relaxed">
           {scene.summary}
         </p>
-      )}
-    </div>
-  );
-}
-
-// Versionen der eigenen Charaktere in dieser Szene: nur für diese Szene oder –
-// in einer AU-Szene – für das ganze AU (gilt dann in allen Szenen dieses AUs).
-function SceneVersionsPanel({ scene, onClose }: { scene: Scene; onClose: () => void }) {
-  const { currentPlayer, charactersOf, myNpcs } = useStore();
-  const mine = (currentPlayer ? [...charactersOf(currentPlayer.id), ...myNpcs] : []).filter((c) =>
-    scene.participant_ids.includes(c.id),
-  );
-  const auName = scene.au ? scene.au_name?.trim() || null : null;
-  const [charId, setCharId] = useState(mine[0]?.id ?? null);
-  const [kind, setKind] = useState<"scene" | "au">(() => {
-    const c = mine[0];
-    return auName && c?.profile?.versions?.au?.[auName] && !c.profile.versions.scene?.[scene.id] ? "au" : "scene";
-  });
-  const c = mine.find((x) => x.id === charId) ?? mine[0];
-  const pill = (active: boolean) =>
-    `rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
-      active ? "bg-accent text-black font-medium" : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
-    }`;
-
-  return (
-    <div className="mb-6 rounded-xl border border-border-subtle bg-bg-surface p-4 sm:p-5">
-      <div className="mb-1 flex items-center justify-between gap-3">
-        <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">Versionen</div>
-        <button onClick={onClose} className="text-[0.8125rem] text-text-tertiary hover:text-text-primary">
-          Fertig
-        </button>
-      </div>
-      <p className="mb-4 text-[0.8125rem] text-text-tertiary">
-        Bild, Name und Grunddaten anders zeigen – nur in dieser Szene
-        {auName ? <> oder in allen Szenen des AUs „{auName}“</> : null}. Leere Felder bleiben wie im Profil.
-      </p>
-      {!c ? (
-        <p className="text-[0.875rem] text-text-tertiary">Du hast keinen Charakter in dieser Szene.</p>
-      ) : (
-        <>
-          {mine.length > 1 && (
-            <div className="mb-3 flex flex-wrap gap-1.5">
-              {mine.map((x) => (
-                <button key={x.id} onClick={() => setCharId(x.id)} className={pill(x.id === c.id)}>
-                  {x.name.split(" ")[0]}
-                </button>
-              ))}
-            </div>
-          )}
-          {auName && (
-            <div className="mb-4 flex flex-wrap gap-1.5">
-              <button onClick={() => setKind("scene")} className={pill(kind === "scene")}>
-                Nur diese Szene
-              </button>
-              <button onClick={() => setKind("au")} className={pill(kind === "au")}>
-                Ganzes AU · {auName}
-              </button>
-            </div>
-          )}
-          <VersionForm
-            key={`${c.id}:${kind}`}
-            character={c}
-            kind={auName ? kind : "scene"}
-            versionKey={auName && kind === "au" ? auName : scene.id}
-          />
-        </>
       )}
     </div>
   );

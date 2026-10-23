@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Character, CharacterProfile } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import {
@@ -552,14 +552,14 @@ export function useCharacterBasics(character: Character, mode: "settings" | "pro
     </>
   );
 
-  return { form, invalid, patch, p, setProfile, F };
+  return { form, invalid, patch, d, p, setProfile, F };
 }
 
 // Einstellungen → Meine Charaktere: die Grunddaten plus das, was nur hier steht
 // (Signatur, GIF in Szenen), mit eigenem Speichern-Knopf.
 export function CharacterBasicsForm({ character }: { character: Character }) {
   const { updateCharacter } = useStore();
-  const { form, invalid, patch, p, setProfile, F } = useCharacterBasics(character, "settings");
+  const { form, invalid, patch, d, p, setProfile, F } = useCharacterBasics(character, "settings");
   const [saved, setSaved] = useState(false);
   const [signature, setSignature] = useState(character.profile?.signature_url ?? null);
   const [uploadingSig, setUploadingSig] = useState(false);
@@ -620,6 +620,32 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
     setTimeout(() => setSaved(false), 1500);
   }
 
+  // Automatisch speichern: kurz nachdem sich im Formular etwas geändert hat
+  // (nur Eingaben im Formular zählen, nicht Änderungen von außen). Fehlt eine
+  // Pflichtangabe, wartet es, bis sie da ist. Beim Zuklappen wird Offenes sofort
+  // gespeichert.
+  const formKey = JSON.stringify([d, p, signature, gif]);
+  const [savedKey, setSavedKey] = useState(formKey);
+  const pending = !invalid && formKey !== savedKey;
+  const latest = useRef({ save, pending });
+  useEffect(() => {
+    latest.current = { save, pending };
+  });
+  useEffect(() => {
+    if (!pending) return;
+    const t = setTimeout(() => {
+      setSavedKey(formKey);
+      latest.current.save();
+    }, 800);
+    return () => clearTimeout(t);
+  }, [formKey, pending]);
+  useEffect(
+    () => () => {
+      if (latest.current.pending) latest.current.save();
+    },
+    [],
+  );
+
   return (
     <div className="flex flex-col gap-4 pt-4">
       {form}
@@ -631,7 +657,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         </p>
         {F({
           label: `Text-Signatur (${(p.signature_text ?? "").length}/2000)`,
-          hint: "Reiner Text oder HTML (z. B. <b>, <i>, <span style=\"…\">, <a>, <img>, <center>). Wird mit den Grunddaten gespeichert.",
+          hint: "Reiner Text oder HTML (z. B. <b>, <i>, <span style=\"…\">, <a>, <img>, <center>).",
           children: (
             <textarea
               value={p.signature_text ?? ""}
@@ -659,7 +685,7 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         )}
         {F({
           label: "Ausrichtung",
-          hint: "Gilt für Text und Bild. Wird mit den Grunddaten gespeichert.",
+          hint: "Gilt für Text und Bild.",
           children: (
             <div className="flex gap-1.5">
               {(
@@ -778,17 +804,16 @@ export function CharacterBasicsForm({ character }: { character: Character }) {
         bearbeiten.
       </p>
 
-      <div className="flex items-center gap-3">
-        <button
-          onClick={save}
-          disabled={invalid}
-          className="rounded-md bg-accent/90 hover:bg-accent px-3 py-1.5 text-[0.8125rem] font-medium text-black disabled:opacity-40"
-        >
-          Grunddaten speichern
-        </button>
-        {invalid && <span className="text-[0.8125rem] text-red-300">Bitte die Pflichtangaben (*) ausfüllen.</span>}
-        {saved && <span className="text-[0.875rem] text-text-secondary">Gespeichert ✓</span>}
-      </div>
+      {(invalid || saved) && (
+        <div className="flex items-center gap-3">
+          {invalid && (
+            <span className="text-[0.8125rem] text-red-300">
+              Bitte die Pflichtangaben (*) ausfüllen – vorher wird nichts gespeichert.
+            </span>
+          )}
+          {saved && <span className="text-[0.875rem] text-text-secondary">Gespeichert ✓</span>}
+        </div>
+      )}
     </div>
   );
 }

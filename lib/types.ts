@@ -282,6 +282,9 @@ export interface Scene {
   // Darstellung der Posts: "script" = Drehbuch-Format (Regie + Dialog, siehe
   // lib/script.ts); sonst normaler Fließtext. Umstellbar, solange kein Post existiert.
   format?: "script" | null;
+  // Beteiligte dürfen für diese Szene eine eigene Version ihres Charakters anlegen
+  // (Szenen-Einstellungen → Versionen, schema-scene-versions.sql)
+  versions?: boolean;
   created_at: string;
   participant_ids: string[]; // character ids, in turn order
   // Ein-Satz-Zusammenfassung – bei Erstellung oder beim Schließen ergänzbar

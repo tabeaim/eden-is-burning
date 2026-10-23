@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
@@ -8,7 +8,7 @@ import { IMAGE_SIZES, uploadAnimation, uploadImage } from "@/lib/images";
 import { isEmptyVersion, withVersion } from "@/lib/versions";
 import { auNames } from "./AuNameField";
 import { Icon } from "./Icon";
-import type { Character, CharacterVersion } from "@/lib/types";
+import type { Character, CharacterVersion, Scene } from "@/lib/types";
 
 const field =
   "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20 placeholder:text-text-tertiary/70";
@@ -96,7 +96,6 @@ export function VersionForm({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const dirty = JSON.stringify(v) !== JSON.stringify(stored);
 
   function set<K extends keyof CharacterVersion>(k: K, val: CharacterVersion[K]) {
     setSaved(false);
@@ -117,13 +116,41 @@ export function VersionForm({
       setBusy(null);
     }
   }
-  function save(next: CharacterVersion | null) {
+  function write(next: CharacterVersion | null) {
     updateCharacter(character.id, { profile: withVersion(character, kind, versionKey, next) });
-    if (next === null) {
-      setV({});
-      onClose?.();
-    } else setSaved(true);
   }
+  function remove() {
+    setV({});
+    setSavedKey("{}");
+    write(null);
+    onClose?.();
+  }
+
+  // Speichert sich selbst, kurz nach der letzten Änderung (wie die Grunddaten);
+  // beim Schließen wird Offenes sofort gespeichert
+  const vKey = JSON.stringify(v);
+  const [savedKey, setSavedKey] = useState(vKey);
+  const pending = vKey !== savedKey;
+  const latest = useRef({ write, vKey, pending });
+  useEffect(() => {
+    latest.current = { write, vKey, pending };
+  });
+  useEffect(() => {
+    if (!pending || busy) return;
+    const t = setTimeout(() => {
+      setSavedKey(vKey);
+      latest.current.write(JSON.parse(vKey) as CharacterVersion);
+      setSaved(true);
+    }, 800);
+    return () => clearTimeout(t);
+  }, [vKey, pending, busy]);
+  useEffect(
+    () => () => {
+      const l = latest.current;
+      if (l.pending) l.write(JSON.parse(l.vKey) as CharacterVersion);
+    },
+    [],
+  );
 
   const text = (k: "name" | "role" | "tagline" | "job", label: string, base: string | null) => (
     <label className="block">
@@ -200,9 +227,9 @@ export function VersionForm({
       </div>
       {error && <p className="text-[0.8125rem] text-red-300">{error}</p>}
       <div className="flex flex-wrap items-center justify-end gap-3">
-        {saved && !dirty && <span className="mr-auto text-[0.8125rem] text-text-tertiary">Gespeichert.</span>}
-        {!isEmptyVersion(stored) && (
-          <button type="button" onClick={() => save(null)} className="text-[0.8125rem] text-text-tertiary hover:text-red-300">
+        {saved && !pending && <span className="mr-auto text-[0.8125rem] text-text-tertiary">Gespeichert ✓</span>}
+        {(!isEmptyVersion(stored) || !isEmptyVersion(v)) && (
+          <button type="button" onClick={remove} className="text-[0.8125rem] text-text-tertiary hover:text-red-300">
             Version entfernen
           </button>
         )}
@@ -211,14 +238,6 @@ export function VersionForm({
             Schließen
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => save(v)}
-          disabled={!dirty || !!busy}
-          className="rounded-md bg-accent/90 px-4 py-1.5 text-[0.8125rem] font-medium text-black hover:bg-accent disabled:opacity-40"
-        >
-          Speichern
-        </button>
       </div>
     </div>
   );
@@ -258,8 +277,8 @@ export function CharacterVersions({ character }: { character: Character }) {
     <div className="flex flex-col gap-3">
       <p className="text-[0.8125rem] text-text-tertiary">
         In einem AU oder in einer einzelnen Szene kann {character.name} anders aussehen oder andere Grunddaten
-        haben. Leere Felder bleiben wie im Profil. Eine Szenen-Version legst du direkt in der Szene an
-        (Knopf „Versionen“).
+        haben. Leere Felder bleiben wie im Profil. Eine Version für eine einzelne Szene legst du in
+        den Einstellungen der Szene an, wenn die Szene Versionen erlaubt.
       </p>
 
       {auKeys.map((k) => row(`au:${k}`, <>AU · {k}</>, "au", k))}
@@ -313,6 +332,69 @@ export function CharacterVersions({ character }: { character: Character }) {
             anlegen.
           </p>
         )
+      )}
+    </div>
+  );
+}
+
+// Abschnitt „Versionen" in den Szenen-Einstellungen (wenn die Szene Versionen
+// erlaubt): die eigenen Charaktere in der Szene – nur für diese Szene oder, in einer
+// AU-Szene, für das ganze AU (gilt dann in allen Szenen dieses AUs).
+export function SceneVersions({ scene, participantIds }: { scene: Scene; participantIds: string[] }) {
+  const { currentPlayer, charactersOf, myNpcs } = useStore();
+  const mine = (currentPlayer ? [...charactersOf(currentPlayer.id), ...myNpcs] : []).filter((c) =>
+    participantIds.includes(c.id),
+  );
+  const auName = scene.au ? scene.au_name?.trim() || null : null;
+  const [charId, setCharId] = useState(mine[0]?.id ?? null);
+  const [kind, setKind] = useState<"scene" | "au">(() => {
+    const c = mine[0];
+    return auName && c?.profile?.versions?.au?.[auName] && !c.profile.versions.scene?.[scene.id] ? "au" : "scene";
+  });
+  const c = mine.find((x) => x.id === charId) ?? mine[0];
+  const pill = (active: boolean) =>
+    `rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
+      active ? "bg-accent text-black font-medium" : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
+    }`;
+
+  return (
+    <div className="rounded-lg border border-border-subtle p-3 sm:p-4">
+      <div className="text-[0.875rem] text-text-secondary">Versionen</div>
+      <p className="mb-3 mt-0.5 text-[0.8125rem] text-text-tertiary">
+        Bild, Name und Grunddaten deines Charakters anders zeigen – nur in dieser Szene
+        {auName ? <> oder in allen Szenen des AUs „{auName}“</> : null}. Leere Felder bleiben wie im Profil.
+        Speichert sich von selbst.
+      </p>
+      {!c ? (
+        <p className="text-[0.8125rem] text-text-tertiary">Du hast keinen Charakter in dieser Szene.</p>
+      ) : (
+        <>
+          {mine.length > 1 && (
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {mine.map((x) => (
+                <button key={x.id} type="button" onClick={() => setCharId(x.id)} className={pill(x.id === c.id)}>
+                  {x.name.split(" ")[0]}
+                </button>
+              ))}
+            </div>
+          )}
+          {auName && (
+            <div className="mb-4 flex flex-wrap gap-1.5">
+              <button type="button" onClick={() => setKind("scene")} className={pill(kind === "scene")}>
+                Nur diese Szene
+              </button>
+              <button type="button" onClick={() => setKind("au")} className={pill(kind === "au")}>
+                Ganzes AU · {auName}
+              </button>
+            </div>
+          )}
+          <VersionForm
+            key={`${c.id}:${kind}`}
+            character={c}
+            kind={auName ? kind : "scene"}
+            versionKey={auName && kind === "au" ? auName : scene.id}
+          />
+        </>
       )}
     </div>
   );

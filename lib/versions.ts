@@ -3,8 +3,10 @@
 // (`profile.versions`), es braucht keine eigene Tabelle. Leere Felder nehmen den
 // Wert aus dem normalen Profil.
 //
-// Reihenfolge: Szenen-Version vor AU-Version vor normalem Profil. Plots haben
-// keine eigene Ebene – sie bekommen die Version über das AU ihrer Szenen.
+// Reihenfolge: Szenen-Version vor AU-Version vor normalem Profil. Szenen-Versionen
+// gibt es nur in Szenen, die sie erlauben (`scene.versions`, Schalter beim Anlegen
+// und in den Szenen-Einstellungen). Plots haben keine eigene Ebene – sie bekommen
+// die Version über das AU ihrer Szenen.
 import type { Character, CharacterVersion, Scene } from "./types";
 import { escapeHtml } from "./format";
 
@@ -31,7 +33,7 @@ export function isEmptyVersion(v: CharacterVersion | null | undefined): boolean 
 }
 
 // Version, die in dieser Szene gilt (Szene schlägt AU), oder null
-export function versionFor(c: Character, scene: Pick<Scene, "id" | "au" | "au_name"> | null | undefined): {
+export function versionFor(c: Character, scene: Pick<Scene, "id" | "au" | "au_name" | "versions"> | null | undefined): {
   version: CharacterVersion;
   kind: "scene" | "au";
   label: string;
@@ -39,7 +41,8 @@ export function versionFor(c: Character, scene: Pick<Scene, "id" | "au" | "au_na
 } | null {
   const vs = c.profile?.versions;
   if (!vs || !scene) return null;
-  const sv = vs.scene?.[scene.id];
+  // Szenen-Versionen gelten nur, solange die Szene sie erlaubt
+  const sv = scene.versions ? vs.scene?.[scene.id] : undefined;
   const av = scene.au && scene.au_name ? vs.au?.[scene.au_name] : undefined;
   if (isEmptyVersion(sv) && isEmptyVersion(av)) return null;
   // Szene ergänzt das AU: Felder der Szene gewinnen, der Rest kommt aus dem AU
@@ -81,7 +84,7 @@ export function applyVersion(c: Character, v: CharacterVersion, label?: string, 
 }
 
 // Der Charakter, wie er in dieser Szene auftritt
-export function characterIn(c: Character, scene: Pick<Scene, "id" | "au" | "au_name"> | null | undefined): Character {
+export function characterIn(c: Character, scene: Pick<Scene, "id" | "au" | "au_name" | "versions"> | null | undefined): Character {
   const found = versionFor(c, scene);
   return found ? applyVersion(c, found.version, found.label, found.ref) : c;
 }
