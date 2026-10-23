@@ -17,6 +17,7 @@ import { areaName } from "@/lib/world";
 import { locationHeader } from "@/lib/headers";
 import { IMAGE_SIZES, uploadImage } from "@/lib/images";
 import { Icon } from "@/components/Icon";
+import { PinterestBoard } from "@/components/PinterestBoard";
 import { isHidden, isWorking } from "@/lib/characters";
 import { CharacterBubble } from "@/components/Bubble";
 import { SceneCard } from "@/components/SceneCard";
@@ -124,8 +125,13 @@ export default function LocationPage({
             )}
           </section>
 
-          {/* Vibes – nur wenn Fotos hinterlegt sind */}
-          {images.length > 0 && (
+          {/* Vibes – entweder das eingebundene Pinterest-Board oder die Fotos */}
+          {loc.pinterest_url ? (
+            <section>
+              <Heading>vibes.</Heading>
+              <PinterestBoard url={loc.pinterest_url} />
+            </section>
+          ) : images.length > 0 && (
             <section>
               <Heading>vibes.</Heading>
               <div className="columns-2 sm:columns-3 gap-3">
@@ -219,16 +225,6 @@ export default function LocationPage({
             </section>
           )}
 
-          {loc.pinterest_url && (
-            <a
-              href={loc.pinterest_url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 self-start text-[0.875rem] text-olive hover:text-accent"
-            >
-              <Icon name="pinterest" size={20} /> Pinterest-Board
-            </a>
-          )}
         </aside>
       </div>
 
@@ -493,6 +489,10 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
   const [imageUrl, setImageUrl] = useState(loc.image_url ?? "");
   const [images, setImages] = useState<string[]>(loc.images ?? []);
   const [pinterest, setPinterest] = useState(loc.pinterest_url ?? "");
+  // Vibes: entweder Fotos oder ein eingebundenes Pinterest-Board
+  const [vibesMode, setVibesMode] = useState<"images" | "pinterest">(
+    loc.pinterest_url ? "pinterest" : "images",
+  );
   const [people, setPeople] = useState<LocationPerson[]>(loc.people ?? []);
   const [newUrl, setNewUrl] = useState("");
   const coverRef = useRef<HTMLInputElement>(null);
@@ -537,7 +537,8 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
       ...(category !== (loc.category ?? null) ? { category } : {}),
       image_url: imageUrl || null,
       images,
-      pinterest_url: pinterest.trim() || null,
+      // Pinterest-Modus: die Fotos bleiben gespeichert, gezeigt wird das Board
+      pinterest_url: vibesMode === "pinterest" ? pinterest.trim() || null : null,
       people: people.map((p) => ({ ...p, note: p.note?.trim() || null })),
     });
     onClose();
@@ -621,14 +622,48 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
         />
       </div>
 
-      {/* Vibes-Fotos */}
+      {/* Vibes: Fotos oder Pinterest-Board */}
       <div>
         <div className="text-[0.875rem] text-text-secondary mb-1">
           Vibes{" "}
-          <span className="text-text-tertiary">
-            ({images.length}/{MAX_IMAGES})
-          </span>
+          {vibesMode === "images" && (
+            <span className="text-text-tertiary">
+              ({images.length}/{MAX_IMAGES})
+            </span>
+          )}
         </div>
+        <div className="mb-2 flex gap-1.5">
+          {(
+            [
+              ["images", "Bilder hochladen"],
+              ["pinterest", "Pinterest-Board"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={vibesMode === value}
+              onClick={() => setVibesMode(value)}
+              className={`rounded-md border px-3 py-1.5 text-[0.8125rem] ${
+                vibesMode === value
+                  ? "border-accent/70 bg-accent-soft text-text-primary"
+                  : "border-border-subtle bg-white/[0.04] text-text-secondary hover:bg-white/[0.08] hover:text-text-primary"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {vibesMode === "pinterest" ? (
+          <input
+            value={pinterest}
+            onChange={(e) => setPinterest(e.target.value)}
+            placeholder="https://pinterest.com/name/board/"
+            aria-label="Pinterest-URL"
+            className={field}
+          />
+        ) : (
+        <>
         {images.length > 0 && (
           <div className="mb-2 grid grid-cols-3 sm:grid-cols-6 gap-2">
             {images.map((src, i) => (
@@ -689,19 +724,11 @@ function LocationEditPanel({ loc, onClose }: { loc: Location; onClose: () => voi
             className="hidden"
           />
         </div>
+        </>
+        )}
       </div>
 
       <PeopleEditor people={people} setPeople={setPeople} />
-
-      <label className="text-[0.875rem] text-text-secondary">
-        Pinterest-Board
-        <input
-          value={pinterest}
-          onChange={(e) => setPinterest(e.target.value)}
-          placeholder="https://pinterest.com/…"
-          className={`mt-1 ${field}`}
-        />
-      </label>
 
       <div className="flex items-center justify-end gap-3">
         {isAdmin && (
