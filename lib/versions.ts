@@ -10,19 +10,6 @@
 import type { Character, CharacterVersion, Scene } from "./types";
 import { escapeHtml } from "./format";
 
-// Felder, die eine Version ändern kann, in der Reihenfolge des Formulars
-export const VERSION_FIELDS: { key: keyof CharacterVersion; label: string; kind: "text" | "number" | "image" | "html" }[] = [
-  { key: "image", label: "Bild", kind: "image" },
-  { key: "name", label: "Name", kind: "text" },
-  { key: "age", label: "Alter", kind: "number" },
-  { key: "role", label: "Rolle", kind: "text" },
-  { key: "tagline", label: "Tagline", kind: "text" },
-  { key: "job", label: "Job", kind: "text" },
-  { key: "bio", label: "Kurzbeschreibung", kind: "html" },
-  { key: "scene_gif_url", label: "Szenen-GIF", kind: "image" },
-  { key: "signature_url", label: "Signatur (Bild)", kind: "image" },
-];
-
 function filled(v: unknown): boolean {
   return v !== undefined && v !== null && v !== "";
 }
@@ -37,7 +24,6 @@ export function versionFor(c: Character, scene: Pick<Scene, "id" | "au" | "au_na
   version: CharacterVersion;
   kind: "scene" | "au";
   label: string;
-  ref: string; // für den Profil-Link: "au:<Name>" oder "scene:<ID>"
 } | null {
   const vs = c.profile?.versions;
   if (!vs || !scene) return null;
@@ -52,13 +38,12 @@ export function versionFor(c: Character, scene: Pick<Scene, "id" | "au" | "au_na
     version: merged,
     kind: isEmptyVersion(sv) ? "au" : "scene",
     label: isEmptyVersion(sv) ? `AU: ${scene.au_name}` : "nur in dieser Szene",
-    ref: isEmptyVersion(sv) ? `au:${scene.au_name}` : `scene:${scene.id}`,
   };
 }
 
 // Charakter mit der Version überblendet. Das Ergebnis trägt `version_label`, damit
 // die Anzeige ein kleines Abzeichen zeigen kann.
-export function applyVersion(c: Character, v: CharacterVersion, label?: string, ref?: string): Character {
+export function applyVersion(c: Character, v: CharacterVersion, label?: string): Character {
   const pick = <T,>(val: T | null | undefined, base: T): T => (filled(val) ? (val as T) : base);
   const profile = { ...(c.profile ?? {}) };
   if (filled(v.age)) profile.birthdate = null; // festes Alter statt Geburtstag
@@ -74,19 +59,17 @@ export function applyVersion(c: Character, v: CharacterVersion, label?: string, 
     age: pick(v.age, c.age),
     role: pick(v.role, c.role),
     tagline: pick(v.tagline, c.tagline),
-    job: pick(v.job, c.job),
     // Kurzbeschreibung wird als einfacher Text eingegeben
     bio: filled(v.bio) ? escapeHtml(String(v.bio)).replace(/\n/g, "<br>") : c.bio,
     profile,
     version_label: label ?? "andere Version",
-    version_ref: ref,
   };
 }
 
 // Der Charakter, wie er in dieser Szene auftritt
 export function characterIn(c: Character, scene: Pick<Scene, "id" | "au" | "au_name" | "versions"> | null | undefined): Character {
   const found = versionFor(c, scene);
-  return found ? applyVersion(c, found.version, found.label, found.ref) : c;
+  return found ? applyVersion(c, found.version, found.label) : c;
 }
 
 // Version speichern (leer = entfernen); liefert das neue Profil
@@ -107,9 +90,4 @@ export function withVersion(
   else versions[kind][key] = clean;
   profile.versions = versions;
   return profile;
-}
-
-// Profil-Adresse; bei einer Version mit `?version=…`, damit das Profil sie zeigt
-export function characterHref(c: Pick<Character, "id" | "version_ref">): string {
-  return c.version_ref ? `/charaktere/${c.id}?version=${encodeURIComponent(c.version_ref)}` : `/charaktere/${c.id}`;
 }

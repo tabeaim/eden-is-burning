@@ -2,7 +2,6 @@
 
 import { capFirst } from "@/lib/format";
 import { characterImage } from "@/lib/avatar";
-import { characterHref } from "@/lib/versions";
 import Link from "next/link";
 import { createContext } from "react";
 import { RichText } from "./RichText";
@@ -34,7 +33,7 @@ export function SceneCharacterCard({
   const age = ageAt(character, at);
   const gone = useCharacterGone(character);
   const paused = isPaused(character);
-  const href = characterHref(character);
+  const href = `/charaktere/${character.id}`;
   const byPlayer = player && (
     <>
       by{" "}

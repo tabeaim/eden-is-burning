@@ -100,7 +100,6 @@ export interface Character {
   // nur zur Anzeige, nie gespeichert: der Charakter tritt hier in einer anderen
   // Version auf (AU oder Szene, siehe lib/versions.ts)
   version_label?: string;
-  version_ref?: string;
 }
 
 export interface FamilyMember {
@@ -209,7 +208,6 @@ export interface CharacterVersion {
   age?: number | null;
   role?: string | null;
   tagline?: string | null;
-  job?: string | null;
   bio?: string | null;
   scene_gif_url?: string | null;
   signature_url?: string | null;

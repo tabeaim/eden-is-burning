@@ -162,7 +162,7 @@ export function VersionForm({
   const agePlaceholder =
     baseAge != null ? String(baseAge) : character.profile?.birthdate ? "je nach Szenendatum" : "wie im Profil";
 
-  const text = (k: "name" | "role" | "tagline" | "job", label: string, base: string | null) => (
+  const text = (k: "name" | "role" | "tagline", label: string, base: string | null) => (
     <label className="block">
       <span className="text-[0.8125rem] text-text-secondary">{label}</span>
       <input
@@ -199,8 +199,7 @@ export function VersionForm({
           />
         </label>
         {text("role", "Rolle", character.role)}
-        {text("job", "Job", character.job)}
-        <div className="sm:col-span-2">{text("tagline", "Tagline", character.tagline)}</div>
+        {text("tagline", "Tagline", character.tagline)}
       </div>
       <label className="block">
         <span className="text-[0.8125rem] text-text-secondary">
@@ -287,7 +286,7 @@ export function CharacterVersions({ character }: { character: Character }) {
     <div className="flex flex-col gap-3">
       <p className="text-[0.8125rem] text-text-tertiary">
         In einem AU oder in einer einzelnen Szene kann {character.name} anders aussehen oder andere Grunddaten
-        haben. Leere Felder bleiben wie im Profil. Eine Version für eine einzelne Szene legst du in
+        haben – zu sehen nur in den Szenen, nicht im Profil. Leere Felder bleiben wie im Profil. Eine Version für eine einzelne Szene legst du in
         den Einstellungen der Szene an, wenn die Szene Versionen erlaubt.
       </p>
 
