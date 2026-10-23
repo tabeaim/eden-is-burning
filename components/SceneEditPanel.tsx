@@ -249,7 +249,7 @@ export function SceneEditPanel({
         </span>
       </Toggle>
       {versions && (
-        <SceneVersions scene={{ ...scene, au, au_name: au ? auName.trim() || null : null }} participantIds={selected} />
+        <SceneVersions scene={{ ...scene, au, au_name: au ? auName.trim() || null : null, inplay_date: date }} participantIds={selected} />
       )}
 
       <div>

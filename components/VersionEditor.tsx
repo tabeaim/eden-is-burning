@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
+import { ageAt } from "@/lib/characters";
 import { IMAGE_SIZES, uploadAnimation, uploadImage } from "@/lib/images";
 import { isEmptyVersion, withVersion } from "@/lib/versions";
 import { auNames } from "./AuNameField";
@@ -83,11 +84,13 @@ export function VersionForm({
   character,
   kind,
   versionKey,
+  at,
   onClose,
 }: {
   character: Character;
   kind: "au" | "scene";
   versionKey: string;
+  at?: string; // Inplay-Datum der Szene: Alter als Platzhalter so, wie es dort stünde
   onClose?: () => void;
 }) {
   const { updateCharacter } = useStore();
@@ -152,6 +155,13 @@ export function VersionForm({
     [],
   );
 
+  // Platzhalter fürs Alter: so, wie es in der Szene stünde (aus dem Geburtsdatum
+  // zum Szenendatum berechnet). AU-Versionen ohne Szene: mit Geburtsdatum gibt es
+  // keine feste Zahl, das Alter hängt von der jeweiligen Szene ab.
+  const baseAge = at || !character.profile?.birthdate ? ageAt(character, at) : null;
+  const agePlaceholder =
+    baseAge != null ? String(baseAge) : character.profile?.birthdate ? "je nach Szenendatum" : "wie im Profil";
+
   const text = (k: "name" | "role" | "tagline" | "job", label: string, base: string | null) => (
     <label className="block">
       <span className="text-[0.8125rem] text-text-secondary">{label}</span>
@@ -184,7 +194,7 @@ export function VersionForm({
             max={150}
             value={v.age ?? ""}
             onChange={(e) => set("age", e.target.value === "" ? null : Math.max(0, parseInt(e.target.value, 10) || 0))}
-            placeholder={character.age != null ? String(character.age) : "wie im Profil"}
+            placeholder={agePlaceholder}
             className={`${field} mt-1`}
           />
         </label>
@@ -392,6 +402,7 @@ export function SceneVersions({ scene, participantIds }: { scene: Scene; partici
             key={`${c.id}:${kind}`}
             character={c}
             kind={auName ? kind : "scene"}
+            at={scene.inplay_date}
             versionKey={auName && kind === "au" ? auName : scene.id}
           />
         </>
