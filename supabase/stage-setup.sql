@@ -682,6 +682,18 @@ create policy "read_marks own" on read_marks for all to authenticated
 grant select, insert, update, delete on read_marks to authenticated;
 grant all on read_marks to service_role;
 
+-- Live-Abgleich: Gelesen/Ungelesen auf einem Gerät erscheint sofort auf allen
+-- anderen Geräten derselben Person.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'read_marks'
+  ) then
+    alter publication supabase_realtime add table public.read_marks;
+  end if;
+end $$;
+
 
 -- ############################################################
 -- ## schema-npc-tiers.sql

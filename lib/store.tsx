@@ -422,6 +422,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Lese-Status pro Szene (wann zuletzt geöffnet). Eine Szene gilt als "neu",
   // wenn ihr jüngster Post neuer ist als der letzte Besuch (oder nie geöffnet).
   const [reads, setReads] = useState<Record<string, string>>({});
+  // Lokale Änderungen am Lese-Status mit Zeitpunkt – damit ein gerade laufender
+  // Abgleich mit der Datenbank sie nicht wieder überschreibt (null = ungelesen).
+  const readEdits = useRef(new Map<string, { at: number; value: string | null }>());
 
   const [saveError, setSaveError] = useState<string | null>(null);
   useEffect(() => {
@@ -796,6 +799,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // read_marks fehlt) und in der Datenbank, damit er Geräte und Deployments übersteht.
   const applyReads = useCallback(
     (pid: string, set: Record<string, string>, remove: string[] = []) => {
+      const at = Date.now();
+      for (const [id, v] of Object.entries(set)) readEdits.current.set(id, { at, value: v });
+      for (const id of remove) readEdits.current.set(id, { at, value: null });
       setReads((r) => {
         const next = { ...r, ...set };
         for (const id of remove) delete next[id];
@@ -863,48 +869,157 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
   const isSubscribed = useCallback((itemId: string) => !!reads[`sub:${itemId}`], [reads]);
 
-  // Lese-Status laden: erst aus dem Browser (sofort da), dann aus der Datenbank.
-  // Je Eintrag gilt der neuere Zeitpunkt; was nur im Browser stand, wird einmalig
-  // hochgeladen. (Jede Vercel-Preview hat eine eigene Adresse und damit einen
-  // leeren Browser-Speicher – ohne Datenbank wäre dort alles wieder ungelesen.)
+  // Lese-Status laden und auf allen Geräten gleich halten: Der Browser-Speicher
+  // ist nur ein schneller Zwischenstand, maßgeblich ist die Datenbank. Änderungen
+  // von anderen Geräten kommen live herein (Realtime auf read_marks); zusätzlich
+  // wird beim Zurückkehren in die App neu abgeglichen. (Jede Vercel-Preview hat
+  // eine eigene Adresse und damit einen leeren Browser-Speicher.)
   useEffect(() => {
     if (!currentPlayer) {
       setReads({});
       return;
     }
     const pid = currentPlayer.id;
+    const cacheKey = `eden:reads:${pid}`;
+    const writeCache = (r: Record<string, string>) => {
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(r));
+      } catch {
+        /* ignore */
+      }
+    };
     let local: Record<string, string> = {};
     try {
-      const raw = localStorage.getItem(`eden:reads:${pid}`);
+      const raw = localStorage.getItem(cacheKey);
       local = raw ? (JSON.parse(raw) as Record<string, string>) : {};
     } catch {
       /* ignore */
     }
     setReads(local);
+    readEdits.current.clear();
+    // Einmalig pro Gerät: was bisher nur im Browser stand, hochladen. Danach nie
+    // wieder – sonst würde ein alter Browser-Stand „ungelesen" auf einem anderen
+    // Gerät rückgängig machen.
+    const migrateKey = `eden:reads-synced:${pid}`;
+    let migrate = false;
+    try {
+      migrate = !localStorage.getItem(migrateKey);
+    } catch {
+      /* ignore */
+    }
+
     let cancelled = false;
-    void (async () => {
-      const server: Record<string, string> = {};
-      for (let from = 0; ; from += 1000) {
-        const { data, error } = await supabase
-          .from("read_marks")
-          .select("item_id, seen_at")
-          .eq("player_id", pid)
-          .range(from, from + 999);
-        if (error || !data) return; // Tabelle fehlt (noch): beim Browser-Stand bleiben
-        for (const row of data as { item_id: string; seen_at: string }[]) server[row.item_id] = row.seen_at;
-        if (data.length < 1000) break;
+    let loading = false;
+    const load = async () => {
+      if (loading) return;
+      loading = true;
+      const started = Date.now();
+      try {
+        const server: Record<string, string> = {};
+        for (let from = 0; ; from += 1000) {
+          const { data, error } = await supabase
+            .from("read_marks")
+            .select("item_id, seen_at")
+            .eq("player_id", pid)
+            .range(from, from + 999);
+          if (error || !data) return; // Tabelle fehlt (noch): beim Browser-Stand bleiben
+          for (const row of data as { item_id: string; seen_at: string }[]) server[row.item_id] = row.seen_at;
+          if (data.length < 1000) break;
+        }
+        if (cancelled) return;
+        if (migrate) {
+          migrate = false;
+          const newer: Record<string, string> = {};
+          for (const [id, at] of Object.entries(local)) {
+            if (!server[id] || new Date(at).getTime() > new Date(server[id]).getTime()) newer[id] = at;
+          }
+          Object.assign(server, newer);
+          const rows = Object.entries(newer).map(([item_id, seen_at]) => ({ player_id: pid, item_id, seen_at }));
+          if (rows.length) persist("markSeen", supabase.from("read_marks").upsert(rows));
+          try {
+            localStorage.setItem(migrateKey, "1");
+          } catch {
+            /* ignore */
+          }
+        }
+        // Was hier während des Ladens geändert wurde, gewinnt (Speichern läuft noch).
+        for (const [id, e] of readEdits.current) {
+          if (e.at < started - 10_000) {
+            readEdits.current.delete(id);
+            continue;
+          }
+          if (e.at < started) continue;
+          if (e.value === null) delete server[id];
+          else server[id] = e.value;
+        }
+        setReads(server);
+        writeCache(server);
+      } finally {
+        loading = false;
       }
-      if (cancelled) return;
-      const newer: Record<string, string> = {};
-      for (const [id, at] of Object.entries(local)) {
-        if (!server[id] || new Date(at).getTime() > new Date(server[id]).getTime()) newer[id] = at;
-      }
-      setReads((r) => ({ ...server, ...newer, ...r }));
-      const rows = Object.entries(newer).map(([item_id, seen_at]) => ({ player_id: pid, item_id, seen_at }));
-      if (rows.length) persist("markSeen", supabase.from("read_marks").upsert(rows));
-    })();
+    };
+    void load();
+
+    // Live: eigene Einträge, die ein anderes Gerät setzt oder löscht.
+    // (Lösch-Ereignisse lassen sich in Supabase nicht filtern – daher selbst prüfen.)
+    const update = (fn: (r: Record<string, string>) => Record<string, string>) =>
+      setReads((r) => {
+        const next = fn(r);
+        writeCache(next);
+        return next;
+      });
+    let joined = false;
+    const channel = supabase
+      .channel(`eden-reads-${pid}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "read_marks", filter: `player_id=eq.${pid}` },
+        (p) => {
+          const row = p.new as { item_id: string; seen_at: string };
+          update((r) => ({ ...r, [row.item_id]: row.seen_at }));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "read_marks", filter: `player_id=eq.${pid}` },
+        (p) => {
+          const row = p.new as { item_id: string; seen_at: string };
+          update((r) => ({ ...r, [row.item_id]: row.seen_at }));
+        },
+      )
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "read_marks" }, (p) => {
+        const row = p.old as { player_id?: string; item_id?: string };
+        if (row.player_id !== pid || !row.item_id) return;
+        const id = row.item_id;
+        update((r) => {
+          if (!(id in r)) return r;
+          const next = { ...r };
+          delete next[id];
+          return next;
+        });
+      })
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED") return;
+        // Nach einem Verbindungsabbruch (z. B. Handy im Standby) neu abgleichen
+        if (joined) void load();
+        joined = true;
+      });
+
+    let lastLoad = Date.now();
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - lastLoad < 5_000) return;
+      lastLoad = Date.now();
+      void load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+
     return () => {
       cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+      void supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPlayer?.id]);
