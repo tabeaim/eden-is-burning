@@ -92,7 +92,7 @@ const STRETCHED = "after:absolute after:inset-0 after:content-['']";
 
 // Letzter Beitrag einer Szene und wohin er führt – bei SMS-Szenen die zuletzt
 // geschriebene Nachricht im Chat auf dem Handy.
-function useLastEntry(scene: Scene) {
+export function useLastEntry(scene: Scene) {
   const { postsOf, chatMessages } = useStore();
   if (scene.chat_id) {
     const last = newestMessage(chatMessages.filter((m) => m.scene_id === scene.id));

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { useSessionState } from "@/lib/session-state";
-import { compareInplay, formatInplayDate, formatInplayDateWeekday } from "@/lib/format";
+import { compareInplay, formatDateTimeShort, formatInplayDate, formatInplayDateWeekday } from "@/lib/format";
 import {
   AU_UNNAMED,
   areaFilterOptions,
@@ -19,7 +19,7 @@ import {
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { MultiSelect } from "@/components/MultiSelect";
-import { AuTag, SceneMatch } from "@/components/SceneCard";
+import { AuTag, SceneMatch, useLastEntry } from "@/components/SceneCard";
 import { DatePicker } from "@/components/DatePicker";
 import { PlotBar, PlotTools, plotToolBtn as smallBtn } from "@/components/PlotBar";
 import { CharacterPicker } from "@/components/CharacterPicker";
@@ -483,6 +483,7 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
   const participants = scene.participant_ids
     .map((id) => character(id))
     .filter(Boolean) as Character[];
+  const { last: lastPost, lastHref, what } = useLastEntry(scene);
 
   return (
     <div className="relative">
@@ -496,10 +497,26 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
             {formatInplayDateWeekday(scene.inplay_date)}
             {scene.inplay_time && ` · ${scene.inplay_time}`}
           </div>
-          {onRemove && (
-            <span className="relative z-10">
-              <RemoveButton onRemove={onRemove} title="Aus dem Plot entfernen" />
-            </span>
+          {(lastPost || onRemove) && (
+            <div className="flex shrink-0 items-center gap-2">
+              {/* letzter Post (Klick springt dorthin, wie in den Szenenboxen) */}
+              {lastPost && (
+                <Link
+                  href={lastHref}
+                  title="Zum neuesten Beitrag springen"
+                  className="group/last relative z-10 text-[0.8125rem] text-text-tertiary hover:text-accent"
+                >
+                  <span className="text-text-secondary group-hover/last:text-accent group-hover/last:underline">{what}</span>
+                  {" · "}
+                  <span className="group-hover/last:underline">{formatDateTimeShort(lastPost.created_at)}</span>
+                </Link>
+              )}
+              {onRemove && (
+                <span className="relative z-10">
+                  <RemoveButton onRemove={onRemove} title="Aus dem Plot entfernen" />
+                </span>
+              )}
+            </div>
           )}
         </div>
         <h3 className="mt-0.5 font-serif text-[1rem] leading-tight text-text-primary">
