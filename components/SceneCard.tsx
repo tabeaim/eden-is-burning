@@ -38,7 +38,7 @@ export function SceneMatch({ scene, size = 20 }: { scene: Scene; size?: number }
   const sms = kind === "sms";
   // Hörer und Sprechblase wirken bei gleicher Größe wuchtiger als das schlanke
   // Streichholz (Sprechblase im Verhältnis wie in der Szenenübersicht: 26 zu 38)
-  const iconSize = call ? Math.round(size * 0.8) : sms ? Math.round(size * 0.68) : size;
+  const iconSize = call ? Math.round(size * 0.7) : sms ? Math.round(size * 0.68) : size;
   return (
     <span
       title={`${call ? "Anruf · " : sms ? "SMS · " : ""}${closed ? "geschlossen" : unread ? "aktiv · neuer Post" : "aktiv"}`}
