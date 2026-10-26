@@ -40,21 +40,34 @@ export function copyFont(): { font: string; size: string; color: string } {
   }
 }
 
-// Der HTML-Import von macOS/iOS (Pages, TextEdit, Notizen) liest CSS-„px" als
-// Punkt und rechnet „pt" in px um – 11pt käme dort als 14,7 an. Auf Apple-Geräten
-// daher die Größe als px angeben, sonst (Word unter Windows) als pt.
-function appleImport(): boolean {
-  return typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.userAgent);
+// Zielprogramm (Einstellungen → Darstellung). Die beiden lesen kopiertes HTML
+// unterschiedlich:
+// - Pages (HTML-Import von macOS) liest CSS-„px" als Punkt und rechnet „pt" um –
+//   11pt käme als 14,7 an. Absätze (<p>, <div>) bringen dort eigene Abstände bzw.
+//   eine Leerzeile am Ende mit, daher nur Zeilenumbrüche (<br>) ohne Absatzangaben.
+// - Word liest pt richtig; <br> wäre dort ein weicher Zeilenumbruch, daher echte
+//   Absätze, aber ohne Abstand (margin: 0).
+export const COPY_TARGET_KEY = "eden:copy-target";
+export type CopyTarget = "pages" | "word";
+
+export function copyTarget(): CopyTarget {
+  try {
+    const v = localStorage.getItem(COPY_TARGET_KEY);
+    if (v === "pages" || v === "word") return v;
+  } catch {
+    /* ignore */
+  }
+  return typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.userAgent) ? "pages" : "word";
 }
 
-function paraStyle(): string {
+function textStyle(target: CopyTarget): string {
   const { font, size, color } = copyFont();
   const name = font.replace(/["';{}<>]/g, "").trim();
   const pt = Number(size.replace(",", "."));
   return [
     `color: ${/^#[0-9a-f]{6}$/i.test(color) ? color : COPY_DEFAULT_COLOR}`,
     name ? `font-family: '${name}'` : "",
-    pt > 0 && pt < 100 ? `font-size: ${pt}${appleImport() ? "px" : "pt"}` : "",
+    pt > 0 && pt < 100 ? `font-size: ${pt}${target === "pages" ? "px" : "pt"}` : "",
   ]
     .filter(Boolean)
     .join("; ");
@@ -164,10 +177,15 @@ export function cleanCopy(root: HTMLElement, range?: Range | null): { html: stri
       : wrap(r, (t) => `<${t}>`, (t) => `</${t}>`, escapeHtml(r.text));
   const runText = (r: Run) => (asTags ? wrap(r, (t) => `<${t}>`, (t) => `</${t}>`, r.text) : r.text);
 
-  const style = escapeHtml(paraStyle()).replace(/"/g, "&quot;");
-  const html = merged
-    .map((p) => `<p style="${style}">${p ? p.map(runHtml).join("") : "&nbsp;"}</p>`)
-    .join("");
+  const target = copyTarget();
+  const style = escapeHtml(textStyle(target)).replace(/"/g, "&quot;");
+  const lines = merged.map((p) => (p ? p.map(runHtml).join("") : ""));
+  // Zeichensatz mitgeben: ohne liest der macOS-Import Umlaute als Latin-1
+  const html =
+    '<meta charset="utf-8">' +
+    (target === "pages"
+      ? `<span style="${style}">${lines.join("<br>")}</span>`
+      : lines.map((l) => `<p style="margin: 0; ${style}">${l || "&nbsp;"}</p>`).join(""));
   const text = merged.map((p) => (p ? p.map(runText).join("") : "")).join("\n");
   return { html, text };
 }

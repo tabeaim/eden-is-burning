@@ -2,7 +2,7 @@
 
 import { playerImage } from "@/lib/avatar";
 import { capFirst } from "@/lib/format";
-import { COPY_COLOR_KEY, COPY_DEFAULT_COLOR, COPY_FONT_KEY, COPY_SIZE_KEY, COPY_TAGS_KEY, copyAsTags, copyFont } from "@/lib/cleanCopy";
+import { COPY_COLOR_KEY, COPY_DEFAULT_COLOR, COPY_FONT_KEY, COPY_SIZE_KEY, COPY_TAGS_KEY, COPY_TARGET_KEY, copyAsTags, copyFont, copyTarget, type CopyTarget } from "@/lib/cleanCopy";
 import { BannerPosition } from "@/components/BannerPosition";
 import { bannerStyle } from "@/lib/headers";
 import { characterImage } from "@/lib/avatar";
@@ -467,6 +467,7 @@ function CopyFontSetting() {
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");
   const [tags, setTags] = useState(true);
+  const [target, setTarget] = useState<CopyTarget>("pages");
   useEffect(() => {
     const f = copyFont();
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -474,6 +475,7 @@ function CopyFontSetting() {
     setSize(f.size);
     setColor(f.color);
     setTags(copyAsTags());
+    setTarget(copyTarget());
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
   function save(key: string, value: string) {
@@ -487,6 +489,32 @@ function CopyFontSetting() {
   return (
     <div>
       <div className="text-[0.875rem] text-text-secondary mb-1">Schrift beim Kopieren von Posts</div>
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="text-[0.8125rem] text-text-tertiary">Einfügen in</span>
+        {(
+          [
+            ["pages", "Pages"],
+            ["word", "Word"],
+          ] as const
+        ).map(([key, name]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => {
+              setTarget(key);
+              save(COPY_TARGET_KEY, key);
+            }}
+            aria-pressed={target === key}
+            className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
+              target === key
+                ? "bg-accent text-black font-medium"
+                : "bg-white/[0.04] text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            {name}
+          </button>
+        ))}
+      </div>
       <div className="flex flex-wrap items-center gap-2">
         <input
           value={font}
@@ -535,7 +563,8 @@ function CopyFontSetting() {
       <p className="mt-1 text-[0.8125rem] text-text-tertiary">
         Kopierte Posts kommen in Pages oder Word in dieser Schrift und Farbe an, mit Kursiv und Fett. Der
         Name muss so heißen wie im Schriftmenü deines Programms. Ohne Schrift nimmt das Programm seine
-        Standardschrift (bei Pages Times), ohne Farbe Schwarz. Gilt nur auf diesem Gerät.
+        Standardschrift (bei Pages Times), ohne Farbe Schwarz. Pages und Word lesen Größe und Absätze
+        unterschiedlich – wähl oben, wohin du einfügst. Gilt nur auf diesem Gerät.
       </p>
       <div className="mt-3">
         <Toggle
