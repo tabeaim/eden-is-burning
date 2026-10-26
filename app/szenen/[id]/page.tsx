@@ -409,7 +409,7 @@ export default function ScenePage({
               <Icon name="message" size={14} /> Antworten
             </button>
           )}
-          {myTurn && scene.participant_ids.length > 2 && (
+          {(myTurn || (store.isAdmin && !!turnId)) && scene.participant_ids.length > 2 && (
             <button onClick={passTurn} className={actionBtn} title="Zug weitergeben">
               <Icon name="arrow-right" size={14} /> Weitergeben
             </button>
@@ -567,7 +567,8 @@ function SceneHeader({
                 <Icon name="message" size={14} /> Antworten
               </button>
             )}
-            {scene.status === "active" && myTurn && scene.participant_ids.length > 2 && (
+            {/* Admins dürfen den Zug auch weitergeben, wenn gerade jemand anderes dran ist */}
+            {scene.status === "active" && (myTurn || (isAdmin && !!activeCharId)) && scene.participant_ids.length > 2 && (
               <button onClick={onPassTurn} className={`max-md:hidden ${btn}`} title="Zug weitergeben">
                 <Icon name="arrow-right" size={14} /> Weitergeben
               </button>
