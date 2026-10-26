@@ -466,7 +466,7 @@ function CopyFontSetting() {
   const [font, setFont] = useState("");
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");
-  const [tags, setTags] = useState(false);
+  const [tags, setTags] = useState(true);
   useEffect(() => {
     const f = copyFont();
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -542,7 +542,7 @@ function CopyFontSetting() {
           checked={tags}
           onChange={(on) => {
             setTags(on);
-            save(COPY_TAGS_KEY, on ? "1" : "");
+            save(COPY_TAGS_KEY, on ? "1" : "0");
           }}
         >
           Formatierung als HTML-Tags mitkopieren{" "}

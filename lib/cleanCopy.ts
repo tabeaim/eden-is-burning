@@ -16,14 +16,15 @@ export const COPY_FONT_KEY = "eden:copy-font";
 export const COPY_SIZE_KEY = "eden:copy-size";
 export const COPY_COLOR_KEY = "eden:copy-color";
 export const COPY_DEFAULT_COLOR = "#000000";
-// Formatierung als sichtbare HTML-Tags in den Text schreiben („<i>Wort</i>")
+// Formatierung als sichtbare HTML-Tags in den Text schreiben („<i>Wort</i>") –
+// Standard; nur ein ausdrückliches „0" (Schalter aus) schaltet es ab
 export const COPY_TAGS_KEY = "eden:copy-tags";
 
 export function copyAsTags(): boolean {
   try {
-    return localStorage.getItem(COPY_TAGS_KEY) === "1";
+    return localStorage.getItem(COPY_TAGS_KEY) !== "0";
   } catch {
-    return false;
+    return true;
   }
 }
 
