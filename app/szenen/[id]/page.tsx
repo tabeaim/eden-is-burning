@@ -842,15 +842,16 @@ function PostRow({
           dangerouslySetInnerHTML={html}
         />
       )}
-      {/* Signatur des Charakters (Einstellungen → Meine Charaktere): Text und/oder Bild */}
-      {character.profile?.signature_text && (
+      {/* Signatur des Charakters (Einstellungen → Meine Charaktere): Text und/oder Bild.
+          Bei Drehbuch-Posts nicht – da spricht nicht ein Charakter allein. */}
+      {!script && character.profile?.signature_text && (
         <SignatureText
           html={character.profile.signature_text}
           align={character.profile.signature_align}
           className="post-signature mt-6 select-none"
         />
       )}
-      {character.profile?.signature_url && (
+      {!script && character.profile?.signature_url && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={character.profile.signature_url}

@@ -78,7 +78,6 @@ export default function CharacterPage({
   const {
     character,
     player,
-    characters,
     scenes,
     smsScenes,
     postsOf,
@@ -144,13 +143,18 @@ export default function CharacterPage({
   // Reiter „Scenes": gespielte Szenen, Anrufe und SMS-Szenen
   const profileScenes = [...inScenes, ...smsScenes.filter((s) => s.participant_ids.includes(c.id))];
 
-  // Mitspieler-Charaktere (für RELATIONS) aus gemeinsamen Szenen
+  // Mitspieler-Charaktere (für RELATIONS) aus gemeinsamen Szenen – auch Supporting
+  // Characters; Statist*innen und Charaktere im Papierkorb nicht
   const coCharIds = new Set<string>();
   for (const s of inScenes)
     for (const pid of s.participant_ids) if (pid !== c.id) coCharIds.add(pid);
+  // SCs posten oft, ohne fest in der Szene eingetragen zu sein
+  const inSceneIds = new Set(inScenes.map((s) => s.id));
+  for (const p of posts)
+    if (p.character_id && p.character_id !== c.id && inSceneIds.has(p.scene_id)) coCharIds.add(p.character_id);
   const coChars = Array.from(coCharIds)
-    .map((cid) => characters.find((x) => x.id === cid))
-    .filter(Boolean) as Character[];
+    .map((cid) => character(cid))
+    .filter((x): x is Character => !!x && !x.deleted_at && tierOf(x) !== "extra");
 
   // Reiter ohne Inhalt werden nicht angezeigt (noch nichts eingetragen / vorhanden)
   const topTabs: [TopTab, string][] = [

@@ -1705,11 +1705,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     void refresh();
   }, [refresh]);
 
+  // Gelesen-Zeitpunkt nie vor dem neuesten Post: Posts tragen die Uhrzeit des
+  // schreibenden Geräts, „gelesen" die des lesenden. Geht eine Uhr ein paar
+  // Sekunden nach, bliebe eine gerade gelesene Szene sonst (auf allen Geräten) neu.
+  const seenStamp = useCallback(
+    (sceneId: string) => {
+      const now = Date.now();
+      const last = postIndex.newest.get(sceneId);
+      const lastAt = last ? new Date(last).getTime() : 0;
+      return new Date(Math.max(now, lastAt)).toISOString();
+    },
+    [postIndex],
+  );
+
   const markSceneSeen = useCallback(
     (sceneId: string) => {
-      if (myPlayerId) applyReads(myPlayerId, { [sceneId]: new Date().toISOString() });
+      if (myPlayerId) applyReads(myPlayerId, { [sceneId]: seenStamp(sceneId) });
     },
-    [myPlayerId, applyReads],
+    [myPlayerId, applyReads, seenStamp],
   );
 
   const markSceneUnread = useCallback(
@@ -1721,19 +1734,36 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const markAllScenesSeen = useCallback(() => {
     if (!myPlayerId) return;
-    const now = new Date().toISOString();
-    applyReads(myPlayerId, Object.fromEntries(state.scenes.map((s) => [s.id, now])));
-  }, [myPlayerId, applyReads, state.scenes]);
+    applyReads(myPlayerId, Object.fromEntries(state.scenes.map((s) => [s.id, seenStamp(s.id)])));
+  }, [myPlayerId, applyReads, state.scenes, seenStamp]);
+
+  // Jüngster Post je Szene, der nicht von mir stammt (eigene Charaktere und
+  // Nebenfiguren, die ich bespiele): Eigene Posts machen eine Szene nicht „neu" –
+  // sonst klingelte es beim Posten, v. a. auf dem jeweils anderen Gerät.
+  const newestForeign = useMemo(() => {
+    const mine = new Set<string>();
+    if (currentPlayer) {
+      for (const c of playable) if (c.player_id === currentPlayer.id) mine.add(c.id);
+      for (const c of myNpcs) mine.add(c.id);
+    }
+    const out = new Map<string, number>();
+    for (const p of state.posts) {
+      if (mine.has(p.character_id)) continue;
+      const t = new Date(p.created_at).getTime();
+      if (t > (out.get(p.scene_id) ?? 0)) out.set(p.scene_id, t);
+    }
+    return out;
+  }, [state.posts, playable, myNpcs, currentPlayer]);
 
   const isSceneNew = useCallback(
     (sceneId: string) => {
       if (!currentPlayer) return false;
-      const last = postIndex.newest.get(sceneId);
+      const last = newestForeign.get(sceneId);
       if (!last) return false;
       const ref = reads[sceneId] ? new Date(reads[sceneId]).getTime() : 0;
-      return new Date(last).getTime() > ref;
+      return last > ref;
     },
-    [postIndex, reads, currentPlayer?.id],
+    [newestForeign, reads, currentPlayer?.id],
   );
 
   // --- Messenger -------------------------------------------------------------
