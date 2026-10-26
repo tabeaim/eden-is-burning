@@ -2,7 +2,6 @@
 
 import { playerImage } from "@/lib/avatar";
 import { capFirst } from "@/lib/format";
-import { COPY_FONT_KEY, COPY_SIZE_KEY, copyFont } from "@/lib/cleanCopy";
 import { BannerPosition } from "@/components/BannerPosition";
 import { bannerStyle } from "@/lib/headers";
 import { characterImage } from "@/lib/avatar";
@@ -424,8 +423,6 @@ function AppearanceTab() {
         </p>
       </div>
 
-      <CopyFontSetting />
-
       {/* Farbmodus */}
       <div>
         <div className="text-[0.875rem] text-text-secondary mb-2">Farbmodus</div>
@@ -457,58 +454,6 @@ function AppearanceTab() {
         </div>
       </div>
 
-    </div>
-  );
-}
-
-// Schrift, mit der kopierte Posts in Pages/Word ankommen (nur dieses Gerät)
-function CopyFontSetting() {
-  const [font, setFont] = useState("");
-  const [size, setSize] = useState("");
-  useEffect(() => {
-    const f = copyFont();
-    /* eslint-disable react-hooks/set-state-in-effect */
-    setFont(f.font);
-    setSize(f.size);
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, []);
-  function save(key: string, value: string) {
-    try {
-      if (value.trim()) localStorage.setItem(key, value.trim());
-      else localStorage.removeItem(key);
-    } catch {
-      /* ignore */
-    }
-  }
-  return (
-    <div>
-      <div className="text-[0.875rem] text-text-secondary mb-1">Schrift beim Kopieren von Posts</div>
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          value={font}
-          onChange={(e) => {
-            setFont(e.target.value);
-            save(COPY_FONT_KEY, e.target.value);
-          }}
-          placeholder="z. B. Helvetica Neue"
-          className={`${field} max-w-xs`}
-        />
-        <input
-          value={size}
-          inputMode="decimal"
-          onChange={(e) => {
-            setSize(e.target.value);
-            save(COPY_SIZE_KEY, e.target.value);
-          }}
-          placeholder="Größe (pt)"
-          className={`${field} w-28`}
-        />
-      </div>
-      <p className="mt-1 text-[0.8125rem] text-text-tertiary">
-        Kopierte Posts kommen in Pages oder Word in dieser Schrift an, mit Kursiv und Fett. Der Name muss so
-        heißen wie im Schriftmenü deines Programms. Leer lassen: Das Programm nimmt seine Standardschrift
-        (bei Pages Times). Gilt nur auf diesem Gerät.
-      </p>
     </div>
   );
 }
