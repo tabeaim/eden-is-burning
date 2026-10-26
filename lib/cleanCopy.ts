@@ -1,12 +1,13 @@
 // Kopieren für Word, Pages & Co.: aus dem angezeigten Post nur Absätze, Kursiv und
 // Fett übernehmen – keine Schriftart, Größe oder Farbe aus dem Forum, sondern
 // Schwarz und die eingestellte Kopier-Schrift (siehe unten).
+// Auf Wunsch stehen die Hervorhebungen stattdessen als sichtbare Tags im Text.
 // Kursiv/Fett wird an der Darstellung abgelesen (getComputedStyle), damit auch
 // Stellen zählen, die im Forum per Stilangabe statt per <i>/<em> gesetzt waren.
 
 import { escapeHtml } from "./format";
 
-type Run = { text: string; i: boolean; b: boolean };
+type Run = { text: string; i: boolean; b: boolean; u: boolean; s: boolean };
 
 // Schrift, Größe und Farbe fürs Zieldokument (Einstellungen → Darstellung), nur
 // auf diesem Gerät. Pages nimmt ohne Angabe Times und färbt den Text im dunklen
@@ -15,6 +16,16 @@ export const COPY_FONT_KEY = "eden:copy-font";
 export const COPY_SIZE_KEY = "eden:copy-size";
 export const COPY_COLOR_KEY = "eden:copy-color";
 export const COPY_DEFAULT_COLOR = "#000000";
+// Formatierung als sichtbare HTML-Tags in den Text schreiben („<i>Wort</i>")
+export const COPY_TAGS_KEY = "eden:copy-tags";
+
+export function copyAsTags(): boolean {
+  try {
+    return localStorage.getItem(COPY_TAGS_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 export function copyFont(): { font: string; size: string; color: string } {
   try {
@@ -71,11 +82,23 @@ export function cleanCopy(root: HTMLElement, range?: Range | null): { html: stri
       if (!text) return;
       if (!text.trim() && cur.length === 0) return; // Einrückungs-Leerraum am Absatzanfang
       flushBreaks();
-      const st = getComputedStyle(node.parentElement ?? root);
+      const parent = node.parentElement ?? root;
+      const st = getComputedStyle(parent);
+      // Unter-/Durchstreichung erbt sich nicht im berechneten Stil – Vorfahren prüfen
+      let u = false;
+      let s = false;
+      for (let el: HTMLElement | null = parent; el && root.contains(el); el = el.parentElement) {
+        const line = getComputedStyle(el).textDecorationLine;
+        if (line.includes("underline")) u = true;
+        if (line.includes("line-through")) s = true;
+        if (el === root) break;
+      }
       cur.push({
         text: text.replace(/\s+/g, " "),
         i: st.fontStyle === "italic" || st.fontStyle.startsWith("oblique"),
         b: (Number(st.fontWeight) || 400) >= Math.max(600, baseWeight + 200),
+        u,
+        s,
       });
       return;
     }
@@ -101,16 +124,42 @@ export function cleanCopy(root: HTMLElement, range?: Range | null): { html: stri
   endPara();
   while (paras.length && paras[paras.length - 1] === null) paras.pop();
 
-  const runHtml = (r: Run) => {
-    let h = escapeHtml(r.text);
-    if (r.b) h = `<b>${h}</b>`;
-    if (r.i) h = `<i>${h}</i>`;
-    return h;
+  // Nachbarstücke mit gleicher Formatierung zusammenlegen (sonst „<i>a</i><i>b</i>")
+  const same = (a: Run, b: Run) => a.i === b.i && a.b === b.b && a.u === b.u && a.s === b.s;
+  const merged = paras.map((p) => {
+    if (!p) return p;
+    const out: Run[] = [];
+    for (const r of p) {
+      const last = out[out.length - 1];
+      if (last && same(last, r)) last.text += r.text;
+      else out.push({ ...r });
+    }
+    if (out.length) {
+      out[0].text = out[0].text.trimStart();
+      out[out.length - 1].text = out[out.length - 1].text.trimEnd();
+    }
+    return out;
+  });
+
+  // Leerzeichen am Rand bleiben außerhalb der Tags: „<i>Wort</i> " statt „<i>Wort </i>"
+  const wrap = (r: Run, open: (t: string) => string, close: (t: string) => string, body: string) => {
+    const tags = (["b", "i", "u", "s"] as const).filter((t) => r[t]);
+    if (!tags.length || !body.trim()) return body;
+    const [, lead, core, trail] = body.match(/^(\s*)([\s\S]*?)(\s*)$/)!;
+    return lead + tags.map(open).join("") + core + [...tags].reverse().map(close).join("") + trail;
   };
+  const asTags = copyAsTags();
+  // Sichtbare Tags: im Text steht „<i>“ – im HTML also maskiert
+  const runHtml = (r: Run) =>
+    asTags
+      ? escapeHtml(wrap(r, (t) => `<${t}>`, (t) => `</${t}>`, r.text))
+      : wrap(r, (t) => `<${t}>`, (t) => `</${t}>`, escapeHtml(r.text));
+  const runText = (r: Run) => (asTags ? wrap(r, (t) => `<${t}>`, (t) => `</${t}>`, r.text) : r.text);
+
   const style = escapeHtml(paraStyle()).replace(/"/g, "&quot;");
-  const html = paras
-    .map((p) => `<p style="${style}">${p ? p.map(runHtml).join("").trim() : "&nbsp;"}</p>`)
+  const html = merged
+    .map((p) => `<p style="${style}">${p ? p.map(runHtml).join("") : "&nbsp;"}</p>`)
     .join("");
-  const text = paras.map((p) => (p ? p.map((r) => r.text).join("").trim() : "")).join("\n");
+  const text = merged.map((p) => (p ? p.map(runText).join("") : "")).join("\n");
   return { html, text };
 }

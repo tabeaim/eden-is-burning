@@ -2,7 +2,7 @@
 
 import { playerImage } from "@/lib/avatar";
 import { capFirst } from "@/lib/format";
-import { COPY_COLOR_KEY, COPY_DEFAULT_COLOR, COPY_FONT_KEY, COPY_SIZE_KEY, copyFont } from "@/lib/cleanCopy";
+import { COPY_COLOR_KEY, COPY_DEFAULT_COLOR, COPY_FONT_KEY, COPY_SIZE_KEY, COPY_TAGS_KEY, copyAsTags, copyFont } from "@/lib/cleanCopy";
 import { BannerPosition } from "@/components/BannerPosition";
 import { bannerStyle } from "@/lib/headers";
 import { characterImage } from "@/lib/avatar";
@@ -466,12 +466,14 @@ function CopyFontSetting() {
   const [font, setFont] = useState("");
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");
+  const [tags, setTags] = useState(false);
   useEffect(() => {
     const f = copyFont();
     /* eslint-disable react-hooks/set-state-in-effect */
     setFont(f.font);
     setSize(f.size);
     setColor(f.color);
+    setTags(copyAsTags());
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
   function save(key: string, value: string) {
@@ -535,6 +537,21 @@ function CopyFontSetting() {
         Name muss so heißen wie im Schriftmenü deines Programms. Ohne Schrift nimmt das Programm seine
         Standardschrift (bei Pages Times), ohne Farbe Schwarz. Gilt nur auf diesem Gerät.
       </p>
+      <div className="mt-3">
+        <Toggle
+          checked={tags}
+          onChange={(on) => {
+            setTags(on);
+            save(COPY_TAGS_KEY, on ? "1" : "");
+          }}
+        >
+          Formatierung als HTML-Tags mitkopieren{" "}
+          <span className="text-text-tertiary">
+            (Kursiv, Fett, Unterstrichen und Durchgestrichen stehen dann sichtbar als &lt;i&gt;…&lt;/i&gt;,
+            &lt;b&gt;…&lt;/b&gt;, &lt;u&gt;…&lt;/u&gt;, &lt;s&gt;…&lt;/s&gt; im Text)
+          </span>
+        </Toggle>
+      </div>
     </div>
   );
 }
