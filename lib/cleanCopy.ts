@@ -1,12 +1,42 @@
-// Kopieren für Word & Co.: aus dem angezeigten Post nur Absätze, Kursiv und Fett
-// übernehmen – keine Schriftart, Größe oder Farbe aus dem Forum. So nimmt das
-// Zieldokument seine eigene Schrift, die Hervorhebungen bleiben aber erhalten.
+// Kopieren für Word, Pages & Co.: aus dem angezeigten Post nur Absätze, Kursiv und
+// Fett übernehmen – keine Schriftart, Größe oder Farbe aus dem Forum, sondern
+// Schwarz und die eingestellte Kopier-Schrift (siehe unten).
 // Kursiv/Fett wird an der Darstellung abgelesen (getComputedStyle), damit auch
 // Stellen zählen, die im Forum per Stilangabe statt per <i>/<em> gesetzt waren.
 
 import { escapeHtml } from "./format";
 
 type Run = { text: string; i: boolean; b: boolean };
+
+// Schrift fürs Zieldokument (Einstellungen → Darstellung), nur auf diesem Gerät.
+// Pages nimmt ohne Angabe Times und färbt den Text im dunklen Modus weiß –
+// daher immer Schwarz und, wenn eingestellt, die eigene Schrift mitgeben.
+export const COPY_FONT_KEY = "eden:copy-font";
+export const COPY_SIZE_KEY = "eden:copy-size";
+
+export function copyFont(): { font: string; size: string } {
+  try {
+    return {
+      font: localStorage.getItem(COPY_FONT_KEY) ?? "",
+      size: localStorage.getItem(COPY_SIZE_KEY) ?? "",
+    };
+  } catch {
+    return { font: "", size: "" };
+  }
+}
+
+function paraStyle(): string {
+  const { font, size } = copyFont();
+  const name = font.replace(/["';{}<>]/g, "").trim();
+  const pt = Number(size.replace(",", "."));
+  return [
+    "color: #000000",
+    name ? `font-family: '${name}'` : "",
+    pt > 0 && pt < 100 ? `font-size: ${pt}pt` : "",
+  ]
+    .filter(Boolean)
+    .join("; ");
+}
 
 const BLOCK = /^(block|list-item|table|table-row|table-cell|flex|grid)$/;
 
@@ -74,8 +104,9 @@ export function cleanCopy(root: HTMLElement, range?: Range | null): { html: stri
     if (r.i) h = `<i>${h}</i>`;
     return h;
   };
+  const style = escapeHtml(paraStyle()).replace(/"/g, "&quot;");
   const html = paras
-    .map((p) => (p ? `<p>${p.map(runHtml).join("").trim()}</p>` : "<p>&nbsp;</p>"))
+    .map((p) => `<p style="${style}">${p ? p.map(runHtml).join("").trim() : "&nbsp;"}</p>`)
     .join("");
   const text = paras.map((p) => (p ? p.map((r) => r.text).join("").trim() : "")).join("\n");
   return { html, text };
