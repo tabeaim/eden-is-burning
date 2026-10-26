@@ -1,6 +1,7 @@
 "use client";
 
 import { ScriptEditor, ScriptView, useScriptViewer, useSpeaker } from "@/components/Script";
+import { cleanCopy } from "@/lib/cleanCopy";
 import { isScript, parseScript, scriptPlain, serializeScript, type ScriptLine } from "@/lib/script";
 import { useOpenPlace } from "@/components/LocationCategoryPicker";
 import { useMyPhone } from "@/components/phone/PhoneFrame";
@@ -715,15 +716,33 @@ function PostRow({
   // Avatare/Signaturen ein-/ausklappen (Zustand liegt auf der Szenenseite)
   const avatars = useContext(SceneAvatarToggle);
 
-  // Ganzen Post samt Formatierung kopieren – so, wie er im Editor steht
+  // Ganzen Post kopieren: nur Absätze, Kursiv und Fett – ohne Schriftart, Größe
+  // und Farbe, damit Word & Co. die eigene Schrift nehmen (siehe lib/cleanCopy.ts)
   async function copy() {
     const plain = script ? scriptPlain(script, (l) => speaker(l).name) : "";
+    const clean = !script && proseRef.current ? cleanCopy(proseRef.current) : null;
     const ok = script
       ? await copyRich(plain.split("\n").map((l) => `<p>${escapeHtml(l)}</p>`).join(""), plain)
-      : await copyRich(renderPost(post.content), proseRef.current?.innerText ?? "");
+      : clean
+        ? await copyRich(clean.html, clean.text)
+        : await copyRich(renderPost(post.content), "");
     if (!ok) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  }
+
+  // Markierten Text normal kopieren (Cmd+C / Rechtsklick): ebenfalls bereinigt
+  function onCopy(e: React.ClipboardEvent) {
+    const root = proseRef.current;
+    const sel = window.getSelection();
+    if (script || !root || !sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    if (!root.contains(range.commonAncestorContainer)) return; // über mehrere Posts: wie gehabt
+    const { html, text } = cleanCopy(root, range);
+    if (!text) return;
+    e.preventDefault();
+    e.clipboardData.setData("text/html", html);
+    e.clipboardData.setData("text/plain", text);
   }
 
   // Bei Textauswahl im Post „Zitat hinzufügen" anbieten. Die Auswahl selbst bleibt
@@ -830,6 +849,7 @@ function PostRow({
       ref={wrapRef}
       className="post-box relative flex-1 min-w-0 select-text"
       onMouseUp={onMouseUp}
+      onCopy={onCopy}
     >
       {script ? (
         <div ref={proseRef}>
@@ -908,7 +928,7 @@ function PostRow({
           )}
           <button
             onClick={copy}
-            title={copied ? "Kopiert" : "Post kopieren (mit Formatierung)"}
+            title={copied ? "Kopiert" : "Post kopieren (Absätze, Kursiv, Fett – ohne Schriftart)"}
             aria-label="Post kopieren"
             className={`rounded p-1 hover:bg-white/[0.06] hover:text-accent ${copied ? "text-accent" : "text-text-tertiary"}`}
           >
