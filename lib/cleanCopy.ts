@@ -40,6 +40,13 @@ export function copyFont(): { font: string; size: string; color: string } {
   }
 }
 
+// Der HTML-Import von macOS/iOS (Pages, TextEdit, Notizen) liest CSS-„px" als
+// Punkt und rechnet „pt" in px um – 11pt käme dort als 14,7 an. Auf Apple-Geräten
+// daher die Größe als px angeben, sonst (Word unter Windows) als pt.
+function appleImport(): boolean {
+  return typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.userAgent);
+}
+
 function paraStyle(): string {
   const { font, size, color } = copyFont();
   const name = font.replace(/["';{}<>]/g, "").trim();
@@ -47,7 +54,7 @@ function paraStyle(): string {
   return [
     `color: ${/^#[0-9a-f]{6}$/i.test(color) ? color : COPY_DEFAULT_COLOR}`,
     name ? `font-family: '${name}'` : "",
-    pt > 0 && pt < 100 ? `font-size: ${pt}pt` : "",
+    pt > 0 && pt < 100 ? `font-size: ${pt}${appleImport() ? "px" : "pt"}` : "",
   ]
     .filter(Boolean)
     .join("; ");
