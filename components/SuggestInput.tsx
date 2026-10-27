@@ -18,6 +18,8 @@ export function SuggestInput({
   createLabel,
   placeholder,
   className = "",
+  inputClassName = "w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20",
+  maxLength,
 }: {
   value: string;
   onChange: (text: string) => void;
@@ -26,6 +28,8 @@ export function SuggestInput({
   createLabel?: string | null; // z.B. „Neuen Ort „X" erstellen" – nur wenn neu
   placeholder?: string;
   className?: string;
+  inputClassName?: string; // eigenes Feld-Styling (z. B. im Handy)
+  maxLength?: number;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -53,8 +57,9 @@ export function SuggestInput({
         onFocus={() => setOpen(true)}
         onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
         placeholder={placeholder}
+        maxLength={maxLength}
         autoComplete="off"
-        className="w-full bg-bg-primary border border-border-subtle rounded-md px-3 py-2 text-[0.875rem] text-text-primary outline-none focus:border-white/20"
+        className={inputClassName}
       />
       {show && (
         <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-border-subtle bg-bg-surface-2 p-1 shadow-xl">

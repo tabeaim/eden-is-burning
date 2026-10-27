@@ -16,6 +16,7 @@ import { capticHandle, parseCount } from "@/lib/captic";
 import { Icon } from "@/components/Icon";
 import { CropDialog } from "@/components/CropDialog";
 import { DatePicker } from "@/components/DatePicker";
+import { SuggestInput } from "@/components/SuggestInput";
 import { EmojiPicker } from "../EmojiPicker";
 import { GifPicker } from "../GifPicker";
 import { CapticAvatar } from "./CapticAvatar";
@@ -64,6 +65,13 @@ export function CapticCompose({
   const [likes, setLikes] = useState(post ? String(post.likes) : "");
   const [date, setDate] = useState(post?.inplay_date ?? "");
   const [place, setPlace] = useState(post?.location ?? "");
+  // Orts-Vorschläge beim Tippen (eigene Liste statt der Browser-Vorschläge)
+  const placeQuery = place.trim().toLowerCase();
+  const placeHits = placeQuery
+    ? locations
+        .filter((l) => l.name.toLowerCase().includes(placeQuery) && l.name.toLowerCase() !== placeQuery)
+        .slice(0, 6)
+    : [];
   // Markierungen auf dem Bild: erst die Stelle antippen, dann das Profil wählen
   const [tags, setTags] = useState<CapticTag[]>(post?.tags ?? []);
   const [tagging, setTagging] = useState(false);
@@ -432,21 +440,18 @@ export function CapticCompose({
         {panel === "emoji" && <EmojiPicker onPick={insertEmoji} />}
         {!story && (
           <>
-            <label className={label}>
+            <div className={label}>
               Ort (optional)
-              <input
+              <SuggestInput
+                className="mt-1"
+                inputClassName={capticField}
                 value={place}
-                onChange={(e) => setPlace(e.target.value)}
+                onChange={setPlace}
                 maxLength={60}
-                list="captic-places"
-                className={`mt-1 ${capticField}`}
+                suggestions={placeHits.map((l) => ({ key: l.id, label: l.name }))}
+                onPick={(id) => setPlace(locations.find((l) => l.id === id)?.name ?? place)}
               />
-              <datalist id="captic-places">
-                {locations.map((l) => (
-                  <option key={l.id} value={l.name} />
-                ))}
-              </datalist>
-            </label>
+            </div>
             <label className={label}>
               Likes
               <input

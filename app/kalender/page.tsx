@@ -21,6 +21,8 @@ import { Icon } from "@/components/Icon";
 import { MultiSelect } from "@/components/MultiSelect";
 import { AuTag, SceneMatch, useLastEntry } from "@/components/SceneCard";
 import { DatePicker } from "@/components/DatePicker";
+import { SuggestInput } from "@/components/SuggestInput";
+import { areaName } from "@/lib/world";
 import { PlotBar, PlotTools, plotToolBtn as smallBtn } from "@/components/PlotBar";
 import { AuTools } from "@/components/AuTools";
 import { CharacterPicker } from "@/components/CharacterPicker";
@@ -692,9 +694,14 @@ function OffSceneForm({
   const [summary, setSummary] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const { locations } = useStore();
-  const locationNames = Array.from(new Set(locations.map((l) => l.name))).sort((a, b) =>
-    a.localeCompare(b, "de"),
-  );
+  // Vorschläge beim Tippen (wie überall, siehe DESIGN.md); ein neuer Name bleibt einfach stehen
+  const q = location.trim().toLowerCase();
+  const locationHits = q
+    ? locations
+        .filter((l) => l.name.toLowerCase().includes(q) && l.name.toLowerCase() !== q)
+        .sort((a, b) => a.name.localeCompare(b.name, "de"))
+        .slice(0, 8)
+    : [];
   const valid = title.trim() && date;
 
   function submit() {
@@ -720,21 +727,17 @@ function OffSceneForm({
           Titel <span className="text-accent">*</span>
           <input value={title} onChange={(e) => setTitle(e.target.value)} autoFocus className={`mt-1 ${field}`} />
         </label>
-        <label className="text-[0.875rem] text-text-secondary">
+        <div className="text-[0.875rem] text-text-secondary">
           Ort
-          <input
+          <SuggestInput
+            className="mt-1"
             value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            list="off-scene-locations"
+            onChange={setLocation}
             placeholder="Vorhandenen Ort wählen oder neu eintippen"
-            className={`mt-1 ${field}`}
+            suggestions={locationHits.map((l) => ({ key: l.id, label: l.name, hint: areaName(l.area) }))}
+            onPick={(id) => setLocation(locations.find((l) => l.id === id)?.name ?? location)}
           />
-          <datalist id="off-scene-locations">
-            {locationNames.map((n) => (
-              <option key={n} value={n} />
-            ))}
-          </datalist>
-        </label>
+        </div>
         <div className="text-[0.875rem] text-text-secondary">
           Datum <span className="text-accent">*</span>
           <DatePicker value={date} onChange={setDate} className="mt-1" />
