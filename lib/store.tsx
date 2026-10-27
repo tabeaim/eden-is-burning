@@ -139,6 +139,12 @@ interface StoreValue extends PersistedState {
   updatePlot: (id: string, patch: Partial<Plot>) => void;
   deletePlot: (id: string) => void;
   canEditPlot: (plot: Plot) => boolean;
+  // AUs umbenennen/löschen (Admins und Beteiligte, siehe supabase/schema-au-manage.sql).
+  // Umbenennen auf einen vorhandenen Namen legt die AUs zusammen; Löschen lässt die
+  // Szenen als AU ohne Namen stehen.
+  canManageAu: (name: string) => boolean;
+  renameAu: (oldName: string, newName: string) => Promise<{ error: string | null }>;
+  deleteAu: (name: string) => Promise<{ error: string | null }>;
   updateCharacter: (id: string, patch: Partial<Character>) => void;
   addCharacter: (playerId: string, name: string, more?: Partial<Character>) => string;
   // Papierkorb: Charakter verschwindet aus allen Listen, bleibt aber erhalten
@@ -1659,6 +1665,50 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({ ...s, plots: s.plots.filter((p) => p.id !== id) }));
   }, []);
 
+  // --- AUs -------------------------------------------------------------------
+  // Darf: Admin, wer einen Charakter in einer (SMS-)Szene des AUs hat oder eine
+  // SMS-Szene des AUs angelegt hat. Die Datenbank prüft das noch einmal.
+  const canManageAu = useCallback(
+    (name: string) => {
+      if (!currentPlayer || !name) return false;
+      if (currentPlayer.is_admin) return true;
+      const mine = new Set(
+        state.characters
+          .filter((c) => c.player_id === currentPlayer.id || (c.co_owner_ids ?? []).includes(currentPlayer.id))
+          .map((c) => c.id),
+      );
+      const inScene = state.scenes.some(
+        (s) => s.au && s.au_name === name && s.participant_ids.some((id) => mine.has(id)),
+      );
+      if (inScene) return true;
+      return state.chatScenes.some((cs) => {
+        if (!cs.au || cs.au_name !== name) return false;
+        if (cs.created_by === currentPlayer.id) return true;
+        const chat = state.chats.find((c) => c.id === cs.chat_id);
+        return !!chat && chat.participant_ids.some((id) => mine.has(id));
+      });
+    },
+    [currentPlayer, state.characters, state.scenes, state.chatScenes, state.chats],
+  );
+  const renameAu = useCallback(
+    async (oldName: string, newName: string) => {
+      const { error } = await supabase.rpc("rename_au", { old_name: oldName, new_name: newName.trim() });
+      if (error) return { error: error.message };
+      await loadWorld();
+      return { error: null };
+    },
+    [loadWorld],
+  );
+  const deleteAu = useCallback(
+    async (name: string) => {
+      const { error } = await supabase.rpc("delete_au", { p_name: name });
+      if (error) return { error: error.message };
+      await loadWorld();
+      return { error: null };
+    },
+    [loadWorld],
+  );
+
   const updatePlayer = useCallback((id: string, patch: Partial<Player>) => {
     persist("updatePlayer", supabase.from("players").update(patch).eq("id", id));
     setState((s) => ({
@@ -2628,6 +2678,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updatePlot,
       deletePlot,
       canEditPlot,
+      canManageAu,
+      renameAu,
+      deleteAu,
       updateCharacter,
       addCharacter,
       deleteCharacter,
@@ -2758,6 +2811,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updatePlot,
       deletePlot,
       canEditPlot,
+      canManageAu,
+      renameAu,
+      deleteAu,
       updateCharacter,
       addCharacter,
       deleteCharacter,

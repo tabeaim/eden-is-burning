@@ -12,6 +12,7 @@ import { MultiSelect } from "@/components/MultiSelect";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import { SceneCard } from "@/components/SceneCard";
 import { PlotBar, PlotTools } from "@/components/PlotBar";
+import { AuTools } from "@/components/AuTools";
 import { areaFilterOptions, areaMatches, plotFilters, plotScenes, tokensMatch, visiblePlots } from "@/lib/plots";
 import { AU_UNNAMED, auNames } from "@/components/AuNameField";
 import type { Plot, Scene } from "@/lib/types";
@@ -49,6 +50,7 @@ export default function ScenesPage() {
     plots,
     addPlot,
     canEditPlot,
+    canManageAu,
     isAdmin,
   } = store;
 
@@ -118,6 +120,8 @@ export default function ScenesPage() {
       opts.push({ value: AU_UNNAMED, label: "Ohne Namen" });
     return opts;
   }, [scenes]);
+  // Genau ein benanntes AU gewählt: Beteiligte (und Admins) können es umbenennen/löschen
+  const auSel = aus.length === 1 && aus[0] !== AU_UNNAMED && canManageAu(aus[0]) ? aus[0] : null;
   const periodOptions = useMemo(() => {
     const set = new Set<string>();
     for (const s of scenes) set.add(s.inplay_date.slice(0, 7));
@@ -164,6 +168,7 @@ export default function ScenesPage() {
   // Geöffneter Plot: seine Szenen (eigene Filter plus von Hand ergänzte, minus
   // entfernte). Was darüber hinaus gewählt ist, grenzt weiter ein.
   const plot = plots.find((p) => p.id === plotId) ?? null;
+  const hasTools = !!auSel || (!!plot && canEditPlot(plot));
   const plotIds = plot
     ? new Set(plotScenes(plot, scenes, plotFilters(plot), character).map((s) => s.id))
     : null;
@@ -346,9 +351,10 @@ export default function ScenesPage() {
           <MultiSelect
             label="AU"
             icon="au"
+            single
             options={auOptions}
             selected={aus}
-            onToggle={(v) => toggle(aus, setAus, v)}
+            onToggle={(v) => setAus(aus.length === 1 && aus[0] === v ? [] : [v])}
             onClear={() => setAus([])}
           />
         </div>
@@ -393,17 +399,28 @@ export default function ScenesPage() {
             Filter zurücksetzen ({activeFilters})
           </button>
         )}
-        {/* Geöffneter Plot: umbenennen / löschen (wie in der Timeline) */}
-        {plot && canEditPlot(plot) && (
+        {/* Geöffneter Plot bzw. gewähltes AU: umbenennen / löschen (wie in der Timeline) */}
+        {hasTools && (
           <div className="ml-auto mr-2 flex flex-wrap items-center gap-1.5">
-            <PlotTools key={plot.id} plot={plot} onDeleted={() => togglePlot(plot)} />
+            {plot && canEditPlot(plot) && (
+              <PlotTools key={plot.id} plot={plot} onDeleted={() => togglePlot(plot)} />
+            )}
+            {auSel && (
+              <AuTools
+                key={auSel}
+                name={auSel}
+                names={auNames(scenes)}
+                onRenamed={(n) => setAus([n])}
+                onDeleted={() => setAus([])}
+              />
+            )}
           </div>
         )}
         <select
           value={sortKey}
           onChange={(e) => setSortKey(e.target.value as SortKey)}
           aria-label="Sortieren nach"
-          className={`${plot && canEditPlot(plot) ? "" : "ml-auto "}bg-bg-primary border border-border-subtle rounded-md px-2.5 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20`}
+          className={`${hasTools ? "" : "ml-auto "}bg-bg-primary border border-border-subtle rounded-md px-2.5 py-1.5 text-[0.875rem] text-text-primary outline-none focus:border-white/20`}
         >
           {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
             <option key={k} value={k} className="bg-bg-surface">

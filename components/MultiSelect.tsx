@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "./Icon";
 
-// Mehrfach-Auswahl-Dropdown mit Checkboxen
+// Mehrfach-Auswahl-Dropdown mit Checkboxen. Mit `single` nur eine Auswahl
+// (runde Marker, die Liste schließt nach dem Klick, die Taste zeigt die Wahl);
+// das Umschalten übernimmt weiter `onToggle`.
 export function MultiSelect({
   label,
   icon,
@@ -11,6 +13,7 @@ export function MultiSelect({
   selected,
   onToggle,
   onClear,
+  single = false,
 }: {
   label: string;
   icon?: IconName; // optionales Icon vor dem Label
@@ -18,6 +21,7 @@ export function MultiSelect({
   selected: string[];
   onToggle: (v: string) => void;
   onClear: () => void;
+  single?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   // Liegt die Taste weit rechts, klappt die Liste nach links auf (sonst würde der
@@ -48,8 +52,14 @@ export function MultiSelect({
         }`}
       >
         {icon && <Icon name={icon} size={14} />}
-        {label}
-        {selected.length > 0 && (
+        {single && selected.length === 1 ? (
+          <span className="max-w-[12rem] truncate">
+            {label}: {options.find((o) => o.value === selected[0])?.label ?? selected[0]}
+          </span>
+        ) : (
+          label
+        )}
+        {!single && selected.length > 0 && (
           <span className="rounded-full bg-accent text-black px-1.5 text-[0.8125rem] font-medium">
             {selected.length}
           </span>
@@ -70,11 +80,14 @@ export function MultiSelect({
             return (
               <button
                 key={o.value}
-                onClick={() => onToggle(o.value)}
+                onClick={() => {
+                  onToggle(o.value);
+                  if (single) setOpen(false);
+                }}
                 className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[0.8125rem] text-text-secondary hover:bg-white/[0.04]"
               >
                 <span
-                  className={`flex items-center justify-center w-3.5 h-3.5 rounded border text-[0.75rem] ${
+                  className={`flex items-center justify-center w-3.5 h-3.5 ${single ? "rounded-full" : "rounded"} border text-[0.75rem] ${
                     on
                       ? "bg-accent border-accent text-black"
                       : "border-border-strong"
@@ -88,7 +101,10 @@ export function MultiSelect({
           })}
           {selected.length > 0 && (
             <button
-              onClick={onClear}
+              onClick={() => {
+                onClear();
+                if (single) setOpen(false);
+              }}
               className="w-full text-left px-2 py-1.5 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
             >
               Auswahl leeren

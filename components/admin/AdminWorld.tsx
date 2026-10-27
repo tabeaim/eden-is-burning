@@ -16,6 +16,7 @@ import { Collapsible } from "../Collapsible";
 import { MultiSelect } from "../MultiSelect";
 import { CharacterBubble } from "../Bubble";
 import { auNames } from "../AuNameField";
+import { AuTools } from "../AuTools";
 import { AU_UNNAMED, areaFilterOptions } from "@/lib/plots";
 import type { Character, Location } from "@/lib/types";
 import { btn, btnDanger, btnPrimary, field, hint, row } from "./ui";
@@ -247,7 +248,8 @@ export function AdminLocations() {
 // --- Szenen & Plots ----------------------------------------------------------
 // Beide Listen sind noch einmal eingeklappt – sie werden schnell lang.
 export function AdminScenes() {
-  const { scenes, plots } = useStore();
+  const { scenes, smsScenes, plots } = useStore();
+  const auCount = auNames([...scenes, ...smsScenes]).length;
   return (
     <div className="flex flex-col gap-3">
       <Collapsible title={`Szenen (${scenes.length})`}>
@@ -256,7 +258,54 @@ export function AdminScenes() {
       <Collapsible title={`Plots (${plots.length})`}>
         <PlotList />
       </Collapsible>
+      <Collapsible title={`AUs (${auCount})`}>
+        <AuList />
+      </Collapsible>
     </div>
+  );
+}
+
+// AUs: umbenennen (auch zusammenlegen) und löschen. Ein AU ist nur der Name an
+// Szenen – die Liste ergibt sich aus den Szenen und SMS-Szenen.
+function AuList() {
+  const { scenes, smsScenes, plots, characters, npcs } = useStore();
+  const all = [...scenes, ...smsScenes];
+  const names = auNames(all);
+  const unnamed = all.filter((s) => s.au && !s.au_name).length;
+  const people = [...characters, ...npcs];
+
+  if (names.length === 0) return <p className={hint}>Noch keine benannten AUs.</p>;
+  return (
+    <>
+      {names.map((n) => {
+        const inScenes = scenes.filter((s) => s.au && s.au_name === n).length;
+        const inSms = smsScenes.filter((s) => s.au && s.au_name === n).length;
+        const versions = people.filter((c) => c.profile?.versions?.au?.[n]).length;
+        const inPlots = plots.filter((p) => p.aus.includes(n)).length;
+        const facts = [
+          inScenes > 0 && `${inScenes} ${inScenes === 1 ? "Szene" : "Szenen"}`,
+          inSms > 0 && `${inSms} ${inSms === 1 ? "SMS-Szene" : "SMS-Szenen"}`,
+          versions > 0 && `${versions} Charakter-${versions === 1 ? "Version" : "Versionen"}`,
+          inPlots > 0 && `in ${inPlots} ${inPlots === 1 ? "Plot" : "Plots"}`,
+        ].filter(Boolean);
+        return (
+          <div key={n} className={`${row} flex flex-wrap items-center gap-3 px-3 py-2.5`}>
+            <div className="min-w-0 flex-1">
+              <div className="text-[0.875rem] italic text-text-primary">{n}</div>
+              <div className="truncate text-[0.8125rem] text-text-tertiary">{facts.join(" · ")}</div>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <AuTools name={n} names={names} btnClass={btn} dangerClass={btnDanger} />
+            </div>
+          </div>
+        );
+      })}
+      <p className={hint}>
+        Umbenennen ändert den Namen überall: Szenen, SMS-Szenen, Charakter-Versionen und Plot-Filter. Wählst du den Namen
+        eines anderen AUs, werden beide zusammengelegt. Löschen lässt die Szenen als AU ohne Namen stehen
+        {unnamed > 0 ? ` (gerade ${unnamed})` : ""}.
+      </p>
+    </>
   );
 }
 

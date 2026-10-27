@@ -22,6 +22,7 @@ import { MultiSelect } from "@/components/MultiSelect";
 import { AuTag, SceneMatch, useLastEntry } from "@/components/SceneCard";
 import { DatePicker } from "@/components/DatePicker";
 import { PlotBar, PlotTools, plotToolBtn as smallBtn } from "@/components/PlotBar";
+import { AuTools } from "@/components/AuTools";
 import { CharacterPicker } from "@/components/CharacterPicker";
 import { auNames } from "@/components/AuNameField";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
@@ -58,6 +59,7 @@ export default function TimelinePage() {
     currentPlayer,
     isAdmin,
     charactersOf,
+    canManageAu,
   } = useStore();
   // Gespielte Szenen (auch Telefonszenen) und SMS-Szenen auf einem Zeitstrahl
   const scenes = useMemo(() => [...playedScenes, ...smsScenes], [playedScenes, smsScenes]);
@@ -92,6 +94,17 @@ export default function TimelinePage() {
       opts.push({ value: AU_UNNAMED, label: "Ohne Namen" });
     return opts;
   }, [scenes]);
+  // Genau ein benanntes AU gewählt: Beteiligte (und Admins) können es umbenennen/löschen
+  const auSel = aus.length === 1 && aus[0] !== AU_UNNAMED && canManageAu(aus[0]) ? aus[0] : null;
+  const auTools = auSel && (
+    <AuTools
+      key={auSel}
+      name={auSel}
+      names={auNames(scenes)}
+      onRenamed={(n) => setAus([n])}
+      onDeleted={() => setAus([])}
+    />
+  );
 
   // Sichtbare Szenen: der offene Plot bringt seine eigenen Filter mit; was
   // darüber hinaus gewählt ist, grenzt seine Szenen weiter ein
@@ -224,9 +237,10 @@ export default function TimelinePage() {
           <MultiSelect
             label="AU"
             icon="au"
+            single
             options={auOptions}
             selected={aus}
-            onToggle={(v) => toggle(aus, setAus, v)}
+            onToggle={(v) => setAus(aus.length === 1 && aus[0] === v ? [] : [v])}
             onClear={() => setAus([])}
           />
           <MultiSelect
@@ -286,7 +300,11 @@ export default function TimelinePage() {
               <Icon name="plus" size={13} /> Off-Szene
             </button>
             <PlotTools key={plot.id} plot={plot} onDeleted={() => setPlotId(null)} />
+            {auTools}
           </div>
+        )}
+        {!(plot && editable) && auTools && (
+          <div className="ml-auto flex flex-wrap items-center gap-2">{auTools}</div>
         )}
       </div>
 
