@@ -60,6 +60,10 @@ export default function TimelinePage() {
     isAdmin,
     charactersOf,
     canManageAu,
+    updateScene,
+    updateChatScene,
+    npcs,
+    chatScenes,
   } = useStore();
   // Gespielte Szenen (auch Telefonszenen) und SMS-Szenen auf einem Zeitstrahl
   const scenes = useMemo(() => [...playedScenes, ...smsScenes], [playedScenes, smsScenes]);
@@ -95,7 +99,29 @@ export default function TimelinePage() {
     return opts;
   }, [scenes]);
   // Genau ein benanntes AU gewählt: Beteiligte (und Admins) können es umbenennen/löschen
+  const myIdForAu = currentPlayer?.id ?? "";
   const auSel = aus.length === 1 && aus[0] !== AU_UNNAMED && canManageAu(aus[0]) ? aus[0] : null;
+  // Gewähltes AU ohne geöffneten Plot: Szenen lassen sich ins AU holen oder aus ihm
+  // herausnehmen (wie beim Plot). Ändert die Szene selbst – deshalb nur Szenen, in
+  // denen ich einen Charakter habe (bzw. die SMS-Szene angelegt habe); Admins alle.
+  const auMode = auSel && !plot ? auSel : null;
+  const myCharIds = new Set(
+    [...characters, ...npcs]
+      .filter((c) => c.player_id === myIdForAu || (c.co_owner_ids ?? []).includes(myIdForAu))
+      .map((c) => c.id),
+  );
+  const canChangeAu = (s: Scene) =>
+    isAdmin ||
+    s.participant_ids.some((id) => myCharIds.has(id)) ||
+    (!!s.chat_id && chatScenes.some((cs) => cs.id === s.id && cs.created_by === myIdForAu));
+  const auAddable = auMode
+    ? scenes.filter((s) => !(s.au && s.au_name === auMode) && canChangeAu(s))
+    : [];
+  function setSceneAu(s: Scene, name: string | null) {
+    const patch = { au: !!name, au_name: name };
+    if (s.chat_id) updateChatScene(s.id, patch);
+    else updateScene(s.id, patch);
+  }
   const auTools = auSel && (
     <AuTools
       key={auSel}
@@ -304,7 +330,20 @@ export default function TimelinePage() {
           </div>
         )}
         {!(plot && editable) && auTools && (
-          <div className="ml-auto flex flex-wrap items-center gap-2">{auTools}</div>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            {auMode && (
+              <SceneSearchAdd
+                scenes={auAddable}
+                onAdd={(id) => {
+                  const s = scenes.find((x) => x.id === id);
+                  if (s) setSceneAu(s, auMode);
+                }}
+                label="zum AU"
+                showAu
+              />
+            )}
+            {auTools}
+          </div>
         )}
       </div>
 
@@ -349,7 +388,16 @@ export default function TimelinePage() {
                         <SceneEntry
                           key={sc.id}
                           scene={sc}
-                          onRemove={plot && editable ? () => removeScene(sc.id) : undefined}
+                          onRemove={
+                            plot && editable
+                              ? () => removeScene(sc.id)
+                              : auMode && canChangeAu(sc)
+                                ? () => setSceneAu(sc, null)
+                                : undefined
+                          }
+                          removeTitle={
+                            plot ? "Aus dem Plot entfernen" : "Aus dem AU entfernen (die Szene wird Canon)"
+                          }
                         />
                       );
                     }
@@ -380,7 +428,19 @@ export default function TimelinePage() {
 }
 
 // Szene per Suche in den Plot aufnehmen: Titel eintippen, Treffer anklicken.
-function SceneSearchAdd({ scenes, onAdd }: { scenes: Scene[]; onAdd: (id: string) => void }) {
+// Auch fürs AU: Die Szene wandert dann in das gewählte AU (`showAu` zeigt, in
+// welchem AU sie bisher spielt).
+function SceneSearchAdd({
+  scenes,
+  onAdd,
+  label = "zum Plot",
+  showAu = false,
+}: {
+  scenes: Scene[];
+  onAdd: (id: string) => void;
+  label?: string; // „zum Plot“ | „zum AU“
+  showAu?: boolean;
+}) {
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
   const hits = query
@@ -397,14 +457,14 @@ function SceneSearchAdd({ scenes, onAdd }: { scenes: Scene[]; onAdd: (id: string
         onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => e.key === "Escape" && setQ("")}
         placeholder="Szene hinzufügen…"
-        aria-label="Szene suchen und zum Plot hinzufügen"
+        aria-label={`Szene suchen und ${label} hinzufügen`}
         className="w-52 bg-bg-primary border border-border-subtle rounded-md pl-8 pr-2.5 py-1.5 text-[0.8125rem] text-text-primary outline-none focus:border-white/20"
       />
       {query && (
         <div className="absolute right-0 z-20 mt-1 w-72 max-w-[calc(100vw-2rem)] rounded-lg border border-border-subtle bg-bg-surface-2 p-1.5 shadow-xl">
           {hits.length === 0 ? (
             <div className="px-2 py-1.5 text-[0.8125rem] text-text-tertiary">
-              Keine passende Szene außerhalb des Plots.
+              {showAu ? "Keine passende Szene außerhalb des AUs." : "Keine passende Szene außerhalb des Plots."}
             </div>
           ) : (
             hits.map((s) => (
@@ -418,7 +478,13 @@ function SceneSearchAdd({ scenes, onAdd }: { scenes: Scene[]; onAdd: (id: string
               >
                 <div className="text-[0.8125rem] text-text-primary">{s.title}</div>
                 <div className="text-[0.75rem] text-text-tertiary">
-                  {[scenePlace(s), formatInplayDate(s.inplay_date)].filter(Boolean).join(" · ")}
+                  {[
+                    scenePlace(s),
+                    formatInplayDate(s.inplay_date),
+                    showAu && s.au ? `AU: ${s.au_name || "ohne Namen"}` : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </div>
               </button>
             ))
@@ -496,7 +562,15 @@ function FactsLine({
 
 // Gespielte Szene im Zeitstrahl: Datum, Titel, Beteiligte · Ort, Beschreibungssatz –
 // im Stil der Szenenboxen, mit dem Streichholz als Knoten auf der Linie.
-function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }) {
+function SceneEntry({
+  scene,
+  onRemove,
+  removeTitle = "Aus dem Plot entfernen",
+}: {
+  scene: Scene;
+  onRemove?: () => void;
+  removeTitle?: string;
+}) {
   const { character } = useStore();
   const participants = scene.participant_ids
     .map((id) => character(id))
@@ -531,7 +605,7 @@ function SceneEntry({ scene, onRemove }: { scene: Scene; onRemove?: () => void }
               )}
               {onRemove && (
                 <span className="relative z-10">
-                  <RemoveButton onRemove={onRemove} title="Aus dem Plot entfernen" />
+                  <RemoveButton onRemove={onRemove} title={removeTitle} />
                 </span>
               )}
             </div>
