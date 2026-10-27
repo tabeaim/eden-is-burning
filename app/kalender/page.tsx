@@ -76,6 +76,7 @@ export default function TimelinePage() {
   const [yearSel, setYearSel] = useSessionState<string[]>("timeline:yearsel", []); // leer = alle Jahre
   const [plotId, setPlotId] = useSessionState<string | null>("timeline:plotid", null);
   const [addingOff, setAddingOff] = useState(false);
+  const [editingOff, setEditingOff] = useState<string | null>(null); // Off-Szene im Bearbeiten
   // Von Hand hinzugefügte Szenen bleiben sichtbar, auch wenn die gerade gewählten
   // Filter (Charakter, AU, Gegend, Jahr, Art) sie sonst ausblenden würden
   const [justAdded, setJustAdded] = useState<{ plot: string; ids: string[] }>({ plot: "", ids: [] });
@@ -412,10 +413,27 @@ export default function TimelinePage() {
                       );
                     }
                     const off = e.off;
+                    // Off-Szenen gibt es nur im Plot – sie werden direkt hier bearbeitet
+                    if (plot && editable && editingOff === off.id)
+                      return (
+                        <OffSceneForm
+                          key={off.id}
+                          initial={off}
+                          characters={characters}
+                          onCancel={() => setEditingOff(null)}
+                          onCreate={(changed) => {
+                            updatePlot(plot.id, {
+                              off_scenes: plot.off_scenes.map((o) => (o.id === off.id ? changed : o)),
+                            });
+                            setEditingOff(null);
+                          }}
+                        />
+                      );
                     return (
                       <OffEntry
                         key={off.id}
                         off={off}
+                        onEdit={plot && editable ? () => setEditingOff(off.id) : undefined}
                         onRemove={
                           plot && editable
                             ? () =>
@@ -645,7 +663,15 @@ function SceneEntry({
 }
 
 // Off-Szene: Plot-Punkt, der nicht ausgespielt wurde – gestrichelt, ohne Link.
-function OffEntry({ off, onRemove }: { off: OffScene; onRemove?: () => void }) {
+function OffEntry({
+  off,
+  onEdit,
+  onRemove,
+}: {
+  off: OffScene;
+  onEdit?: () => void;
+  onRemove?: () => void;
+}) {
   const { character } = useStore();
   const participants = off.participant_ids
     .map((id) => character(id))
@@ -663,7 +689,20 @@ function OffEntry({ off, onRemove }: { off: OffScene; onRemove?: () => void }) {
             {off.inplay_time && <> · {off.inplay_time}</>}
             <span className="rounded bg-white/[0.06] px-2 py-0.5">im Off</span>
           </div>
-          {onRemove && <RemoveButton onRemove={onRemove} title="Off-Szene löschen" />}
+          {(onEdit || onRemove) && (
+            <div className="flex shrink-0 items-center gap-0.5">
+              {onEdit && (
+                <button
+                  onClick={onEdit}
+                  title="Off-Szene bearbeiten"
+                  className="rounded p-1 text-text-tertiary hover:bg-white/[0.06] hover:text-accent"
+                >
+                  <Icon name="edit" size={13} />
+                </button>
+              )}
+              {onRemove && <RemoveButton onRemove={onRemove} title="Off-Szene löschen" />}
+            </div>
+          )}
         </div>
         <h3 className="mt-0.5 font-serif text-[1rem] leading-tight text-text-primary">
           {off.title}
@@ -677,22 +716,25 @@ function OffEntry({ off, onRemove }: { off: OffScene; onRemove?: () => void }) {
   );
 }
 
-// Formular für eine Off-Szene (Infos + Beschreibungssatz)
+// Formular für eine Off-Szene (Infos + Beschreibungssatz). Mit `initial` zum
+// Bearbeiten einer vorhandenen – sie steht dann direkt an ihrer Stelle im Zeitstrahl.
 function OffSceneForm({
+  initial,
   characters,
   onCancel,
   onCreate,
 }: {
+  initial?: OffScene;
   characters: Character[];
   onCancel: () => void;
   onCreate: (off: OffScene) => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [location, setLocation] = useState("");
-  const [summary, setSummary] = useState("");
-  const [selected, setSelected] = useState<string[]>([]);
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [date, setDate] = useState(initial?.inplay_date ?? "");
+  const [time, setTime] = useState(initial?.inplay_time ?? "");
+  const [location, setLocation] = useState(initial?.location_name ?? "");
+  const [summary, setSummary] = useState(initial?.summary ?? "");
+  const [selected, setSelected] = useState<string[]>(initial?.participant_ids ?? []);
   const { locations } = useStore();
   // Vorschläge beim Tippen (wie überall, siehe DESIGN.md); ein neuer Name bleibt einfach stehen
   const q = location.trim().toLowerCase();
@@ -707,7 +749,7 @@ function OffSceneForm({
   function submit() {
     if (!valid) return;
     onCreate({
-      id: `off_${Math.random().toString(36).slice(2, 9)}`,
+      id: initial?.id ?? `off_${Math.random().toString(36).slice(2, 9)}`,
       title: title.trim(),
       inplay_date: date,
       inplay_time: time.trim(),
@@ -718,9 +760,11 @@ function OffSceneForm({
   }
 
   return (
-    <div className="mb-6 max-w-3xl rounded-xl border border-border-subtle bg-bg-surface p-4 flex flex-col gap-3">
+    <div
+      className={`${initial ? "" : "mb-6 "}max-w-3xl rounded-xl border border-border-subtle bg-bg-surface p-4 flex flex-col gap-3`}
+    >
       <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">
-        Off-Szene – ein Plot-Punkt, der nicht ausgespielt wurde
+        {initial ? "Off-Szene bearbeiten" : "Off-Szene – ein Plot-Punkt, der nicht ausgespielt wurde"}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="text-[0.875rem] text-text-secondary">
@@ -775,7 +819,7 @@ function OffSceneForm({
           disabled={!valid}
           className="rounded-md bg-accent/90 hover:bg-accent text-black text-[0.8125rem] font-medium px-3 py-1.5 disabled:opacity-40"
         >
-          Off-Szene hinzufügen
+          {initial ? "Speichern" : "Off-Szene hinzufügen"}
         </button>
       </div>
     </div>
