@@ -101,10 +101,9 @@ export default function TimelinePage() {
   // Genau ein benanntes AU gewählt: Beteiligte (und Admins) können es umbenennen/löschen
   const myIdForAu = currentPlayer?.id ?? "";
   const auSel = aus.length === 1 && aus[0] !== AU_UNNAMED && canManageAu(aus[0]) ? aus[0] : null;
-  // Gewähltes AU ohne geöffneten Plot: Szenen lassen sich ins AU holen oder aus ihm
-  // herausnehmen (wie beim Plot). Ändert die Szene selbst – deshalb nur Szenen, in
+  // Gewähltes AU (nie zusammen mit einem Plot): Szenen lassen sich ins AU holen oder
+  // aus ihm herausnehmen (wie beim Plot). Ändert die Szene selbst – deshalb nur Szenen, in
   // denen ich einen Charakter habe (bzw. die SMS-Szene angelegt habe); Admins alle.
-  const auMode = auSel && !plot ? auSel : null;
   const myCharIds = new Set(
     [...characters, ...npcs]
       .filter((c) => c.player_id === myIdForAu || (c.co_owner_ids ?? []).includes(myIdForAu))
@@ -114,8 +113,8 @@ export default function TimelinePage() {
     isAdmin ||
     s.participant_ids.some((id) => myCharIds.has(id)) ||
     (!!s.chat_id && chatScenes.some((cs) => cs.id === s.id && cs.created_by === myIdForAu));
-  const auAddable = auMode
-    ? scenes.filter((s) => !(s.au && s.au_name === auMode) && canChangeAu(s))
+  const auAddable = auSel
+    ? scenes.filter((s) => !(s.au && s.au_name === auSel) && canChangeAu(s))
     : [];
   function setSceneAu(s: Scene, name: string | null) {
     const patch = { au: !!name, au_name: name };
@@ -185,11 +184,10 @@ export default function TimelinePage() {
 
   const filterCount = tokens.length + aus.length + areas.length + activeYears.length + kinds.length;
   // Gewählte Charakter-/AU-/Gegend-Filter lassen sich als neue Filter des Plots speichern
+  // (ohne AU: bei offenem Plot ist kein AU gewählt, die AUs des Plots bleiben)
   const filterChanged = plot
-    ? tokens.length + aus.length + areas.length > 0 &&
-      (!sameSet(plot.tokens, tokens) ||
-        !sameSet(plot.aus, aus) ||
-        !sameSet(plot.areas ?? [], areas))
+    ? tokens.length + areas.length > 0 &&
+      (!sameSet(plot.tokens, tokens) || !sameSet(plot.areas ?? [], areas))
     : false;
   const addable = plot
     ? scenes.filter((s) => !plotScenes(plot, scenes, plotFilters(plot), character).includes(s))
@@ -205,6 +203,8 @@ export default function TimelinePage() {
     // weg, alle anderen bleiben. Danach lässt sich wieder eingrenzen.
     setPlotId(p.id);
     setTokens([]);
+    // Plot und AU sind nie gleichzeitig gewählt (das AU des Plots steckt im Plot)
+    setAus([]);
   }
 
   function removeScene(id: string) {
@@ -266,7 +266,12 @@ export default function TimelinePage() {
             single
             options={auOptions}
             selected={aus}
-            onToggle={(v) => setAus(aus.length === 1 && aus[0] === v ? [] : [v])}
+            onToggle={(v) => {
+              // Plot und AU schließen sich aus: ein gewähltes AU schließt den Plot
+              if (aus.length === 1 && aus[0] === v) return setAus([]);
+              setAus([v]);
+              setPlotId(null);
+            }}
             onClear={() => setAus([])}
           />
           <MultiSelect
@@ -283,7 +288,11 @@ export default function TimelinePage() {
           plots={myPlots}
           activeId={plotId}
           onToggle={togglePlot}
-          onSave={(name) => setPlotId(addPlot(name, [...tokens], [...aus], [...areas]))}
+          onSave={(name) => {
+            // Das AU steckt jetzt im Plot; der AU-Filter selbst wird frei
+            setPlotId(addPlot(name, [...tokens], [...aus], [...areas]));
+            setAus([]);
+          }}
           canSave={[...tokens, ...aus, ...areas].length > 0}
         />
       </div>
@@ -313,10 +322,10 @@ export default function TimelinePage() {
             {filterChanged && (
               <button
                 onClick={() =>
-                  updatePlot(plot.id, { tokens: [...tokens], aus: [...aus], areas: [...areas] })
+                  updatePlot(plot.id, { tokens: [...tokens], areas: [...areas] })
                 }
                 className={smallBtn}
-                title="Ersetzt die Filter des Plots (Charaktere, AU, Gegend) durch die gerade gewählten"
+                title="Ersetzt die Filter des Plots (Charaktere, Gegend) durch die gerade gewählten; die AUs des Plots bleiben"
               >
                 <Icon name="check" size={13} /> Als Plot-Filter speichern
               </button>
@@ -326,17 +335,16 @@ export default function TimelinePage() {
               <Icon name="plus" size={13} /> Off-Szene
             </button>
             <PlotTools key={plot.id} plot={plot} onDeleted={() => setPlotId(null)} />
-            {auTools}
           </div>
         )}
-        {!(plot && editable) && auTools && (
+        {auTools && (
           <div className="ml-auto flex flex-wrap items-center gap-2">
-            {auMode && (
+            {auSel && (
               <SceneSearchAdd
                 scenes={auAddable}
                 onAdd={(id) => {
                   const s = scenes.find((x) => x.id === id);
-                  if (s) setSceneAu(s, auMode);
+                  if (s) setSceneAu(s, auSel);
                 }}
                 label="zum AU"
                 showAu
@@ -391,7 +399,7 @@ export default function TimelinePage() {
                           onRemove={
                             plot && editable
                               ? () => removeScene(sc.id)
-                              : auMode && canChangeAu(sc)
+                              : auSel && canChangeAu(sc)
                                 ? () => setSceneAu(sc, null)
                                 : undefined
                           }

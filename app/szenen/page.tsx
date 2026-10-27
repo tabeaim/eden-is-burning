@@ -183,9 +183,11 @@ export default function ScenesPage() {
       setPlotId(null);
       return;
     }
-    // Gewählte Charakter-Filter fallen weg, alle anderen bleiben
+    // Gewählte Charakter-Filter fallen weg, alle anderen bleiben – außer dem AU:
+    // Plot und AU sind nie gleichzeitig gewählt
     setPlotId(p.id);
     setTokens([]);
+    setAus([]);
   }
 
   // Reiter ohne Szenen werden nicht angezeigt („Alle" immer; ein einzelner Reiter braucht keine Leiste)
@@ -354,7 +356,12 @@ export default function ScenesPage() {
             single
             options={auOptions}
             selected={aus}
-            onToggle={(v) => setAus(aus.length === 1 && aus[0] === v ? [] : [v])}
+            onToggle={(v) => {
+              // Plot und AU schließen sich aus: ein gewähltes AU schließt den Plot
+              if (aus.length === 1 && aus[0] === v) return setAus([]);
+              setAus([v]);
+              setPlotId(null);
+            }}
             onClear={() => setAus([])}
           />
         </div>
@@ -376,7 +383,11 @@ export default function ScenesPage() {
           plots={myPlots}
           activeId={plotId}
           onToggle={togglePlot}
-          onSave={(name) => setPlotId(addPlot(name, [...tokens], [...aus], [...areas]))}
+          onSave={(name) => {
+            // Das AU steckt jetzt im Plot; der AU-Filter selbst wird frei
+            setPlotId(addPlot(name, [...tokens], [...aus], [...areas]));
+            setAus([]);
+          }}
           canSave={[...tokens, ...aus, ...areas].length > 0}
         />
       </div>
