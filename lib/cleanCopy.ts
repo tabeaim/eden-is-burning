@@ -63,7 +63,8 @@ export function copyTarget(): CopyTarget {
 function textStyle(target: CopyTarget): string {
   const { font, size, color } = copyFont();
   const name = font.replace(/["';{}<>]/g, "").trim();
-  const pt = Number(size.replace(",", "."));
+  // Erste Zahl im Feld nehmen – „11“, „11pt“, „11 pt“ oder „10,5“ gehen alle
+  const pt = Number(size.replace(",", ".").match(/\d+(\.\d+)?/)?.[0] ?? "");
   return [
     `color: ${/^#[0-9a-f]{6}$/i.test(color) ? color : COPY_DEFAULT_COLOR}`,
     name ? `font-family: '${name}'` : "",
