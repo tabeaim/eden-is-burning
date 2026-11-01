@@ -57,37 +57,12 @@ function highlightTerm(html: string, term: string): string {
     .join("");
 }
 
-// Ca.-Zeilen pro Seite (Pagination nach geschätzter Zeilenzahl, nicht nach
-// Post-Anzahl). ~280 Zeilen ≈ etwa 5 durchschnittlich lange Posts pro Seite.
-const LINES_PER_PAGE = 280;
-
-function estimateLines(html: string): number {
-  const text = html
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|div)>/gi, "\n")
-    .replace(/<[^>]+>/g, "");
-  let lines = 0;
-  for (const seg of text.split("\n")) {
-    lines += Math.max(1, Math.ceil(seg.trim().length / 90));
-  }
-  return Math.max(1, lines);
-}
+// Feste Seitengröße: 10 Posts pro Seite.
+const POSTS_PER_PAGE = 10;
 
 function paginate(posts: Post[]): Post[][] {
   const pages: Post[][] = [];
-  let cur: Post[] = [];
-  let curLines = 0;
-  for (const p of posts) {
-    const l = estimateLines(p.content);
-    if (cur.length > 0 && curLines + l > LINES_PER_PAGE) {
-      pages.push(cur);
-      cur = [];
-      curLines = 0;
-    }
-    cur.push(p);
-    curLines += l;
-  }
-  if (cur.length) pages.push(cur);
+  for (let i = 0; i < posts.length; i += POSTS_PER_PAGE) pages.push(posts.slice(i, i + POSTS_PER_PAGE));
   return pages.length ? pages : [[]];
 }
 

@@ -31,8 +31,12 @@ import {
   PING_CUSTOM_NAME_KEY,
   PING_KEY,
   PING_SOUNDS,
+  PING_SCENES_KEY,
+  PING_SCENE_OPTIONS,
   PING_SOUND_KEY,
+  type PingScenes,
   type PingSound,
+  pingScenes,
   pingEnabled,
   pingSound,
   playPing,
@@ -590,6 +594,7 @@ function CopyFontSetting() {
 function NotificationsTab() {
   const [ping, setPing] = useState(true);
   const [sound, setSound] = useState<PingSound>("chime");
+  const [scenesMode, setScenesMode] = useState<PingScenes>("own");
   const [customName, setCustomName] = useState<string | null>(null);
   const [hasCustom, setHasCustom] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -599,6 +604,7 @@ function NotificationsTab() {
     /* eslint-disable react-hooks/set-state-in-effect */
     setPing(pingEnabled());
     setSound(pingSound());
+    setScenesMode(pingScenes());
     try {
       setHasCustom(!!localStorage.getItem(PING_CUSTOM_KEY));
       setCustomName(localStorage.getItem(PING_CUSTOM_NAME_KEY));
@@ -673,9 +679,32 @@ function NotificationsTab() {
       >
         Ton bei Neuem{" "}
         <span className="text-text-tertiary">
-          (neuer Post in deinen Szenen, Nachricht, Anruf, Mailbox, Captic – solange Eden in einem Tab offen ist)
+          (neuer Post in Szenen, Nachricht, Anruf, Mailbox, Captic – solange Eden in einem Tab offen ist)
         </span>
       </Toggle>
+
+      {/* Bei welchen Szenen */}
+      <div className={ping ? "" : "opacity-50"}>
+        <div className="text-[0.875rem] text-text-secondary mb-2">Neue Posts in Szenen</div>
+        <div className="flex flex-wrap items-center gap-2">
+          {PING_SCENE_OPTIONS.map((o) => (
+            <button
+              key={o.key}
+              onClick={() => {
+                setScenesMode(o.key);
+                store(PING_SCENES_KEY, o.key);
+              }}
+              aria-pressed={scenesMode === o.key}
+              className={pill(scenesMode === o.key)}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1.5 text-[0.8125rem] text-text-tertiary">
+          Eigene Szenen: Szenen, in denen einer deiner Charaktere mitspielt.
+        </p>
+      </div>
 
       {/* Tonauswahl */}
       <div className={ping ? "" : "opacity-50"}>

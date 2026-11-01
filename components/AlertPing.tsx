@@ -14,6 +14,24 @@ export function pingEnabled(): boolean {
   }
 }
 
+// Bei welchen Szenen ein neuer Post klingelt (pro Gerät): standardmäßig nur in
+// Szenen mit eigenen Charakteren, wahlweise auch abonnierte oder alle Szenen.
+export const PING_SCENES_KEY = "eden:ping-scenes";
+export type PingScenes = "own" | "subscribed" | "all";
+export const PING_SCENE_OPTIONS: { key: PingScenes; label: string }[] = [
+  { key: "own", label: "Nur eigene Szenen" },
+  { key: "subscribed", label: "Eigene und abonnierte" },
+  { key: "all", label: "Alle Szenen" },
+];
+export function pingScenes(): PingScenes {
+  try {
+    const v = localStorage.getItem(PING_SCENES_KEY);
+    return v === "subscribed" || v === "all" ? v : "own";
+  } catch {
+    return "own";
+  }
+}
+
 // Welcher Ton (pro Gerät): eine der eingebauten Varianten oder ein eigener,
 // hochgeladener Ton. Der eigene Ton liegt als data:-Adresse im Browser.
 export const PING_SOUND_KEY = "eden:ping-sound";
@@ -129,11 +147,14 @@ export function AlertPing() {
 
   const myIds = new Set(currentPlayer ? charactersOf(currentPlayer.id).map((c) => c.id) : []);
   const myNpcIds = new Set(myNpcs.map((c) => c.id));
+  const sceneMode = pingScenes();
   const keys: string[] = [];
   for (const s of scenes) {
     // bespielte Nebenfiguren zählen nur in abonnierten Szenen (wie beim Dashboard-Zähler)
     const mine = s.participant_ids.some((id) => myIds.has(id) || (myNpcIds.has(id) && isSubscribed(s.id)));
-    if (!mine || !isSceneNew(s.id)) continue;
+    const counts =
+      sceneMode === "all" || mine || (sceneMode === "subscribed" && isSubscribed(s.id));
+    if (!counts || !isSceneNew(s.id)) continue;
     const posts = postsOf(s.id);
     keys.push(`scene:${s.id}:${posts[posts.length - 1]?.id ?? ""}`);
   }
@@ -144,16 +165,23 @@ export function AlertPing() {
   for (const c of incomingCalls) keys.push(`call:${c.id}`);
   for (const a of mailboxAlerts) keys.push(`mailbox:${a.kind}:${a.call.id}`);
   for (const a of capticUnread) keys.push(`captic:${a.characterId}:${a.count}`);
-  const signature = keys.sort().join("|");
+  const signature = sceneMode + "#" + keys.sort().join("|");
 
   const known = useRef<Set<string> | null>(null);
   const since = useRef(0);
+  const lastMode = useRef(sceneMode);
   useEffect(() => {
     const now = keys;
     // Beim Start (und solange die Daten noch eintrudeln) nur merken, nicht klingeln
     if (!known.current) {
       known.current = new Set(now);
       since.current = Date.now();
+      return;
+    }
+    // Szenen-Auswahl wurde umgestellt: neu hinzugekommene Szenen nur merken
+    if (lastMode.current !== sceneMode) {
+      lastMode.current = sceneMode;
+      for (const k of now) known.current.add(k);
       return;
     }
     const fresh = now.some((k) => !known.current!.has(k));
