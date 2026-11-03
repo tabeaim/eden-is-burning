@@ -288,7 +288,7 @@ export default function CharacterPage({
       {tab === "personal" && tierOf(c) !== "extra" && (
         <>
         <SectionHeading>pockets.</SectionHeading>
-        <section className="flex flex-col items-center justify-center gap-10 md:flex-row md:items-start">
+        <section className="flex flex-col items-center justify-center gap-10 md:flex-row md:items-start md:gap-16">
           {/* ohne Handy (Einstellungen) nur die Gegenstände */}
           {hasPhone(c) && (
             <div className="max-w-full shrink-0">
@@ -296,9 +296,10 @@ export default function CharacterPage({
             </div>
           )}
           {hasPhone(c) ? (
-            // so hoch wie das Handy daneben: Fläche bleibt 4:3 (die Gegenstände liegen in
-            // Prozent darauf), Breite = Handyhöhe (72 % von min(800px, 100dvh − 6.5rem)) × 4/3
-            <div className="w-full min-w-0 max-w-[28rem] md:w-[min(100%,calc(min(800px,100dvh_-_6.5rem)*0.96))] md:max-w-none">
+            // etwa drei Viertel der Handyhöhe, senkrecht mittig daneben, damit die
+            // Gegenstände Luft haben: Fläche bleibt 4:3 (die Gegenstände liegen in Prozent
+            // darauf), Breite = 0,75 × Handyhöhe (72 % von min(800px, 100dvh − 6.5rem)) × 4/3
+            <div className="w-full min-w-0 max-w-[28rem] md:w-[min(100%,calc(min(800px,100dvh_-_6.5rem)*0.72))] md:max-w-none md:self-center">
               <ThingsBoard items={c.profile?.things ?? []} fill />
             </div>
           ) : (
