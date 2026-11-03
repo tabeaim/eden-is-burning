@@ -288,7 +288,7 @@ export default function CharacterPage({
       {tab === "personal" && tierOf(c) !== "extra" && (
         <>
         <SectionHeading>pockets.</SectionHeading>
-        <section className="flex flex-col items-center justify-center gap-10 md:flex-row md:items-start md:gap-16">
+        <section className="flex flex-col items-center justify-center gap-10 md:flex-row md:items-start">
           {/* ohne Handy (Einstellungen) nur die Gegenstände */}
           {hasPhone(c) && (
             <div className="max-w-full shrink-0">
