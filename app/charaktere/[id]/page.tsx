@@ -296,11 +296,11 @@ export default function CharacterPage({
             </div>
           )}
           {hasPhone(c) ? (
-            // etwa drei Viertel der Handyhöhe, senkrecht mittig daneben, damit die
-            // Gegenstände Luft haben: Fläche bleibt 4:3 (die Gegenstände liegen in Prozent
-            // darauf), Breite = 0,75 × Handyhöhe (72 % von min(800px, 100dvh − 6.5rem)) × 4/3
-            <div className="w-full min-w-0 max-w-[28rem] md:w-[min(100%,calc(min(800px,100dvh_-_6.5rem)*0.72))] md:max-w-none md:self-center">
-              <ThingsBoard items={c.profile?.things ?? []} fill />
+            // so hoch wie das Handy daneben (oben und unten bündig): Fläche bleibt 4:3
+            // (die Gegenstände liegen in Prozent darauf), Breite = Handyhöhe (72 % von
+            // min(800px, 100dvh − 6.5rem)) × 4/3; die Gegenstände darin etwas kleiner
+            <div className="w-full min-w-0 max-w-[28rem] md:w-[min(100%,calc(min(800px,100dvh_-_6.5rem)*0.96))] md:max-w-none">
+              <ThingsBoard items={c.profile?.things ?? []} fill inset />
             </div>
           ) : (
             <ThingsBoard items={c.profile?.things ?? []} />

@@ -36,9 +36,11 @@ export function ThingsBoard({
   items: rawItems,
   onChange,
   fill = false,
+  inset = false,
 }: {
   items: ThingItem[];
   fill?: boolean; // Ansicht: die ganze Spalte füllen (Looks → Style)
+  inset?: boolean; // Ansicht: Gegenstände etwas kleiner, mit Luft zum Rand (Pockets)
   // Mit onChange ist die Fläche ein Whiteboard zum Bearbeiten (steckt im
   // „Bearbeiten"-Formular des Profils, das auch speichert); ohne nur Ansicht.
   onChange?: (items: ThingItem[]) => void;
@@ -198,6 +200,7 @@ export function ThingsBoard({
             seinen Platz.
           </div>
         )}
+        <div className={`absolute inset-0 ${inset && !editing ? "scale-[0.8]" : ""}`}>
         {shown.map((t) => {
           const isActive = editing && selected === t.id;
           return (
@@ -291,6 +294,7 @@ export function ThingsBoard({
             </div>
           );
         })}
+        </div>
       </div>
 
       {editing && cropping && items.some((t) => t.id === cropping) && (
