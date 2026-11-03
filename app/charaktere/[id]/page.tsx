@@ -515,14 +515,15 @@ function CharacterTab({ c }: { c: Character }) {
   return (
     <div className="flex flex-col gap-5">
       {beside ? (
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        // items-start: jede Box so hoch wie ihr Inhalt
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
           {about}
           {beside}
         </div>
       ) : (
         about
       )}
-      {boxes.length > 0 && <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">{boxes}</div>}
+      {boxes.length > 0 && <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">{boxes}</div>}
       <Vibes c={c} />
       {empty && (
         <p className="text-[0.875rem] text-text-tertiary">Noch keine Charakterbeschreibung hinterlegt.</p>
