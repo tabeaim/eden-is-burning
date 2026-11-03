@@ -239,13 +239,18 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Reiter nutzen eines davon, statt eigene Spalten und Abstände zu erfinden):
   `SPLIT` – schmale Textspalte + breitere Inhaltsspalte im Verhältnis 2:3,
   `gap-x-10 gap-y-6` (General: Beschreibung | Facts);
+  `SPLIT_BANNER` – General mit optionalem Hochkant-Banner (`profile.side_banner_url`,
+  in den Einstellungen): Banner 250 × 492 px | Beschreibung | alle Facts in einem
+  schmalen Kasten (24rem, `ProfileFacts merged`, Werte auf einer Fluchtlinie);
   `CARDS` – Karten-Listen zweispaltig, `gap-3` (Scenes, Relations);
   `BOXES` – kleine Boxen nebeneinander, `gap-5` (Facts-Gruppen).
   Bereiche trennt eine Linie mit `mt-6 mb-6`, der Footer beginnt mit `mt-6`.
 - **Profil bearbeiten** (`ProfileEditPanel`): wie die Charakter-Einstellungen in
-  aufklappbaren Abschnitten (`Collapsible`): Auf einen Blick (offen),
-  Eigenschaften, Skills & Slider, Stammbaum, Timeline, Looks – Style, Pockets,
-  Moodboard; Statist*innen nur Grunddaten und Moodboard (Bilder oder Pinterest).
+  aufklappbaren Abschnitten (`Collapsible`), alle anfangs zugeklappt: Zitat &
+  Banner (Header-Bild, optionaler Hochkant-Banner, Zitat) über Identität, dann
+  die Grunddaten (Aussehen mit der Style-Collage), Beschreibung, Eigenschaften,
+  Skills & Slider, Stammbaum, Timeline, Pockets, Moodboard; Statist*innen nur
+  Grunddaten und Moodboard (Bilder oder Pinterest).
 - **Whiteboards** (`ThingsBoard`: Pockets, Style) sind Querformat (4:3) und
   höchstens 28rem breit – beim Bearbeiten genauso wie im Profil. Ältere
   Hochformat-Collagen werden beim Anzeigen verkleinert und mittig gesetzt
@@ -279,7 +284,7 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   einfarbiger Hintergrund entfernt werden (`lib/cutout.ts`).
 - **Facts:** Label fett in Großbuchstaben (0.75rem, gedämpftes Grau
   `text-text-tertiary/80`, ohne Doppelpunkt), Wert
-  mit `gap-x-6` Abstand daneben in normaler
+  mit `gap-x-8` Abstand daneben in normaler
   Schreibweise (0.875rem) – `Facts`/`FactRow`. Im Profil steht jede Kategorie
   („facts.", „studies.", „work.") in einer dezenten Box
   (`rounded-lg border bg-bg-surface`); die Facts-Spalte ist breit genug für lange
@@ -353,9 +358,8 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Geschwister oder Partner*in neu an (Platz und Verknüpfung ergeben sich) oder
   ordnet eine vorhandene Zeile als Partner*in zu. Name und Verhältnis stehen
   nebeneinander, ✕ immer rechts in derselben Zeile.
-- **Relations** bearbeitet nur, wer den Charakter selbst spielt (`playsAs`). Der
-  erklärende Hinweis steht nur beim eigenen Charakter und verschwindet nach drei
-  Eintragungen/Leerungen (Zähler `relation_uses` im Spieler*innen-Profil).
+- **Relations** bearbeitet nur, wer den Charakter selbst spielt (`playsAs`); ohne
+  erklärenden Hinweis über der Liste.
 - **Namen aufzählen:** zwei mit „&", mehr mit Kommas (`joinNames`). In den Szenen-
   und Chat-Karten immer mit „&" vor dem letzten Namen („A, B & C", `joinNamesAnd`);
   passen nicht alle in die Bubble, endet die Aufzählung mit „…".

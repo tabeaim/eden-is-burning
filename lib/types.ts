@@ -37,9 +37,6 @@ export interface PlayerProfile {
   sliders?: { left: string; right: string; value: number }[];
   likes?: string[];
   dislikes?: string[];
-  // Wie oft Beziehungen im Relations-Reiter schon eingetragen/geleert wurden –
-  // danach verschwindet dort der erklärende Hinweis
-  relation_uses?: number;
 }
 
 export interface Character {
@@ -190,6 +187,9 @@ export interface CharacterProfile {
   // GIF, das in Szenen unter dem Avatar steht (höchstens so breit wie der Avatar,
   // halb so hoch)
   scene_gif_url?: string | null;
+  // Optionaler Hochkant-Banner (250 × 492 px) links im Reiter General des Profils;
+  // ohne ihn stehen dort nur Beschreibung und Facts
+  side_banner_url?: string | null;
   // Stammbaum: Verwandte nach Generation (-2 Großeltern, -1 Eltern, 0 gleiche
   // Generation, 1 Kinder, 2 Enkel); optional mit einem Charakter verknüpft
   family?: FamilyMember[];

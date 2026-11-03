@@ -1,15 +1,20 @@
 // Fakten-Liste (siehe DESIGN.md): Label fett in Großbuchstaben, ohne Doppelpunkt,
 // Wert daneben in normaler Schreibweise und Textgröße; lange Werte brechen um, statt aus der Spalte zu laufen.
+// `subgrid`: übernimmt die Spalten des umgebenden Rasters – so beginnen die Werte
+// mehrerer Listen untereinander auf derselben Linie (Facts-Kasten im Profil).
 export function Facts({
   className = "",
+  subgrid = false,
   children,
 }: {
   className?: string;
+  subgrid?: boolean;
   children: React.ReactNode;
 }) {
+  const cols = subgrid ? "col-span-2 grid-cols-subgrid" : "grid-cols-[max-content_minmax(0,1fr)]";
   return (
     <dl
-      className={`${className} grid grid-cols-[max-content_minmax(0,1fr)] items-baseline gap-x-6 gap-y-1.5 text-[0.875rem]`}
+      className={`${className} grid ${cols} items-baseline gap-x-8 gap-y-1.5 text-[0.875rem]`}
     >
       {children}
     </dl>

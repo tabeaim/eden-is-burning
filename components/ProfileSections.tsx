@@ -59,7 +59,9 @@ function shown(c: Character, key: string, value: string | null | undefined): str
   return value && !isHidden(c, key) ? value : null;
 }
 
-export function ProfileFacts({ c }: { c: Character }) {
+// `merged`: alle Gruppen in einem schmalen, langen Kasten untereinander (Reiter
+// General des Charakterprofils); sonst je Gruppe eine eigene Box.
+export function ProfileFacts({ c, merged = false }: { c: Character; merged?: boolean }) {
   const { locations, scenes } = useStore();
   const p = c.profile ?? {};
   const age = ageAt(c);
@@ -162,6 +164,32 @@ export function ProfileFacts({ c }: { c: Character }) {
       ],
     ],
   ];
+  const filled = groups.filter(([, rows]) => rows.some(([, v]) => v !== null && v !== undefined && v !== ""));
+  if (merged) {
+    if (filled.length === 0) return null;
+    return (
+      <SectionBox>
+        {/* ein Raster für alle Gruppen: Werte beginnen überall auf derselben Linie */}
+        <div className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-8">
+        {filled.map(([title, rows], i) => (
+          <div
+            key={title}
+            className={`col-span-2 grid grid-cols-subgrid ${i > 0 ? "mt-4 border-t border-border-subtle pt-4" : ""}`}
+          >
+            <div className="col-span-2">
+              <SectionHeading>{title}</SectionHeading>
+            </div>
+            <Facts subgrid>
+              {rows.map(([label, value]) => (
+                <FactRow key={label} label={label} value={value} />
+              ))}
+            </Facts>
+          </div>
+        ))}
+        </div>
+      </SectionBox>
+    );
+  }
   return (
     <>
       {groups.map(([title, rows]) =>

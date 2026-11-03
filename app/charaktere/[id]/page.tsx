@@ -61,6 +61,10 @@ const btnQuiet = "text-[0.8125rem] text-text-tertiary hover:text-text-primary px
 // die Reiter gleich aufgebaut sind:
 // schmale Textspalte + breitere Inhaltsspalte (General: Beschreibung | Facts)
 const SPLIT = "grid items-start gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]";
+// General mit Hochkant-Banner (optional, Einstellungen; Maße des früheren
+// Profil-Banners, 250 × 492 px) | Beschreibung | alle Facts in einem schmalen Kasten
+const SPLIT_BANNER =
+  "grid items-start gap-x-8 gap-y-6 md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_minmax(0,24rem)]";
 // Karten-Listen in zwei Spalten (Scenes, Relations)
 const CARDS = "grid items-start gap-3 lg:grid-cols-2";
 // kleine Boxen nebeneinander (Facts-Gruppen)
@@ -176,6 +180,7 @@ export default function CharacterPage({
   ];
   // Gewählter Reiter, sonst der erste vorhandene
   const topTab: TopTab = topTabs.some(([k]) => k === topTabState) ? topTabState : "general";
+  const sideBanner = c.profile?.side_banner_url ?? null;
   const tab: Tab | null = tabs.some(([k]) => k === tabState) ? tabState : (tabs[0]?.[0] ?? null);
   const tabBtn = (active: boolean) =>
     `rounded-full px-3.5 py-1.5 text-[0.8125rem] transition-colors ${
@@ -217,7 +222,14 @@ export default function CharacterPage({
       {/* Strich unter den Reitern */}
       <TabRule />
       {topTab === "general" && (
-        <div className={SPLIT}>
+        <div className={sideBanner ? SPLIT_BANNER : SPLIT}>
+          {/* Hochkant-Banner (optional, aus den Einstellungen) – auf dem Handy über dem Text */}
+          {sideBanner && (
+            <div className="relative h-[492px] w-full max-w-[250px] overflow-hidden rounded-xl bg-bg-surface md:row-span-2 lg:row-span-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={sideBanner} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            </div>
+          )}
           {/* Kurzbeschreibung, darüber „meet <Vorname>." */}
           <section>
             <SectionHeading>meet {c.name.split(" ")[0]}.</SectionHeading>
@@ -227,10 +239,15 @@ export default function CharacterPage({
               <p className="text-[0.875rem] text-text-tertiary">Noch keine Kurzbeschreibung.</p>
             )}
           </section>
-          {/* Facts (Looks stehen im Reiter „Looks") */}
-          <div className={BOXES}>
-            <ProfileFacts c={c} />
-          </div>
+          {/* Facts (Looks stehen im Reiter „Looks"): neben dem Banner ein schmaler,
+              langer Kasten, sonst je Gruppe eine Box */}
+          {sideBanner ? (
+            <ProfileFacts c={c} merged />
+          ) : (
+            <div className={BOXES}>
+              <ProfileFacts c={c} />
+            </div>
+          )}
         </div>
       )}
       {topTab === "inplay" && <InplayTab inScenes={profileScenes} />}
@@ -276,7 +293,15 @@ export default function CharacterPage({
               <PhonePreview character={c} />
             </div>
           )}
-          <ThingsBoard items={c.profile?.things ?? []} />
+          {hasPhone(c) ? (
+            // so hoch wie das Handy daneben: Fläche bleibt 4:3 (die Gegenstände liegen in
+            // Prozent darauf), Breite = Handyhöhe (72 % von min(800px, 100dvh − 6.5rem)) × 4/3
+            <div className="w-full min-w-0 max-w-[28rem] md:w-[min(100%,calc(min(800px,100dvh_-_6.5rem)*0.96))] md:max-w-none">
+              <ThingsBoard items={c.profile?.things ?? []} fill />
+            </div>
+          ) : (
+            <ThingsBoard items={c.profile?.things ?? []} />
+          )}
           {!hasPhone(c) && !(c.profile?.things ?? []).length && (
             <p className="text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>
           )}
@@ -568,7 +593,6 @@ function InplayTab({ inScenes }: { inScenes: Scene[] }) {
   );
 }
 
-const RELATION_HINT_USES = 3;
 
 function RelationsTab({
   c,
@@ -579,10 +603,6 @@ function RelationsTab({
   coChars: Character[];
   canEdit: boolean;
 }) {
-  const { currentPlayer } = useStore();
-  // Der Hinweis erklärt die Funktion nur, bis sie sitzt: Nach ein paar
-  // Eintragungen (gezählt im eigenen Profil, siehe RelationRow) verschwindet er.
-  const showHint = canEdit && (currentPlayer?.profile?.relation_uses ?? 0) < RELATION_HINT_USES;
   return (
     <section>
       <SectionHeading>relations.</SectionHeading>
@@ -593,12 +613,6 @@ function RelationsTab({
         </p>
       ) : (
         <>
-          {showHint && (
-            <p className="mb-4 text-[0.8125rem] text-text-tertiary">
-              Verbindungen werden automatisch aus gemeinsamen Szenen erkannt. Trag ein, um was für
-              eine Beziehung es sich handelt.
-            </p>
-          )}
           {/* nach Kategorie gruppiert; ohne Kategorie stehen sie zuletzt */}
           {[...RELATION_CATEGORIES, [null, "others."] as const].map(([key, title]) => {
             const rows = coChars.filter((rc) => (c.relationships?.[rc.id]?.category ?? null) === key);
@@ -634,14 +648,7 @@ function RelationRow({
   rc: Character;
   canEdit: boolean;
 }) {
-  const { updateCharacter, updatePlayer, currentPlayer } = useStore();
-  // Jede Eintragung/Leerung zählt als Nutzung der Funktion (für den Hinweis oben)
-  const countUse = () => {
-    const uses = currentPlayer?.profile?.relation_uses ?? 0;
-    if (currentPlayer && uses < RELATION_HINT_USES) {
-      updatePlayer(currentPlayer.id, { profile: { ...(currentPlayer.profile ?? {}), relation_uses: uses + 1 } });
-    }
-  };
+  const { updateCharacter } = useStore();
   const rel = c.relationships?.[rc.id] ?? {};
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(rel.label ?? "");
@@ -656,7 +663,6 @@ function RelationRow({
         [rc.id]: { label: label.trim() || null, note: note.trim() || null, category: category || null },
       },
     });
-    countUse();
     setEditing(false);
   }
 
@@ -703,7 +709,6 @@ function RelationRow({
             const next = { ...c.relationships };
             delete next[rc.id];
             updateCharacter(c.id, { relationships: next });
-            countUse();
             setConfirmClear(false);
           }}
         />

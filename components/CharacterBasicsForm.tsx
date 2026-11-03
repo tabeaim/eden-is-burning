@@ -47,7 +47,13 @@ const field =
 // Wohngegend, Beschäftigung, Aussehen …); was ein früherer Supporting Character
 // darüber hinaus ausgefüllt hat, bleibt in den Einstellungen stehen, erscheint
 // aber nicht im Profil.
-export function useCharacterBasics(character: Character, mode: "settings" | "profile") {
+// `slots`: zusätzliche Teile, die nur das Profil-Bearbeiten einfügt – `top` steht
+// über „Identität" (Zitat & Banner), `looks` am Ende von „Aussehen" (Style-Collage).
+export function useCharacterBasics(
+  character: Character,
+  mode: "settings" | "profile",
+  slots: { top?: React.ReactNode; looks?: React.ReactNode } = {},
+) {
   const { updateCharacter, locations } = useStore();
   const main = tierOf(character) === "main";
   const extra = tierOf(character) === "extra";
@@ -247,8 +253,13 @@ export function useCharacterBasics(character: Character, mode: "settings" | "pro
           aber nicht im Profil – als Supporting Character wieder schon.
         </p>
       )}
-      {/* --- Wer --- */}
-      <Collapsible title="Identität" defaultOpen={mode === "profile"} forceOpen={missing.name || missing.age || missing.faceclaim || askBirthdate}>
+      {slots.top}
+      {/* --- Wer --- (klappt nur auf, wenn eine Pflichtangabe fehlt; in den
+          Einstellungen auch, wenn statt Geburtsdatum nur ein Alter da ist) */}
+      <Collapsible
+        title="Identität"
+        forceOpen={missing.name || missing.age || missing.faceclaim || (mode === "settings" && askBirthdate)}
+      >
       <div className="flex items-start gap-4">
         <div className="w-[110px] shrink-0">
           <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-border-subtle bg-bg-primary">
@@ -547,6 +558,7 @@ export function useCharacterBasics(character: Character, mode: "settings" | "pro
         {F({ label: "Haare", hideKey: "hair", children: <input {...text("hair")} /> })}
         {F({ label: "Augen", hideKey: "eyes", children: <input {...text("eyes")} /> })}
       </div>
+      {slots.looks}
 
       </Collapsible>
 

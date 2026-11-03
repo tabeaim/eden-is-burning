@@ -38,7 +38,6 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   const { updateCharacter } = useStore();
   const tier = tierOf(character);
   const full = tier !== "extra";
-  const basics = useCharacterBasics(character, "profile");
   const [d, setD] = useState(character);
   const prof = character.profile ?? {};
   const [skills, setSkills] = useState(prof.skills ?? []);
@@ -54,8 +53,11 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   const [minus, setMinus] = useState((prof.traits_minus ?? []).join(", "));
   const [likes, setLikes] = useState((prof.likes ?? []).join(", "));
   const [dislikes, setDislikes] = useState((prof.dislikes ?? []).join(", "));
-  const [uploading, setUploading] = useState<null | "banner" | "vibes">(null);
+  const [uploading, setUploading] = useState<null | "banner" | "side" | "vibes">(null);
   const bannerFile = useRef<HTMLInputElement>(null);
+  const sideFile = useRef<HTMLInputElement>(null);
+  // optionaler Hochkant-Banner links im Reiter General
+  const [sideBanner, setSideBanner] = useState(prof.side_banner_url ?? null);
   const vibesFile = useRef<HTMLInputElement>(null);
   const vibes = d.vibes ?? [];
   // Moodboard von Statist*innen: entweder Bilder oder ein Pinterest-Board
@@ -76,6 +78,15 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
     setUploading("banner");
     try {
       set("banner_url", await uploadImage(f, "characters", IMAGE_SIZES.banner));
+    } finally {
+      setUploading(null);
+    }
+  }
+  async function uploadSide(f: File | undefined) {
+    if (!f) return;
+    setUploading("side");
+    try {
+      setSideBanner(await uploadImage(f, "characters", IMAGE_SIZES.portrait));
     } finally {
       setUploading(null);
     }
@@ -124,6 +135,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       })(),
       things,
       outfit,
+      side_banner_url: sideBanner,
       traits_plus: toList(plus),
       traits_minus: toList(minus),
       likes: toList(likes),
@@ -151,16 +163,10 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
   const removeBtn =
     "flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-tertiary hover:bg-white/[0.06] hover:text-red-300";
 
-  return (
-    <div className="mb-6 flex flex-col gap-4 rounded-xl border border-border-subtle bg-bg-surface p-4 sm:p-5">
-      <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">Profil bearbeiten</div>
-
-      {/* Grunddaten – dieselben Felder wie in den Einstellungen */}
-      {basics.form}
-
-      {full && (
-        <>
-      <Collapsible title="Auf einen Blick" defaultOpen>
+  // --- Teile, die in die Grunddaten-Abschnitte eingefügt werden ---
+  // über „Identität": Header-Bild, Hochkant-Banner und Zitat
+  const top = full && (
+    <Collapsible title="Zitat & Banner">
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-[0.875rem] text-text-secondary">Header-Bild (oben über dem Namen)</span>
         <button disabled={uploading !== null} onClick={() => bannerFile.current?.click()} className={uploadBtn}>
@@ -193,12 +199,65 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
           <BannerPosition url={d.banner_url} onChange={(url) => set("banner_url", url)} />
         </div>
       )}
+      <div className="flex flex-wrap items-start gap-3">
+        <span className="text-[0.875rem] text-text-secondary">
+          Hochkant-Banner (optional, 250 × 492 px, links im Reiter General)
+        </span>
+        <div className="flex flex-wrap items-center gap-3">
+          <button disabled={uploading !== null} onClick={() => sideFile.current?.click()} className={uploadBtn}>
+            <Icon name="upload" size={13} />{" "}
+            {uploading === "side" ? "Lädt…" : sideBanner ? "Banner ersetzen" : "Banner hochladen"}
+          </button>
+          {sideBanner && (
+            <button onClick={() => setSideBanner(null)} className="text-[0.8125rem] text-text-tertiary hover:text-text-primary">
+              Banner entfernen
+            </button>
+          )}
+        </div>
+        <input
+          ref={sideFile}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            void uploadSide(f);
+          }}
+        />
+      </div>
+      {sideBanner && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={sideBanner} alt="Hochkant-Banner" className="h-[246px] w-[125px] rounded-lg object-cover" />
+      )}
       <label className={label}>
         Zitat
         <input {...text("quote")} className={`mt-1 ${field}`} />
       </label>
+    </Collapsible>
+  );
+  // am Ende von „Aussehen": die Style-Collage (Reiter „Looks")
+  const looks = full && (
+    <div className="flex flex-col gap-2 border-t border-border-subtle pt-4">
+      <div className={group}>Style</div>
+      <p className={hint}>
+        Was trägt dein Charakter? Die hochgeladenen Bilder erscheinen als Collage unter „Looks“.
+      </p>
+      <ThingsBoard items={outfit} onChange={setOutfit} />
+    </div>
+  );
+  const basics = useCharacterBasics(character, "profile", { top, looks });
 
-      <div className={group}>Ausführliche Beschreibung</div>
+  return (
+    <div className="mb-6 flex flex-col gap-4 rounded-xl border border-border-subtle bg-bg-surface p-4 sm:p-5">
+      <div className="text-[0.875rem] uppercase tracking-wider text-text-tertiary">Profil bearbeiten</div>
+
+      {/* Grunddaten – dieselben Felder wie in den Einstellungen */}
+      {basics.form}
+
+      {full && (
+        <>
+      <Collapsible title="Beschreibung">
       <RichEditor
         value={d.personality ?? ""}
         onChange={(v) => set("personality", v || null)}
@@ -357,13 +416,6 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
 
       </Collapsible>
 
-      <Collapsible title="Looks – Style">
-      <p className={hint}>
-        Was trägt dein Charakter? Die hochgeladenen Bilder erscheinen als Collage unter „Looks“.
-      </p>
-      <ThingsBoard items={outfit} onChange={setOutfit} />
-
-      </Collapsible>
 
         </>
       )}
