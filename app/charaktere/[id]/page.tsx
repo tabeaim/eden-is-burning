@@ -296,7 +296,8 @@ export default function CharacterPage({
             </div>
           )}
           {hasPhone(c) ? (
-            // ab md so hoch wie das Handy (streckt sich auf die Zeilenhöhe), Breite =
+            // ab md so hoch wie das Handy (streckt sich auf die Zeilenhöhe; die
+            // Gegenstände bleiben 4:3 und liegen mittig darin), Breite =
             // 0,8 × Handyhöhe (72 % von min(800px, 100dvh − 6.5rem)) × 4/3. Das Feld ist so
             // breit wie sein Inhalt, damit Handy + Collage als Gruppe mittig stehen (links
             // und rechts gleich viel Rand); mobil bleibt es 4:3
