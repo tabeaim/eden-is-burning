@@ -241,7 +241,7 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   `gap-x-10 gap-y-6` (General: Beschreibung | Facts);
   `SPLIT_BANNER` – General mit optionalem Hochkant-Banner (`profile.side_banner_url`,
   in „Profil bearbeiten“ → Zitat & Banner): Banner 250 px breit, auf Zeilenhöhe
-  gestreckt (= Facts-Kasten), auf dem Handy ausgeblendet | Beschreibung | alle Facts in einem
+  gestreckt (= Facts-Kasten, mindestens 28rem), auf dem Handy ausgeblendet | Beschreibung | alle Facts in einem
   schmalen Kasten (24rem, `ProfileFacts merged`, Werte auf einer Fluchtlinie);
   `CARDS` – Karten-Listen zweispaltig, `gap-3` (Scenes, Relations);
   `BOXES` – kleine Boxen nebeneinander, `gap-5` (Facts-Gruppen).

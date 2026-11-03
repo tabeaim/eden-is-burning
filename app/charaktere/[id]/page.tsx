@@ -64,7 +64,7 @@ const SPLIT = "grid items-start gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,2fr)_min
 // General mit Hochkant-Banner (optional, Profil bearbeiten; Breite des früheren
 // Profil-Banners: 250 px breit) | Beschreibung | alle Facts in einem schmalen Kasten.
 // Der Banner streckt sich auf die Höhe der Zeile, also des Facts-Kastens (bzw. der
-// Beschreibung, falls die länger ist); auf dem Handy entfällt er.
+// Beschreibung, falls die länger ist), mindestens aber 28rem; auf dem Handy entfällt er.
 const SPLIT_BANNER =
   "grid items-start gap-x-8 gap-y-6 md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_minmax(0,24rem)]";
 // Karten-Listen in zwei Spalten (Scenes, Relations)
@@ -227,7 +227,7 @@ export default function CharacterPage({
         <div className={sideBanner ? SPLIT_BANNER : SPLIT}>
           {/* Hochkant-Banner (optional, aus „Profil bearbeiten") – nicht auf dem Handy */}
           {sideBanner && (
-            <div className="relative hidden w-[250px] self-stretch overflow-hidden rounded-xl bg-bg-surface md:row-span-2 md:block lg:row-span-1">
+            <div className="relative hidden min-h-[28rem] w-[250px] self-stretch overflow-hidden rounded-xl bg-bg-surface md:row-span-2 md:block lg:row-span-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={sideBanner} alt="" className="absolute inset-0 h-full w-full object-cover" />
             </div>
