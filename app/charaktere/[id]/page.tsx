@@ -227,7 +227,7 @@ export default function CharacterPage({
         <div className={sideBanner ? SPLIT_BANNER : SPLIT}>
           {/* Hochkant-Banner (optional, aus „Profil bearbeiten") – nicht auf dem Handy */}
           {sideBanner && (
-            <div className="relative hidden min-h-[20rem] w-[250px] self-stretch overflow-hidden rounded-xl bg-bg-surface md:row-span-2 md:block lg:row-span-1">
+            <div className="relative hidden w-[250px] self-stretch overflow-hidden rounded-xl bg-bg-surface md:row-span-2 md:block lg:row-span-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={sideBanner} alt="" className="absolute inset-0 h-full w-full object-cover" />
             </div>
