@@ -36,9 +36,13 @@ export function ThingsBoard({
   items: rawItems,
   onChange,
   fill = false,
+  stretch = false,
 }: {
   items: ThingItem[];
   fill?: boolean; // Ansicht: die ganze Spalte füllen (Looks → Style)
+  // Ansicht ab md: so hoch wie das Elternelement statt 4:3 – die Gegenstände
+  // behalten ihre Breite, ihre Lage zieht sich in der Höhe auseinander (Pockets)
+  stretch?: boolean;
   // Mit onChange ist die Fläche ein Whiteboard zum Bearbeiten (steckt im
   // „Bearbeiten"-Formular des Profils, das auch speichert); ohne nur Ansicht.
   onChange?: (items: ThingItem[]) => void;
@@ -179,14 +183,14 @@ export function ThingsBoard({
       className={
         editing
           ? "grid items-start gap-4 md:grid-cols-[minmax(0,28rem)_minmax(15rem,24rem)]"
-          : `w-full min-w-0 ${fill ? "" : "max-w-[28rem]"}`
+          : `w-full min-w-0 ${fill ? "" : "max-w-[28rem]"} ${stretch ? "md:h-full" : ""}`
       }
     >
       {/* Die Fläche: fester Rahmen 3:4; in der Ansicht durchsichtig */}
       <div
         ref={board}
         onPointerDown={() => editing && setSelected(null)}
-        className={`relative aspect-[4/3] w-full ${fill && !editing ? "" : "max-w-[28rem]"} overflow-hidden ${
+        className={`relative aspect-[4/3] w-full ${stretch && !editing ? "md:aspect-auto md:h-full" : ""} ${fill && !editing ? "" : "max-w-[28rem]"} overflow-hidden ${
           editing
             ? "touch-none rounded-xl border border-dashed border-border-strong bg-white/[0.04] [background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:10%_7.5%]"
             : ""

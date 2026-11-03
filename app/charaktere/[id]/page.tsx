@@ -296,12 +296,12 @@ export default function CharacterPage({
             </div>
           )}
           {hasPhone(c) ? (
-            // 80 % der Handyhöhe, senkrecht mittig daneben: Fläche bleibt 4:3 (die
-            // Gegenstände liegen in Prozent darauf), Breite = 0,8 × Handyhöhe (72 % von
-            // min(800px, 100dvh − 6.5rem)) × 4/3. Das Feld ist so breit wie sein Inhalt,
-            // damit Handy + Collage als Gruppe mittig stehen (links und rechts gleich viel Rand)
-            <div className="w-full min-w-0 max-w-[28rem] md:w-[min(100%,calc(min(800px,100dvh_-_6.5rem)*0.768))] md:max-w-none md:self-center">
-              <ThingsBoard items={c.profile?.things ?? []} fill />
+            // ab md so hoch wie das Handy (streckt sich auf die Zeilenhöhe), Breite =
+            // 0,8 × Handyhöhe (72 % von min(800px, 100dvh − 6.5rem)) × 4/3. Das Feld ist so
+            // breit wie sein Inhalt, damit Handy + Collage als Gruppe mittig stehen (links
+            // und rechts gleich viel Rand); mobil bleibt es 4:3
+            <div className="w-full min-w-0 max-w-[28rem] md:w-[min(100%,calc(min(800px,100dvh_-_6.5rem)*0.768))] md:max-w-none md:self-stretch">
+              <ThingsBoard items={c.profile?.things ?? []} fill stretch />
             </div>
           ) : (
             <ThingsBoard items={c.profile?.things ?? []} />
