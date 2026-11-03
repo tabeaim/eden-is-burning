@@ -814,6 +814,7 @@ function CharacterEditor({ character }: { character: Character }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmMain, setConfirmMain] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [confirmSupporting, setConfirmSupporting] = useState(false);
   const postCount = posts.filter((p) => p.character_id === character.id).length;
   const anchor = `charakter-${character.id}`;
   // „#handy-<id>" (Einstellungen-App auf dem Handy) springt direkt zum Handy-Block
@@ -915,6 +916,34 @@ function CharacterEditor({ character }: { character: Character }) {
               </p>
             </Collapsible>
           )}
+          {tierOf(character) === "main" && (
+            <Collapsible title="Stufe">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="min-w-0 flex-1 text-[0.8125rem] text-text-tertiary">
+                Aus einem Main Character kann ein Supporting Character werden – mit reduziertem Handy.
+                Du kannst ihn danach weiteren Spieler*innen zuordnen und jederzeit wieder zum Main Character machen.
+              </p>
+              <button
+                onClick={() => setConfirmSupporting(true)}
+                className="rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-text-primary hover:bg-white/[0.08]"
+              >
+                Zum Supporting Character machen
+              </button>
+            </div>
+            </Collapsible>
+          )}
+          {confirmSupporting && (
+            <ConfirmDialog
+              title={`${character.name} zum Supporting Character machen?`}
+              text="Das Handy wird auf die Supporting-Character-Funktionen reduziert und Pausieren entfällt. Profil, Szenen und Posts bleiben, wie sie sind; zurück zum Main Character geht es jederzeit."
+              confirmLabel="Zum Supporting Character machen"
+              onCancel={() => setConfirmSupporting(false)}
+              onConfirm={() => {
+                setConfirmSupporting(false);
+                updateCharacter(character.id, { is_npc: true, npc_tier: "supporting" });
+              }}
+            />
+          )}
           {tierOf(character) === "supporting" && (
             <Collapsible title="Zuordnung">
               <NpcOwners character={character} />
@@ -953,7 +982,7 @@ function CharacterEditor({ character }: { character: Character }) {
           {confirmMain && (
             <ConfirmDialog
               title={`${character.name} zum Main Character machen?`}
-              text="Der Charakter bekommt das volle Profil und gehört danach nur noch dir. Andere Zuordnungen entfallen. Zurück zum Supporting Character geht es nicht."
+              text="Der Charakter bekommt das volle Profil und gehört danach nur noch dir. Andere Zuordnungen entfallen."
               confirmLabel="Zum Main Character machen"
               onCancel={() => setConfirmMain(false)}
               onConfirm={() => {
