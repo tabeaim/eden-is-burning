@@ -201,7 +201,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
       )}
       <div className="flex flex-wrap items-start gap-3">
         <span className="text-[0.875rem] text-text-secondary">
-          Hochkant-Banner (optional, 250 × 492 px, links im Reiter General)
+          Hochkant-Banner (optional, 250 px breit, links im Reiter General – so hoch wie die Facts)
         </span>
         <div className="flex flex-wrap items-center gap-3">
           <button disabled={uploading !== null} onClick={() => sideFile.current?.click()} className={uploadBtn}>
