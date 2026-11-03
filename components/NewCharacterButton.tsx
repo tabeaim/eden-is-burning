@@ -134,7 +134,8 @@ export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
         </select>
       </div>
       <p className="text-[0.8125rem] text-text-tertiary">
-        Das zweite Feld ist das Geburtsdatum – daraus wird das Alter berechnet. Alles Weitere
+        Das zweite Feld ist das Geburtsdatum – daraus wird das Alter berechnet; das aktuelle
+        Spieljahr ist 2021. Alles Weitere
         trägst du danach direkt im Profil ein.
       </p>
       <div className="flex items-center justify-end gap-1.5">{buttons}</div>

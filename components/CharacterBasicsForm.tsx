@@ -281,7 +281,7 @@ export function useCharacterBasics(character: Character, mode: "settings" | "pro
             required: main,
             hideKey: "age",
             error: missing.age,
-            hint: [age != null ? `${age} Jahre` : null, zodiac?.de].filter(Boolean).join(" · ") || null,
+            hint: [age != null ? `${age} Jahre` : null, zodiac?.de, "Spieljahr 2021"].filter(Boolean).join(" · "),
             notice: askBirthdate
               ? "Bisher ist nur das Alter hinterlegt – bitte trag ein Geburtsdatum ein."
               : null,
@@ -324,8 +324,9 @@ export function useCharacterBasics(character: Character, mode: "settings" | "pro
         </div>
       </div>
       <p className="text-[0.8125rem] text-text-tertiary">
-        Alter und Sternzeichen werden aus dem Geburtsdatum berechnet: das Alter im Profil zum{" "}
-        {formatInplayDate("2022-01-01")}, in einer Szene zum Datum der Szene.
+        Das aktuelle Spieljahr ist 2021. Alter und Sternzeichen werden aus dem Geburtsdatum
+        berechnet: das Alter im Profil zum {formatInplayDate("2022-01-01")} (Ende des Spieljahrs),
+        in einer Szene zum Datum der Szene.
       </p>
       {more(!!character.bio) &&
         F({
