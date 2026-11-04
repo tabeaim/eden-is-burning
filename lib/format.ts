@@ -28,6 +28,13 @@ export function formatInplayDateWeekday(iso: string): string {
   return `${WEEKDAYS_DE[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]}, ${formatInplayDate(iso)}`;
 }
 
+// "2021-11-28" -> "So, 28.11.2021" (Timeline am Handy)
+export function formatInplayDateWeekdayShort(iso: string): string {
+  const [y, m, d] = iso.split("-").map((n) => parseInt(n, 10));
+  if (!y || !m || !d) return iso;
+  return `${WEEKDAYS_DE[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]}, ${formatInplayDateShort(iso)}`;
+}
+
 // "2021-11-22" -> "22.11.2021" (für kompakte Zeilen)
 export function formatInplayDateShort(iso: string): string {
   const [y, m, d] = iso.split("-");

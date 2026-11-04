@@ -5,7 +5,14 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { useSessionState } from "@/lib/session-state";
-import { compareInplay, formatDateTimeShort, formatInplayDate, formatInplayDateWeekday } from "@/lib/format";
+import {
+  compareInplay,
+  formatDateTimeShort,
+  formatInplayDate,
+  formatInplayDateWeekday,
+  formatInplayDateWeekdayShort,
+  joinNamesAnd,
+} from "@/lib/format";
 import {
   AU_UNNAMED,
   areaFilterOptions,
@@ -532,6 +539,17 @@ function Node({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Inplay-Datum im Kopf eines Eintrags: am Handy numerisch („So, 28.11.2021"),
+// sonst ausgeschrieben
+function EntryDate({ iso }: { iso: string }) {
+  return (
+    <>
+      <span className="sm:hidden">{formatInplayDateWeekdayShort(iso)}</span>
+      <span className="max-sm:hidden">{formatInplayDateWeekday(iso)}</span>
+    </>
+  );
+}
+
 function RemoveButton({ onRemove, title }: { onRemove: () => void; title: string }) {
   return (
     <button
@@ -544,7 +562,7 @@ function RemoveButton({ onRemove, title }: { onRemove: () => void; title: string
   );
 }
 
-// Faktenzeile eines Eintrags: Profilbilder zusammengerückt + Vornamen · Ort (· AU)
+// Faktenzeile eines Eintrags: Profilbilder zusammengerückt + „A, B & C" · Ort (· AU)
 // – reiner Text mit Punkten dazwischen, nichts davon anklickbar.
 function FactsLine({
   participants,
@@ -573,17 +591,18 @@ function FactsLine({
             ))}
           </span>
           <span className="text-text-secondary">
-            {participants.map((c) => c.name.split(" ")[0]).join(" & ")}
+            {joinNamesAnd(participants.map((c) => c.name.split(" ")[0]))}
           </span>
         </span>
       )}
+      {/* Ort: am Handy in eigener Zeile (kein Punkt am Zeilenanfang), sonst dahinter */}
       {location && (
-        <span>
-          {participants.length > 0 && "· "}
-          {location}
+        <span className={participants.length > 0 ? "max-sm:basis-full" : undefined}>
+          {participants.length > 0 && <span className="max-sm:hidden">· </span>}
+          {location} {children}
         </span>
       )}
-      {children}
+      {!location && children}
     </div>
   );
 }
@@ -604,6 +623,18 @@ function SceneEntry({
     .map((id) => character(id))
     .filter(Boolean) as Character[];
   const { last: lastPost, lastHref, what } = useLastEntry(scene);
+  // letzter Post (Klick springt dorthin, wie in den Szenenboxen)
+  const lastLink = lastPost && (
+    <Link
+      href={lastHref}
+      title="Zum neuesten Beitrag springen"
+      className="group/last relative z-10 text-[0.8125rem] text-text-tertiary hover:text-accent"
+    >
+      <span className="text-text-secondary group-hover/last:text-accent group-hover/last:underline">{what}</span>
+      {" · "}
+      <span className="group-hover/last:underline">{formatDateTimeShort(lastPost.created_at)}</span>
+    </Link>
+  );
 
   return (
     <div className="relative">
@@ -612,25 +643,16 @@ function SceneEntry({
       </Node>
       {/* Die ganze Karte führt zur Szene (Titel-Link, über die Karte gestreckt) */}
       <div className="relative rounded-xl border border-border-subtle bg-bg-surface px-4 py-3 transition-colors hover:bg-white/[0.03]">
+        {/* Kopf: Datum links; rechts der letzte Post (nur ab sm – am Handy steht
+            er unten) und der Mülleimer */}
         <div className="flex items-start justify-between gap-3">
-          <div className="text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
-            {formatInplayDateWeekday(scene.inplay_date)}
+          <div className="min-w-0 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
+            <EntryDate iso={scene.inplay_date} />
             {scene.inplay_time && ` · ${scene.inplay_time}`}
           </div>
           {(lastPost || onRemove) && (
-            <div className="flex shrink-0 items-center gap-2">
-              {/* letzter Post (Klick springt dorthin, wie in den Szenenboxen) */}
-              {lastPost && (
-                <Link
-                  href={lastHref}
-                  title="Zum neuesten Beitrag springen"
-                  className="group/last relative z-10 text-[0.8125rem] text-text-tertiary hover:text-accent"
-                >
-                  <span className="text-text-secondary group-hover/last:text-accent group-hover/last:underline">{what}</span>
-                  {" · "}
-                  <span className="group-hover/last:underline">{formatDateTimeShort(lastPost.created_at)}</span>
-                </Link>
-              )}
+            <div className="-mr-1.5 -mt-0.5 flex shrink-0 items-center gap-2">
+              {lastPost && <span className="max-sm:hidden">{lastLink}</span>}
               {onRemove && (
                 <span className="relative z-10">
                   <RemoveButton onRemove={onRemove} title={removeTitle} />
@@ -657,6 +679,7 @@ function SceneEntry({
         {scene.summary && (
           <p className="mt-2 text-[0.875rem] italic text-text-secondary">{scene.summary}</p>
         )}
+        {lastPost && <div className="mt-2 sm:hidden">{lastLink}</div>}
       </div>
     </div>
   );
@@ -685,12 +708,12 @@ function OffEntry({
       <div className="rounded-xl border border-dashed border-border-strong px-4 py-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2 text-[0.8125rem] uppercase tracking-wider text-text-tertiary">
-            {formatInplayDateWeekday(off.inplay_date)}
+            <EntryDate iso={off.inplay_date} />
             {off.inplay_time && <> · {off.inplay_time}</>}
             <span className="rounded bg-white/[0.06] px-2 py-0.5">im Off</span>
           </div>
           {(onEdit || onRemove) && (
-            <div className="flex shrink-0 items-center gap-0.5">
+            <div className="-mr-1.5 -mt-0.5 flex shrink-0 items-center gap-0.5">
               {onEdit && (
                 <button
                   onClick={onEdit}
