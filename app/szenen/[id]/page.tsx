@@ -507,7 +507,7 @@ function SceneHeader({
   // Ort und Datum
   const actions = (
     (isParticipant || canReply || isAdmin || bell) && (
-    <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:justify-end">
+    <div className="flex flex-wrap items-center justify-end gap-2 md:flex-nowrap">
       {/* Antworten, Weitergeben, Beenden: auf dem Handy nur unter den Posts */}
       {canReply && (
         <button
