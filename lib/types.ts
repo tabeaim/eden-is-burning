@@ -360,7 +360,8 @@ export interface OffScene {
 }
 
 // Ein Plot: gespeicherte Timeline-Filter plus von Hand ergänzte/entfernte Szenen
-// und Off-Szenen. Sichtbar für Betroffene (oder privat); bearbeiten dürfen Ersteller*in und Admins.
+// und Off-Szenen. Sichtbar für Betroffene (oder privat); bearbeiten dürfen sie auch,
+// löschen nur Ersteller*in und Admins.
 export interface Plot {
   id: string;
   name: string;

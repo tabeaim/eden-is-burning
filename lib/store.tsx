@@ -38,6 +38,7 @@ import { openedFromRecoveryLink, supabase, supabaseConfigured } from "./supabase
 import { rememberPhone } from "./phone";
 import { mentionedIds, postNotices, replaceHandle, requestId } from "./captic";
 import { orderMessages, smsAsScene, type DatedMessage } from "./chats";
+import { visiblePlots } from "./plots";
 import { playsAs, tierOf } from "./characters";
 
 interface PersistedState {
@@ -140,7 +141,8 @@ interface StoreValue extends PersistedState {
   addPlot: (name: string, tokens: string[], aus: string[], areas?: string[], isPrivate?: boolean) => string;
   updatePlot: (id: string, patch: Partial<Plot>) => void;
   deletePlot: (id: string) => void;
-  canEditPlot: (plot: Plot) => boolean;
+  canEditPlot: (plot: Plot) => boolean; // Ersteller*in, Admins und Betroffene
+  ownsPlot: (plot: Plot) => boolean; // löschen, privat stellen: Ersteller*in und Admins
   // AUs umbenennen/löschen (Admins und Beteiligte, siehe supabase/schema-au-manage.sql).
   // Umbenennen auf einen vorhandenen Namen legt die AUs zusammen; Löschen lässt die
   // Szenen als AU ohne Namen stehen.
@@ -1636,12 +1638,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   // --- Plots (Timeline) ------------------------------------------------------
-  const canEditPlot = useCallback(
-    (plot: Plot) =>
-      !!currentPlayer &&
-      (Boolean(currentPlayer.is_admin) || plot.created_by === currentPlayer.id),
-    [currentPlayer],
-  );
   const addPlot = useCallback(
     (name: string, tokens: string[], aus: string[], areas: string[] = [], isPrivate = false) => {
       const plot: Plot = {
@@ -1842,6 +1838,31 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
     return out;
   }, [state.chatScenes, state.chats, state.chatMessages]);
+
+  // Plot bearbeiten: wer ihn sehen darf – Ersteller*in, Admins und alle
+  // Betroffenen (private Plots nur Ersteller*in). Löschen und Privat-Stellen
+  // bleiben bei Ersteller*in und Admins (`ownsPlot`).
+  const canEditPlot = useCallback(
+    (plot: Plot) => {
+      if (!currentPlayer) return false;
+      const charIds = new Set(charactersOf(currentPlayer.id).map((c) => c.id));
+      return (
+        visiblePlots(
+          [plot],
+          [...state.scenes, ...smsScenes],
+          { playerId: currentPlayer.id, isAdmin: Boolean(currentPlayer.is_admin), charIds },
+          character,
+        ).length > 0
+      );
+    },
+    [currentPlayer, charactersOf, state.scenes, smsScenes, character],
+  );
+  const ownsPlot = useCallback(
+    (plot: Plot) =>
+      !!currentPlayer &&
+      (Boolean(currentPlayer.is_admin) || plot.created_by === currentPlayer.id),
+    [currentPlayer],
+  );
 
   const addChatScene = useCallback(
     (chatId: string, data: Pick<ChatScene, "title" | "inplay_date" | "summary" | "au" | "au_name">) => {
@@ -2691,6 +2712,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updatePlot,
       deletePlot,
       canEditPlot,
+      ownsPlot,
       canManageAu,
       renameAu,
       deleteAu,
@@ -2825,6 +2847,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updatePlot,
       deletePlot,
       canEditPlot,
+      ownsPlot,
       canManageAu,
       renameAu,
       deleteAu,

@@ -130,9 +130,12 @@ export const plotToolBtn =
   "inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-2.5 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
 
 // Werkzeuge für den geöffneten Plot (Timeline und Szenen-Übersicht): umbenennen,
-// privat/geteilt umstellen und löschen. Nur zeigen, wenn der Plot bearbeitet werden darf (`canEditPlot`).
+// privat/geteilt umstellen und löschen. Nur zeigen, wenn der Plot bearbeitet werden darf
+// (`canEditPlot`: auch Betroffene); löschen nur `ownsPlot`, privat stellen nur wer ihn angelegt hat.
 export function PlotTools({ plot, onDeleted }: { plot: Plot; onDeleted: () => void }) {
-  const { updatePlot, deletePlot } = useStore();
+  const { updatePlot, deletePlot, ownsPlot, currentPlayer } = useStore();
+  const owner = ownsPlot(plot); // löschen: Ersteller*in und Admins
+  const creator = !!currentPlayer && plot.created_by === currentPlayer.id; // privat stellen
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -183,20 +186,26 @@ export function PlotTools({ plot, onDeleted }: { plot: Plot; onDeleted: () => vo
           <Icon name="edit" size={13} /> Umbenennen
         </button>
       )}
-      <button
-        onClick={() => updatePlot(plot.id, { private: !plot.private })}
-        title={
-          plot.private
-            ? "Nur für dich sichtbar – klicken, um ihn mit den betroffenen Spieler*innen zu teilen"
-            : "Für die betroffenen Spieler*innen sichtbar – klicken, um ihn privat zu stellen"
-        }
-        className={plotToolBtn}
-      >
-        <Icon name="lock" size={13} /> {plot.private ? "Privat" : "Geteilt"}
-      </button>
-      <button onClick={() => setConfirmDelete(true)} className={plotToolBtn}>
-        <Icon name="trash" size={13} /> Plot löschen
-      </button>
+      {/* Privat stellen: nur wer den Plot angelegt hat */}
+      {creator && (
+        <button
+          onClick={() => updatePlot(plot.id, { private: !plot.private })}
+          title={
+            plot.private
+              ? "Nur für dich sichtbar – klicken, um ihn mit den betroffenen Spieler*innen zu teilen"
+              : "Für die betroffenen Spieler*innen sichtbar – klicken, um ihn privat zu stellen"
+          }
+          className={plotToolBtn}
+        >
+          <Icon name="lock" size={13} /> {plot.private ? "Privat" : "Geteilt"}
+        </button>
+      )}
+      {/* Löschen: Ersteller*in und Admins */}
+      {owner && (
+        <button onClick={() => setConfirmDelete(true)} className={plotToolBtn}>
+          <Icon name="trash" size={13} /> Plot löschen
+        </button>
+      )}
       {confirmDelete && (
         <ConfirmDialog
           title={`Plot „${plot.name}“ löschen?`}
