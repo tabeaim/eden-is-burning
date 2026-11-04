@@ -291,9 +291,9 @@ export default function TimelinePage() {
           plots={myPlots}
           activeId={plotId}
           onToggle={togglePlot}
-          onSave={(name) => {
+          onSave={(name, isPrivate) => {
             // Das AU steckt jetzt im Plot; der AU-Filter selbst wird frei
-            setPlotId(addPlot(name, [...tokens], [...aus], [...areas]));
+            setPlotId(addPlot(name, [...tokens], [...aus], [...areas], isPrivate));
             setAus([]);
           }}
           canSave={[...tokens, ...aus, ...areas].length > 0}

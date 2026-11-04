@@ -137,7 +137,7 @@ interface StoreValue extends PersistedState {
   appSettings: AppSettings;
   updateAppSettings: (patch: Partial<AppSettings>) => void;
   addNpc: (npc: Pick<Character, "name" | "role" | "age">, tier?: "extra" | "supporting") => string;
-  addPlot: (name: string, tokens: string[], aus: string[], areas?: string[]) => string;
+  addPlot: (name: string, tokens: string[], aus: string[], areas?: string[], isPrivate?: boolean) => string;
   updatePlot: (id: string, patch: Partial<Plot>) => void;
   deletePlot: (id: string) => void;
   canEditPlot: (plot: Plot) => boolean;
@@ -1643,7 +1643,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [currentPlayer],
   );
   const addPlot = useCallback(
-    (name: string, tokens: string[], aus: string[], areas: string[] = []) => {
+    (name: string, tokens: string[], aus: string[], areas: string[] = [], isPrivate = false) => {
       const plot: Plot = {
         id: uid("plot"),
         name: name.trim(),
@@ -1651,6 +1651,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         aus,
         // nur mitschicken, wenn gesetzt (Spalte kommt aus schema-plots-areas.sql)
         ...(areas.length > 0 ? { areas } : {}),
+        // ebenso (Spalte aus schema-plots-private.sql)
+        ...(isPrivate ? { private: true } : {}),
         include_ids: [],
         exclude_ids: [],
         off_scenes: [],

@@ -100,7 +100,7 @@ export function plotScenes(
 
 // Plots sieht nur, wessen Charaktere betroffen sind: als Filter gewählt, in einer
 // Szene oder Off-Szene des Plots beteiligt – außerdem wer den Plot angelegt hat,
-// und Admins.
+// und Admins. Private Plots nur, wer sie angelegt hat.
 export function visiblePlots(
   plots: Plot[],
   scenes: Scene[],
@@ -108,16 +108,19 @@ export function visiblePlots(
   character: CharacterLookup,
 ): Plot[] {
   const involvesMe = (ids: string[]) => ids.some((id) => me.charIds.has(id));
-  return plots.filter(
-    (p) =>
+  return plots.filter((p) => {
+    if (p.created_by === me.playerId) return true;
+    // private Plots sieht nur, wer sie angelegt hat (auch keine Admins)
+    if (p.private) return false;
+    return (
       me.isAdmin ||
-      p.created_by === me.playerId ||
       p.tokens.some(
         (t) => t === `player:${me.playerId}` || me.charIds.has(t.replace(/^char:/, "")),
       ) ||
       p.off_scenes.some((o) => involvesMe(o.participant_ids)) ||
       plotScenes(p, scenes, plotFilters(p), character).some((s) =>
         involvesMe(s.participant_ids),
-      ),
-  );
+      )
+    );
+  });
 }

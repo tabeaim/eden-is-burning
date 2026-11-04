@@ -360,7 +360,7 @@ export interface OffScene {
 }
 
 // Ein Plot: gespeicherte Timeline-Filter plus von Hand ergänzte/entfernte Szenen
-// und Off-Szenen. Für alle sichtbar; bearbeiten dürfen Ersteller*in und Admins.
+// und Off-Szenen. Sichtbar für Betroffene (oder privat); bearbeiten dürfen Ersteller*in und Admins.
 export interface Plot {
   id: string;
   name: string;
@@ -370,6 +370,9 @@ export interface Plot {
   include_ids: string[]; // zusätzlich aufgenommene Szenen
   exclude_ids: string[]; // herausgenommene Szenen
   off_scenes: OffScene[];
+  // privat: nur für die Person sichtbar, die ihn angelegt hat; sonst für sie,
+  // Admins und alle betroffenen Spieler*innen (schema-plots-private.sql)
+  private?: boolean;
   created_by?: string | null;
   created_at: string;
 }
