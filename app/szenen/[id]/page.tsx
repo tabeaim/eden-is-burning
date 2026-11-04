@@ -425,8 +425,25 @@ function SceneHeader({
   closing: boolean;
   setClosing: (v: boolean) => void;
 }) {
-  const { updateScene, locationsOf, isAdmin } = useStore();
+  const { updateScene, locationsOf, isAdmin, isSubscribed, setSubscribed, currentPlayer, charactersOf } = useStore();
   const character = useCharacterIn(scene);
+  // Glocke: Szenen ohne eigenen Main Character lassen sich abonnieren (dann
+  // zählen sie im Menü mit und klingeln). Mit eigenem Charakter ohnehin.
+  const ownScene = !!currentPlayer && charactersOf(currentPlayer.id).some((c) => scene.participant_ids.includes(c.id));
+  const subscribed = isSubscribed(scene.id);
+  const bell = currentPlayer && !ownScene && (
+    <button
+      onClick={() => setSubscribed(scene.id, !subscribed)}
+      title={subscribed ? "Abonniert – klicken zum Abbestellen" : "Szene abonnieren (Benachrichtigung und Ton bei neuen Posts)"}
+      aria-label={subscribed ? "Szene abbestellen" : "Szene abonnieren"}
+      aria-pressed={subscribed}
+      className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] ${
+        subscribed ? "text-accent" : "text-text-tertiary hover:text-text-primary"
+      }`}
+    >
+      <Icon name="bell" size={15} fill={subscribed ? "currentColor" : "none"} />
+    </button>
+  );
   // Ortsprofil zum Szenen-Ort (falls ein Eintrag existiert) → Ort anklickbar
   const loc = scene.location_name
     ? locationsOf(scene.location_area).find((l) => l.name === scene.location_name)
@@ -526,7 +543,7 @@ function SceneHeader({
         })}
         </div>
 
-        {(isParticipant || canReply || isAdmin) && (
+        {(isParticipant || canReply || isAdmin || bell) && (
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2 md:shrink-0 md:flex-nowrap">
             {/* Antworten, Weitergeben, Beenden: auf dem Handy nur unter den Posts */}
             {canReply && (
@@ -567,6 +584,7 @@ function SceneHeader({
                 <Icon name="edit" size={14} /> Bearbeiten
               </button>
             )}
+            {bell}
           </div>
         )}
       </div>
@@ -875,7 +893,7 @@ function PostRow({
   );
 
   return (
-    <div className="post-row group/post">
+    <div className="post-row group/post relative">
       {confirmDelete && (
         <ConfirmDialog
           title="Post löschen?"
@@ -889,7 +907,15 @@ function PostRow({
         />
       )}
       {!editing && (
-        <div className="mb-1 flex items-center justify-end gap-0.5 transition-opacity focus-within:opacity-100 group-hover/post:opacity-100 [@media(hover:hover)]:opacity-0">
+        // Drehbuch-Posts (ohne Charakter-Karte): Mit Maus liegt die Leiste über der
+        // ersten Zeile, statt oben Platz zu belegen
+        <div
+          className={`mb-1 flex items-center justify-end gap-0.5 transition-opacity focus-within:opacity-100 group-hover/post:opacity-100 [@media(hover:hover)]:opacity-0 ${
+            script
+              ? "[@media(hover:hover)]:absolute [@media(hover:hover)]:right-0 [@media(hover:hover)]:top-0 [@media(hover:hover)]:z-10 [@media(hover:hover)]:mb-0 [@media(hover:hover)]:rounded-md [@media(hover:hover)]:bg-bg-primary [@media(hover:hover)]:pl-2"
+              : ""
+          }`}
+        >
           {/* wann der Post wirklich geschrieben wurde (nicht das Inplay-Datum) */}
           <span className="mr-1.5 text-[0.75rem] text-text-tertiary">gepostet {formatDateTime(post.created_at)}</span>
           {avatars && (

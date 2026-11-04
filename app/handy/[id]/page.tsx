@@ -1,5 +1,6 @@
 "use client";
 
+import { ProfileName } from "@/components/ProfileName";
 import { Fragment, use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
@@ -624,7 +625,7 @@ function ChatView({ chat }: { chat: Chat }) {
                     sender && ownerGone(sender, player) ? GONE_CLASS : ""
                   }`}
                 >
-                  {contactShortName(viewer, sender)}
+                  <ProfileName id={sender?.id}>{contactShortName(viewer, sender)}</ProfileName>
                 </span>
               )}
               {labeled && !mine && lastOfGroup && sender && (

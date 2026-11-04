@@ -457,7 +457,7 @@ function Sidebar({
   ];
   const phoneBadge =
     unreadChatCount + incomingCalls.length + capticUnread.reduce((n, a) => n + a.count, 0);
-  // Orange Zähler im Menü: Szenen = alle ungelesenen; Dashboard = Bewegung bei
+  // Orange Zähler im Menü: Szenen = ungelesene eigene und abonnierte; Dashboard = Bewegung bei
   // den eigenen Charakteren (eigene Szenen, Chats, Anrufe)
   const myIds = new Set(myChars.map((c) => c.id));
   // zugeordnete Supporting Characters zählen in all ihren Szenen (wie auf dem
@@ -466,7 +466,10 @@ function Sidebar({
   const myNpcIds = new Set(myNpcs.map((c) => c.id));
   const newScenes = scenes.filter((s) => isSceneNew(s.id));
   const badges: Record<string, number> = {
-    "/szenen": newScenes.length,
+    // Szenen: nur ungelesene mit eigenen Charakteren oder abonnierte
+    "/szenen": newScenes.filter(
+      (s) => isSubscribed(s.id) || s.participant_ids.some((id) => myIds.has(id) || mySupportingIds.has(id)),
+    ).length,
     "/dashboard":
       newScenes.filter((s) =>
         s.participant_ids.some(

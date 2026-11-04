@@ -14,8 +14,8 @@ export function pingEnabled(): boolean {
   }
 }
 
-// Bei welchen Szenen ein neuer Post klingelt (pro Gerät): standardmäßig nur in
-// Szenen mit eigenen Charakteren, wahlweise auch abonnierte oder alle Szenen.
+// Bei welchen Szenen ein neuer Post klingelt (pro Gerät): standardmäßig in
+// Szenen mit eigenen Charakteren und abonnierten, wahlweise nur eigene oder alle.
 export const PING_SCENES_KEY = "eden:ping-scenes";
 export type PingScenes = "own" | "subscribed" | "all";
 export const PING_SCENE_OPTIONS: { key: PingScenes; label: string }[] = [
@@ -26,9 +26,9 @@ export const PING_SCENE_OPTIONS: { key: PingScenes; label: string }[] = [
 export function pingScenes(): PingScenes {
   try {
     const v = localStorage.getItem(PING_SCENES_KEY);
-    return v === "subscribed" || v === "all" ? v : "own";
+    return v === "own" || v === "all" ? v : "subscribed";
   } catch {
-    return "own";
+    return "subscribed";
   }
 }
 

@@ -18,7 +18,7 @@ import { AU_UNNAMED, auNames } from "@/components/AuNameField";
 import type { Plot, Scene } from "@/lib/types";
 import { SCENE_KINDS, chatHref, newestMessage, sceneKind } from "@/lib/chats";
 
-type Tab = "active" | "all" | "mine" | "archive";
+type Tab = "active" | "all" | "mine" | "subscribed" | "archive";
 type SortKey = "active" | "inplay" | "created" | "title";
 
 const SORT_LABELS: Record<SortKey, string> = {
@@ -52,15 +52,16 @@ export default function ScenesPage() {
     canEditPlot,
     canManageAu,
     isAdmin,
+    isSubscribed,
   } = store;
 
   // Gespielte Szenen (auch Telefonszenen) und SMS-Szenen in einer Liste
   const scenes = useMemo(() => [...playedScenes, ...smsScenes], [playedScenes, smsScenes]);
 
   const [tabState, setTab] = useSessionState<Tab>("szenen:tab", "all");
-  // Art: zunächst nur richtige Szenen; Anrufe und SMS lassen sich dazuwählen (leer = alle)
-  const [kinds, setKinds] = useSessionState<string[]>("szenen:kinds", ["scene"]);
-  const kindsChanged = kinds.length !== 1 || kinds[0] !== "scene";
+  // Art: zunächst alle (leer = alle); Szenen, Anrufe oder SMS lassen sich eingrenzen
+  const [kinds, setKinds] = useSessionState<string[]>("szenen:kinds2", []);
+  const kindsChanged = kinds.length > 0;
   const [searchTitle, setSearchTitle] = useSessionState("szenen:searchtitle", "");
   const [searchPost, setSearchPost] = useSessionState("szenen:searchpost", "");
   const [aus, setAus] = useSessionState<string[]>("szenen:aus", []); // AU-Namen | AU_UNNAMED
@@ -197,6 +198,9 @@ export default function ScenesPage() {
     ...(scenes.some((s) => s.participant_ids.some((id) => myCharIds.has(id)))
       ? ([["mine", "Meine"]] as [Tab, string][])
       : []),
+    ...(scenes.some((s) => isSubscribed(s.id) && !s.participant_ids.some((id) => myCharIds.has(id)))
+      ? ([["subscribed", "Abonnierte"]] as [Tab, string][])
+      : []),
     ...(scenes.some((s) => s.status === "closed") ? ([["archive", "Archiv"]] as [Tab, string][]) : []),
   ];
   const tab: Tab = sceneTabs.some(([k]) => k === tabState) ? tabState : "all";
@@ -207,6 +211,8 @@ export default function ScenesPage() {
     if (tab === "active" && s.status !== "active") return false;
     if (tab === "archive" && s.status !== "closed") return false;
     if (tab === "mine" && !s.participant_ids.some((id) => myCharIds.has(id)))
+      return false;
+    if (tab === "subscribed" && (!isSubscribed(s.id) || s.participant_ids.some((id) => myCharIds.has(id))))
       return false;
     // AUs (Mehrfach): Szene muss in einem der gewählten AUs spielen
     if (aus.length > 0 && !(s.au && aus.includes(s.au_name || AU_UNNAMED)))
@@ -266,7 +272,7 @@ export default function ScenesPage() {
     setSearchTitle("");
     setSearchPost("");
     setAus([]);
-    setKinds(["scene"]);
+    setKinds([]);
     setPlotId(null);
     setTokens([]);
     setAreas([]);
@@ -333,7 +339,7 @@ export default function ScenesPage() {
             options={SCENE_KINDS}
             selected={kinds}
             onToggle={(v) => toggle(kinds, setKinds, v)}
-            onClear={() => setKinds(["scene"])}
+            onClear={() => setKinds([])}
           />
           <MultiSelect
             label="Gegend"

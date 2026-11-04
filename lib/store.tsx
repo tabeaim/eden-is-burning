@@ -113,6 +113,8 @@ interface StoreValue extends PersistedState {
   // Abonniert: Szenen/Chats, in denen ich mit einer Nebenfigur mitgemacht habe –
   // nur die tauchen für diese Figuren im Dashboard auf (privat, pro Spieler*in)
   isSubscribed: (itemId: string) => boolean;
+  // Szene von Hand abonnieren / abbestellen (Glocke im Szenenkopf)
+  setSubscribed: (itemId: string, on: boolean) => void;
   // mutations
   addPost: (sceneId: string, characterId: string, content: string) => void;
   updatePost: (postId: string, content: string) => void;
@@ -874,6 +876,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [myPlayerId, applyReads],
   );
   const isSubscribed = useCallback((itemId: string) => !!reads[`sub:${itemId}`], [reads]);
+  const setSubscribed = useCallback(
+    (itemId: string, on: boolean) => {
+      if (!myPlayerId) return;
+      if (on) subscribe(itemId);
+      else applyReads(myPlayerId, {}, [`sub:${itemId}`]);
+    },
+    [myPlayerId, subscribe, applyReads],
+  );
 
   // Lese-Status laden und auf allen Geräten gleich halten: Der Browser-Speicher
   // ist nur ein schneller Zwischenstand, maßgeblich ist die Datenbank. Änderungen
@@ -2661,6 +2671,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       canEditCharacter,
       myNpcs,
       isSubscribed,
+      setSubscribed,
       addPost,
       updatePost,
       deletePost,
@@ -2794,6 +2805,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       canEditCharacter,
       myNpcs,
       isSubscribed,
+      setSubscribed,
       addPost,
       updatePost,
       deletePost,

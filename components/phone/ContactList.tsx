@@ -4,8 +4,7 @@ import { capFirst } from "@/lib/format";
 import { useMemo, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { contactName, contactPhoto, hasPhone } from "@/lib/phone";
-import { characterImage } from "@/lib/avatar";
+import { contactName, hasPhone } from "@/lib/phone";
 import { tierLabel } from "@/lib/characters";
 import { Icon } from "@/components/Icon";
 import { ContactAvatar } from "./PhoneFrame";
@@ -23,7 +22,6 @@ export function ContactList({
   onMessage,
   onEdit,
   onMark,
-  onAvatar,
 }: {
   owner: Character;
   onPick?: (c: Character) => void; // anrufen
@@ -32,8 +30,6 @@ export function ContactList({
   // Favoriten / von Hand als relevant markierte Kontakte ändern (Rechtsklick
   // bzw. langes Drücken auf einen Kontakt)
   onMark?: (patch: { favorites?: string[]; relevant?: string[]; not_relevant?: string[] }) => void;
-  // Vorschau im Profil: Klick aufs Profilbild zeigt es groß (statt aufs Profil zu führen)
-  onAvatar?: (src: string, c: Character) => void;
 }) {
   const { characters, npcs, scenes, posts, chats, chatMessages, calls, currentPlayer } = useStore();
   // „Relevante": mit wem der Besitzer schon Kontakt hatte · „Alle": wirklich alle
@@ -100,23 +96,7 @@ export function ContactList({
     const renamed = name(c) !== c.name;
     const body = (
       <>
-        {onAvatar ? (
-          <button
-            onClick={() => onAvatar(contactPhoto(owner, c) || c.phone?.avatar || characterImage(c), c)}
-            title="Profilbild vergrößern"
-            aria-label={`Profilbild von ${name(c)} vergrößern`}
-            className="shrink-0 cursor-zoom-in rounded-full"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={contactPhoto(owner, c) || c.phone?.avatar || characterImage(c)}
-              alt=""
-              className="h-10 w-10 rounded-full bg-bg-surface-2 object-cover"
-            />
-          </button>
-        ) : (
-          <ContactAvatar owner={owner} character={c} size={40} />
-        )}
+        <ContactAvatar owner={owner} character={c} size={40} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[0.9375rem] text-text-primary">
             {name(c)}

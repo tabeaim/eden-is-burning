@@ -8,6 +8,8 @@ import { PHONE_AREA, contactShortName } from "@/lib/phone";
 import { ContactAvatar, useMyPhone } from "./phone/PhoneFrame";
 import { CharacterSelect } from "./CharacterSelect";
 import { Icon } from "./Icon";
+import { PhotoZoom } from "./PhotoZoom";
+import { ProfileName } from "./ProfileName";
 
 // Wer spricht: für Mitlesende mit eigenem Charakter in der Szene (`viewer`) so,
 // wie die Person in dessen Handy steht (Kontaktname, Kontakt- bzw. Messenger-
@@ -59,15 +61,18 @@ export function ScriptView({ lines, viewer }: { lines: ScriptLine[]; viewer?: Ch
             {who && viewer ? (
               <ContactAvatar owner={viewer} character={who} size={28} />
             ) : who ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={characterImage(who)} alt="" className="h-7 w-7 shrink-0 rounded-full bg-bg-surface-2 object-cover" />
+              <PhotoZoom src={characterImage(who)} name={who.name}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={characterImage(who)} alt="" className="h-7 w-7 shrink-0 rounded-full bg-bg-surface-2 object-cover" />
+              </PhotoZoom>
             ) : (
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-olive-soft text-[0.75rem] uppercase text-text-primary">
                 {name.charAt(0)}
               </span>
             )}
             <p className="min-w-0 flex-1 whitespace-pre-wrap break-words pt-0.5">
-              <span className="font-semibold">{name}:</span> {l.text}
+              <ProfileName id={who?.id} className="font-semibold">{name}</ProfileName>
+              <span className="font-semibold">:</span> {l.text}
             </p>
           </div>
         );

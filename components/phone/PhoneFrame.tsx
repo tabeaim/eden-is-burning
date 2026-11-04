@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
 import { PHONE_OWNER_KEY, contactName, contactPhoto, hasPhone, resolvePhone, type PhoneModel } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
+import { PhotoZoom } from "@/components/PhotoZoom";
 import { tierLabel } from "@/lib/characters";
 
 // Das „Handy" (siehe DESIGN.md). Über dem Gerät – nicht auf dem Display – sitzt
@@ -465,52 +465,30 @@ export function PhoneHeader({
   );
 }
 
-// Klick auf ein Profilbild führt immer aufs Charakterprofil. Kein <a>, damit das
-// auch in Zeilen funktioniert, die selbst schon Link oder Knopf sind.
-function ProfileTarget({ id, children }: { id: string; children: React.ReactNode }) {
-  const router = useRouter();
-  const go = (e: React.SyntheticEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    router.push(`/charaktere/${id}`);
-  };
-  return (
-    <span
-      role="link"
-      tabIndex={0}
-      title="Zum Profil"
-      onClick={go}
-      onKeyDown={(e) => e.key === "Enter" && go(e)}
-      className="shrink-0 cursor-pointer rounded-full"
-    >
-      {children}
-    </span>
-  );
-}
-
 export function PhoneAvatar({
   character,
   size = 40,
   className = "",
   link = true,
 }: {
-  character: Pick<Character, "faceclaim_image_url" | "phone"> & { id?: string };
+  character: Pick<Character, "faceclaim_image_url" | "phone"> & { id?: string; name?: string };
   size?: number;
   className?: string;
-  link?: boolean; // false: reine Anzeige (z.B. in Auswahllisten)
+  link?: boolean; // false: reine Anzeige (z.B. in Auswahllisten); sonst vergrößert ein Klick das Bild
 }) {
+  const src = character.phone?.avatar || characterImage(character);
   const img = (
     // Im Handy zeigt sich ein Charakter mit seinem Messenger-Profilbild, falls er
     // eines festgelegt hat – sonst mit dem normalen Charakterbild.
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={character.phone?.avatar || characterImage(character)}
+      src={src}
       alt=""
       style={{ width: size, height: size }}
       className={`shrink-0 rounded-full bg-bg-surface-2 object-cover ${className}`}
     />
   );
-  return link && character.id ? <ProfileTarget id={character.id}>{img}</ProfileTarget> : img;
+  return link && character.id ? <PhotoZoom src={src} name={character.name}>{img}</PhotoZoom> : img;
 }
 
 // Avatar bei Kontakten und Anrufen: das eigene Kontaktfoto dieses Handys, sonst
@@ -529,7 +507,7 @@ export function ContactAvatar({
   const photo = contactPhoto(owner, character);
   if (!photo) return <PhoneAvatar character={character} size={size} className={className} />;
   return (
-    <ProfileTarget id={character.id}>
+    <PhotoZoom src={photo} name={contactName(owner, character)}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={photo}
@@ -537,7 +515,7 @@ export function ContactAvatar({
         style={{ width: size, height: size }}
         className={`shrink-0 rounded-full bg-bg-surface-2 object-cover ${className}`}
       />
-    </ProfileTarget>
+    </PhotoZoom>
   );
 }
 
