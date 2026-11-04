@@ -20,34 +20,38 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
 // Größe und Drehung direkt am Objekt einstellen.
 // Positionen sind Prozente der Fläche, damit die Collage auf jedem Bildschirm
 // gleich aussieht.
-// Die Fläche ist 4:3 quer. Collagen, die noch auf der früheren Hochformat-Fläche
+// Die Fläche ist 4:3 quer (Pockets: 16:15, siehe unten). Collagen, die noch auf der früheren Hochformat-Fläche
 // (3:4) angelegt wurden, werden dafür verkleinert und mittig gesetzt (gleiche
 // Anordnung, nur kleiner) – erkennbar am fehlenden Merker `l`. Danach gelten sie
 // als umgerechnet, ein erneutes Anwenden ändert nichts mehr.
 const LEGACY_SCALE = (3 / 4) / (4 / 3);
+// Pockets liegen auf einer höheren Fläche (16:15), damit sie so hoch ist wie das
+// Handy daneben. Collagen von der 4:3-Fläche behalten Breite und Lage, nur die
+// Höhe der Fläche wächst: y rückt zur Mitte (Merker `p`).
+export const POCKETS_ASPECT = 16 / 15;
+const POCKETS_SCALE = (3 / 4) / (1 / POCKETS_ASPECT);
 const round1 = (n: number) => Math.round(n * 10) / 10;
-export function fitBoard(items: ThingItem[]): ThingItem[] {
-  return items.map((t) =>
-    t.l ? t : { ...t, x: round1(50 + (t.x - 50) * LEGACY_SCALE), w: round1(t.w * LEGACY_SCALE), l: true },
-  );
+export function fitBoard(items: ThingItem[], pockets = false): ThingItem[] {
+  return items.map((t) => {
+    const u = t.l ? t : { ...t, x: round1(50 + (t.x - 50) * LEGACY_SCALE), w: round1(t.w * LEGACY_SCALE), l: true };
+    return !pockets || u.p ? u : { ...u, y: round1(50 + (u.y - 50) * POCKETS_SCALE), p: true };
+  });
 }
 
 export function ThingsBoard({
   items: rawItems,
   onChange,
   fill = false,
-  stretch = false,
+  pockets = false,
 }: {
   items: ThingItem[];
   fill?: boolean; // Ansicht: die ganze Spalte füllen (Looks → Style)
-  // Ansicht ab md: das Feld so hoch wie das Elternelement, die 4:3-Fläche mit den
-  // Gegenständen bleibt unverändert und liegt senkrecht mittig darin (Pockets)
-  stretch?: boolean;
+  pockets?: boolean; // Pockets: Fläche im Handy-Format (16:15) statt 4:3
   // Mit onChange ist die Fläche ein Whiteboard zum Bearbeiten (steckt im
   // „Bearbeiten"-Formular des Profils, das auch speichert); ohne nur Ansicht.
   onChange?: (items: ThingItem[]) => void;
 }) {
-  const items = useMemo(() => fitBoard(rawItems), [rawItems]);
+  const items = useMemo(() => fitBoard(rawItems, pockets), [rawItems, pockets]);
   const editing = !!onChange;
   const setItems = (next: ThingItem[] | ((list: ThingItem[]) => ThingItem[])) =>
     onChange?.(typeof next === "function" ? next(items) : next);
@@ -107,7 +111,7 @@ export function ThingsBoard({
       const full = toCanvas(pending, 800);
       const src = await uploadCanvas(cut ? removeBackground(full, tolerance) : full, "things");
       const id = `thing_${Math.random().toString(36).slice(2, 9)}`;
-      setItems((list) => [...list, { id, src, x: 50, y: 50, w: 30, r: 0, l: true }]);
+      setItems((list) => [...list, { id, src, x: 50, y: 50, w: 30, r: 0, l: true, ...(pockets ? { p: true } : {}) }]);
       setSelected(id);
       setPending(null);
     } finally {
@@ -183,14 +187,14 @@ export function ThingsBoard({
       className={
         editing
           ? "grid items-start gap-4 md:grid-cols-[minmax(0,28rem)_minmax(15rem,24rem)]"
-          : `w-full min-w-0 ${fill ? "" : "max-w-[28rem]"} ${stretch ? "md:flex md:h-full md:items-center" : ""}`
+          : `w-full min-w-0 ${fill ? "" : "max-w-[28rem]"}`
       }
     >
-      {/* Die Fläche: fester Rahmen 3:4; in der Ansicht durchsichtig */}
+      {/* Die Fläche: fester Rahmen 4:3 (Pockets 16:15); in der Ansicht durchsichtig */}
       <div
         ref={board}
         onPointerDown={() => editing && setSelected(null)}
-        className={`relative aspect-[4/3] w-full ${fill && !editing ? "" : "max-w-[28rem]"} overflow-hidden ${
+        className={`relative ${pockets ? "aspect-[16/15]" : "aspect-[4/3]"} w-full ${fill && !editing ? "" : "max-w-[28rem]"} overflow-hidden ${
           editing
             ? "touch-none rounded-xl border border-dashed border-border-strong bg-white/[0.04] [background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:10%_7.5%]"
             : ""

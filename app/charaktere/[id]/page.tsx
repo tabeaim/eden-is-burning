@@ -296,16 +296,14 @@ export default function CharacterPage({
             </div>
           )}
           {hasPhone(c) ? (
-            // ab md so hoch wie das Handy (streckt sich auf die Zeilenhöhe; die
-            // Gegenstände bleiben 4:3 und liegen mittig darin), Breite =
-            // 0,8 × Handyhöhe (72 % von min(800px, 100dvh − 6.5rem)) × 4/3. Das Feld ist so
-            // breit wie sein Inhalt, damit Handy + Collage als Gruppe mittig stehen (links
-            // und rechts gleich viel Rand); mobil bleibt es 4:3
-            <div className="w-full min-w-0 max-w-[28rem] md:w-[min(100%,calc(min(800px,100dvh_-_6.5rem)*0.768))] md:max-w-none md:self-stretch">
-              <ThingsBoard items={c.profile?.things ?? []} fill stretch />
+            // Fläche im Handy-Format (16:15), ab md so hoch wie das Handy: Breite =
+            // Handyhöhe (72 % von min(800px, 100dvh − 6.5rem)) × 16/15. Handy + Collage
+            // stehen als Gruppe mittig (links und rechts gleich viel Rand)
+            <div className="w-full min-w-0 max-w-[28rem] md:w-[min(100%,calc(min(800px,100dvh_-_6.5rem)*0.768))] md:max-w-none md:self-center">
+              <ThingsBoard items={c.profile?.things ?? []} fill pockets />
             </div>
           ) : (
-            <ThingsBoard items={c.profile?.things ?? []} />
+            <ThingsBoard items={c.profile?.things ?? []} pockets />
           )}
           {!hasPhone(c) && !(c.profile?.things ?? []).length && (
             <p className="text-[0.875rem] text-text-tertiary">Nichts in den Taschen.</p>

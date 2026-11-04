@@ -426,7 +426,7 @@ export function ProfileEditPanel({ character, onClose }: { character: Character;
             Was hat dein Charakter immer dabei? Die hochgeladenen Bilder erscheinen im Profil als
             Collage neben dem Handy.
           </p>
-          <ThingsBoard items={things} onChange={setThings} />
+          <ThingsBoard items={things} onChange={setThings} pockets />
         </Collapsible>
       )}
 

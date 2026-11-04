@@ -138,6 +138,9 @@ export interface ThingItem {
   // Querformat-Fläche (4:3). Ältere Collagen entstanden auf einer Hochformat-Fläche
   // und werden beim Anzeigen umgerechnet (siehe fitBoard in ThingsBoard).
   l?: boolean;
+  // Pockets: Fläche im Handy-Format (16:15, so hoch wie das Handy). Ältere Pockets
+  // lagen auf der 4:3-Fläche und werden beim Anzeigen umgerechnet (fitBoard).
+  p?: boolean;
 }
 
 // Erweitertes Charakterprofil (JSON-Spalte `profile`). Grunddaten pflegt man in
