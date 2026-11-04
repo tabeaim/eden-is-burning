@@ -16,6 +16,7 @@ import {
   zodiacOf,
 } from "@/lib/characters";
 import { AREA_ORDER, areaName } from "@/lib/world";
+import { capFirst } from "@/lib/format";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { DEFAULT_AVATAR, characterImage } from "@/lib/avatar";
@@ -96,7 +97,8 @@ export function ProfileFacts({ c, merged = false }: { c: Character; merged?: boo
         </Bubble>
       );
     }
-    return <span key={name}>{name}</span>;
+    // freier Text: wie die übrigen Fakten mit großem Anfangsbuchstaben
+    return <span key={name}>{capFirst(name)}</span>;
   };
   const role = shown(c, "role", c.role) ?? (c.job || null);
   const workplace =
