@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useStore, whoseTurn } from "@/lib/store";
 import { areaName } from "@/lib/world";
-import { escapeHtml, formatDateTime, formatInplayDate, renderPost } from "@/lib/format";
+import { escapeHtml, formatDateTime, formatInplayDate, formatInplayDateShort, renderPost } from "@/lib/format";
 import { postHtml } from "@/lib/html";
 import { copyRich, useProseEditor } from "@/lib/editor";
 import { FormatBar } from "@/components/RichEditor";
@@ -503,6 +503,55 @@ function SceneHeader({
   const btn =
     "flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 text-[0.8125rem] text-text-secondary hover:text-text-primary";
 
+  // Aktions-Buttons: ab `md` rechts oben neben den Charakteren, am Handy unter
+  // Ort und Datum
+  const actions = (
+    (isParticipant || canReply || isAdmin || bell) && (
+    <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:justify-end">
+      {/* Antworten, Weitergeben, Beenden: auf dem Handy nur unter den Posts */}
+      {canReply && (
+        <button
+          onClick={onReply}
+          title={myTurn ? "Du bist am Zug" : undefined}
+          className={`max-md:hidden ${
+            myTurn
+              ? "flex items-center gap-1.5 rounded-md border border-accent/70 bg-accent-soft px-3 py-1.5 text-[0.8125rem] text-text-primary"
+              : btn
+          }`}
+        >
+          <Icon name="message" size={14} /> Antworten
+        </button>
+      )}
+      {/* Admins dürfen den Zug auch weitergeben, wenn gerade jemand anderes dran ist */}
+      {scene.status === "active" && (myTurn || (isAdmin && !!activeCharId)) && scene.participant_ids.length > 2 && (
+        <button onClick={onPassTurn} className={`max-md:hidden ${btn}`} title="Zug weitergeben">
+          <Icon name="arrow-right" size={14} /> Weitergeben
+        </button>
+      )}
+      {scene.status === "active" && isParticipant && (
+        <button onClick={() => setClosing(true)} className={`max-md:hidden ${btn}`}>
+          <Icon name="check" size={14} /> Beenden
+        </button>
+      )}
+      {scene.status === "closed" && (isParticipant || isAdmin) && (
+        <button
+          onClick={() => updateScene(scene.id, { status: "active" })}
+          className={btn}
+        >
+          <Icon name="flame" size={14} /> Wieder eröffnen
+        </button>
+      )}
+      {/* Bearbeiten: Beteiligte und Admins – auch bei geschlossenen Szenen */}
+      {(isParticipant || isAdmin) && (
+        <button onClick={() => setEditing(true)} className={btn}>
+          <Icon name="edit" size={14} /> Bearbeiten
+        </button>
+      )}
+      {bell}
+    </div>
+    )
+  );
+
   return (
     <div className="mb-6">
       {/* Status + Charaktere links, Aktions-Buttons rechts (gleiche Höhe). Ab `md`
@@ -543,50 +592,7 @@ function SceneHeader({
         })}
         </div>
 
-        {(isParticipant || canReply || isAdmin || bell) && (
-          <div className="ml-auto flex flex-wrap items-center justify-end gap-2 md:shrink-0 md:flex-nowrap">
-            {/* Antworten, Weitergeben, Beenden: auf dem Handy nur unter den Posts */}
-            {canReply && (
-              <button
-                onClick={onReply}
-                title={myTurn ? "Du bist am Zug" : undefined}
-                className={`max-md:hidden ${
-                  myTurn
-                    ? "flex items-center gap-1.5 rounded-md border border-accent/70 bg-accent-soft px-3 py-1.5 text-[0.8125rem] text-text-primary"
-                    : btn
-                }`}
-              >
-                <Icon name="message" size={14} /> Antworten
-              </button>
-            )}
-            {/* Admins dürfen den Zug auch weitergeben, wenn gerade jemand anderes dran ist */}
-            {scene.status === "active" && (myTurn || (isAdmin && !!activeCharId)) && scene.participant_ids.length > 2 && (
-              <button onClick={onPassTurn} className={`max-md:hidden ${btn}`} title="Zug weitergeben">
-                <Icon name="arrow-right" size={14} /> Weitergeben
-              </button>
-            )}
-            {scene.status === "active" && isParticipant && (
-              <button onClick={() => setClosing(true)} className={`max-md:hidden ${btn}`}>
-                <Icon name="check" size={14} /> Beenden
-              </button>
-            )}
-            {scene.status === "closed" && (isParticipant || isAdmin) && (
-              <button
-                onClick={() => updateScene(scene.id, { status: "active" })}
-                className={btn}
-              >
-                <Icon name="flame" size={14} /> Wieder eröffnen
-              </button>
-            )}
-            {/* Bearbeiten: Beteiligte und Admins – auch bei geschlossenen Szenen */}
-            {(isParticipant || isAdmin) && (
-              <button onClick={() => setEditing(true)} className={btn}>
-                <Icon name="edit" size={14} /> Bearbeiten
-              </button>
-            )}
-            {bell}
-          </div>
-        )}
+        {actions && <div className="ml-auto max-md:hidden md:shrink-0">{actions}</div>}
       </div>
 
       {/* Ort als Bubble · Datum, Tageszeit (+ AU) */}
@@ -605,9 +611,11 @@ function SceneHeader({
             }
           />
         )}
-        <span>
+        {/* Datum gleich neben dem Ort, am Handy numerisch („27.11.2021") */}
+        <span className="whitespace-nowrap">
           {scenePlace(scene) && "· "}
-          {formatInplayDate(scene.inplay_date)}
+          <span className="md:hidden">{formatInplayDateShort(scene.inplay_date)}</span>
+          <span className="max-md:hidden">{formatInplayDate(scene.inplay_date)}</span>
           {scene.inplay_time.trim() && `, ${scene.inplay_time.trim()}`}
         </span>
         {scene.au && (
@@ -616,6 +624,9 @@ function SceneHeader({
           </span>
         )}
       </div>
+
+      {/* Am Handy: Buttons unter Ort und Datum */}
+      {actions && <div className="mt-3 md:hidden">{actions}</div>}
 
       {/* Beschreibungssatz */}
       {scene.summary && (
