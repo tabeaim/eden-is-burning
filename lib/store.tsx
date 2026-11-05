@@ -1191,12 +1191,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     () => npcs.filter((c) => playsAs(c, currentPlayer?.id)),
     [npcs, currentPlayer?.id],
   );
-  // Orte bearbeiten dürfen Admins und wer den Ort erstellt hat.
+  // Orte bearbeiten dürfen Admins, wer den Ort erstellt hat, wer einen Charakter
+  // spielt, der zum Ort gehört (bei „Characters & NPCs" eingetragen oder „works
+  // here"), und wer mit einem eigenen Charakter eine Szene an dem Ort hat.
+  // Gleiche Regel wie die Policy in supabase/schema-locations-edit.sql.
   const canEditLocation = useCallback(
-    (loc: Location) =>
-      !!currentPlayer &&
-      (Boolean(currentPlayer.is_admin) || loc.created_by === currentPlayer.id),
-    [currentPlayer],
+    (loc: Location) => {
+      if (!currentPlayer) return false;
+      if (currentPlayer.is_admin || loc.created_by === currentPlayer.id) return true;
+      const mine = new Set(
+        state.characters
+          .filter((c) => !c.deleted_at && playsAs(c, currentPlayer.id))
+          .map((c) => c.id),
+      );
+      if (mine.size === 0) return false;
+      if ((loc.people ?? []).some((p) => mine.has(p.id))) return true;
+      if (
+        state.characters.some(
+          (c) => mine.has(c.id) && c.profile?.employer_location_id === loc.id,
+        )
+      )
+        return true;
+      return state.scenes.some(
+        (s) =>
+          s.location_area === loc.area &&
+          s.location_name === loc.name &&
+          s.participant_ids.some((id) => mine.has(id)),
+      );
+    },
+    [currentPlayer, state.characters, state.scenes],
   );
 
   // --- Mutationen (optimistisch lokal + Schreiben nach Supabase) ------------
