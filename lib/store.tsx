@@ -2929,15 +2929,20 @@ export function useStore() {
   return ctx;
 }
 
-// Wer ist in einer Szene als Nächstes "dran"? (der/die andere als der letzte Post)
+// Wer ist in einer Szene als Nächstes "dran"? Reihum nach der Teilnehmer*innen-
+// Liste: dran ist, wer nach dem letzten Post kommt. Postet jemand außer der
+// Reihe, geht es von dort aus weiter (nicht bei der übersprungenen Person).
 export function whoseTurn(scene: Scene, posts: Post[]): string | null {
-  if (scene.participant_ids.length === 0) return null;
+  const ids = scene.participant_ids;
+  if (ids.length === 0) return null;
   // Manuelle Zug-Übergabe überschreibt die automatische Reihenfolge
-  if (scene.next_up && scene.participant_ids.includes(scene.next_up)) {
+  if (scene.next_up && ids.includes(scene.next_up)) {
     return scene.next_up;
   }
-  if (posts.length === 0) return scene.participant_ids[0];
-  const last = posts[posts.length - 1].character_id;
-  const others = scene.participant_ids.filter((id) => id !== last);
-  return others[0] ?? scene.participant_ids[0];
+  // Letzter Post von jemandem, der noch in der Szene ist
+  for (let i = posts.length - 1; i >= 0; i--) {
+    const idx = ids.indexOf(posts[i].character_id);
+    if (idx !== -1) return ids[(idx + 1) % ids.length];
+  }
+  return ids[0];
 }
