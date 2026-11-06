@@ -287,7 +287,7 @@ export default function ScenePage({
             <div
               key={post.id}
               id={`post-${post.id}`}
-              className={`scroll-mt-24 ${i > 0 ? "mt-7 pt-7 border-t border-accent/40" : ""}`}
+              className={`scroll-mt-24 ${i > 0 ? "mt-7 pt-7 border-t border-accent/40" : "pt-2"}`}
             >
               <PostRow
                 post={post}
@@ -918,12 +918,12 @@ function PostRow({
         />
       )}
       {!editing && (
-        // Drehbuch-Posts (ohne Charakter-Karte): Mit Maus liegt die Leiste über der
-        // ersten Zeile, statt oben Platz zu belegen
+        // Drehbuch-Posts (ohne Charakter-Karte): Mit Maus schwebt die Leiste im
+        // Abstand über dem Post, statt oben Platz zu belegen oder Text zu verdecken
         <div
           className={`mb-1 flex items-center justify-end gap-0.5 transition-opacity focus-within:opacity-100 group-hover/post:opacity-100 [@media(hover:hover)]:opacity-0 ${
             script
-              ? "[@media(hover:hover)]:absolute [@media(hover:hover)]:right-0 [@media(hover:hover)]:top-0 [@media(hover:hover)]:z-10 [@media(hover:hover)]:mb-0 [@media(hover:hover)]:rounded-md [@media(hover:hover)]:bg-bg-primary [@media(hover:hover)]:pl-2"
+              ? "[@media(hover:hover)]:absolute [@media(hover:hover)]:right-0 [@media(hover:hover)]:bottom-full [@media(hover:hover)]:z-10 [@media(hover:hover)]:mb-0.5 [@media(hover:hover)]:rounded-md [@media(hover:hover)]:bg-bg-primary [@media(hover:hover)]:pl-2"
               : ""
           }`}
         >
