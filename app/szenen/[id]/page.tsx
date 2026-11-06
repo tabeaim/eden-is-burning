@@ -1148,6 +1148,27 @@ function ReplyBox({
     setPreview((p) => (p === null ? (script ? serializeScript(lines) : (editorRef.current?.innerHTML ?? "")) : null));
   }
 
+  // Offene Vorschau läuft beim Schreiben mit (auch bei Formatierung über die Toolbar)
+  const previewOpen = preview !== null;
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (previewOpen && script) setPreview(serializeScript(lines));
+  }, [previewOpen, script, lines]);
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!previewOpen || script || !el) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const obs = new MutationObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setPreview(el.innerHTML), 120);
+    });
+    obs.observe(el, { childList: true, subtree: true, characterData: true, attributes: true });
+    return () => {
+      obs.disconnect();
+      clearTimeout(timer);
+    };
+  }, [previewOpen, script]);
+
   const baseChar = activeCharId ? character(activeCharId) : myChars[0];
   const activeChar = baseChar ? characterIn(baseChar, scene) : undefined;
 
