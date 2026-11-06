@@ -66,6 +66,20 @@ function paginate(posts: Post[]): Post[][] {
   return pages.length ? pages : [[]];
 }
 
+// Welche Seitenzahlen die Navigation zeigt: erste, letzte und die aktuelle mit
+// je einer Nachbarseite; Lücken werden zu „…“ (null). Fehlt nur eine Seite,
+// steht sie selbst da statt der Pünktchen.
+function pageList(current: number, count: number): (number | null)[] {
+  const keep = new Set([0, count - 1, current - 1, current, current + 1]);
+  const out: (number | null)[] = [];
+  for (let i = 0; i < count; i++) {
+    if (keep.has(i)) out.push(i);
+    else if (keep.has(i - 1) && keep.has(i + 1)) out.push(i);
+    else if (out[out.length - 1] !== null) out.push(null);
+  }
+  return out;
+}
+
 export default function ScenePage({
   params,
 }: {
@@ -313,7 +327,12 @@ export default function ScenePage({
           >
             ‹ Zurück
           </button>
-          {pages.map((_, i) => (
+          {pageList(safePage, pages.length).map((i, k) =>
+            i === null ? (
+              <span key={`gap-${k}`} className="px-1 text-[0.8125rem] text-text-tertiary">
+                …
+              </span>
+            ) : (
             <button
               key={i}
               onClick={() => goPage(i)}
@@ -325,7 +344,8 @@ export default function ScenePage({
             >
               {i + 1}
             </button>
-          ))}
+            ),
+          )}
           <button
             disabled={safePage === pages.length - 1}
             onClick={() => goPage(safePage + 1)}
