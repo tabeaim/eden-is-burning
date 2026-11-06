@@ -119,6 +119,21 @@ export async function uploadAnimation(file: File, folder: string): Promise<strin
   return supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
+// GIF oder animiertes WebP? (Animiertes WebP: VP8X-Block mit gesetztem Animations-Bit.)
+export async function isAnimated(file: File): Promise<boolean> {
+  if (file.type === "image/gif") return true;
+  if (file.type !== "image/webp") return false;
+  const head = new Uint8Array(await file.slice(0, 21).arrayBuffer());
+  const chunk = String.fromCharCode(...head.slice(12, 16));
+  return chunk === "VP8X" && (head[20] & 0x02) !== 0;
+}
+
+// Für Bildfelder, die auch GIFs erlauben (z.B. Avatar): Animationen unverändert,
+// alles andere wie gewohnt verkleinert.
+export async function uploadImageOrAnimation(file: File, folder: string, maxSide: number): Promise<string> {
+  return (await isAnimated(file)) ? uploadAnimation(file, folder) : uploadImage(file, folder, maxSide);
+}
+
 // Kurze Videos (mit Ton) gehen unverändert in den Speicher – im Browser lässt sich
 // ein Video nicht sinnvoll neu kodieren. Deshalb die Grenzen bei Größe und Länge.
 export const MAX_VIDEO_BYTES = 25 * 1024 * 1024;

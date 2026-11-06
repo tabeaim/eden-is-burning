@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
 import { ageAt } from "@/lib/characters";
-import { IMAGE_SIZES, uploadAnimation, uploadImage } from "@/lib/images";
+import { IMAGE_SIZES, uploadAnimation, uploadImage, uploadImageOrAnimation } from "@/lib/images";
 import { isEmptyVersion, withVersion } from "@/lib/versions";
 import { auNames } from "./AuNameField";
 import { Icon } from "./Icon";
@@ -111,7 +111,9 @@ export function VersionForm({
       const url =
         k === "scene_gif_url"
           ? await uploadAnimation(f, "characters")
-          : await uploadImage(f, "characters", k === "image" ? IMAGE_SIZES.portrait : IMAGE_SIZES.signature);
+          : k === "image"
+            ? await uploadImageOrAnimation(f, "characters", IMAGE_SIZES.portrait)
+            : await uploadImage(f, "characters", IMAGE_SIZES.signature);
       set(k, url);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Hochladen fehlgeschlagen.");

@@ -22,7 +22,7 @@ import { RichEditor } from "./RichEditor";
 import { plainText } from "@/lib/html";
 import { AREA_ORDER, AREAS, areaName } from "@/lib/world";
 import { PHONE_AREA } from "@/lib/phone";
-import { uploadImage, uploadAnimation, IMAGE_SIZES } from "@/lib/images";
+import { uploadImage, uploadAnimation, uploadImageOrAnimation, IMAGE_SIZES } from "@/lib/images";
 import { GifPicker } from "./phone/GifPicker";
 import { characterImage } from "@/lib/avatar";
 import { capFirst, formatInplayDate } from "@/lib/format";
@@ -63,6 +63,7 @@ export function useCharacterBasics(
   const [d, setD] = useState(character);
   const [p, setP] = useState<CharacterProfile>(character.profile ?? {});
   const [uploading, setUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const file = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof Character>(key: K, value: Character[K]) =>
@@ -111,10 +112,13 @@ export function useCharacterBasics(
   async function onPhoto(f: File | undefined) {
     if (!f) return;
     setUploading(true);
+    setPhotoError(null);
     try {
-      const url = await uploadImage(f, "characters", IMAGE_SIZES.portrait);
+      const url = await uploadImageOrAnimation(f, "characters", IMAGE_SIZES.portrait);
       set("faceclaim_image_url", url);
       updateCharacter(character.id, { faceclaim_image_url: url });
+    } catch (e) {
+      setPhotoError(e instanceof Error ? e.message : "Hochladen fehlgeschlagen.");
     } finally {
       setUploading(false);
     }
@@ -262,9 +266,10 @@ export function useCharacterBasics(
       >
       <div className="flex items-start gap-4">
         <div className="w-[110px] shrink-0">
-          <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-border-subtle bg-bg-primary">
+          {/* Avatar ungeschnitten in seinen Originalproportionen */}
+          <div className="overflow-hidden rounded-lg border border-border-subtle bg-bg-primary">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={characterImage(d)} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <img src={characterImage(d)} alt="" className="block h-auto w-full" />
           </div>
           <button
             disabled={uploading}
@@ -274,6 +279,7 @@ export function useCharacterBasics(
             <Icon name="upload" size={13} /> {uploading ? "Lädt…" : "Avatar"}
           </button>
           <input ref={file} type="file" accept="image/*" hidden onChange={(e) => void onPhoto(e.target.files?.[0])} />
+          {photoError && <p className="mt-1 text-[0.75rem] text-red-400">{photoError}</p>}
         </div>
         <div className={`min-w-0 flex-1 ${grid}`}>
           {F({
