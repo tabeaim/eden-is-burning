@@ -412,7 +412,7 @@ function ChatView({ chat }: { chat: Chat }) {
       if (sc) {
         if (listed.has(sc.id)) continue;
         listed.add(sc.id);
-        directory.push({ key, anchor: sc.id, title: sc.title, day: sc.inplay_date, scene: sc });
+        directory.push({ key, anchor: sc.id, title: sc.title.toLowerCase(), day: sc.inplay_date, scene: sc });
       } else {
         directory.push({
           key: `${key}|${m.id}`,
@@ -425,7 +425,7 @@ function ChatView({ chat }: { chat: Chat }) {
     }
     for (const sc of scenesHere) {
       if (!listed.has(sc.id)) {
-        directory.push({ key: sc.id, anchor: "", title: `${sc.title} (noch leer)`, day: sc.inplay_date, scene: sc });
+        directory.push({ key: sc.id, anchor: "", title: `${sc.title.toLowerCase()} (noch leer)`, day: sc.inplay_date, scene: sc });
       }
     }
   }
@@ -563,7 +563,7 @@ function ChatView({ chat }: { chat: Chat }) {
               <div
                 id={sceneFirst.get(sc.id) === m.id ? sc.id : `head-${m.id}`}
                 data-scene-head
-                data-pos={`${sc.title} · ${formatInplayDateShort(m.day || sc.inplay_date)}`}
+                data-pos={`${sc.title.toLowerCase()} · ${formatInplayDateShort(m.day || sc.inplay_date)}`}
                 className="mb-1 mt-3 flex items-center gap-1"
               >
                 <button
@@ -587,7 +587,7 @@ function ChatView({ chat }: { chat: Chat }) {
                       : "border-border-strong text-text-tertiary"
                   }`}
                 >
-                  <span className="truncate">{sc.title}</span>
+                  <span className="truncate">{sc.title.toLowerCase()}</span>
                   {sc.status === "closed" && <span className="shrink-0 font-normal">· beendet</span>}
                 </button>
                 <span className="h-px flex-1 bg-border-strong" />
@@ -755,7 +755,7 @@ function ChatView({ chat }: { chat: Chat }) {
                 : sel.length === 0
                   ? "Nachrichten antippen"
                   : adjustScene
-                    ? `„${adjustScene.title}“: ${sel.length} markiert`
+                    ? `„${adjustScene.title.toLowerCase()}“: ${sel.length} markiert`
                     : `${sel.length} markiert`}
             </span>
             <button
@@ -1172,7 +1172,7 @@ function ChatView({ chat }: { chat: Chat }) {
                     setSel(null);
                   }}
                 >
-                  Zu „{sc.title}“
+                  Zu „{sc.title.toLowerCase()}“
                 </SheetButton>
               ))}
               {selMsgs.some((m) => sceneOf(m)) && (
@@ -1229,7 +1229,7 @@ function ChatView({ chat }: { chat: Chat }) {
       {menuScene && (
         <Sheet onClose={() => setSceneMenu(null)}>
           <div className="mb-2 px-1">
-            <div className="truncate text-[0.875rem] font-semibold text-text-primary">{menuScene.title}</div>
+            <div className="truncate text-[0.875rem] font-semibold text-text-primary">{menuScene.title.toLowerCase()}</div>
             <div className="text-[0.8125rem] text-text-tertiary">
               {formatInplayDate(menuScene.inplay_date)}
               {menuScene.au && ` · ${menuScene.au_name || "AU"}`}

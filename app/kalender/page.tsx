@@ -511,7 +511,7 @@ function SceneSearchAdd({
                 }}
                 className="w-full rounded-md px-2 py-1.5 text-left hover:bg-white/[0.04]"
               >
-                <div className="text-[0.8125rem] text-text-primary">{s.title}</div>
+                <div className="text-[0.8125rem] text-text-primary">{s.title.toLowerCase()}</div>
                 <div className="text-[0.75rem] text-text-tertiary">
                   {[
                     scenePlace(s),
@@ -666,7 +666,7 @@ function SceneEntry({
             href={sceneHref(scene)}
             className="after:absolute after:inset-0 after:content-['']"
           >
-            {scene.title}
+            {scene.title.toLowerCase()}
           </Link>
         </h3>
         <FactsLine participants={participants} location={scenePlace(scene) || null}>
@@ -728,7 +728,7 @@ function OffEntry({
           )}
         </div>
         <h3 className="mt-0.5 font-serif text-[1rem] leading-tight text-text-primary">
-          {off.title}
+          {off.title.toLowerCase()}
         </h3>
         <FactsLine participants={participants} location={off.location_name} />
         {off.summary && (

@@ -61,7 +61,7 @@ export function QuoteRotator() {
             <>
               {" "}in{" "}
               <Link href={`/szenen/${scene.id}`} className="italic hover:text-accent">
-                {scene.title}
+                {scene.title.toLowerCase()}
               </Link>
             </>
           )}

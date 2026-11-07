@@ -303,7 +303,7 @@ export function CharacterVersions({ character }: { character: Character }) {
             Szene ·{" "}
             {s ? (
               <Link href={`/szenen/${s.id}`} onClick={(e) => e.stopPropagation()} className="hover:text-accent">
-                {s.title}
+                {s.title.toLowerCase()}
               </Link>
             ) : (
               <span className="text-text-tertiary">gelöschte Szene</span>

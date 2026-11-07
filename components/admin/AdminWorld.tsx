@@ -332,7 +332,7 @@ function SceneList() {
           <div key={s.id} className={`${row} flex flex-wrap items-center gap-3 px-3 py-2.5`}>
             <div className="min-w-0 flex-1">
               <Link href={`/szenen/${s.id}`} className="text-[0.875rem] text-text-primary hover:text-accent">
-                {s.title}
+                {s.title.toLowerCase()}
               </Link>
               <div className="truncate text-[0.8125rem] text-text-tertiary">
                 {s.location_name || areaName(s.location_area)} · {active ? "aktiv" : "beendet"} · {postCount(s.id)}{" "}
@@ -353,7 +353,7 @@ function SceneList() {
               <button
                 onClick={() =>
                   setAsk({
-                    title: `„${s.title}“ löschen?`,
+                    title: `„${s.title.toLowerCase()}“ löschen?`,
                     warning: `Das lässt sich NICHT rückgängig machen. Mit der Szene werden ${postCount(s.id)} Posts und alle Zitate gelöscht.`,
                     label: "Szene löschen",
                     run: () => deleteScene(s.id),

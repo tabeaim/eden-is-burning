@@ -212,7 +212,7 @@ export function SceneCard({
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-serif text-[1rem] text-text-primary leading-tight">
             <Link href={href ?? sceneHref(scene)} className={STRETCHED}>
-              {scene.title}
+              {scene.title.toLowerCase()}
             </Link>
           </h3>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -337,7 +337,7 @@ export function SceneRow({ scene }: { scene: Scene }) {
       <div className="min-w-0 flex-1">
         <div className="font-serif text-[0.875rem] text-text-primary truncate">
           <Link href={sceneHref(scene)} className={STRETCHED}>
-            {scene.title}
+            {scene.title.toLowerCase()}
           </Link>
         </div>
         <div className="text-[0.875rem] text-text-tertiary truncate">

@@ -292,7 +292,7 @@ export function SceneEditPanel({
       {confirmDelete && (
         <ConfirmDialog
           title="Szene löschen?"
-          text={`„${scene.title}“ wird mit allen ${postCount} Posts und ihren Zitaten endgültig gelöscht. Das lässt sich nicht rückgängig machen.`}
+          text={`„${scene.title.toLowerCase()}“ wird mit allen ${postCount} Posts und ihren Zitaten endgültig gelöscht. Das lässt sich nicht rückgängig machen.`}
           confirmLabel="Szene löschen"
           onCancel={() => setConfirmDelete(false)}
           onConfirm={() => {

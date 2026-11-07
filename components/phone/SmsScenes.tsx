@@ -164,7 +164,7 @@ export function SceneBar({
           <span className="min-w-0 truncate">
             {target ? (
               <>
-                Szene: <span className="font-semibold text-text-primary">{target.title}</span>
+                Szene: <span className="font-semibold text-text-primary">{target.title.toLowerCase()}</span>
               </>
             ) : (
               "Lose Nachrichten"
@@ -192,7 +192,7 @@ export function SceneBar({
           {scenes.map((s) => (
             <button key={s.id} type="button" onClick={() => onPick(s.id)} className={chip(s.id === targetId)}>
               {dran.has(s.id) && s.id !== targetId && dot}
-              <span className="truncate">{s.title}</span>
+              <span className="truncate">{s.title.toLowerCase()}</span>
             </button>
           ))}
           <button type="button" onClick={() => onPick(null)} className={chip(targetId === null)}>

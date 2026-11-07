@@ -45,7 +45,7 @@ export function ChatRow({
   // Gruppenname, sonst die (anderen) Beteiligten
   const names = chatName(chat, character, forCharacter ? { id: forCharacter } : null);
   const title = scene
-    ? scene.title
+    ? scene.title.toLowerCase()
     : (
         <>
           {chat.name?.trim() ? "Gruppe " : forCharacter ? "Chat mit " : "Neue Nachrichten bei "}

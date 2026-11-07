@@ -168,7 +168,7 @@ export default function ScenePage({
         .join(" · ")
     : undefined;
   useSetPageMeta(
-    scene?.title ?? "Szene",
+    scene?.title.toLowerCase() ?? "Szene",
     factsLine,
     scene?.header_url ?? undefined,
     "max-w-6xl",
@@ -1048,7 +1048,7 @@ function DraftRow({
           title="Entwurf löschen?"
           text={
             lastOfDraftScene
-              ? `Der Entwurf für ${c.name} wird endgültig gelöscht – und mit ihm die Szene „${scene.title}“, die noch ein Entwurf ist. Das lässt sich nicht rückgängig machen.`
+              ? `Der Entwurf für ${c.name} wird endgültig gelöscht – und mit ihm die Szene „${scene.title.toLowerCase()}“, die noch ein Entwurf ist. Das lässt sich nicht rückgängig machen.`
               : `Der Entwurf für ${c.name} wird endgültig gelöscht. Das lässt sich nicht rückgängig machen.`
           }
           confirmLabel={lastOfDraftScene ? "Entwurf und Szene löschen" : "Entwurf löschen"}
