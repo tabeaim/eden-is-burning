@@ -41,7 +41,7 @@ export function useScriptViewer(sceneId: string): Character | undefined {
 }
 
 // Ein Post im Drehbuch-Format: Regieanweisungen kursiv, Dialog als
-// „[Bild] Name: Text".
+// „[Bild] Name (Klang): Text".
 export function ScriptView({ lines, viewer }: { lines: ScriptLine[]; viewer?: Character }) {
   const speaker = useSpeaker(viewer);
   if (lines.length === 0) return <span className="opacity-50">(noch nichts geschrieben)</span>;
@@ -72,6 +72,7 @@ export function ScriptView({ lines, viewer }: { lines: ScriptLine[]; viewer?: Ch
             )}
             <p className="min-w-0 flex-1 whitespace-pre-wrap break-words pt-0.5">
               <ProfileName id={who?.id} className="font-semibold">{name}</ProfileName>
+              {l.tone && <span className="italic text-text-tertiary"> ({l.tone})</span>}
               <span className="font-semibold">:</span> {l.text}
             </p>
           </div>
@@ -157,6 +158,15 @@ export function ScriptEditor({
                   )}
                 </>
               ))}
+            {l.k === "line" && (
+              <input
+                value={l.tone ?? ""}
+                onChange={(e) => set(i, { tone: e.target.value })}
+                placeholder="Wie? (z. B. verschlafen)"
+                aria-label="Wie es klingt"
+                className={`${field} !w-48 !py-1 italic`}
+              />
+            )}
             {/* Reihenfolge: Zeile nach oben / unten schieben */}
             <span className="ml-auto flex items-center">
               <button
