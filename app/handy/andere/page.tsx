@@ -36,7 +36,8 @@ export default function OtherPhonesPage() {
   const mine = new Set(myChars.map((c) => c.id));
   const meId = me?.id ?? "";
   const all = [...characters, ...npcs]
-    .filter((c) => hasPhone(c) && c.id !== me?.id)
+    // nur bestehende Charaktere und NPCs – nichts aus dem Papierkorb, keine gelöschten Hüllen
+    .filter((c) => hasPhone(c) && !c.deleted_at && !c.purged_at && c.id !== me?.id)
     .sort((a, b) => a.name.localeCompare(b.name, "de"));
   const byId = new Map(all.map((c) => [c.id, c]));
 

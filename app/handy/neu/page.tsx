@@ -42,7 +42,7 @@ export default function NewSmsPage() {
   const [groupName, setGroupName] = useState("");
   const [timeOverride, setTimeOverride] = useState<string | null>(null);
 
-  const everyone = [...characters, ...npcs].filter((c) => hasPhone(c)); // ohne Handy keine SMS
+  const everyone = [...characters, ...npcs].filter((c) => hasPhone(c) && !c.deleted_at && !c.purged_at); // ohne Handy keine SMS, nichts Gelöschtes
   const to = toIds
     .map((id) => everyone.find((c) => c.id === id && c.id !== from?.id))
     .filter((c): c is Character => !!c);
