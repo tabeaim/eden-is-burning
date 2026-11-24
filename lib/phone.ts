@@ -223,21 +223,56 @@ export function suggestCallTime(
 }
 
 // --- Uhrzeit beim Schreiben ---------------------------------------------------
-// Automatisch: Die nächste Nachricht kommt so viel später, wie man realistisch
-// braucht – die letzte (fremde) Nachricht lesen, kurz überlegen, die eigene tippen.
-// Kurze Wechsel bleiben in derselben Minute, lange Nachrichten brauchen länger.
+// Automatisch: Jede Nachricht kostet so viel Zeit, wie man realistisch braucht –
+// die vorige (fremde) Nachricht lesen, kurz überlegen, die eigene tippen. Die
+// Sekunden laufen über den ganzen Verlauf mit (auch viele kurze Nachrichten
+// schieben die Uhr weiter). Weicht eine gespeicherte Uhrzeit von der Rechnung ab
+// (von Hand gesetzt), zählt ab dort deren Zeit.
 const READ_CHARS_PER_SECOND = 20; // gut 200 Wörter pro Minute
 const TYPE_CHARS_PER_SECOND = 3.5; // Tippen am Handy
 const PAUSE_SECONDS = 15;
 
-export function estimateReplyTime(
-  last: Pick<ChatMessage, "character_id" | "kind" | "content" | "inplay_time">,
-  writerId: string,
-  draft: string,
-): string {
-  if (!last.inplay_time) return "12:00";
-  const fromOther = last.character_id !== writerId;
-  const read = !fromOther ? 0 : last.kind === "text" || last.kind === "voice" ? last.content.length / READ_CHARS_PER_SECOND : 3;
-  const seconds = read + PAUSE_SECONDS + draft.trim().length / TYPE_CHARS_PER_SECOND;
-  return addMinutes(last.inplay_time, Math.floor(seconds / 60));
+type TimedMessage = Pick<ChatMessage, "character_id" | "kind" | "content" | "inplay_time">;
+
+const textLength = (m: Pick<ChatMessage, "kind" | "content">) =>
+  m.kind === "text" || m.kind === "voice" ? m.content.trim().length : 0;
+
+// Sekunden, die eine Nachricht nach der vorigen braucht
+export function messageSeconds(prev: TimedMessage | null, writerId: string, next: Pick<ChatMessage, "kind" | "content">) {
+  const read =
+    prev && prev.character_id !== writerId
+      ? textLength(prev)
+        ? textLength(prev) / READ_CHARS_PER_SECOND
+        : 3 // Bild, GIF: kurz ansehen
+      : 0;
+  const type = next.kind === "text" || next.kind === "voice" ? textLength(next) / TYPE_CHARS_PER_SECOND : 3;
+  return read + PAUSE_SECONDS + type;
+}
+
+const toMinutes = (t: string) => {
+  const [h, m] = t.split(":").map((n) => parseInt(n, 10));
+  return h * 60 + m;
+};
+const fromMinutes = (total: number) => {
+  const t = ((Math.floor(total) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+};
+
+// `messages`: der Verlauf des Strangs in Lesereihenfolge
+export function estimateReplyTime(messages: TimedMessage[], writerId: string, draft: string): string {
+  let clock: number | null = null; // Sekunden seit Mitternacht (läuft über Tage weiter)
+  let prev: TimedMessage | null = null;
+  for (const m of messages) {
+    if (m.kind === "date" || !m.inplay_time) continue;
+    const stored = toMinutes(m.inplay_time);
+    if (clock === null) {
+      clock = stored * 60;
+    } else {
+      const next: number = clock + messageSeconds(prev, m.character_id, m);
+      clock = ((Math.floor(next / 60) % 1440) + 1440) % 1440 === stored ? next : stored * 60;
+    }
+    prev = m;
+  }
+  if (clock === null) return "12:00";
+  return fromMinutes((clock + messageSeconds(prev, writerId, { kind: "text", content: draft })) / 60);
 }
