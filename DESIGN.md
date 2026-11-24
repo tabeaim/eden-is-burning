@@ -626,12 +626,15 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Rechtsklick auf einen Eintrag: „Anruf abbrechen" (eigener,
   klingelnder) und „Aus der Anrufliste löschen" (nur auf diesem Handy).
 - **Andere Handys** (`/handy/andere`, „👀" in der Leiste über dem Gerät):
-  oben waagerechte Reihen kleiner Handy-Vorschauen nach Wichtigkeit – „★ Favoriten"
-  (in einem meiner Handys markiert), „Schreibt mit dir" (SMS/Anrufe mit meinen
-  Charakteren, zuletzt aktiv vorn, „gestern" usw.), „Aus deinen Szenen" (nach
-  Anzahl gemeinsamer Szenen), „Neu dabei" (letzte 14 Tage); jede Person nur in
-  der ersten passenden Reihe. Wer in einem eigenen Handy aus „Relevante"
-  entfernt wurde (`not_relevant`), steht in keiner Reihe außer den Favoriten.
+  immer aus Sicht des Handys, das ich gerade in der Hand habe („aus Sicht von …",
+  bei mehreren Charakteren umschaltbar, gleiche Auswahl wie die Leiste über dem
+  Gerät). Oben waagerechte Reihen kleiner Handy-Vorschauen nach Wichtigkeit, nur
+  für diesen Charakter – „★ Favoriten" (in diesem Handy markiert), „Schreibt mit
+  dir" (SMS/Anrufe mit diesem Charakter, zuletzt aktiv vorn, „gestern" usw.),
+  „Aus deinen Szenen" (nach Anzahl gemeinsamer Szenen), „Neu dabei" (letzte 14
+  Tage); jede Person nur in der ersten passenden Reihe. Wer in diesem Handy aus
+  „Relevante" entfernt wurde (`not_relevant`), steht in keiner Reihe außer den
+  Favoriten. Eigene Charaktere erscheinen nie.
   Darunter eingeklappt „Weitere" (nur, wer oben in keiner Reihe steht); die
   Suche blendet die Reihen aus und durchsucht alle. Ein Handy öffnet groß als `PhonePreview`, ‹ › bzw. Pfeiltasten
   blättern innerhalb der Reihe, aus der es geöffnet wurde. Von dort aus dem eigenen Handy: „SMS schreiben" (`SMS_TO_KEY`),
