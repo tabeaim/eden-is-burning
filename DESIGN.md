@@ -632,13 +632,14 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Charakter sortiert: zuerst Favoriten dieses Handys, dann wer mit ihm schreibt
   oder telefoniert (zuletzt aktiv vorn), dann gemeinsame Szenen (nach Anzahl),
   dann sonst unter „Relevante" (von Hand hinzugefügt oder mit eigenem
-  Kontakt-Eintrag), dann „neu dabei" (letzte 14 Tage), danach alle übrigen
-  alphabetisch. Wer in diesem Handy aus „Relevante" entfernt wurde
+  Kontakt-Eintrag), dann „neu dabei" (letzte 14 Tage). Alle übrigen stehen
+  alphabetisch darunter im eingeklappten „Weitere". Wer in diesem Handy aus „Relevante" entfernt wurde
   (`not_relevant`), rutscht zu den übrigen (außer Favoriten). Die kleine Zeile
   unter dem Namen zeigt den Grund („★ Favorit", „gestern", „3 Szenen",
   „neu dabei"), sonst das Modell. Eigene Charaktere erscheinen nie. Die Suche
-  filtert die Liste und behält die Reihenfolge. Ein Handy öffnet groß als
-  `PhonePreview`, ‹ › bzw. Pfeiltasten blättern durch die (gefilterte) Liste.
+  zeigt alle Treffer in einer Liste (Relevante zuerst). Ein Handy öffnet groß
+  als `PhonePreview`, ‹ › bzw. Pfeiltasten blättern durch die Liste, aus der es
+  geöffnet wurde.
   Von dort aus dem eigenen Handy: „SMS schreiben" (`SMS_TO_KEY`),
   „Anrufen" (`CALL_TO_KEY` öffnet den Anruf-Dialog), „Captic-Profil"
   (`CAPTIC_OPEN_KEY` = `profile:<id>`).
