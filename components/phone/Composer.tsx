@@ -20,6 +20,10 @@ export function Composer({
   onTime,
   placeholder = "Nachricht",
   above,
+  auto,
+  onAuto,
+  onNextMorning,
+  onDraft,
 }: {
   onSend: (kind: ChatMessageKind, content: string) => void;
   onDate?: () => void; // „Inplay-Datum" im Plus-Menü
@@ -28,8 +32,16 @@ export function Composer({
   onTime?: (time: string) => void;
   placeholder?: string;
   above?: React.ReactNode; // z.B. die Vorschau der Nachricht, auf die geantwortet wird
+  auto?: boolean; // Uhrzeit wird gerade automatisch geschätzt
+  onAuto?: () => void; // zurück auf „Automatisch"
+  onNextMorning?: () => void; // „Nächster Tag, 8 Uhr"
+  onDraft?: (text: string) => void; // getippter Text (für die automatische Uhrzeit)
 }) {
-  const [text, setText] = useState("");
+  const [text, setTextState] = useState("");
+  const setText = (t: string) => {
+    setTextState(t);
+    onDraft?.(t);
+  };
   const [panel, setPanel] = useState<null | "emoji" | "gif" | "plus">(null);
   const [uploading, setUploading] = useState(false);
   // Sprachnachricht: der getippte Text geht als (textbasierte) Sprachnachricht raus
@@ -103,6 +115,33 @@ export function Composer({
             </button>
           ))}
           <span>Min</span>
+          {onNextMorning && (
+            <button
+              type="button"
+              onClick={onNextMorning}
+              title="Nächster Tag, 8 Uhr"
+              className="rounded-full bg-white/[0.06] px-2.5 py-1.5 font-semibold text-text-secondary hover:bg-white/[0.12]"
+            >
+              ☀ 8:00
+            </button>
+          )}
+          {onAuto && (
+            <button
+              type="button"
+              onClick={onAuto}
+              aria-pressed={auto}
+              title={
+                auto
+                  ? "Automatisch: Lesen + kurze Pause + Tippen. Antippen schaltet aus."
+                  : "Uhrzeit automatisch schätzen (Lesen + kurze Pause + Tippen)"
+              }
+              className={`ml-auto rounded-full px-2.5 py-1.5 font-semibold ${
+                auto ? "bg-accent/90 text-black" : "bg-white/[0.06] text-text-secondary hover:bg-white/[0.12]"
+              }`}
+            >
+              ✨ Auto
+            </button>
+          )}
         </div>
       )}
       {voice && (

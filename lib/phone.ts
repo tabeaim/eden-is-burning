@@ -216,3 +216,39 @@ export function suggestCallTime(
   const date = time < last.inplay_time! ? nextDay(last.inplay_date!) : last.inplay_date!;
   return { date, time };
 }
+
+// --- Uhrzeit beim Schreiben ---------------------------------------------------
+// „Automatisch": Die nächste Nachricht kommt so viel später, wie man realistisch
+// braucht – die letzte (fremde) Nachricht lesen, kurz überlegen, die eigene tippen.
+// Kurze Wechsel bleiben in derselben Minute, lange Nachrichten brauchen länger.
+export const AUTO_TIME_KEY = "eden:auto-time";
+const READ_CHARS_PER_SECOND = 20; // gut 200 Wörter pro Minute
+const TYPE_CHARS_PER_SECOND = 3.5; // Tippen am Handy
+const PAUSE_SECONDS = 15;
+
+export function estimateReplyTime(
+  last: Pick<ChatMessage, "character_id" | "kind" | "content" | "inplay_time">,
+  writerId: string,
+  draft: string,
+): string {
+  if (!last.inplay_time) return "12:00";
+  const fromOther = last.character_id !== writerId;
+  const read = !fromOther ? 0 : last.kind === "text" || last.kind === "voice" ? last.content.length / READ_CHARS_PER_SECOND : 3;
+  const seconds = read + PAUSE_SECONDS + draft.trim().length / TYPE_CHARS_PER_SECOND;
+  return addMinutes(last.inplay_time, Math.floor(seconds / 60));
+}
+
+export function autoTimeEnabled(): boolean {
+  try {
+    return localStorage.getItem(AUTO_TIME_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+export function setAutoTimeEnabled(on: boolean) {
+  try {
+    localStorage.setItem(AUTO_TIME_KEY, on ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+}

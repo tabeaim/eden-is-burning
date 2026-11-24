@@ -739,6 +739,10 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   (Inplay-Datum, Pflicht bei „Neue SMS"; weitere über Plus → „Inplay-Datum").
   Jede Nachricht trägt eine Inplay-Uhrzeit: Die Eingabezeile schlägt die letzte
   Uhrzeit + 1 Minute vor, änderbar per Zeitfeld oder +1/+3/+9/+24.
+  „☀ 8:00" springt auf den nächsten Tag, 8 Uhr. „✨ Auto" (pro Gerät,
+  `AUTO_TIME_KEY`) schätzt die Uhrzeit stattdessen: letzte fremde Nachricht
+  lesen + kurze Pause + eigene tippen (`estimateReplyTime`), wächst beim Tippen
+  mit; eine von Hand gesetzte Uhrzeit hat Vorrang, „✨ Auto" schaltet zurück.
 
 ## Detailseiten (Szene, Charakter, Ort)
 
