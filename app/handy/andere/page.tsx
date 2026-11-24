@@ -16,8 +16,8 @@ import { btn } from "@/components/admin/ui";
 // echtem Namen (mit Suche); ein Handy lässt sich groß öffnen, mit ‹ › neben dem
 // Gerät weiterblättern, und von dort aus SMS schreiben oder anrufen (Captic über
 // die App im Gerät) – immer aus Sicht des Handys, das ich gerade in der Hand habe
-// (umschaltbar). Oben alphabetisch, wer für diesen Charakter relevant ist,
-// darunter eingeklappt „weitere.".
+// (umschaltbar). Oben nach Relevanz für diesen Charakter sortiert (ohne
+// Überschriften), darunter eingeklappt „weitere.".
 // „Alexanders Handy", aber „Max' Handy" (Name endet auf s, x, z, ß)
 const possessive = (first: string) => (/[sxzß]$/i.test(first) ? `${first}'` : `${first}s`);
 
@@ -95,15 +95,16 @@ export default function OtherPhonesPage() {
         .map((c) => c.id),
     );
 
-    // die Gruppen entscheiden nur, wer oben steht – angezeigt wird alphabetisch
-    const inFront = new Set([...favorites, ...writing, ...fromScenes, ...relevant, ...fresh].map((c) => c.id));
-    return { front: all.filter((c) => inFront.has(c.id)), rest: all.filter((c) => !inFront.has(c.id)) };
+    // ohne Überschriften: die Gruppen geben nur die Reihenfolge vor
+    const front = [...favorites, ...writing, ...fromScenes, ...relevant, ...fresh];
+    const inFront = new Set(front.map((c) => c.id));
+    return { front, rest: all.filter((c) => !inFront.has(c.id)) };
   })();
 
-  // oben die Relevanten, darunter eingeklappt „weitere." (beides alphabetisch);
-  // die Suche zeigt alle Treffer in einer Liste
+  // oben die nach Relevanz sortierten (ohne Überschriften), darunter eingeklappt
+  // „weitere." (alphabetisch); die Suche zeigt alle Treffer in einer Liste
   const hit = (c: Character) => c.name.toLowerCase().includes(query);
-  const grid = query ? all.filter(hit) : ranked.front;
+  const grid = query ? [...ranked.front, ...ranked.rest].filter(hit) : ranked.front;
   const rest = query ? [] : ranked.rest;
   // ohne Relevante gibt es nichts einzuklappen
   const restShown = restOpen || grid.length === 0;
