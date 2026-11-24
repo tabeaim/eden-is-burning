@@ -277,7 +277,7 @@ export function PhoneSettings({
           checked={phone.captic}
           onChange={(on) => save({ captic: { ...raw.captic, enabled: on } })}
         >
-          Captic <span className="text-text-tertiary">· Foto-Netzwerk</span>
+          Captic <span className="text-text-tertiary">· Social Network</span>
         </Toggle>
         </Group>
       )}
