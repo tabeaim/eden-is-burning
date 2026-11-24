@@ -58,6 +58,8 @@ export function PhoneHome({
 }) {
   const { chats, calls, isChatNew, capticNews, updateCharacter } = useStore();
   const phone = resolvePhone(character);
+  // Im Spiel versteckte Apps: für alle sichtbar, nur markiert
+  const secret = character.phone?.secret_apps ?? [];
   // Apps per Ziehen ordnen (nur auf dem eigenen Handy)
   const sort = useDragSort(
     phone.apps,
@@ -114,7 +116,7 @@ export function PhoneHome({
           // Fotos zeigt das zuletzt hinzugefügte Foto als Icon
           const lastPhoto = a.key === "fotos" ? character.phone?.photos?.[0]?.url : undefined;
           const icon = (
-            <AppIcon label={a.label} bg={a.bg} icon={lastPhoto ?? a.icon}>
+            <AppIcon label={a.label} bg={a.bg} icon={lastPhoto ?? a.icon} secret={secret.includes(a.key)}>
               {lastPhoto ? null : a.glyph}
             </AppIcon>
           );

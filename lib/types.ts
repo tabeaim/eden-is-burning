@@ -227,6 +227,7 @@ export interface PhoneSettings {
   battery?: number | null; // Akkustand 0–100 (fehlt: 75); ändert sich nur von Hand
   hidden_apps?: string[] | null; // abgewählte Deko-Standard-Apps (DECOR_APPS); echte Apps sind immer da
   custom_apps?: CustomPhoneApp[]; // selbst erstellte Apps (Name + Icon)
+  secret_apps?: string[] | null; // im Spiel vom Charakter versteckte Apps – alle Spieler*innen sehen sie, nur markiert
   app_order?: string[] | null; // Reihenfolge auf dem Startbildschirm (App-Schlüssel), per Ziehen sortiert
   // Eigene Kontakt-Einträge dieses Handys: Charakter-ID -> abweichender Name und
   // Foto. Der Name gilt überall auf diesem Handy, das Foto nur bei Kontakten und

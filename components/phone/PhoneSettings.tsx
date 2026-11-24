@@ -474,6 +474,35 @@ export function PhoneSettings({
               </div>
             )}
           </div>
+
+          {/* Im Spiel versteckt: der Charakter hat die App versteckt – alle
+              Spieler*innen sehen sie weiter, nur markiert */}
+          <div>
+            <div className={label}>Im Spiel versteckt</div>
+            <div className="flex flex-wrap gap-1.5">
+              {phone.apps.map((a) => {
+                const secret = raw.secret_apps ?? [];
+                const on = secret.includes(a.key);
+                return (
+                  <button
+                    key={a.key}
+                    onClick={() =>
+                      save({ secret_apps: on ? secret.filter((k) => k !== a.key) : [...secret, a.key] })
+                    }
+                    className={`${pill(on)} inline-flex items-center gap-1.5 ${a.icon ? "!py-1 !pl-1" : ""}`}
+                  >
+                    {a.icon ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={a.icon} alt="" className="h-6 w-6 rounded-md object-cover" />
+                    ) : (
+                      <span>{a.glyph}</span>
+                    )}
+                    <span>{a.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </Group>
       )}
       </>
