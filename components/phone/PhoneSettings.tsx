@@ -55,6 +55,18 @@ export function PhoneSettings({
     .filter((a, i, all) => all.findIndex((x) => sameApp(x, a)) === i && !custom.some((x) => sameApp(x, a)))
     .sort((a, b) => a.name.localeCompare(b.name, "de"));
   const [appName, setAppName] = useState("");
+  // Eigene Gehäusefarbe: beim Ziehen im Farbwähler sofort zeigen, kurz danach speichern
+  const [colorDraft, setColorDraft] = useState<string | null>(null);
+  const colorTimer = useRef<number | null>(null);
+  const pickColor = (hex: string) => {
+    setColorDraft(hex);
+    if (colorTimer.current) window.clearTimeout(colorTimer.current);
+    colorTimer.current = window.setTimeout(() => {
+      save({ color: hex });
+      setColorDraft(null);
+    }, 400);
+  };
+  const customColor = !!colorDraft || !PHONE_COLORS.some((c) => c.hex === phone.frame);
   // Akku beim Ziehen nur anzeigen, beim Loslassen speichern
   const [batteryDraft, setBatteryDraft] = useState<number | null>(null);
   const commitBattery = () => {
@@ -191,9 +203,27 @@ export function PhoneSettings({
               aria-label={c.label}
               onClick={() => save({ color: c.key })}
               style={{ background: c.hex }}
-              className={swatch(phone.frame === c.hex)}
+              className={swatch(!colorDraft && phone.frame === c.hex)}
             />
           ))}
+          {/* jede andere Farbe über den Farbwähler */}
+          <label
+            title="Eigene Farbe"
+            style={{
+              background: customColor
+                ? (colorDraft ?? phone.frame)
+                : "conic-gradient(#ff453a, #ffd60a, #30d158, #0a84ff, #bf5af2, #ff453a)",
+            }}
+            className={`${swatch(customColor)} relative cursor-pointer overflow-hidden`}
+          >
+            <input
+              type="color"
+              value={colorDraft ?? phone.frame}
+              onChange={(e) => pickColor(e.target.value)}
+              aria-label="Eigene Gehäusefarbe"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+          </label>
         </div>
       </div>
 

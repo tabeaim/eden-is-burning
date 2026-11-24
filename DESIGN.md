@@ -525,7 +525,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Startbildschirm, Captic und „Neue SMS" sind immer aus Sicht eines eigenen
   Charakters (`useMyPhone`).
 - **Look pro Charakter** (`lib/phone.ts`, Einstellungen → Meine Charaktere →
-  `PhoneSettings`): Modell (iPhone neu/alt, Android, Burner Phone), Gehäusefarbe,
+  `PhoneSettings`): Modell (iPhone neu/alt, Android, Burner Phone), Gehäusefarbe
+  (Vorschläge oder jede Farbe über den bunten Farbwähler, `phone.color` = `#rrggbb`),
   Zustand (Kratzer/Sprünge liegen als Overlay über dem Display – auch mobil),
   Akku (`phone.battery`, 0–100, ohne Angabe 75 %; fester Wert, sinkt und lädt
   nicht von selbst, keine Auswirkungen. Das Symbol in der Statusleiste füllt

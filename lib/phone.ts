@@ -118,7 +118,10 @@ export const batteryColor = (v: number) => (v < 15 ? "#ff453a" : v < 30 ? "#ffd6
 export function resolvePhone(c: Pick<Character, "phone"> | null | undefined): ResolvedPhone {
   const p: PhoneSettings = c?.phone ?? {};
   const model = PHONE_MODELS.find((m) => m.key === p.model)?.key ?? "island";
-  const frame = (PHONE_COLORS.find((x) => x.key === p.color) ?? PHONE_COLORS[0]).hex;
+  // Gehäusefarbe: Schlüssel aus PHONE_COLORS oder frei gewählt (#rrggbb)
+  const frame = /^#[0-9a-f]{6}$/i.test(p.color ?? "")
+    ? p.color!
+    : (PHONE_COLORS.find((x) => x.key === p.color) ?? PHONE_COLORS[0]).hex;
   const wear = Math.min(3, Math.max(0, Math.round(p.wear ?? 0)));
   const chosen = (p.apps ?? []).flatMap((k) => OPTIONAL_APPS.filter((a) => a.key === k));
   const custom: PhoneApp[] = (p.custom_apps ?? []).map((a) => ({

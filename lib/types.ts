@@ -220,7 +220,7 @@ export interface PhoneSettings {
   disabled?: boolean; // der Charakter hat kein Handy
   avatar?: string | null; // eigenes Profilbild im Messenger (sonst das Charakterbild)
   model?: string; // Schlüssel aus PHONE_MODELS
-  color?: string; // Schlüssel aus PHONE_COLORS
+  color?: string; // Schlüssel aus PHONE_COLORS oder eigene Farbe (#rrggbb)
   wear?: number; // 0 wie neu … 3 Display gesprungen
   wallpaper?: string | null; // "preset:<key>" oder Bild-Adresse
   apps?: string[]; // zusätzlich gewählte Apps (OPTIONAL_APPS)
