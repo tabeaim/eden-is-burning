@@ -9,13 +9,11 @@ import { formatDateTime, formatInplayDate, formatInplayDateShort } from "@/lib/f
 import { isEmojiOnly, QUICK_REACTIONS } from "@/lib/emoji";
 import {
   addMinutes,
-  autoTimeEnabled,
   contactShortName,
   estimateReplyTime,
   hasPhone,
   nextDay,
   resolvePhone,
-  setAutoTimeEnabled,
 } from "@/lib/phone";
 import {
   chatTitle,
@@ -212,15 +210,12 @@ function ChatView({ chat }: { chat: Chat }) {
   const lastTimed = newestMessage(targetMsgs.filter((m) => m.inplay_time));
   const lastTime = lastTimed?.inplay_time;
   const [timeOverride, setTimeOverride] = useState<string | null>(null);
-  // „✨ Auto" (pro Gerät): statt „+1 Minute" schätzen, wie lange Lesen und Tippen
-  // dauern – wächst beim Tippen mit. Eine von Hand gesetzte Uhrzeit hat Vorrang.
-  const [auto, setAuto] = useState(true);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setAuto(autoTimeEnabled()), []);
+  // Automatisch (Standard): statt „+1 Minute" schätzen, wie lange Lesen und
+  // Tippen dauern – wächst beim Tippen mit. Eine von Hand gesetzte Uhrzeit hat Vorrang.
   const [draft, setDraft] = useState("");
   const time =
     timeOverride ??
-    (lastTimed && auto ? estimateReplyTime(lastTimed, self, draft) : lastTime ? addMinutes(lastTime, 1) : "12:00");
+    (lastTimed ? estimateReplyTime(lastTimed, self, draft) : lastTime ? addMinutes(lastTime, 1) : "12:00");
   // Nach Mitternacht beginnt von selbst der nächste Tag: Die letzte Nachricht war
   // am Abend, die nächste hat eine frühere Uhrzeit am Morgen („23:58" → „00:03").
   const pastMidnight = !!lastTime && lastTime >= "12:00" && time < "12:00";
@@ -867,21 +862,8 @@ function ChatView({ chat }: { chat: Chat }) {
           media={!burner}
           time={time}
           onTime={setTimeOverride}
-          auto={auto && !timeOverride}
-          onAuto={() => {
-            const next = !(auto && !timeOverride);
-            setAuto(next);
-            setAutoTimeEnabled(next);
-            setTimeOverride(null);
-          }}
-          onNextMorning={
-            day
-              ? () => {
-                  setDayOverride(nextDay(day));
-                  setTimeOverride("08:00");
-                }
-              : undefined
-          }
+          auto={!timeOverride}
+          onAuto={() => setTimeOverride(null)}
           onDraft={setDraft}
           placeholder={`Nachricht als ${selfChar?.name.split(" ")[0] ?? "…"}`}
           above={
