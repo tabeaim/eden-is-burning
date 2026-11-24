@@ -625,6 +625,12 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   5 Minuten nach der letzten Nachricht des Charakters (`suggestCallTime`).
   Rechtsklick auf einen Eintrag: „Anruf abbrechen" (eigener,
   klingelnder) und „Aus der Anrufliste löschen" (nur auf diesem Handy).
+- **Andere Handys** (`/handy/andere`, „👀" in der Leiste über dem Gerät):
+  Übersicht aller Handys fremder Charaktere (Hintergrund, Profilbild, Modell;
+  Suche). Ein Handy öffnet groß als `PhonePreview`, ‹ › bzw. Pfeiltasten
+  blättern. Von dort aus dem eigenen Handy: „SMS schreiben" (`SMS_TO_KEY`),
+  „Anrufen" (`CALL_TO_KEY` öffnet den Anruf-Dialog), „Captic-Profil"
+  (`CAPTIC_OPEN_KEY` = `profile:<id>`).
 - **Handy im Charakterprofil** (Reiter „Handy", `PhonePreview`): Look,
   Startbildschirm und Kontaktliste nur zum Ansehen (`PhoneFrame preview`,
   `PhoneHome readOnly`) – nichts führt irgendwohin, nichts ist bearbeitbar.
