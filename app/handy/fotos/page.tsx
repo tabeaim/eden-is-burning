@@ -110,7 +110,7 @@ export default function PhotosPage() {
         back="/handy"
         actions={
           <>
-            {photos.length > 1 && (
+            {photos.length > 0 && (
               <button
                 onClick={() => setOrdering((v) => !v)}
                 className={`px-2 text-[0.875rem] ${ordering ? "font-semibold text-accent" : "text-text-secondary hover:text-text-primary"}`}
@@ -212,12 +212,21 @@ export default function PhotosPage() {
             <span className="flex-1 text-center text-[0.8125rem] tabular-nums text-white/70">
               {index + 1} / {photos.length}
             </span>
-            <span className="w-16" />
+            <span className="flex w-16 justify-end">
+              <button
+                onClick={() => setConfirmDelete(open)}
+                aria-label="Foto löschen"
+                title="Foto löschen"
+                className="flex h-8 w-8 items-center justify-center text-white/60 hover:text-red-300"
+              >
+                <Icon name="trash" size={18} />
+              </button>
+            </span>
           </div>
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={open.url} alt={open.caption ?? ""} className="max-h-full max-w-full object-contain" />
-            {photos.length > 1 && (
+            {photos.length > 0 && (
               <>
                 <button
                   onClick={() => step(-1)}
@@ -257,6 +266,7 @@ export default function PhotosPage() {
           confirmLabel="Löschen"
           onConfirm={() => {
             save(photos.filter((x) => x.id !== confirmDelete.id));
+            if (openId === confirmDelete.id) setOpenId(null);
             setConfirmDelete(null);
           }}
           onCancel={() => setConfirmDelete(null)}

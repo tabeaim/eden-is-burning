@@ -659,12 +659,14 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Home-Button des alten Modells) führt immer dorthin zurück.
 - **Notizen** (`/handy/notizen`, `phone.notes`): Liste mit Titel und erster
   Zeile, Stift oben rechts legt eine neue an, Antippen öffnet sie zum Schreiben
-  („Fertig" bzw. Zurück speichert, leere Notizen verschwinden). „Ordnen": ↑ ↓
-  verschieben, ✕ löschen (mit `ConfirmDialog`).
+  (gespeichert wird laufend beim Tippen, leere Notizen verschwinden), unter der
+  Liste „+ Neue Notiz". Löschen: Mülleimer in der offenen Notiz oder „Ordnen"
+  (↑ ↓ verschieben, ✕ löschen), immer mit `ConfirmDialog`.
 - **Fotos** (`/handy/fotos`, `phone.photos`): Dreier-Raster, Plus oben rechts lädt
   mehrere auf einmal hoch (`PHOTOS_PER_UPLOAD`, insgesamt `PHOTOS_MAX`, neueste
   vorne). Antippen öffnet die Großansicht im Display mit ‹ ›, Zähler und
-  Bildunterschrift. „Ordnen": ‹ › verschieben, ✕ löschen (mit `ConfirmDialog`).
+  Bildunterschrift; Mülleimer oben rechts löscht. „Ordnen": ‹ › verschieben,
+  ✕ löschen (beides mit `ConfirmDialog`).
   Beides liegt im Handy des Charakters (`characters.phone`) – keine eigene Tabelle.
 - **Captic** (`/handy/captic`, `components/phone/captic/`, `lib/captic.ts`):
   fiktives Foto-Netzwerk, immer aus Sicht des Charakters, dessen Handy man in der

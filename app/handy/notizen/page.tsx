@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import type { PhoneNote } from "@/lib/types";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -20,6 +20,9 @@ export default function NotesPage() {
   const [draft, setDraft] = useState<PhoneNote | null>(null);
   const [ordering, setOrdering] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<PhoneNote | null>(null);
+  // Beim Tippen wird laufend gespeichert (kurz verzögert) – so geht nichts verloren,
+  // auch wenn man das Handy über die Home-Leiste verlässt.
+  const saveTimer = useRef<number | null>(null);
 
   if (!me) {
     return (
@@ -42,16 +45,24 @@ export default function NotesPage() {
   function newNote() {
     openNote({ id: newId(), title: "", text: "" });
   }
-  // Schließen speichert; eine leere Notiz verschwindet
-  function close() {
-    if (draft) {
-      const exists = notes.some((n) => n.id === draft.id);
-      if (empty(draft)) {
-        if (exists) save(notes.filter((n) => n.id !== draft.id));
-      } else {
-        save(exists ? notes.map((n) => (n.id === draft.id ? draft : n)) : [draft, ...notes]);
-      }
+  // Notiz in die Liste übernehmen (neu: oben); eine leere verschwindet
+  function store(d: PhoneNote) {
+    const exists = notes.some((n) => n.id === d.id);
+    if (empty(d)) {
+      if (exists) save(notes.filter((n) => n.id !== d.id));
+    } else {
+      save(exists ? notes.map((n) => (n.id === d.id ? d : n)) : [d, ...notes]);
     }
+  }
+  function edit(d: PhoneNote) {
+    setDraft(d);
+    if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    if (!empty(d)) saveTimer.current = window.setTimeout(() => store(d), 600);
+  }
+  function close() {
+    if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    saveTimer.current = null;
+    if (draft) store(draft);
     setDraft(null);
     setOpenId(null);
   }
@@ -74,6 +85,25 @@ export default function NotesPage() {
   const iconBtn =
     "flex h-8 w-8 items-center justify-center rounded-full text-text-tertiary hover:bg-white/[0.06] hover:text-text-primary disabled:opacity-30";
 
+  const confirmDialog = confirmDelete && (
+    <ConfirmDialog
+      title="Notiz löschen?"
+      text={`„${confirmDelete.title.trim() || "Neue Notiz"}“ verschwindet vom Handy.`}
+      confirmLabel="Löschen"
+      onConfirm={() => {
+        if (saveTimer.current) window.clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+        save(notes.filter((x) => x.id !== confirmDelete.id));
+        if (draft?.id === confirmDelete.id) {
+          setDraft(null);
+          setOpenId(null);
+        }
+        setConfirmDelete(null);
+      }}
+      onCancel={() => setConfirmDelete(null)}
+    />
+  );
+
   if (openId && draft) {
     return (
       <PhoneFrame {...frame}>
@@ -83,6 +113,16 @@ export default function NotesPage() {
             Notizen
           </button>
           <div className="flex-1" />
+          {notes.some((n) => n.id === draft.id) && (
+            <button
+              onClick={() => setConfirmDelete(draft)}
+              aria-label="Notiz löschen"
+              title="Notiz löschen"
+              className="flex h-9 w-9 items-center justify-center text-text-tertiary hover:text-red-300"
+            >
+              <Icon name="trash" size={18} />
+            </button>
+          )}
           <button onClick={close} className="px-2 text-[0.9375rem] font-semibold text-accent">
             Fertig
           </button>
@@ -91,19 +131,20 @@ export default function NotesPage() {
           <input
             value={draft.title}
             autoFocus={!draft.title && !draft.text}
-            onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+            onChange={(e) => edit({ ...draft, title: e.target.value })}
             placeholder="Titel"
             maxLength={120}
             className="bg-transparent text-[1.25rem] font-bold text-text-primary outline-none placeholder:text-text-tertiary"
           />
           <textarea
             value={draft.text}
-            onChange={(e) => setDraft({ ...draft, text: e.target.value })}
+            onChange={(e) => edit({ ...draft, text: e.target.value })}
             placeholder="Notiz"
             maxLength={10000}
             className="min-h-[60vh] flex-1 resize-none bg-transparent text-[16px] leading-relaxed text-text-primary outline-none placeholder:text-text-tertiary sm:text-[0.9375rem]"
           />
         </div>
+        {confirmDialog}
       </PhoneFrame>
     );
   }
@@ -114,7 +155,7 @@ export default function NotesPage() {
         back="/handy"
         actions={
           <>
-            {notes.length > 1 && (
+            {notes.length > 0 && (
               <button
                 onClick={() => setOrdering((v) => !v)}
                 className={`px-2 text-[0.875rem] ${ordering ? "font-semibold text-accent" : "text-text-secondary hover:text-text-primary"}`}
@@ -177,19 +218,17 @@ export default function NotesPage() {
             </button>
           );
         })}
+        {!ordering && (
+          <button
+            onClick={newNote}
+            className="flex w-full items-center gap-2 px-3 py-3 text-left text-[0.9375rem] font-medium text-accent hover:bg-white/[0.03]"
+          >
+            <Icon name="plus" size={18} />
+            Neue Notiz
+          </button>
+        )}
       </div>
-      {confirmDelete && (
-        <ConfirmDialog
-          title="Notiz löschen?"
-          text={`„${confirmDelete.title.trim() || "Neue Notiz"}“ verschwindet vom Handy.`}
-          confirmLabel="Löschen"
-          onConfirm={() => {
-            save(notes.filter((x) => x.id !== confirmDelete.id));
-            setConfirmDelete(null);
-          }}
-          onCancel={() => setConfirmDelete(null)}
-        />
-      )}
+      {confirmDialog}
     </PhoneFrame>
   );
 }
