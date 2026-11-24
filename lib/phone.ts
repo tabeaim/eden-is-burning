@@ -58,6 +58,10 @@ export const STANDARD_APPS: PhoneApp[] = [
   { key: "einstellungen", label: "Einstellungen", glyph: "⚙️", bg: "linear-gradient(#a9a9af, #6b6b70)", href: "/einstellungen" },
 ];
 
+// Standard-Apps, die nur Deko sind – lassen sich in den Handy-Einstellungen
+// abwählen. Fotos, Notizen und Einstellungen funktionieren und bleiben immer.
+export const DECOR_APPS = ["rechner", "kamera", "uhr", "wetter", "karten"];
+
 // Optionale Apps – sagen etwas über den Charakter. Bewusst ohne echte Marken.
 export const OPTIONAL_APPS: PhoneApp[] = [
   { key: "musik", label: "Musik", glyph: "🎵", bg: "linear-gradient(#fb5c74, #d81b47)" },
@@ -123,7 +127,10 @@ export function resolvePhone(c: Pick<Character, "phone"> | null | undefined): Re
     wallpaperLight:
       !!p.wallpaper?.startsWith("preset:") &&
       !!PHONE_WALLPAPERS.find((w) => w.key === p.wallpaper!.slice("preset:".length))?.light,
-    apps: [...STANDARD_APPS, ...[...chosen, ...custom].slice(0, MAX_EXTRA_APPS)],
+    apps: [
+      ...STANDARD_APPS.filter((a) => !DECOR_APPS.includes(a.key) || !(p.hidden_apps ?? []).includes(a.key)),
+      ...[...chosen, ...custom].slice(0, MAX_EXTRA_APPS),
+    ],
     captic: model !== "burner" && !!p.captic?.enabled,
   };
 }

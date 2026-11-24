@@ -528,9 +528,12 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   `PhoneSettings`): Modell (iPhone neu/alt, Android, Burner Phone), Gehäusefarbe,
   Zustand (Kratzer/Sprünge liegen als Overlay über dem Display – auch mobil),
   Hintergrundbild (dunkle und helle Vorlagen oder eigenes Bild; auf hellen Vorlagen stehen Uhr und App-Namen dunkel), Apps, eigenes Profilbild
-  fürs Handy (`PhoneAvatar` zeigt es überall im Handy statt des Charakterbilds). Standard-Apps sind
-  immer da; wählbar sind nur optionale und selbst erstellte (Name + Icon),
-  zusammen höchstens so viele, wie auf einen Startbildschirm passen.
+  fürs Handy (`PhoneAvatar` zeigt es überall im Handy statt des Charakterbilds). Funktionierende
+  Standard-Apps (Fotos, Notizen, Einstellungen) sind immer da; die reinen
+  Deko-Standard-Apps (`DECOR_APPS`: Rechner, Kamera, Uhr, Wetter, Karten) lassen
+  sich abwählen (`hidden_apps`); dazu optionale und selbst erstellte (Name + Icon),
+  zusammen höchstens so viele, wie auf einen Startbildschirm passen. App-Icons
+  (`AppIcon`) tragen einen Glanz (heller Schimmer oben, feiner Lichtrand).
 - **Mitlesen:** Ist kein eigener Charakter im Chat, bleibt man auf dem eigenen
   Handy; alle Blasen stehen links mit Vorname und Avatar (wie ein Gruppenchat).
   Chat-Namen: eine Person mit vollem Namen, mehrere nur mit Vornamen
