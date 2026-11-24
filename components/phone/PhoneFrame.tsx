@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
-import { PHONE_OWNER_KEY, contactName, contactPhoto, hasPhone, resolvePhone, type PhoneModel } from "@/lib/phone";
+import { PHONE_OWNER_KEY, batteryColor, contactName, contactPhoto, hasPhone, resolvePhone, type PhoneModel } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
 import { PhotoZoom } from "@/components/PhotoZoom";
 import { tierLabel } from "@/lib/characters";
@@ -33,7 +33,8 @@ export function PhoneFrame({
   preview?: boolean;
   children: React.ReactNode;
 }) {
-  const { character, calls } = useStore();
+  const { character, calls, updateCharacter } = useStore();
+  const { myChars } = useMyPhone();
   const ownerChar = owner ? character(owner) : undefined;
   const phone = resolvePhone(ownerChar);
   const ringing = callBanner && !preview
@@ -108,7 +109,17 @@ export function PhoneFrame({
             burner ? "phone-burner" : ""
           } ${tone === "home" ? `phone-home ${phone.wallpaperLight ? "phone-home-light" : ""}` : ""}`}
         >
-          <StatusBar model={phone.model} tone={tone} />
+          <StatusBar
+            model={phone.model}
+            tone={tone}
+            battery={phone.battery}
+            // Akku einstellen nur am eigenen Handy, nicht in der Vorschau fremder Handys
+            onBattery={
+              !preview && ownerChar && myChars.some((c) => c.id === ownerChar.id)
+                ? (battery) => updateCharacter(ownerChar.id, { phone: { ...ownerChar.phone, battery } })
+                : undefined
+            }
+          />
           {ringing && (
             <Link
               href="/handy/telefon"
@@ -205,6 +216,45 @@ function OwnerBar({
   options: string[];
   onOwner?: (id: string) => void;
 }) {
+  return (
+    // Rechts bleibt auf schmalen Bildschirmen Platz für die Menü-Taste der App.
+    <div className="relative z-20 flex h-12 shrink-0 items-center border-b border-border-subtle bg-bg-sidebar pl-2 pr-14 sm:mb-3 sm:h-auto sm:w-[390px] sm:justify-center sm:border-0 sm:bg-transparent sm:px-0">
+      <OwnerPicker
+        owner={owner}
+        options={options}
+        onOwner={onOwner}
+        menuClassName="left-2 sm:left-1/2 sm:-translate-x-1/2"
+      />
+      {/* fremde Handys ansehen (Übersicht mit Suche) */}
+      <Link
+        href="/handy/andere"
+        title="Andere Handys ansehen"
+        className="ml-2 flex shrink-0 items-center gap-1 rounded-full border border-border-subtle bg-bg-surface px-2.5 py-1 text-[0.8125rem] text-text-secondary hover:text-text-primary"
+      >
+        <span aria-hidden>👀</span>
+        <span className="hidden sm:inline">Andere Handys</span>
+        <span className="sr-only sm:hidden">Andere Handys</span>
+      </Link>
+    </div>
+  );
+}
+
+// Auswahl, wessen Handy man in der Hand hat: Chip mit Bild und „Handy von …" ▾,
+// darunter die eigenen Charaktere (mit Zähler, wo Neues wartet). Auch auf
+// „Andere Handys" (aus wessen Sicht sortiert wird).
+export function OwnerPicker({
+  owner,
+  options,
+  onOwner,
+  menuClassName = "left-0",
+  prefix = "Handy von",
+}: {
+  owner: string | null;
+  options: string[];
+  onOwner?: (id: string) => void;
+  menuClassName?: string;
+  prefix?: string; // Beschriftung vor dem Vornamen im Chip (im Menü immer „Handy von")
+}) {
   const { character, chats, calls, isChatNew, capticUnread } = useStore();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -224,7 +274,7 @@ function OwnerBar({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  const entry = (id: string | null) => {
+  const entry = (id: string | null, label = "Handy von") => {
     const c = id ? character(id) : undefined;
     return (
       <>
@@ -236,7 +286,7 @@ function OwnerBar({
           </span>
         )}
         <span className="min-w-0 truncate">
-          {c ? `Handy von ${c.name.split(" ")[0]}` : "Handy"}
+          {c ? `${label} ${c.name.split(" ")[0]}` : "Handy"}
           {c?.is_npc && (
             <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
               {tierLabel(c)}
@@ -249,11 +299,7 @@ function OwnerBar({
   const choosable = options.length > 1 && !!onOwner;
 
   return (
-    // Rechts bleibt auf schmalen Bildschirmen Platz für die Menü-Taste der App.
-    <div
-      ref={ref}
-      className="relative z-20 flex h-12 shrink-0 items-center border-b border-border-subtle bg-bg-sidebar pl-2 pr-14 sm:mb-3 sm:h-auto sm:w-[390px] sm:justify-center sm:border-0 sm:bg-transparent sm:px-0"
-    >
+    <div ref={ref} className="relative min-w-0">
       <button
         disabled={!choosable}
         onClick={() => setOpen((o) => !o)}
@@ -261,7 +307,7 @@ function OwnerBar({
         aria-expanded={open}
         className="flex min-w-0 max-w-full items-center gap-2 rounded-full border border-border-subtle bg-bg-surface py-1 pl-1 pr-3 text-[0.8125rem] text-text-primary disabled:border-transparent disabled:bg-transparent"
       >
-        {entry(owner)}
+        {entry(owner, prefix)}
         {/* auf einem anderen Handy wartet etwas – man muss nicht suchen */}
         {choosable && newsElsewhere && (
           <span className="h-2 w-2 shrink-0 rounded-full bg-accent" title="Neues auf einem anderen Handy" />
@@ -274,20 +320,10 @@ function OwnerBar({
           />
         )}
       </button>
-      {/* fremde Handys ansehen (Übersicht mit Suche) */}
-      <Link
-        href="/handy/andere"
-        title="Andere Handys ansehen"
-        className="ml-2 flex shrink-0 items-center gap-1 rounded-full border border-border-subtle bg-bg-surface px-2.5 py-1 text-[0.8125rem] text-text-secondary hover:text-text-primary"
-      >
-        <span aria-hidden>👀</span>
-        <span className="hidden sm:inline">Andere Handys</span>
-        <span className="sr-only sm:hidden">Andere Handys</span>
-      </Link>
       {open && (
         <div
           role="listbox"
-          className="absolute left-2 top-full mt-1 w-[min(18rem,calc(100vw-1rem))] rounded-xl border border-border-subtle bg-bg-surface-2 p-1 shadow-2xl shadow-black/70 sm:left-1/2 sm:-translate-x-1/2"
+          className={`absolute top-full z-30 mt-1 w-[min(18rem,calc(100vw-1rem))] rounded-xl border border-border-subtle bg-bg-surface-2 p-1 shadow-2xl shadow-black/70 ${menuClassName}`}
         >
           {options.map((id) => (
             <button
@@ -317,8 +353,23 @@ function OwnerBar({
 }
 
 // Statusleiste des Displays: Uhrzeit, Kamera je nach Modell, Empfang und Akku.
-function StatusBar({ model, tone }: { model: PhoneModel; tone: "app" | "home" }) {
+// Akku: Füllung nach Prozent (rot unter 15 %, gelb unter 30 %). Am eigenen Handy
+// öffnet ein Doppelklick (oder Rechtsklick, Enter) einen Regler mit „Fertig".
+function StatusBar({
+  model,
+  tone,
+  battery,
+  onBattery,
+}: {
+  model: PhoneModel;
+  tone: "app" | "home";
+  battery: number;
+  onBattery?: (v: number) => void;
+}) {
   const [now, setNow] = useState(() => new Date());
+  const [editing, setEditing] = useState<number | null>(null);
+  const shown = editing ?? battery;
+  const toggle = () => onBattery && setEditing((v) => (v === null ? battery : null));
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 20_000);
     return () => clearInterval(t);
@@ -346,12 +397,68 @@ function StatusBar({ model, tone }: { model: PhoneModel; tone: "app" | "home" })
           <rect x="9" y="2.5" width="3" height="8.5" rx="0.8" />
           <rect x="13.5" y="0" width="3" height="11" rx="0.8" opacity="0.35" />
         </svg>
-        <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden>
-          <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity="0.45" />
-          <rect x="2" y="2" width="13" height="8" rx="1.6" fill="currentColor" />
-          <rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.45" />
-        </svg>
+        <span
+          role={onBattery ? "button" : undefined}
+          tabIndex={onBattery ? 0 : undefined}
+          aria-label={`Akku ${shown} %`}
+          title={onBattery ? "Doppelklick: Akku einstellen" : `Akku ${shown} %`}
+          onDoubleClick={toggle}
+          onContextMenu={(e) => {
+            if (!onBattery) return;
+            e.preventDefault();
+            toggle();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggle();
+            }
+          }}
+          className={onBattery ? "cursor-pointer select-none" : undefined}
+        >
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden>
+            <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity="0.45" />
+            <rect
+              x="2"
+              y="2"
+              width={Math.max(shown > 0 ? 1 : 0, (18 * shown) / 100)}
+              height="8"
+              rx="1.6"
+              fill={batteryColor(shown)}
+            />
+            <rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.45" />
+          </svg>
+        </span>
       </span>
+      {editing !== null && onBattery && (
+        <div
+          onDoubleClick={(e) => e.stopPropagation()}
+          className="absolute right-3 top-full z-50 w-44 select-none rounded-xl border border-white/15 bg-[#1c1c1e]/95 p-3 text-white shadow-xl shadow-black/60 backdrop-blur"
+        >
+          <div className="mb-2 flex justify-between text-[0.8125rem] font-normal">
+            <span>Akku</span>
+            <strong>{editing} %</strong>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={editing}
+            onChange={(e) => setEditing(Number(e.target.value))}
+            aria-label="Akkustand"
+            className="w-full accent-[var(--color-accent,#f2b25a)]"
+          />
+          <button
+            onClick={() => {
+              if (editing !== battery) onBattery(editing);
+              setEditing(null);
+            }}
+            className="mt-2 w-full rounded-md bg-accent/90 py-1 text-[0.8125rem] font-medium text-black hover:bg-accent"
+          >
+            Fertig
+          </button>
+        </div>
+      )}
     </div>
   );
 }

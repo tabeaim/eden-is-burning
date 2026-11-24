@@ -7,9 +7,11 @@ import { useStore } from "@/lib/store";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import {
   DECOR_APPS,
-  MAX_EXTRA_APPS,
+  homeAppSlots,
   OPTIONAL_APPS,
   STANDARD_APPS,
+  shownStandardApps,
+  BURNER_COLORS,
   PHONE_COLORS,
   PHONE_MODELS,
   PHONE_WALLPAPERS,
@@ -43,8 +45,12 @@ export function PhoneSettings({
   // Gewählte optionale Apps und eigene Apps teilen sich die freien Plätze
   const chosen = (raw.apps ?? []).filter((k) => OPTIONAL_APPS.some((a) => a.key === k));
   const custom = raw.custom_apps ?? [];
-  const extraCount = chosen.length + custom.length;
-  const full = extraCount >= MAX_EXTRA_APPS;
+  // Alle Apps auf dem Startbildschirm zählen zum Limit (4 × 4 Plätze)
+  // Fotos, Notizen und Einstellungen sind fest – gezählt wird nur, was man wählt
+  const fixedApps = STANDARD_APPS.length - DECOR_APPS.length;
+  const freeSlots = homeAppSlots(raw) - fixedApps;
+  const appCount = shownStandardApps(raw).length - fixedApps + chosen.length + custom.length;
+  const full = appCount >= freeSlots;
   // Eigene Apps der anderen Spieler*innen zum Übernehmen – jede nur einmal
   // (gleicher Name + gleiches Icon) und ohne die, die dieses Handy schon hat
   const sameApp = (a: { name: string; icon: string }, b: { name: string; icon: string }) =>
@@ -55,6 +61,26 @@ export function PhoneSettings({
     .filter((a, i, all) => all.findIndex((x) => sameApp(x, a)) === i && !custom.some((x) => sameApp(x, a)))
     .sort((a, b) => a.name.localeCompare(b.name, "de"));
   const [appName, setAppName] = useState("");
+  // Eigene Gehäusefarbe: beim Ziehen im Farbwähler sofort zeigen, kurz danach speichern
+  const [colorDraft, setColorDraft] = useState<string | null>(null);
+  const colorTimer = useRef<number | null>(null);
+  const pickColor = (hex: string) => {
+    setColorDraft(hex);
+    if (colorTimer.current) window.clearTimeout(colorTimer.current);
+    colorTimer.current = window.setTimeout(() => {
+      save({ color: hex });
+      setColorDraft(null);
+    }, 400);
+  };
+  // Burner Phone: kräftige Plastikfarben statt der edlen Smartphone-Töne
+  const palette: readonly { key: string; label: string; hex: string }[] = phone.burner ? BURNER_COLORS : PHONE_COLORS;
+  const customColor = !!colorDraft || !palette.some((c) => c.hex === phone.frame);
+  // Akku beim Ziehen nur anzeigen, beim Loslassen speichern
+  const [batteryDraft, setBatteryDraft] = useState<number | null>(null);
+  const commitBattery = () => {
+    if (batteryDraft !== null && batteryDraft !== phone.battery) save({ battery: batteryDraft });
+    setBatteryDraft(null);
+  };
   const [uploadingIcon, setUploadingIcon] = useState(false);
   const iconFile = useRef<HTMLInputElement>(null);
   const customWallpaper = raw.wallpaper && !raw.wallpaper.startsWith("preset:") ? raw.wallpaper : null;
@@ -104,9 +130,31 @@ export function PhoneSettings({
     `rounded-full px-3 py-1.5 text-[0.8125rem] transition-colors ${
       active ? "bg-accent text-black" : "bg-white/[0.06] text-text-secondary hover:text-text-primary"
     }`;
+  // Gewählte App als Pille mit Augen-Knopf (im Spiel verstecken)
+  const onPill = `${pill(true)} inline-flex items-center gap-1 !py-1 !pr-1`;
+  const secretApps = raw.secret_apps ?? [];
+  const lockBtn = (key: string, name: string) => {
+    const on = secretApps.includes(key);
+    return (
+      <button
+        onClick={() =>
+          save({ secret_apps: on ? secretApps.filter((k) => k !== key) : [...secretApps, key] })
+        }
+        aria-pressed={on}
+        aria-label={`${name} im Spiel verstecken`}
+        title={on ? "Im Spiel versteckt – antippen zum Zeigen" : "Im Spiel verstecken"}
+        className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors ${
+          on ? "bg-black/80 text-white" : "text-black/35 hover:bg-black/10 hover:text-black/70"
+        }`}
+      >
+        <Icon name="eye-off" size={13} />
+      </button>
+    );
+  };
   const swatch = (active: boolean) =>
-    `h-9 w-9 rounded-full border border-border-subtle ${active ? "ring-2 ring-accent ring-offset-2 ring-offset-bg-surface" : ""}`;
-  const label = "mb-1.5 text-[0.875rem] text-text-secondary";
+    // schrumpft mit, damit alle Farben auch im schmalen Burner-Display in eine Zeile passen
+    `aspect-square min-w-0 max-w-8 flex-1 rounded-full border border-border-subtle ${active ? "ring-2 ring-accent ring-offset-2 ring-offset-bg-surface" : ""}`;
+  const label = "mb-2 text-[0.8125rem] font-medium text-text-secondary";
 
   return (
     <div className="flex flex-col gap-4">
@@ -126,17 +174,17 @@ export function PhoneSettings({
       <Toggle checked={!raw.disabled} onChange={(on) => save({ disabled: !on })}>
         Hat ein Handy{" "}
         <span className="text-text-tertiary">
-          (aus: kein Handy im Profil, keine SMS und Anrufe, nicht in Kontaktlisten)
+          (aus: keine SMS, Anrufe und Kontakte)
         </span>
       </Toggle>
       </>
       )}
       {raw.disabled ? null : (
       <>
+      <Group>
       <div>
         <div className={label}>
-          Profilbild im Messenger{" "}
-          <span className="text-text-tertiary">(so sehen andere den Charakter auf dem Handy)</span>
+          Profilbild im Messenger
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <PhoneAvatar character={character} size={56} className="ring-1 ring-border-subtle" link={false} />
@@ -163,7 +211,9 @@ export function PhoneSettings({
           />
         </div>
       </div>
+      </Group>
 
+      <Group>
       <div>
         <div className={label}>Modell</div>
         <div className="flex flex-wrap gap-1.5">
@@ -177,18 +227,61 @@ export function PhoneSettings({
 
       <div>
         <div className={label}>Gehäusefarbe</div>
-        <div className="flex flex-wrap gap-2.5">
-          {PHONE_COLORS.map((c) => (
+        {/* Im grünlichen Burner-Display sähe man keine Farben – dort mit Namen */}
+        {phone.burner && inPhone ? (
+          <div className="flex flex-wrap gap-1.5">
+            {palette.map((c) => (
+              <button
+                key={c.key}
+                onClick={() => save({ color: c.key })}
+                className={pill(!colorDraft && phone.frame === c.hex)}
+              >
+                {c.label}
+              </button>
+            ))}
+            <label className={`${pill(customColor)} relative cursor-pointer`}>
+              Eigene…
+              <input
+                type="color"
+                value={colorDraft ?? phone.frame}
+                onChange={(e) => pickColor(e.target.value)}
+                aria-label="Eigene Gehäusefarbe"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </label>
+          </div>
+        ) : (
+        <div className="flex gap-1.5 px-0.5">
+          {palette.map((c) => (
             <button
               key={c.key}
               title={c.label}
               aria-label={c.label}
               onClick={() => save({ color: c.key })}
               style={{ background: c.hex }}
-              className={swatch(phone.frame === c.hex)}
+              className={swatch(!colorDraft && phone.frame === c.hex)}
             />
           ))}
+          {/* jede andere Farbe über den Farbwähler */}
+          <label
+            title="Eigene Farbe"
+            style={{
+              background: customColor
+                ? (colorDraft ?? phone.frame)
+                : "conic-gradient(#ff453a, #ffd60a, #30d158, #0a84ff, #bf5af2, #ff453a)",
+            }}
+            className={`${swatch(customColor)} relative cursor-pointer overflow-hidden`}
+          >
+            <input
+              type="color"
+              value={colorDraft ?? phone.frame}
+              onChange={(e) => pickColor(e.target.value)}
+              aria-label="Eigene Gehäusefarbe"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+          </label>
         </div>
+        )}
       </div>
 
       <div>
@@ -202,26 +295,51 @@ export function PhoneSettings({
         </div>
       </div>
 
+      </Group>
+
+      {/* Akku: fester Wert, sinkt und lädt nicht von selbst (auch per Doppelklick
+          aufs Akku-Symbol in der Statusleiste) */}
+      <Group>
+      <div>
+        <div className={label}>
+          Akku <span className="text-text-tertiary">{batteryDraft ?? phone.battery} %</span>
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={batteryDraft ?? phone.battery}
+          onChange={(e) => setBatteryDraft(Number(e.target.value))}
+          onPointerUp={commitBattery}
+          onKeyUp={commitBattery}
+          onBlur={commitBattery}
+          aria-label="Akkustand"
+          className="w-full max-w-xs accent-[var(--color-accent,#f2b25a)]"
+        />
+      </div>
+
+      </Group>
+
       {/* Captic gibt es auch für Supporting Characters */}
       {!phone.burner && (
+        <Group>
         <Toggle
           checked={phone.captic}
           onChange={(on) => save({ captic: { ...raw.captic, enabled: on } })}
         >
-          Captic{" "}
-          <span className="text-text-tertiary">
-            (Foto-Netzwerk – das Profil bearbeitest du danach direkt in der App auf dem Handy)
-          </span>
+          Captic <span className="text-text-tertiary">· Social Network – dein Profil stellst du in der App ein</span>
         </Toggle>
+        </Group>
       )}
 
       {reduced ? null : phone.burner ? (
+        <Group>
         <p className="text-[0.8125rem] text-text-tertiary">
-          Das Burner Phone ist ein altes Tastenhandy: kein Hintergrundbild, keine Apps, kein
-          Captic – nur SMS.
+          Burner Phone: nur SMS, keine Apps.
         </p>
+        </Group>
       ) : (
-        <>
+        <Group>
           <div>
             <div className={label}>Hintergrundbild</div>
             <div className="flex flex-wrap items-center gap-2.5">
@@ -266,50 +384,65 @@ export function PhoneSettings({
             <div className={label}>
               Apps{" "}
               <span className="text-text-tertiary">
-                (nur Deko · Fotos und Notizen bleiben immer · weitere {extraCount}/{MAX_EXTRA_APPS})
+                {appCount}/{freeSlots}
               </span>
             </div>
+            {/* Gewählte Apps haben rechts ein durchgestrichenes Auge: „im Spiel versteckt" –
+                alle sehen die App weiter, auf dem Startbildschirm markiert */}
             <div className="flex flex-wrap gap-1.5">
+              {STANDARD_APPS.filter((a) => !DECOR_APPS.includes(a.key)).map((a) => (
+                <span key={a.key} className={onPill}>
+                  <span className="px-1">
+                    {a.glyph} {a.label}
+                  </span>
+                  {lockBtn(a.key, a.label)}
+                </span>
+              ))}
               {STANDARD_APPS.filter((a) => DECOR_APPS.includes(a.key)).map((a) => {
                 const hidden = raw.hidden_apps ?? [];
                 const on = !hidden.includes(a.key);
-                return (
-                  <button
-                    key={a.key}
-                    onClick={() =>
-                      save({ hidden_apps: on ? [...hidden, a.key] : hidden.filter((k) => k !== a.key) })
-                    }
-                    className={pill(on)}
-                  >
+                const toggle = () =>
+                  save({ hidden_apps: on ? [...hidden, a.key] : hidden.filter((k) => k !== a.key) });
+                return on ? (
+                  <span key={a.key} className={onPill}>
+                    <button onClick={toggle} className="px-1">
+                      {a.glyph} {a.label}
+                    </button>
+                    {lockBtn(a.key, a.label)}
+                  </span>
+                ) : (
+                  <button key={a.key} disabled={full} onClick={toggle} className={`${pill(false)} disabled:opacity-40`}>
                     {a.glyph} {a.label}
                   </button>
                 );
               })}
               {OPTIONAL_APPS.map((a) => {
                 const on = chosen.includes(a.key);
-                return (
-                  <button
-                    key={a.key}
-                    disabled={!on && full}
-                    onClick={() =>
-                      save({ apps: on ? chosen.filter((k) => k !== a.key) : [...chosen, a.key] })
-                    }
-                    className={`${pill(on)} disabled:opacity-40`}
-                  >
+                const toggle = () => save({ apps: on ? chosen.filter((k) => k !== a.key) : [...chosen, a.key] });
+                return on ? (
+                  <span key={a.key} className={onPill}>
+                    <button onClick={toggle} className="px-1">
+                      {a.glyph} {a.label}
+                    </button>
+                    {lockBtn(a.key, a.label)}
+                  </span>
+                ) : (
+                  <button key={a.key} disabled={full} onClick={toggle} className={`${pill(false)} disabled:opacity-40`}>
                     {a.glyph} {a.label}
                   </button>
                 );
               })}
               {custom.map((a) => (
-                <span key={a.id} className={`${pill(true)} inline-flex items-center gap-1.5 !py-1 !pl-1`}>
+                <span key={a.id} className={`${onPill} !pl-1`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={a.icon} alt="" className="h-6 w-6 rounded-md object-cover" />
-                  {a.name}
+                  <span className="px-0.5">{a.name}</span>
+                  {lockBtn(a.id, a.name)}
                   <button
                     onClick={() => save({ custom_apps: custom.filter((x) => x.id !== a.id) })}
                     aria-label={`${a.name} entfernen`}
                     title="Entfernen"
-                    className="px-0.5 text-black/60 hover:text-black"
+                    className="px-1 text-black/60 hover:text-black"
                   >
                     ✕
                   </button>
@@ -350,8 +483,7 @@ export function PhoneSettings({
             {shared.length > 0 && (
               <div className="mt-4">
                 <div className={label}>
-                  Apps von anderen Spieler*innen{" "}
-                  <span className="text-text-tertiary">(antippen zum Hinzufügen)</span>
+                  Von anderen Spieler*innen
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {shared.map((a) => (
@@ -377,10 +509,20 @@ export function PhoneSettings({
               </div>
             )}
           </div>
-        </>
+        </Group>
       )}
       </>
       )}
     </div>
+  );
+}
+
+// Bereich der Handy-Einstellungen: schlichte Karte ohne Überschrift – die
+// Beschriftungen der Felder reichen
+function Group({ children }: { children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-4 rounded-xl border border-border-subtle bg-white/[0.03] p-3">
+      {children}
+    </section>
   );
 }

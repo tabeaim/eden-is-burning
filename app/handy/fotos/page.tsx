@@ -8,12 +8,14 @@ import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Icon } from "@/components/Icon";
 import { PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
+import { useDragSort } from "@/lib/useDragSort";
 
 const newId = () => `photo_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 // Fotos-App des eigenen Handys: Fotos hochladen (mehrere auf einmal), groß
 // ansehen und durchblättern, Bildunterschrift eintragen. „Ordnen" schiebt Fotos
-// nach vorne oder hinten und löscht sie. Gespeichert im Handy (`phone.photos`).
+// nach vorne oder hinten und löscht sie; umsortieren geht auch per Ziehen (Touch:
+// kurz halten). Gespeichert im Handy (`phone.photos`).
 export default function PhotosPage() {
   const { updateCharacter } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
@@ -28,6 +30,12 @@ export default function PhotosPage() {
   const photos = me?.phone?.photos ?? [];
   const index = photos.findIndex((p) => p.id === openId);
   const open = index >= 0 ? photos[index] : null;
+  const sort = useDragSort(
+    photos,
+    (p) => p.id,
+    (next) => me && updateCharacter(me.id, { phone: { ...me.phone, photos: next } }),
+    !uploading,
+  );
 
   // Bildunterschrift des offenen Fotos zum Bearbeiten übernehmen
   useEffect(() => {
@@ -48,7 +56,8 @@ export default function PhotosPage() {
 
   const save = (next: PhonePhoto[]) => updateCharacter(owner.id, { phone: { ...owner.phone, photos: next } });
 
-  async function add(list: FileList | null) {
+  async function add(list: FileList | File[] | null) {
+    if (uploading) return;
     const files = [...(list ?? [])].filter((f) => f.type.startsWith("image/"));
     if (!files.length) return;
     setError(null);
@@ -106,6 +115,7 @@ export default function PhotosPage() {
         setOwner(id);
       }}
     >
+      <PasteImages onImages={(files) => void add(files)} />
       <PhoneHeader
         back="/handy"
         actions={
@@ -123,7 +133,7 @@ export default function PhotosPage() {
                 onClick={() => file.current?.click()}
                 disabled={!!uploading || photos.length >= PHOTOS_MAX}
                 aria-label="Fotos hinzufügen"
-                title="Fotos hinzufügen"
+                title="Fotos hinzufügen – oder Bild mit Strg+V / Cmd+V einfügen"
                 className="flex h-9 w-9 items-center justify-center text-accent disabled:opacity-40"
               >
                 <Icon name="plus" size={22} />
@@ -157,12 +167,13 @@ export default function PhotosPage() {
         {error && <p className="px-3 py-2 text-center text-[0.8125rem] text-red-300">{error}</p>}
         {photos.length === 0 && !uploading && (
           <p className="px-8 pt-16 text-center text-[0.875rem] text-text-tertiary">
-            Noch keine Fotos. Mit dem Plus oben rechts fügst du welche hinzu.
+            Noch keine Fotos. Mit dem Plus oben rechts fügst du welche hinzu – oder du fügst ein
+            kopiertes Bild mit Strg+V (Mac: Cmd+V) ein.
           </p>
         )}
         <div className="grid grid-cols-3 gap-0.5">
-          {photos.map((p, i) => (
-            <div key={p.id} className="relative aspect-square bg-bg-surface-2">
+          {sort.list.map((p, i) => (
+            <div key={p.id} {...sort.itemProps(p.id)} className={`relative aspect-square bg-bg-surface-2 ${sort.itemProps(p.id).className}`}>
               <button
                 onClick={() => !ordering && setOpenId(p.id)}
                 disabled={ordering}
@@ -274,4 +285,20 @@ export default function PhotosPage() {
       )}
     </PhoneFrame>
   );
+}
+
+// Strg+V / Cmd+V fügt Bilder aus der Zwischenablage hinzu (auch beim Tippen einer
+// Bildunterschrift – reiner Text wird dann ganz normal eingefügt)
+function PasteImages({ onImages }: { onImages: (files: File[]) => void }) {
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const files = [...(e.clipboardData?.files ?? [])].filter((f) => f.type.startsWith("image/"));
+      if (!files.length) return;
+      e.preventDefault();
+      onImages(files);
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [onImages]);
+  return null;
 }

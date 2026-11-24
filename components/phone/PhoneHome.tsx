@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { resolvePhone } from "@/lib/phone";
+import { useDragSort } from "@/lib/useDragSort";
 import { AppIcon, CAPTIC_BG, CapticGlyph, MESSENGER_BG, MessengerGlyph } from "./AppIcon";
 
 // Ein Ziel auf dem Handy: echter Link; in der Vorschau nur Deko bzw. ein Knopf
@@ -55,8 +56,17 @@ export function PhoneHome({
   // nur ansehen (fremdes Handy): Notizen und Fotos lassen sich trotzdem öffnen
   onOpenApp?: (key: "notizen" | "fotos") => void;
 }) {
-  const { chats, calls, isChatNew, capticNews } = useStore();
+  const { chats, calls, isChatNew, capticNews, updateCharacter } = useStore();
   const phone = resolvePhone(character);
+  // Im Spiel versteckte Apps: für alle sichtbar, nur markiert
+  const secret = character.phone?.secret_apps ?? [];
+  // Apps per Ziehen ordnen (nur auf dem eigenen Handy)
+  const sort = useDragSort(
+    phone.apps,
+    (a) => a.key,
+    (next) => updateCharacter(character.id, { phone: { ...character.phone, app_order: next.map((a) => a.key) } }),
+    !readOnly && !phone.burner,
+  );
   const unread = readOnly
     ? 0
     : chats.filter((c) => c.participant_ids.includes(character.id) && isChatNew(c.id)).length;
@@ -99,32 +109,30 @@ export function PhoneHome({
         phone.wallpaperLight ? "" : "bg-black/15"
       }`}
     >
-      {/* Angedeutete Apps – nicht anklickbar (außer Einstellungen, Fotos und Notizen; Fotos zeigt das neueste Foto) */}
+      {/* Angedeutete Apps – nicht anklickbar (außer Einstellungen, Fotos und Notizen; Fotos zeigt das neueste Foto).
+          Auf dem eigenen Handy lassen sie sich per Ziehen umsortieren. */}
       <div className="grid grid-cols-4 justify-items-center gap-y-5">
-        {phone.apps.map((a) => {
+        {sort.list.map((a) => {
           // Fotos zeigt das zuletzt hinzugefügte Foto als Icon
           const lastPhoto = a.key === "fotos" ? character.phone?.photos?.[0]?.url : undefined;
           const icon = (
-            <AppIcon label={a.label} bg={a.bg} icon={lastPhoto ?? a.icon}>
+            <AppIcon label={a.label} bg={a.bg} icon={lastPhoto ?? a.icon} secret={secret.includes(a.key)}>
               {lastPhoto ? null : a.glyph}
             </AppIcon>
           );
-          if (readOnly && onOpenApp && (a.key === "notizen" || a.key === "fotos")) {
-            const key = a.key;
-            return (
-              <button key={a.key} onClick={() => onOpenApp(key)}>
-                {icon}
-              </button>
+          const key = a.key;
+          const item =
+            readOnly && onOpenApp && (key === "notizen" || key === "fotos") ? (
+              <button onClick={() => onOpenApp(key)}>{icon}</button>
+            ) : a.href && !readOnly ? (
+              <Link href={`${a.href}#handy-${character.id}`}>{icon}</Link>
+            ) : (
+              <span aria-hidden>{icon}</span>
             );
-          }
-          return a.href && !readOnly ? (
-            <Link key={a.key} href={`${a.href}#handy-${character.id}`}>
-              {icon}
-            </Link>
-          ) : (
-            <span key={a.key} aria-hidden>
-              {icon}
-            </span>
+          return (
+            <div key={key} {...sort.itemProps(key)}>
+              {item}
+            </div>
           );
         })}
       </div>

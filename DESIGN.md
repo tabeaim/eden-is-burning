@@ -525,15 +525,29 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Startbildschirm, Captic und „Neue SMS" sind immer aus Sicht eines eigenen
   Charakters (`useMyPhone`).
 - **Look pro Charakter** (`lib/phone.ts`, Einstellungen → Meine Charaktere →
-  `PhoneSettings`): Modell (iPhone neu/alt, Android, Burner Phone), Gehäusefarbe,
+  `PhoneSettings`): Modell (iPhone neu/alt, Android, Burner Phone), Gehäusefarbe
+  (Vorschläge – beim Burner Phone kräftige Plastikfarben (`BURNER_COLORS`) – oder
+  jede Farbe über den bunten Farbwähler, `phone.color` = `#rrggbb`; die Farbkreise
+  schrumpfen mit und bleiben in einer Zeile; im grünlichen Burner-Display stehen
+  die Farben als Namen statt Kreisen),
   Zustand (Kratzer/Sprünge liegen als Overlay über dem Display – auch mobil),
+  Akku (`phone.battery`, 0–100, ohne Angabe 75 %; fester Wert, sinkt und lädt
+  nicht von selbst, keine Auswirkungen. Das Symbol in der Statusleiste füllt
+  sich passend, unter 30 % gelb, unter 15 % rot. Am eigenen Handy öffnet ein
+  Doppelklick, Rechtsklick oder Enter auf das Symbol einen Regler mit „Fertig";
+  fremde Handys zeigen ihn nur an),
   Hintergrundbild (dunkle und helle Vorlagen oder eigenes Bild; auf hellen Vorlagen stehen Uhr und App-Namen dunkel), Apps, eigenes Profilbild
   fürs Handy (`PhoneAvatar` zeigt es überall im Handy statt des Charakterbilds). Funktionierende
   Standard-Apps (Fotos, Notizen, Einstellungen) sind immer da; die reinen
   Deko-Standard-Apps (`DECOR_APPS`: Rechner, Kamera, Uhr, Wetter, Karten) lassen
   sich abwählen (`hidden_apps`); dazu optionale und selbst erstellte (Name + Icon),
-  zusammen höchstens so viele, wie auf einen Startbildschirm passen – alles in
-  einem gemeinsamen Bereich „Apps" in den Einstellungen. Dieselben
+  zusammen höchstens so viele, wie auf einen Startbildschirm passen (`HOME_APP_SLOTS`
+  = 24, 6 Reihen à 4; beim alten iPhone eine Reihe weniger, `homeAppSlots`; alle Apps zählen, auch Fotos, Notizen und Einstellungen – der
+  Zähler zeigt nur die frei wählbaren, also x/21 bzw. x/17) – alles in
+  einem gemeinsamen Bereich „Apps" in den Einstellungen. Die Handy-Einstellungen
+  sind in schlichte Karten ohne Überschrift gruppiert (Profilbild · Look · Akku ·
+  Captic · Startbildschirm), mit möglichst wenig Erklärtext; die Farben passen in
+  eine Zeile. Dieselben
   Handy-Einstellungen öffnet auch die Einstellungen-App im Handy selbst
   (`/handy/einstellungen`, `PhoneSettings inPhone`, nur fürs eigene Handy) –
   dort ohne den Schalter „Hat ein Handy", damit man sich nicht aussperrt; ein
@@ -634,9 +648,10 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Rechtsklick auf einen Eintrag: „Anruf abbrechen" (eigener,
   klingelnder) und „Aus der Anrufliste löschen" (nur auf diesem Handy).
 - **Andere Handys** (`/handy/andere`, „👀" in der Leiste über dem Gerät):
-  immer aus Sicht des Handys, das ich gerade in der Hand habe („aus Sicht von …",
-  bei mehreren Charakteren umschaltbar, gleiche Auswahl wie die Leiste über dem
-  Gerät). Eine einzige Liste ohne Überschriften, nach Relevanz für diesen
+  immer aus Sicht des Handys, das ich gerade in der Hand habe. Oben der
+  Zurück-Link mit Namen („‹ Alexanders Handy"), neben dem Titel bei mehreren
+  Charakteren der Chip „aus Sicht von …" ▾ (`OwnerPicker`, derselbe wie in der
+  Leiste über dem Gerät). Eine einzige Liste ohne Überschriften, nach Relevanz für diesen
   Charakter sortiert: zuerst Favoriten dieses Handys, dann wer mit ihm schreibt
   oder telefoniert (zuletzt aktiv vorn), dann gemeinsame Szenen (nach Anzahl),
   dann sonst unter „Relevante" (von Hand hinzugefügt oder mit eigenem
@@ -678,15 +693,27 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   reine Deko (`AppIcon` ohne Link) – Ausnahmen „Einstellungen", die in die
   Charakter-Einstellungen führt, sowie „Notizen" und „Fotos" (siehe unten); echte Apps (Telefon, Nachrichten, Captic)
   stehen im Dock. Die Home-Leiste unten (bzw. der
-  Home-Button des alten Modells) führt immer dorthin zurück.
+  Home-Button des alten Modells) führt immer dorthin zurück. Auf dem eigenen
+  Handy lassen sich die Apps per Ziehen umsortieren (`phone.app_order`, neu
+  gewählte Apps landen hinten). Ohne eigene Reihenfolge stehen Einstellungen,
+  Notizen und Fotos vorne, dann die Deko-Apps, dann gewählte und eigene. „Im Spiel versteckt" (Knopf mit durchgestrichenem Auge in jeder gewählten
+  App-Pille der Handy-Einstellungen, keine eigene Liste; `phone.secret_apps`) heißt nur: der Charakter hat die App versteckt. Alle
+  Spieler*innen sehen sie weiter, auch bei fremden Handys – abgedunkelt mit
+  durchgestrichenem Auge unten rechts (`AppIcon secret`).
+- **Sortieren per Ziehen** (`useDragSort`, `lib/useDragSort.ts`): Startbildschirm-Apps,
+  Notizen und Fotos. Maus: festhalten und ziehen, ein einfacher Klick öffnet
+  weiterhin. Touch: kurz halten (350 ms), bis sich das Element hebt, dann ziehen –
+  normales Wischen scrollt. Das gezogene Element folgt dem Finger, die anderen
+  rücken live nach; gespeichert wird einmal beim Loslassen. „Ordnen" mit Pfeilen
+  bleibt als Alternative (und zum Löschen).
 - **Notizen** (`/handy/notizen`, `phone.notes`): Liste mit Titel und erster
   Zeile, Stift oben rechts legt eine neue an, Antippen öffnet sie zum Schreiben
-  (gespeichert wird laufend beim Tippen, leere Notizen verschwinden), unter der
-  Liste „+ Neue Notiz". Löschen: Mülleimer in der offenen Notiz oder „Ordnen"
+  (gespeichert wird laufend beim Tippen, leere Notizen verschwinden) – kein
+  zweiter „Neue Notiz"-Knopf unter der Liste. Löschen: Mülleimer in der offenen Notiz oder „Ordnen"
   (↑ ↓ verschieben, ✕ löschen), immer mit `ConfirmDialog`.
 - **Fotos** (`/handy/fotos`, `phone.photos`): Dreier-Raster, Plus oben rechts lädt
   mehrere auf einmal hoch (`PHOTOS_PER_UPLOAD`, insgesamt `PHOTOS_MAX`, neueste
-  vorne). Antippen öffnet die Großansicht im Display mit ‹ ›, Zähler und
+  vorne); Strg+V / Cmd+V fügt Bilder aus der Zwischenablage ein (Hinweis nur im leeren Album und als Tooltip am Plus, keine Textzeile unter den Fotos). Antippen öffnet die Großansicht im Display mit ‹ ›, Zähler und
   Bildunterschrift; Mülleimer oben rechts löscht. „Ordnen": ‹ › verschieben,
   ✕ löschen (beides mit `ConfirmDialog`).
   Beides liegt im Handy des Charakters (`characters.phone`) – keine eigene Tabelle.

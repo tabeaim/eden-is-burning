@@ -22,6 +22,16 @@ export const PHONE_COLORS = [
   { key: "red", label: "Rot", hex: "#7c2027" },
 ] as const;
 
+// Das Burner Phone ist ein buntes Plastik-Tastenhandy – eigene, kräftige Vorschläge
+export const BURNER_COLORS = [
+  { key: "b-black", label: "Schwarz", hex: "#26262a" },
+  { key: "b-red", label: "Knallrot", hex: "#d1342f" },
+  { key: "b-blue", label: "Blau", hex: "#2463c4" },
+  { key: "b-yellow", label: "Gelb", hex: "#f0c22e" },
+  { key: "b-lime", label: "Limette", hex: "#86c23f" },
+  { key: "b-orange", label: "Orange", hex: "#ee7a1c" },
+] as const;
+
 export const PHONE_WEAR = ["Wie neu", "Leichte Kratzer", "Zerkratzt", "Display gesprungen"];
 
 // Vorlagen – alles andere per eigenem Bild. `light`: heller Hintergrund, auf dem
@@ -47,15 +57,16 @@ export interface PhoneApp {
 
 // Standard-Apps: auf jedem Smartphone einfach da, nicht wählbar.
 export const STANDARD_APPS: PhoneApp[] = [
+  // Einstellungen, Notizen und Fotos stehen vorne (die echten Apps), dann die Deko
+  // führt zu den Handy-Einstellungen des Charakters (Look, Captic, Apps)
+  { key: "einstellungen", label: "Einstellungen", glyph: "⚙️", bg: "linear-gradient(#a9a9af, #6b6b70)", href: "/handy/einstellungen" },
+  { key: "notizen", label: "Notizen", glyph: "📝", bg: "linear-gradient(#ffe27a, #f2b824)", href: "/handy/notizen" },
+  { key: "fotos", label: "Fotos", glyph: "🌸", bg: "linear-gradient(#ffffff, #dcdce0)", href: "/handy/fotos" },
   { key: "rechner", label: "Rechner", glyph: "🧮", bg: "linear-gradient(#48484c, #1c1c1e)" },
   { key: "kamera", label: "Kamera", glyph: "📷", bg: "linear-gradient(#8e8e93, #48484c)" },
-  { key: "fotos", label: "Fotos", glyph: "🌸", bg: "linear-gradient(#ffffff, #dcdce0)", href: "/handy/fotos" },
   { key: "uhr", label: "Uhr", glyph: "⏰", bg: "linear-gradient(#2c2c2e, #111113)" },
   { key: "wetter", label: "Wetter", glyph: "⛅", bg: "linear-gradient(#4aa3f0, #1d5fc2)" },
   { key: "karten", label: "Karten", glyph: "🗺️", bg: "linear-gradient(#7ed0a0, #3c8f6a)" },
-  { key: "notizen", label: "Notizen", glyph: "📝", bg: "linear-gradient(#ffe27a, #f2b824)", href: "/handy/notizen" },
-  // führt zu den Handy-Einstellungen des Charakters (Look, Captic, Apps)
-  { key: "einstellungen", label: "Einstellungen", glyph: "⚙️", bg: "linear-gradient(#a9a9af, #6b6b70)", href: "/handy/einstellungen" },
 ];
 
 // Standard-Apps, die nur Deko sind – lassen sich in den Handy-Einstellungen
@@ -76,15 +87,38 @@ export const OPTIONAL_APPS: PhoneApp[] = [
   { key: "videos", label: "Videos", glyph: "▶️", bg: "linear-gradient(#ff5b5b, #c51616)" },
 ];
 
-// Der Startbildschirm hat vier Reihen à vier Apps: acht Standard-Apps plus bis zu
-// acht weitere (gewählte und eigene zusammen).
-export const MAX_EXTRA_APPS = 16 - STANDARD_APPS.length;
+// Der Startbildschirm hat sechs Reihen à vier Apps (passt am Rechner und auf
+// üblichen Handys ohne Scrollen). Alle zählen: die Standard-Apps
+// (Fotos, Notizen, Einstellungen fest, Deko abwählbar) plus gewählte und eigene.
+export const HOME_APP_SLOTS = 24; // 6 Reihen à 4 auf dem Startbildschirm (ohne Dock)
+// Das alte iPhone hat oben und unten breite Ränder (Home-Taste): eine Reihe weniger
+export const homeAppSlots = (p: PhoneSettings | null | undefined) =>
+  p?.model === "classic" ? HOME_APP_SLOTS - 4 : HOME_APP_SLOTS;
+// Standard-Apps, die gerade auf dem Startbildschirm stehen (abgewählte Deko fehlt)
+export const shownStandardApps = (p: PhoneSettings | null | undefined) =>
+  STANDARD_APPS.filter((a) => !DECOR_APPS.includes(a.key) || !(p?.hidden_apps ?? []).includes(a.key));
+// Plätze für weitere und eigene Apps: was die Standard-Apps übrig lassen
+export const extraAppSlots = (p: PhoneSettings | null | undefined) =>
+  homeAppSlots(p) - shownStandardApps(p).length;
+
+// Eigene Reihenfolge (per Ziehen) anwenden; Apps ohne Platz darin – z. B. neu
+// gewählte – kommen in ihrer üblichen Reihenfolge dahinter.
+export function orderApps<A extends { key: string }>(apps: A[], order: string[] | null | undefined): A[] {
+  if (!order?.length) return apps;
+  const pos = new Map(order.map((k, i) => [k, i]));
+  const rank = (a: A, i: number) => pos.get(a.key) ?? order.length + i;
+  return apps
+    .map((a, i) => ({ a, r: rank(a, i) }))
+    .sort((x, y) => x.r - y.r)
+    .map((x) => x.a);
+}
 
 export interface ResolvedPhone {
   model: PhoneModel;
   burner: boolean;
   frame: string; // Gehäusefarbe (hex)
   wear: number;
+  battery: number; // 0–100
   wallpaper: string; // fertiger CSS-`background`-Wert
   wallpaperLight: boolean; // helle Vorlage: Beschriftung dunkel statt weiß
   apps: PhoneApp[]; // Standard + gewählte + eigene, in Anzeige-Reihenfolge
@@ -107,10 +141,20 @@ export function wallpaperCss(value: string | null | undefined): string {
   return (PHONE_WALLPAPERS.find((w) => w.key === key) ?? PHONE_WALLPAPERS[0]).css;
 }
 
+// Akkustand: 0–100, ohne Angabe 75 %. Er sinkt und lädt nicht von selbst.
+export const DEFAULT_BATTERY = 75;
+export const clampBattery = (v: number | null | undefined) =>
+  typeof v === "number" && Number.isFinite(v) ? Math.min(100, Math.max(0, Math.round(v))) : DEFAULT_BATTERY;
+// Farbe der Akku-Füllung: rot unter 15 %, gelb unter 30 %, sonst Schriftfarbe
+export const batteryColor = (v: number) => (v < 15 ? "#ff453a" : v < 30 ? "#ffd60a" : "currentColor");
+
 export function resolvePhone(c: Pick<Character, "phone"> | null | undefined): ResolvedPhone {
   const p: PhoneSettings = c?.phone ?? {};
   const model = PHONE_MODELS.find((m) => m.key === p.model)?.key ?? "island";
-  const frame = (PHONE_COLORS.find((x) => x.key === p.color) ?? PHONE_COLORS[0]).hex;
+  // Gehäusefarbe: Schlüssel aus PHONE_COLORS oder frei gewählt (#rrggbb)
+  const frame = /^#[0-9a-f]{6}$/i.test(p.color ?? "")
+    ? p.color!
+    : ([...PHONE_COLORS, ...BURNER_COLORS].find((x) => x.key === p.color) ?? PHONE_COLORS[0]).hex;
   const wear = Math.min(3, Math.max(0, Math.round(p.wear ?? 0)));
   const chosen = (p.apps ?? []).flatMap((k) => OPTIONAL_APPS.filter((a) => a.key === k));
   const custom: PhoneApp[] = (p.custom_apps ?? []).map((a) => ({
@@ -123,14 +167,15 @@ export function resolvePhone(c: Pick<Character, "phone"> | null | undefined): Re
     burner: model === "burner",
     frame,
     wear,
+    battery: clampBattery(p.battery),
     wallpaper: wallpaperCss(p.wallpaper),
     wallpaperLight:
       !!p.wallpaper?.startsWith("preset:") &&
       !!PHONE_WALLPAPERS.find((w) => w.key === p.wallpaper!.slice("preset:".length))?.light,
-    apps: [
-      ...STANDARD_APPS.filter((a) => !DECOR_APPS.includes(a.key) || !(p.hidden_apps ?? []).includes(a.key)),
-      ...[...chosen, ...custom].slice(0, MAX_EXTRA_APPS),
-    ],
+    apps: orderApps(
+      [...shownStandardApps(p), ...[...chosen, ...custom].slice(0, extraAppSlots(p))],
+      p.app_order,
+    ),
     captic: model !== "burner" && !!p.captic?.enabled,
   };
 }
