@@ -666,8 +666,9 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Abschnitte der Karte: ›, Großbuchstaben, grau). Der Seitentitel „andere handys."
   steht in der Schrift einer Abschnitts-Überschrift, aber weiß. Wer in diesem Handy aus „Relevante" entfernt wurde
   (`not_relevant`), rutscht zu den übrigen (außer Favoriten). Kacheln zeigen das
-  Kontaktfoto dieses Handys (`ContactAvatar`, sonst das Profilbild) und den
-  echten Vornamen (mittig), darunter das Datum der letzten Interaktion mit dem
+  Kontaktfoto und den Kontaktnamen dieses Handys (`ContactAvatar`,
+  `contactShortName`; sonst Profilbild und Vorname, mittig; die Suche findet
+  beide Namen), darunter das Datum der letzten Interaktion mit dem
   gewählten Handy-Charakter (SMS, Anruf oder Post in einer gemeinsamen Szene;
   ohne Interaktion keine Zeile). Die eigenen
   anderen Charaktere stehen mit in der Liste (nur das gerade gewählte Handy

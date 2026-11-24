@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import type { Character } from "@/lib/types";
-import { CALL_TO_KEY, SMS_TO_KEY, hasPhone, resolvePhone } from "@/lib/phone";
+import { CALL_TO_KEY, SMS_TO_KEY, contactName, contactShortName, hasPhone, resolvePhone } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
 import { ContactAvatar, OwnerPicker, useMyPhone } from "@/components/phone/PhoneFrame";
 import { PhonePreview } from "@/components/phone/PhonePreview";
@@ -13,7 +13,7 @@ import { btn } from "@/components/admin/ui";
 
 // „Andere Handys": alle Handys fremder Charaktere zum Ansehen. Übersicht mit
 // Hintergrund, Profilbild (das Kontaktfoto dieses Handys, sonst das eigene) und
-// echtem Namen (mit Suche); ein Handy lässt sich groß öffnen, mit ‹ › neben dem
+// Kontaktnamen (mit Suche); ein Handy lässt sich groß öffnen, mit ‹ › neben dem
 // Gerät weiterblättern, und von dort aus SMS schreiben oder anrufen (Captic über
 // die App im Gerät) – immer aus Sicht des Handys, das ich gerade in der Hand habe
 // (umschaltbar). Oben nach Relevanz für diesen Charakter sortiert (ohne
@@ -113,7 +113,9 @@ export default function OtherPhonesPage() {
 
   // oben die nach Relevanz sortierten (ohne Überschriften), darunter eingeklappt
   // „weitere." (alphabetisch); die Suche zeigt alle Treffer in einer Liste
-  const hit = (c: Character) => c.name.toLowerCase().includes(query);
+  // Suche findet echten und eigenen Kontaktnamen
+  const hit = (c: Character) =>
+    c.name.toLowerCase().includes(query) || contactName(me, c).toLowerCase().includes(query);
   const grid = query ? [...ranked.front, ...ranked.rest].filter(hit) : ranked.front;
   const rest = query ? [] : ranked.rest;
   // ohne Relevante gibt es nichts einzuklappen
@@ -288,8 +290,8 @@ function shortDate(iso: string | undefined): string | null {
 }
 
 // Kleine Handy-Vorschau: Gehäusefarbe als Rahmen, Hintergrund, Profilbild (Kontaktfoto
-// des eigenen Handys, sonst das des Charakters), darunter mittig der echte
-// Vorname und das Datum der letzten Interaktion
+// des eigenen Handys, sonst das des Charakters), darunter mittig der Kontaktname
+// dieses Handys (sonst der Vorname) und das Datum der letzten Interaktion
 function PhoneTile({
   c,
   owner,
@@ -318,7 +320,7 @@ function PhoneTile({
       </span>
       <span className="block bg-bg-surface px-2 py-1 text-center">
         <span className="block truncate text-[0.75rem] font-semibold text-text-primary" title={c.name}>
-          {c.name.split(" ")[0]}
+          {contactShortName(owner, c)}
         </span>
         {sub && <span className="block truncate text-[0.625rem] text-text-tertiary">{sub}</span>}
       </span>
