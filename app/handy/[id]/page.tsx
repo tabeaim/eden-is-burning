@@ -215,7 +215,7 @@ function ChatView({ chat }: { chat: Chat }) {
   const [draft, setDraft] = useState("");
   const time =
     timeOverride ??
-    (lastTimed ? estimateReplyTime(lastTimed, self, draft) : lastTime ? addMinutes(lastTime, 1) : "12:00");
+    (lastTimed ? estimateReplyTime(targetMsgs, self, draft) : lastTime ? addMinutes(lastTime, 1) : "12:00");
   // Nach Mitternacht beginnt von selbst der nächste Tag: Die letzte Nachricht war
   // am Abend, die nächste hat eine frühere Uhrzeit am Morgen („23:58" → „00:03").
   const pastMidnight = !!lastTime && lastTime >= "12:00" && time < "12:00";
