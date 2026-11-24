@@ -14,11 +14,12 @@ import { CAPTIC_OPEN_KEY } from "@/components/phone/captic/CapticApp";
 // „Andere Handys": alle Handys fremder Charaktere zum Ansehen. Übersicht mit
 // Hintergrund, Profilbild und Modell (mit Suche); ein Handy lässt sich groß
 // öffnen, mit ‹ › weiterblättern, und von dort aus SMS schreiben, anrufen oder
-// das Captic-Profil öffnen – immer aus Sicht des eigenen Handys.
+// das Captic-Profil öffnen – immer aus Sicht des Handys, das ich gerade in der
+// Hand habe (umschaltbar). Die Reihen oben hängen nur an diesem Charakter.
 export default function OtherPhonesPage() {
   const router = useRouter();
   const { characters, npcs, chats, chatMessages, calls, scenes } = useStore();
-  const { me, myChars } = useMyPhone();
+  const { me, myChars, setOwner } = useMyPhone();
   const [q, setQ] = useState("");
   const [now] = useState(() => Date.now());
   const [restOpen, setRestOpen] = useState(false);
@@ -26,7 +27,9 @@ export default function OtherPhonesPage() {
   const [opened, setOpened] = useState<{ id: string; list: string[] } | null>(null);
 
   const query = q.trim().toLowerCase();
+  // eigene Charaktere tauchen nie auf; die Reihen gelten nur für das Handy, das ich gerade in der Hand habe
   const mine = new Set(myChars.map((c) => c.id));
+  const meId = me?.id ?? "";
   const all = [...characters, ...npcs]
     .filter((c) => hasPhone(c) && !mine.has(c.id) && c.player_id !== me?.player_id)
     .sort((a, b) => a.name.localeCompare(b.name, "de"));
@@ -35,17 +38,17 @@ export default function OtherPhonesPage() {
 
   // Reihen oben, nach Wichtigkeit – jede Person nur in der ersten passenden Reihe
   const rows = (() => {
-    // in einem meiner Handys aus „Relevante" entfernt: nicht in den Reihen (außer Favoriten)
-    const notRelevant = new Set(myChars.flatMap((c) => c.phone?.not_relevant ?? []));
+    // in diesem Handy aus „Relevante" entfernt: nicht in den Reihen (außer Favoriten)
+    const notRelevant = new Set(me?.phone?.not_relevant ?? []);
     const used = new Set<string>();
     const take = (ids: string[]) =>
       ids.filter((id) => byId.has(id) && !used.has(id) && (used.add(id), true)).map((id) => byId.get(id)!);
 
-    // 1. Favoriten in einem meiner Handys
-    const favorites = take([...new Set(myChars.flatMap((c) => c.phone?.favorites ?? []))]);
+    // 1. Favoriten dieses Handys
+    const favorites = take(me?.phone?.favorites ?? []);
     for (const id of notRelevant) used.add(id);
 
-    // 2. Schreibt mit dir: SMS oder Anrufe mit meinen Charakteren, zuletzt aktiv vorn
+    // 2. Schreibt mit dir: SMS oder Anrufe mit diesem Charakter, zuletzt aktiv vorn
     const last = new Map<string, string>();
     const touch = (id: string, at: string) => {
       if (!mine.has(id) && at > (last.get(id) ?? "")) last.set(id, at);
@@ -53,20 +56,20 @@ export default function OtherPhonesPage() {
     const newestIn = new Map<string, string>();
     for (const m of chatMessages) if (m.created_at > (newestIn.get(m.chat_id) ?? "")) newestIn.set(m.chat_id, m.created_at);
     for (const c of chats) {
-      if (!c.participant_ids.some((id) => mine.has(id))) continue;
+      if (!c.participant_ids.includes(meId)) continue;
       const at = newestIn.get(c.id);
       if (at) for (const id of c.participant_ids) touch(id, at);
     }
     for (const call of calls) {
-      if (mine.has(call.caller_id)) touch(call.callee_id, call.created_at);
-      if (mine.has(call.callee_id)) touch(call.caller_id, call.created_at);
+      if (call.caller_id === meId) touch(call.callee_id, call.created_at);
+      if (call.callee_id === meId) touch(call.caller_id, call.created_at);
     }
     const writing = take([...last.keys()].sort((a, b) => last.get(b)!.localeCompare(last.get(a)!)));
 
     // 3. Aus deinen Szenen
     const together = new Map<string, number>();
     for (const sc of scenes) {
-      if (!sc.participant_ids.some((id) => mine.has(id))) continue;
+      if (!sc.participant_ids.includes(meId)) continue;
       for (const id of sc.participant_ids) together.set(id, (together.get(id) ?? 0) + 1);
     }
     const fromScenes = take([...together.keys()].sort((a, b) => together.get(b)! - together.get(a)!));
@@ -135,6 +138,27 @@ export default function OtherPhonesPage() {
           Eigenes Handy
         </Link>
         <h1 className="text-[1.25rem] font-bold text-text-primary">Andere Handys</h1>
+        {me && (
+          <span className="flex items-center gap-1.5 text-[0.8125rem] text-text-tertiary">
+            aus Sicht von
+            {myChars.length > 1 ? (
+              <select
+                value={me.id}
+                onChange={(e) => setOwner(e.target.value)}
+                className="rounded-md border border-border-subtle bg-white/[0.04] px-2 py-1 font-medium text-text-primary"
+                aria-label="Von welchem Handy aus"
+              >
+                {myChars.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="font-medium text-text-primary">{me.name}</span>
+            )}
+          </span>
+        )}
         <label className="ml-auto flex w-full items-center gap-2 rounded-full bg-white/[0.06] px-3 py-1.5 text-text-tertiary sm:w-64">
           <Icon name="search" size={15} className="shrink-0" />
           <input
