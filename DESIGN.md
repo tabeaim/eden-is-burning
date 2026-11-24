@@ -640,7 +640,9 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   alphabetisch darunter im eingeklappten „Weitere". Wer in diesem Handy aus „Relevante" entfernt wurde
   (`not_relevant`), rutscht zu den übrigen (außer Favoriten). Die kleine Zeile
   unter dem Namen zeigt den Grund („★ Favorit", „gestern", „3 Szenen",
-  „neu dabei"), sonst das Modell. Eigene Charaktere erscheinen nie. Die Suche
+  „neu dabei"), sonst das Modell. Die eigenen anderen Charaktere stehen mit in der Liste
+  (nur das gerade gewählte Handy fehlt); bei ihnen führt „Dieses Handy nehmen"
+  direkt auf ihr Handy. Die Suche
   zeigt alle Treffer in einer Liste (Relevante zuerst). Ein Handy öffnet groß
   als `PhonePreview`, ‹ › bzw. Pfeiltasten blättern durch die Liste, aus der es
   geöffnet wurde.
