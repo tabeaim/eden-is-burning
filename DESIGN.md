@@ -44,6 +44,10 @@ kleingeschriebenen Abschnitts-Überschriften mit Punkt („facts.", „scenes.")
 (`DashHeading`) `1.5rem`, in den Profilen (`SectionHeading`) `1.75rem`
 (Unter-Überschriften `1.25rem`). Schriftgrößen immer aus der vorhandenen Skala
 nehmen, keine krummen Zwischenwerte.
+**Titel mit Punkt** (Seitentitel und weiße Überschriften in der Display-Schrift,
+z. B. „andere handys.", Spieler*innen-Namen, Logo): Text in `text-text-primary`, der
+Punkt immer orange als eigenes `<span className="text-accent">.</span>`. Bei
+Abschnitts-Überschriften, die ganz orange sind, ist der Punkt ohnehin orange.
 Alles andere ist Montserrat. Standard-Textgröße `0.875rem`, Bubbles/Buttons
 `0.8125rem`.
 
@@ -664,7 +668,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   (letzte 14 Tage). Alle übrigen stehen
   alphabetisch darunter im eingeklappten „Weitere · 5" (Stil wie die aufklappbaren
   Abschnitte der Karte: ›, Großbuchstaben, grau). Der Seitentitel „andere handys."
-  steht in der Schrift einer Abschnitts-Überschrift, aber weiß. Wer in diesem Handy aus „Relevante" entfernt wurde
+  steht in der Schrift einer Abschnitts-Überschrift, aber weiß mit orangem Punkt. Wer in diesem Handy aus „Relevante" entfernt wurde
   (`not_relevant`), rutscht zu den übrigen (außer Favoriten). Kacheln zeigen das
   Kontaktfoto und den Kontaktnamen dieses Handys (`ContactAvatar`,
   `contactShortName`; sonst Profilbild und Vorname, mittig; die Suche findet

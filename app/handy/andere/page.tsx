@@ -166,7 +166,9 @@ export default function OtherPhonesPage() {
         {me ? `${possessive(me.name.split(" ")[0])} Handy` : "Zum Handy"}
       </Link>
       <div className="mt-1 flex flex-wrap items-center gap-3">
-        <h1 className="font-display lowercase text-[1.625rem] leading-none text-text-primary">andere handys.</h1>
+        <h1 className="font-display lowercase text-[1.625rem] leading-none text-text-primary">
+          andere handys<span className="text-accent">.</span>
+        </h1>
         {me && myChars.length > 1 && (
           <OwnerPicker
             owner={me.id}
