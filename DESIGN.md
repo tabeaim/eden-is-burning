@@ -630,8 +630,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   (in einem meiner Handys markiert), „Schreibt mit dir" (SMS/Anrufe mit meinen
   Charakteren, zuletzt aktiv vorn, „gestern" usw.), „Aus deinen Szenen" (nach
   Anzahl gemeinsamer Szenen), „Neu dabei" (letzte 14 Tage); jede Person nur in
-  der ersten passenden Reihe. Darunter „Alle" als Raster; die Suche blendet die
-  Reihen aus. Ein Handy öffnet groß als `PhonePreview`, ‹ › bzw. Pfeiltasten
+  der ersten passenden Reihe. Darunter „Weitere" als Raster (nur, wer oben in
+  keiner Reihe steht); die Suche blendet die Reihen aus und durchsucht alle. Ein Handy öffnet groß als `PhonePreview`, ‹ › bzw. Pfeiltasten
   blättern innerhalb der Reihe, aus der es geöffnet wurde. Von dort aus dem eigenen Handy: „SMS schreiben" (`SMS_TO_KEY`),
   „Anrufen" (`CALL_TO_KEY` öffnet den Anruf-Dialog), „Captic-Profil"
   (`CAPTIC_OPEN_KEY` = `profile:<id>`).

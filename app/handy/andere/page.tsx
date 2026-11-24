@@ -84,6 +84,10 @@ export default function OtherPhonesPage() {
     ].filter((r) => r.list.length > 0);
   })();
 
+  // Raster unten: ohne Suche nur, wer oben in keiner Reihe steht; mit Suche alle Treffer
+  const inRows = new Set(rows.flatMap((r) => r.list.map((c) => c.id)));
+  const grid = query ? shown : shown.filter((c) => !inRows.has(c.id));
+
   const openList = opened?.list ?? [];
   const index = opened ? openList.indexOf(opened.id) : -1;
   const open = opened ? (byId.get(opened.id) ?? null) : null;
@@ -159,12 +163,14 @@ export default function OtherPhonesPage() {
           </section>
         ))}
 
-      <h2 className="mb-2 mt-6 text-[0.75rem] font-semibold uppercase tracking-wider text-text-tertiary">
-        {query ? "Suchergebnis" : "Alle"} <span className="font-normal">· {shown.length}</span>
-      </h2>
+      {grid.length > 0 && (
+        <h2 className="mb-2 mt-6 text-[0.75rem] font-semibold uppercase tracking-wider text-text-tertiary">
+          {query ? "Suchergebnis" : rows.length ? "Weitere" : "Alle"} <span className="font-normal">· {grid.length}</span>
+        </h2>
+      )}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
-        {shown.map((c) => (
-          <PhoneTile key={c.id} c={c} sub={modelLabel(c)} onOpen={() => setOpenId(c.id)} />
+        {grid.map((c) => (
+          <PhoneTile key={c.id} c={c} sub={modelLabel(c)} onOpen={() => setOpenId(c.id, grid)} />
         ))}
       </div>
 
