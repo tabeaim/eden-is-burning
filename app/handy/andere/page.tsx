@@ -7,7 +7,7 @@ import { useStore } from "@/lib/store";
 import type { Character } from "@/lib/types";
 import { CALL_TO_KEY, PHONE_MODELS, SMS_TO_KEY, hasPhone, resolvePhone } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
-import { PhoneAvatar, useMyPhone } from "@/components/phone/PhoneFrame";
+import { OwnerPicker, PhoneAvatar, useMyPhone } from "@/components/phone/PhoneFrame";
 import { PhonePreview } from "@/components/phone/PhonePreview";
 import { CAPTIC_OPEN_KEY } from "@/components/phone/captic/CapticApp";
 
@@ -17,6 +17,9 @@ import { CAPTIC_OPEN_KEY } from "@/components/phone/captic/CapticApp";
 // das Captic-Profil öffnen – immer aus Sicht des Handys, das ich gerade in der
 // Hand habe (umschaltbar). Oben nach Relevanz für diesen Charakter sortiert
 // (ohne Überschriften), darunter eingeklappt „Weitere".
+// „Alexanders Handy", aber „Max' Handy" (Name endet auf s, x, z, ß)
+const possessive = (first: string) => (/[sxzß]$/i.test(first) ? `${first}'` : `${first}s`);
+
 export default function OtherPhonesPage() {
   const router = useRouter();
   const { characters, npcs, chats, chatMessages, calls, scenes } = useStore();
@@ -148,32 +151,20 @@ export default function OtherPhonesPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-3 py-4 sm:px-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <Link href="/handy" className="flex items-center gap-1 text-[0.8125rem] text-accent hover:underline">
-          <Icon name="chevron-right" size={16} className="rotate-180" />
-          Eigenes Handy
-        </Link>
+      {/* Zurück zum eigenen Handy (mit Namen), darunter Titel, Sicht-Auswahl und Suche */}
+      <Link href="/handy" className="inline-flex items-center gap-1 text-[0.8125rem] text-accent hover:underline">
+        <Icon name="chevron-right" size={16} className="rotate-180" />
+        {me ? `${possessive(me.name.split(" ")[0])} Handy` : "Zum Handy"}
+      </Link>
+      <div className="mt-1 flex flex-wrap items-center gap-3">
         <h1 className="text-[1.25rem] font-bold text-text-primary">Andere Handys</h1>
-        {me && (
-          <span className="flex items-center gap-1.5 text-[0.8125rem] text-text-tertiary">
-            aus Sicht von
-            {myChars.length > 1 ? (
-              <select
-                value={me.id}
-                onChange={(e) => setOwner(e.target.value)}
-                className="rounded-md border border-border-subtle bg-white/[0.04] px-2 py-1 font-medium text-text-primary"
-                aria-label="Von welchem Handy aus"
-              >
-                {myChars.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <span className="font-medium text-text-primary">{me.name}</span>
-            )}
-          </span>
+        {me && myChars.length > 1 && (
+          <OwnerPicker
+            owner={me.id}
+            options={myChars.map((c) => c.id)}
+            onOwner={setOwner}
+            prefix="aus Sicht von"
+          />
         )}
         <label className="ml-auto flex w-full items-center gap-2 rounded-full bg-white/[0.06] px-3 py-1.5 text-text-tertiary sm:w-64">
           <Icon name="search" size={15} className="shrink-0" />

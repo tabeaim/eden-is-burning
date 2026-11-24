@@ -648,9 +648,10 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Rechtsklick auf einen Eintrag: „Anruf abbrechen" (eigener,
   klingelnder) und „Aus der Anrufliste löschen" (nur auf diesem Handy).
 - **Andere Handys** (`/handy/andere`, „👀" in der Leiste über dem Gerät):
-  immer aus Sicht des Handys, das ich gerade in der Hand habe („aus Sicht von …",
-  bei mehreren Charakteren umschaltbar, gleiche Auswahl wie die Leiste über dem
-  Gerät). Eine einzige Liste ohne Überschriften, nach Relevanz für diesen
+  immer aus Sicht des Handys, das ich gerade in der Hand habe. Oben der
+  Zurück-Link mit Namen („‹ Alexanders Handy"), neben dem Titel bei mehreren
+  Charakteren der Chip „aus Sicht von …" ▾ (`OwnerPicker`, derselbe wie in der
+  Leiste über dem Gerät). Eine einzige Liste ohne Überschriften, nach Relevanz für diesen
   Charakter sortiert: zuerst Favoriten dieses Handys, dann wer mit ihm schreibt
   oder telefoniert (zuletzt aktiv vorn), dann gemeinsame Szenen (nach Anzahl),
   dann sonst unter „Relevante" (von Hand hinzugefügt oder mit eigenem

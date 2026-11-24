@@ -216,6 +216,45 @@ function OwnerBar({
   options: string[];
   onOwner?: (id: string) => void;
 }) {
+  return (
+    // Rechts bleibt auf schmalen Bildschirmen Platz für die Menü-Taste der App.
+    <div className="relative z-20 flex h-12 shrink-0 items-center border-b border-border-subtle bg-bg-sidebar pl-2 pr-14 sm:mb-3 sm:h-auto sm:w-[390px] sm:justify-center sm:border-0 sm:bg-transparent sm:px-0">
+      <OwnerPicker
+        owner={owner}
+        options={options}
+        onOwner={onOwner}
+        menuClassName="left-2 sm:left-1/2 sm:-translate-x-1/2"
+      />
+      {/* fremde Handys ansehen (Übersicht mit Suche) */}
+      <Link
+        href="/handy/andere"
+        title="Andere Handys ansehen"
+        className="ml-2 flex shrink-0 items-center gap-1 rounded-full border border-border-subtle bg-bg-surface px-2.5 py-1 text-[0.8125rem] text-text-secondary hover:text-text-primary"
+      >
+        <span aria-hidden>👀</span>
+        <span className="hidden sm:inline">Andere Handys</span>
+        <span className="sr-only sm:hidden">Andere Handys</span>
+      </Link>
+    </div>
+  );
+}
+
+// Auswahl, wessen Handy man in der Hand hat: Chip mit Bild und „Handy von …" ▾,
+// darunter die eigenen Charaktere (mit Zähler, wo Neues wartet). Auch auf
+// „Andere Handys" (aus wessen Sicht sortiert wird).
+export function OwnerPicker({
+  owner,
+  options,
+  onOwner,
+  menuClassName = "left-0",
+  prefix = "Handy von",
+}: {
+  owner: string | null;
+  options: string[];
+  onOwner?: (id: string) => void;
+  menuClassName?: string;
+  prefix?: string; // Beschriftung vor dem Vornamen im Chip (im Menü immer „Handy von")
+}) {
   const { character, chats, calls, isChatNew, capticUnread } = useStore();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -235,7 +274,7 @@ function OwnerBar({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  const entry = (id: string | null) => {
+  const entry = (id: string | null, label = "Handy von") => {
     const c = id ? character(id) : undefined;
     return (
       <>
@@ -247,7 +286,7 @@ function OwnerBar({
           </span>
         )}
         <span className="min-w-0 truncate">
-          {c ? `Handy von ${c.name.split(" ")[0]}` : "Handy"}
+          {c ? `${label} ${c.name.split(" ")[0]}` : "Handy"}
           {c?.is_npc && (
             <span className="ml-1.5 text-[0.6875rem] uppercase tracking-wider text-text-tertiary">
               {tierLabel(c)}
@@ -260,11 +299,7 @@ function OwnerBar({
   const choosable = options.length > 1 && !!onOwner;
 
   return (
-    // Rechts bleibt auf schmalen Bildschirmen Platz für die Menü-Taste der App.
-    <div
-      ref={ref}
-      className="relative z-20 flex h-12 shrink-0 items-center border-b border-border-subtle bg-bg-sidebar pl-2 pr-14 sm:mb-3 sm:h-auto sm:w-[390px] sm:justify-center sm:border-0 sm:bg-transparent sm:px-0"
-    >
+    <div ref={ref} className="relative min-w-0">
       <button
         disabled={!choosable}
         onClick={() => setOpen((o) => !o)}
@@ -272,7 +307,7 @@ function OwnerBar({
         aria-expanded={open}
         className="flex min-w-0 max-w-full items-center gap-2 rounded-full border border-border-subtle bg-bg-surface py-1 pl-1 pr-3 text-[0.8125rem] text-text-primary disabled:border-transparent disabled:bg-transparent"
       >
-        {entry(owner)}
+        {entry(owner, prefix)}
         {/* auf einem anderen Handy wartet etwas – man muss nicht suchen */}
         {choosable && newsElsewhere && (
           <span className="h-2 w-2 shrink-0 rounded-full bg-accent" title="Neues auf einem anderen Handy" />
@@ -285,20 +320,10 @@ function OwnerBar({
           />
         )}
       </button>
-      {/* fremde Handys ansehen (Übersicht mit Suche) */}
-      <Link
-        href="/handy/andere"
-        title="Andere Handys ansehen"
-        className="ml-2 flex shrink-0 items-center gap-1 rounded-full border border-border-subtle bg-bg-surface px-2.5 py-1 text-[0.8125rem] text-text-secondary hover:text-text-primary"
-      >
-        <span aria-hidden>👀</span>
-        <span className="hidden sm:inline">Andere Handys</span>
-        <span className="sr-only sm:hidden">Andere Handys</span>
-      </Link>
       {open && (
         <div
           role="listbox"
-          className="absolute left-2 top-full mt-1 w-[min(18rem,calc(100vw-1rem))] rounded-xl border border-border-subtle bg-bg-surface-2 p-1 shadow-2xl shadow-black/70 sm:left-1/2 sm:-translate-x-1/2"
+          className={`absolute top-full z-30 mt-1 w-[min(18rem,calc(100vw-1rem))] rounded-xl border border-border-subtle bg-bg-surface-2 p-1 shadow-2xl shadow-black/70 ${menuClassName}`}
         >
           {options.map((id) => (
             <button
