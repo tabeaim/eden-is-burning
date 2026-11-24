@@ -11,6 +11,7 @@ import {
   OPTIONAL_APPS,
   STANDARD_APPS,
   shownStandardApps,
+  BURNER_COLORS,
   PHONE_COLORS,
   PHONE_MODELS,
   PHONE_WALLPAPERS,
@@ -71,7 +72,9 @@ export function PhoneSettings({
       setColorDraft(null);
     }, 400);
   };
-  const customColor = !!colorDraft || !PHONE_COLORS.some((c) => c.hex === phone.frame);
+  // Burner Phone: kräftige Plastikfarben statt der edlen Smartphone-Töne
+  const palette: readonly { key: string; label: string; hex: string }[] = phone.burner ? BURNER_COLORS : PHONE_COLORS;
+  const customColor = !!colorDraft || !palette.some((c) => c.hex === phone.frame);
   // Akku beim Ziehen nur anzeigen, beim Loslassen speichern
   const [batteryDraft, setBatteryDraft] = useState<number | null>(null);
   const commitBattery = () => {
@@ -203,7 +206,7 @@ export function PhoneSettings({
       <div>
         <div className={label}>Gehäusefarbe</div>
         <div className="flex gap-2">
-          {PHONE_COLORS.map((c) => (
+          {palette.map((c) => (
             <button
               key={c.key}
               title={c.label}
