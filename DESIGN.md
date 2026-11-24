@@ -696,10 +696,10 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Home-Button des alten Modells) führt immer dorthin zurück. Auf dem eigenen
   Handy lassen sich die Apps per Ziehen umsortieren (`phone.app_order`, neu
   gewählte Apps landen hinten). Ohne eigene Reihenfolge stehen Einstellungen,
-  Notizen und Fotos vorne, dann die Deko-Apps, dann gewählte und eigene. „Im Spiel versteckt" (Schloss-Knopf in jeder gewählten
+  Notizen und Fotos vorne, dann die Deko-Apps, dann gewählte und eigene. „Im Spiel versteckt" (Knopf mit durchgestrichenem Auge in jeder gewählten
   App-Pille der Handy-Einstellungen, keine eigene Liste; `phone.secret_apps`) heißt nur: der Charakter hat die App versteckt. Alle
   Spieler*innen sehen sie weiter, auch bei fremden Handys – abgedunkelt mit
-  Schloss unten rechts (`AppIcon secret`).
+  durchgestrichenem Auge unten rechts (`AppIcon secret`).
 - **Sortieren per Ziehen** (`useDragSort`, `lib/useDragSort.ts`): Startbildschirm-Apps,
   Notizen und Fotos. Maus: festhalten und ziehen, ein einfacher Klick öffnet
   weiterhin. Touch: kurz halten (350 ms), bis sich das Element hebt, dann ziehen –

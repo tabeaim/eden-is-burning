@@ -14,7 +14,7 @@ export function AppIcon({
   icon?: string; // eigenes Icon-Bild statt Symbol
   children?: React.ReactNode;
   badge?: number;
-  secret?: boolean; // im Spiel versteckt: abgedunkelt, mit Schloss
+  secret?: boolean; // im Spiel versteckt: abgedunkelt, mit durchgestrichenem Auge
 }) {
   return (
     <span className="flex w-[5rem] flex-col items-center gap-1" title={secret ? "Im Spiel versteckt" : undefined}>
@@ -32,11 +32,11 @@ export function AppIcon({
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-[0.95rem] bg-[linear-gradient(160deg,rgba(255,255,255,0.42)_0%,rgba(255,255,255,0.12)_38%,rgba(255,255,255,0)_55%,rgba(0,0,0,0.12)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),inset_0_0_0_0.5px_rgba(255,255,255,0.18)]"
         />
-        {/* Im Spiel versteckt: abgedunkelt, Schloss unten rechts */}
+        {/* Im Spiel versteckt: abgedunkelt, durchgestrichenes Auge unten rechts */}
         {secret && <span aria-hidden className="absolute inset-0 rounded-[0.95rem] bg-black/45" />}
         {secret && (
           <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/80 text-white ring-1 ring-white/30">
-            <Icon name="lock" size={11} />
+            <Icon name="eye-off" size={12} />
           </span>
         )}
         {badge > 0 && (

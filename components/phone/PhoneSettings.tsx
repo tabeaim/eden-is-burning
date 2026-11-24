@@ -130,7 +130,7 @@ export function PhoneSettings({
     `rounded-full px-3 py-1.5 text-[0.8125rem] transition-colors ${
       active ? "bg-accent text-black" : "bg-white/[0.06] text-text-secondary hover:text-text-primary"
     }`;
-  // Gewählte App als Pille mit Schloss-Knopf (im Spiel verstecken)
+  // Gewählte App als Pille mit Augen-Knopf (im Spiel verstecken)
   const onPill = `${pill(true)} inline-flex items-center gap-1 !py-1 !pr-1`;
   const secretApps = raw.secret_apps ?? [];
   const lockBtn = (key: string, name: string) => {
@@ -147,7 +147,7 @@ export function PhoneSettings({
           on ? "bg-black/80 text-white" : "text-black/35 hover:bg-black/10 hover:text-black/70"
         }`}
       >
-        <Icon name="lock" size={12} />
+        <Icon name="eye-off" size={13} />
       </button>
     );
   };
@@ -387,7 +387,7 @@ export function PhoneSettings({
                 {appCount}/{freeSlots}
               </span>
             </div>
-            {/* Gewählte Apps haben rechts ein Schloss: „im Spiel versteckt" –
+            {/* Gewählte Apps haben rechts ein durchgestrichenes Auge: „im Spiel versteckt" –
                 alle sehen die App weiter, auf dem Startbildschirm markiert */}
             <div className="flex flex-wrap gap-1.5">
               {STANDARD_APPS.filter((a) => !DECOR_APPS.includes(a.key)).map((a) => (
