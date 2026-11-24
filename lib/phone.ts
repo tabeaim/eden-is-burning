@@ -86,9 +86,10 @@ export const OPTIONAL_APPS: PhoneApp[] = [
   { key: "videos", label: "Videos", glyph: "▶️", bg: "linear-gradient(#ff5b5b, #c51616)" },
 ];
 
-// Der Startbildschirm hat vier Reihen à vier Apps. Alle zählen: die Standard-Apps
+// Der Startbildschirm hat sechs Reihen à vier Apps (passt am Rechner und auf
+// üblichen Handys ohne Scrollen). Alle zählen: die Standard-Apps
 // (Fotos, Notizen, Einstellungen fest, Deko abwählbar) plus gewählte und eigene.
-export const HOME_APP_SLOTS = 16; // 4 × 4 Plätze auf dem Startbildschirm (ohne Dock)
+export const HOME_APP_SLOTS = 24; // 6 Reihen à 4 auf dem Startbildschirm (ohne Dock)
 // Standard-Apps, die gerade auf dem Startbildschirm stehen (abgewählte Deko fehlt)
 export const shownStandardApps = (p: PhoneSettings | null | undefined) =>
   STANDARD_APPS.filter((a) => !DECOR_APPS.includes(a.key) || !(p?.hidden_apps ?? []).includes(a.key));
