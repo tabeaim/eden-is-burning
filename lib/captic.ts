@@ -92,18 +92,35 @@ export function canSeeCaptic(
 
 export const requestId = (targetId: string, actorId: string) => `cape_request_${targetId}_${actorId}`;
 
-// 1234 → „1.234" · 12400 → „12,4 Tsd." · 1250000 → „1,3 Mio."
+// Wie beim Vorbild, immer abgerundet:
+// 999 → „999" · 1000 → „1k" · 3456 → „3,4k" · 125900 → „125k" · 1250000 → „1,2 Mio."
 export function formatCount(n: number): string {
-  const short = (v: number) => (Math.round(v * 10) / 10).toLocaleString("de-DE");
-  if (n >= 1_000_000) return `${short(n / 1_000_000)} Mio.`;
-  if (n >= 10_000) return `${short(n / 1_000)} Tsd.`;
-  return n.toLocaleString("de-DE");
+  const whole = Math.max(0, Math.floor(n));
+  // ganzzahlig rechnen, damit nichts durch Rundungsfehler eine Stelle verliert
+  const down = (unit: number, decimals: 0 | 1) =>
+    (decimals ? Math.floor(whole / (unit / 10)) / 10 : Math.floor(whole / unit)).toLocaleString("de-DE");
+  if (whole >= 1_000_000) return `${down(1_000_000, whole >= 100_000_000 ? 0 : 1)} Mio.`;
+  if (whole >= 1_000) return `${down(1_000, whole >= 100_000 ? 0 : 1)}k`;
+  return String(whole);
 }
 
-// Eingabe einer Zahl („12.400", „12400") → Zahl oder null
+// Eingabe einer Zahl → Zahl oder null. Versteht „3400", „3.400", „3,4k",
+// „3.4k", „12 Tsd.", „1,2 Mio" und „1.2m".
 export function parseCount(input: string): number | null {
-  const digits = input.replace(/\D/g, "");
-  return digits ? Math.min(parseInt(digits, 10), 999_999_999) : null;
+  const text = input.trim().toLowerCase().replace(/\s+/g, "");
+  if (!text) return null;
+  const unit = text.match(/(k|tsd\.?|tausend|m|mio\.?|million(en)?)$/);
+  let value: number;
+  if (unit) {
+    const num = parseFloat(text.slice(0, -unit[0].length).replace(",", "."));
+    if (!Number.isFinite(num)) return null;
+    value = num * (unit[0].startsWith("m") ? 1_000_000 : 1_000);
+  } else {
+    const digits = text.replace(/\D/g, "");
+    if (!digits) return null;
+    value = parseInt(digits, 10);
+  }
+  return Math.min(Math.round(value), 999_999_999);
 }
 
 export function likeCount(post: Pick<CapticPost, "likes" | "liked_by">): number {

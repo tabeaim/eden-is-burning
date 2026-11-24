@@ -619,7 +619,11 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Handy wechseln:** Das Aufklappmenü zeigt nur Vornamen und je Handy einen
   orangen Zähler, wenn dort etwas Neues wartet (Punkt an der Taste, wenn es ein
   anderes Handy betrifft).
-- **Anrufliste:** Rechtsklick auf einen Eintrag: „Anruf abbrechen" (eigener,
+- **Anrufliste:** Oben die Favoriten als Schnellwahl (Profilbild + Name, Tipp
+  öffnet den Anruf-Dialog). Abgelehnte und verpasste (eingehend, vom Anrufenden
+  abgebrochen) Anrufe stehen rot. Der Anruf-Dialog schlägt Datum und Uhrzeit vor:
+  5 Minuten nach der letzten Nachricht des Charakters (`suggestCallTime`).
+  Rechtsklick auf einen Eintrag: „Anruf abbrechen" (eigener,
   klingelnder) und „Aus der Anrufliste löschen" (nur auf diesem Handy).
 - **Handy im Charakterprofil** (Reiter „Handy", `PhonePreview`): Look,
   Startbildschirm und Kontaktliste nur zum Ansehen (`PhoneFrame preview`,
@@ -687,6 +691,9 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   - **Profil:** Beiträge im Dreier-Raster (quadratisch; Videos/GIFs als Standbild
     mit Zeichen). Eigenes Profil: „Profil bearbeiten" (Nutzername, Bio, Follower-
     und Gefolgt-Zahl frei wählbar – leer zählt, wer in der App wirklich folgt).
+    Zahlen versteht `parseCount` auch als „3,4k", „12 Tsd." oder „1,2 Mio";
+    angezeigt werden sie wie beim Vorbild, immer abgerundet (`formatCount`:
+    „999", „3,4k", „125k", „1,2 Mio.").
     Neue Beiträge nur über das Plus in der Leiste unten.
     Fremdes Profil: „Folgen" (Captic-Pink) / „Gefolgt" (grau).
   - **Beitrag** (`CapticPostCard`): Bild, GIF oder kurzes Video (läuft stumm los,
@@ -717,6 +724,10 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   `bg-bg-surface-2`; nur die letzte Blase einer Folge hat die spitze Ecke. Bis zu
   drei Emojis ohne Text stehen groß ohne Blase. Reaktionen hängen als kleine Pills
   unter der Blase.
+- **Doppelklick** bzw. doppeltes Antippen auf eine eigene Nachricht öffnet direkt
+  „Bearbeiten" (das Blatt nach einfachem Tippen kommt dafür eine Viertelsekunde
+  später). In Captic öffnet Doppelklick auf Zahlen, Name oder Bio des eigenen
+  Profils „Profil bearbeiten", auf die eigene Bildunterschrift „Bearbeiten".
 - **Antippen oder Rechtsklick** auf eine Nachricht öffnet ein Blatt von unten
   (Reaktionen, Antworten, Kopieren, Bearbeiten, Löschen) – keine Hover-Menüs,
   damit es mobil gleich funktioniert. Bearbeiten und Löschen nur bei eigenen

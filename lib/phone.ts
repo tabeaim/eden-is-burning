@@ -1,6 +1,6 @@
 // Look der Charakter-Handys: Modelle, Gehäusefarben, Abnutzung, Hintergründe und
 // die Apps, die der Startbildschirm (nicht anklickbar) andeutet.
-import type { Character, PhoneSettings } from "./types";
+import type { Character, ChatMessage, PhoneSettings } from "./types";
 import { tierOf } from "./characters";
 
 // Schlüssel bleiben technisch (island = Kamera-Insel, punch = Kamera-Punkt,
@@ -192,4 +192,27 @@ export function addMinutes(time: string, minutes: number): string {
   if (Number.isNaN(h) || Number.isNaN(m)) return time;
   const total = (((h * 60 + m + minutes) % 1440) + 1440) % 1440;
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+// Vorschlag für einen Anruf: 5 Minuten nach der letzten Nachricht, die dieser
+// Charakter geschrieben hat (mit Datum und Uhrzeit im Spiel). Über Mitternacht
+// hinweg rutscht der Tag mit. Ohne passende Nachricht: null.
+export function suggestCallTime(
+  messages: Pick<ChatMessage, "character_id" | "kind" | "inplay_date" | "inplay_time" | "created_at">[],
+  characterId: string,
+): { date: string; time: string } | null {
+  let last: (typeof messages)[number] | null = null;
+  for (const m of messages) {
+    if (m.character_id !== characterId || m.kind === "date" || !m.inplay_date || !m.inplay_time) continue;
+    const later =
+      !last ||
+      (m.inplay_date.localeCompare(last.inplay_date!) ||
+        m.inplay_time.localeCompare(last.inplay_time!) ||
+        m.created_at.localeCompare(last.created_at)) > 0;
+    if (later) last = m;
+  }
+  if (!last) return null;
+  const time = addMinutes(last.inplay_time!, 5);
+  const date = time < last.inplay_time! ? nextDay(last.inplay_date!) : last.inplay_date!;
+  return { date, time };
 }

@@ -457,7 +457,7 @@ export function CapticCompose({
               <input
                 value={likes}
                 onChange={(e) => setLikes(e.target.value)}
-                inputMode="numeric"
+                inputMode="text"
                 placeholder="0"
                 className={`mt-1 ${capticField}`}
               />

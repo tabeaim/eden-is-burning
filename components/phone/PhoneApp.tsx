@@ -14,7 +14,7 @@ import {
   ScriptToggle,
   useCreatePhoneScene,
 } from "@/components/phone/IncomingCall";
-import { contactName, contactShortName, hasPhone } from "@/lib/phone";
+import { contactName, contactShortName, hasPhone, suggestCallTime } from "@/lib/phone";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { ContactList } from "@/components/phone/ContactList";
 import {
@@ -38,7 +38,7 @@ const when = (c: Pick<PhoneCall, "inplay_date" | "inplay_time">) =>
 // eigenem Foto versehen (gilt nur auf diesem Handy).
 export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
   const router = useRouter();
-  const { calls, scenes, character, addCall, updateCall, updateCharacter, dismissMailboxAlert } = useStore();
+  const { calls, scenes, chatMessages, character, addCall, updateCall, updateCharacter, dismissMailboxAlert } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
   const [view, setView] = useState(initialView);
   const [contact, setContact] = useState<Character | null>(null);
@@ -83,6 +83,9 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
   const mailboxCall = calls.find((c) => c.id === mailboxFor && c.caller_id === me.id && c.status === "declined");
   const heard = myCalls.find((c) => c.id === heardId);
   const canLeave = (c: PhoneCall) => c.status === "declined" && c.caller_id === me.id;
+  const favorites = (me.phone?.favorites ?? [])
+    .map((id) => character(id))
+    .filter((c): c is Character => !!c && hasPhone(c));
 
   // Aus der Anrufliste dieses Handys löschen (beim Gegenüber bleibt der Eintrag).
   // Ein eigener, noch klingelnder Anruf wird dabei abgebrochen.
@@ -112,6 +115,32 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
                 Noch keine Anrufe. Unter „Kontakte“ kannst du jemanden anrufen.
               </p>
             )}
+            {/* Favoriten als Schnellwahl: antippen öffnet direkt den Anruf-Dialog */}
+            {favorites.length > 0 && (
+              <div className="border-b border-border-subtle px-3 pb-2.5 pt-2">
+                <div className="pb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-text-tertiary">
+                  Favoriten
+                </div>
+                <div className="flex gap-3 overflow-x-auto">
+                  {favorites.map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setContact(f)}
+                      title={`${contactName(me, f)} anrufen`}
+                      className="flex w-14 shrink-0 flex-col items-center gap-1 text-center"
+                    >
+                      {/* nur Anzeige: der Klick gilt dem Anruf, nicht dem Profilbild */}
+                      <span className="pointer-events-none">
+                        <ContactAvatar owner={me} character={f} size={48} />
+                      </span>
+                      <span className="w-full truncate text-[0.6875rem] text-text-secondary">
+                        {contactShortName(me, f)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {log.map((c) => {
               const outgoing = c.caller_id === me.id;
               const other = character(outgoing ? c.callee_id : c.caller_id);
@@ -122,8 +151,12 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
                   : c.status === "declined"
                     ? "abgelehnt"
                     : c.status === "cancelled"
-                      ? "abgebrochen"
+                      ? outgoing
+                        ? "abgebrochen"
+                        : "verpasst"
                       : "klingelt …";
+              // abgelehnt und verpasst stehen rot in der Liste
+              const missed = c.status === "declined" || (c.status === "cancelled" && !outgoing);
               const body = (
                 <>
                   {other && <ContactAvatar owner={me} character={other} size={44} />}
@@ -131,7 +164,7 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
                     <span className="flex items-baseline gap-2">
                       <span
                         className={`min-w-0 flex-1 truncate text-[0.9375rem] font-semibold ${
-                          c.status === "declined" ? "text-red-300" : "text-text-primary"
+                          missed ? "text-red-300" : "text-text-primary"
                         }`}
                       >
                         {contactName(me, other)}
@@ -241,6 +274,7 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
         <CallDialog
           me={me}
           contact={contact}
+          suggestion={suggestCallTime(chatMessages, me.id)}
           onCancel={() => setContact(null)}
           onRing={(date, time) => {
             addCall({ caller_id: me.id, callee_id: contact.id, inplay_date: date, inplay_time: time, status: "ringing", scene_id: null });
@@ -445,18 +479,21 @@ function MailboxDialog({
 function CallDialog({
   me,
   contact,
+  suggestion,
   onRing,
   onScene,
   onCancel,
 }: {
   me: Character;
   contact: Character;
+  suggestion?: { date: string; time: string } | null;
   onRing: (date: string, time: string) => void;
   onScene: (date: string, time: string, title: string, script: boolean) => void;
   onCancel: () => void;
 }) {
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("20:00");
+  // Vorschlag: 5 Minuten nach der letzten Nachricht dieses Charakters
+  const [date, setDate] = useState(suggestion?.date ?? "");
+  const [time, setTime] = useState(suggestion?.time ?? "20:00");
   const [title, setTitle] = useState("");
   const [script, setScript] = useState(false);
   const ok = !!date && !!time;

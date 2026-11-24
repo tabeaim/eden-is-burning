@@ -637,7 +637,11 @@ function Profile({
         ) : (
           <StoryAvatar character={who} size={76} active={hasStory} onOpen={onStory} />
         )}
-        <div className="flex flex-1 justify-around text-center">
+        {/* Doppelklick auf Zahlen, Name oder Bio öffnet beim eigenen Profil „Profil bearbeiten" */}
+        <div
+          className="flex flex-1 justify-around text-center"
+          onDoubleClick={own && !editing ? startEdit : undefined}
+        >
           {[
             [formatCount(posts.length), "Beiträge"],
             [formatCount(followers), "Follower"],
@@ -716,7 +720,7 @@ function Profile({
               Follower
               <input
                 value={draft.followers}
-                inputMode="numeric"
+                inputMode="text"
                 placeholder={String(realFollowers)}
                 onChange={(e) => setDraft({ ...draft, followers: e.target.value })}
                 className={`mt-1 ${capticField}`}
@@ -726,7 +730,7 @@ function Profile({
               Gefolgt
               <input
                 value={draft.following}
-                inputMode="numeric"
+                inputMode="text"
                 placeholder={String(follows(who).length)}
                 onChange={(e) => setDraft({ ...draft, following: e.target.value })}
                 className={`mt-1 ${capticField}`}
@@ -756,14 +760,16 @@ function Profile({
         </div>
       ) : (
         <div className="px-4 pt-3">
-          <div className="text-[0.875rem] font-semibold text-text-primary">{profile.display_name || who.name}</div>
-          <div className="text-[0.8125rem] text-text-tertiary">
-            @{handle}
-            {isPrivate(who) && " · privat"}
+          <div onDoubleClick={own ? startEdit : undefined}>
+            <div className="text-[0.875rem] font-semibold text-text-primary">{profile.display_name || who.name}</div>
+            <div className="text-[0.8125rem] text-text-tertiary">
+              @{handle}
+              {isPrivate(who) && " · privat"}
+            </div>
+            {bio && (
+              <p className="mt-1 whitespace-pre-wrap break-words text-[0.8125rem] text-text-secondary">{bio}</p>
+            )}
           </div>
-          {bio && (
-            <p className="mt-1 whitespace-pre-wrap break-words text-[0.8125rem] text-text-secondary">{bio}</p>
-          )}
           <div className="mt-3 flex gap-2">
             {own ? (
               <button onClick={startEdit} className={button}>

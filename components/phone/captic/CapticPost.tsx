@@ -280,8 +280,12 @@ export function CapticPostCard({
         <button onClick={() => setLikers(true)} disabled={likes === 0} className={name}>
           Gefällt {formatCount(likes)} Mal
         </button>
+        {/* Doppelklick auf die eigene Bildunterschrift öffnet „Bearbeiten" */}
         {post.caption && (
-          <p className="mt-1 whitespace-pre-wrap break-words">
+          <p
+            className="mt-1 whitespace-pre-wrap break-words"
+            onDoubleClick={mine ? () => onEdit(post.id) : undefined}
+          >
             <button onClick={() => author && onProfile(author.id)} className={name}>
               {author ? capticHandle(author) : "unbekannt"}
             </button>{" "}

@@ -292,6 +292,26 @@ function ChatView({ chat }: { chat: Chat }) {
   // die erste und die letzte Nachricht antippen – alles dazwischen ist mit markiert.
   const selAnchor = useRef<string | null>(null);
   const [rangeMode, setRangeMode] = useState(false);
+  // Doppelklick auf eine eigene Nachricht öffnet direkt „Bearbeiten". Damit der
+  // erste Klick nicht schon das Blatt aufmacht, wartet er kurz auf den zweiten.
+  const tapTimer = useRef<number | null>(null);
+  const editableByDoubleClick = (m: (typeof messages)[number]) =>
+    !sel && m.kind !== "date" && canWriteAs(m.character_id);
+  const clickMessage = (m: (typeof messages)[number], shift: boolean) => {
+    if (shift || !editableByDoubleClick(m)) return tapMessage(m.id, shift);
+    if (tapTimer.current) window.clearTimeout(tapTimer.current);
+    tapTimer.current = window.setTimeout(() => {
+      tapTimer.current = null;
+      tapMessage(m.id);
+    }, 250);
+  };
+  const doubleClickMessage = (m: (typeof messages)[number]) => {
+    if (!editableByDoubleClick(m)) return;
+    if (tapTimer.current) window.clearTimeout(tapTimer.current);
+    tapTimer.current = null;
+    window.getSelection()?.removeAllRanges();
+    setEditId(m.id);
+  };
   const tapMessage = (id: string, shift = false) => {
     if (!sel && !(shift && canEdit)) {
       if (!hasSelection()) setActiveId(id);
@@ -636,7 +656,8 @@ function ChatView({ chat }: { chat: Chat }) {
               <div
                 role="button"
                 tabIndex={0}
-                onClick={(e) => tapMessage(m.id, e.shiftKey)}
+                onClick={(e) => clickMessage(m, e.shiftKey)}
+                onDoubleClick={() => doubleClickMessage(m)}
                 // Umschalt-Klick markiert einen Bereich, statt Text auszuwählen
                 onMouseDown={(e) => e.shiftKey && canEdit && e.preventDefault()}
                 onKeyDown={(e) => e.key === "Enter" && tapMessage(m.id)}
