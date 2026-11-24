@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { ageAt } from "@/lib/characters";
 import { AREA_ORDER, areaName } from "@/lib/world";
-import { DatePicker } from "./DatePicker";
+import { AgeBirthdayInput } from "./AgeBirthdayInput";
 import { Icon } from "./Icon";
 
 const KINDS = {
@@ -20,14 +20,15 @@ const field =
 // „Neu anlegen" für alle drei Stufen: gestrichelte Pill (siehe DESIGN.md), die erst
 // die Pflichtangaben abfragt – ohne sie wird nichts angelegt. Supporting
 // Characters und Statist*innen brauchen nur einen Namen; ein Main Character dazu
-// Geburtsdatum (daraus das Alter), Faceclaim und Wohngegend. Danach geht es ins Profil, wo
+// Alter und Geburtstag (daraus das Geburtsjahr), Faceclaim und Wohngegend. Danach geht es ins Profil, wo
 // gleich die Bearbeitung offen ist – dort wird alles Weitere ausgefüllt.
 export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
   const router = useRouter();
   const { addNpc, addCharacter, currentPlayer } = useStore();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [birthdate, setBirthdate] = useState("");
+  const [birthdate, setBirthdate] = useState(""); // aus Alter + Geburtstag berechnet
+  const [resetKey, setResetKey] = useState(0);
   const [faceclaim, setFaceclaim] = useState("");
   const [area, setArea] = useState("");
   const main = kind === "character";
@@ -48,6 +49,7 @@ export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
     setOpen(false);
     setName("");
     setBirthdate("");
+    setResetKey((k) => k + 1);
     setFaceclaim("");
     setArea("");
   }
@@ -110,7 +112,13 @@ export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
           autoFocus
           className={`${field} py-2`}
         />
-        <DatePicker value={birthdate} onChange={setBirthdate} />
+        <AgeBirthdayInput
+          key={resetKey}
+          birthdate={birthdate || null}
+          age={null}
+          field={`${field} py-2`}
+          onChange={(iso) => setBirthdate(iso ?? "")}
+        />
         <input
           value={faceclaim}
           onChange={(e) => setFaceclaim(e.target.value)}
@@ -134,9 +142,8 @@ export function NewCharacterButton({ kind }: { kind: keyof typeof KINDS }) {
         </select>
       </div>
       <p className="text-[0.8125rem] text-text-tertiary">
-        Das zweite Feld ist das Geburtsdatum – daraus wird das Alter berechnet; das aktuelle
-        Spieljahr ist 2021. Alles Weitere
-        trägst du danach direkt im Profil ein.
+        Alter und Geburtstag – das Geburtsjahr wird daraus berechnet (Spieljahr 2021). Alles
+        Weitere trägst du danach direkt im Profil ein.
       </p>
       <div className="flex items-center justify-end gap-1.5">{buttons}</div>
     </div>
