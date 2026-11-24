@@ -76,9 +76,15 @@ export const OPTIONAL_APPS: PhoneApp[] = [
   { key: "videos", label: "Videos", glyph: "▶️", bg: "linear-gradient(#ff5b5b, #c51616)" },
 ];
 
-// Der Startbildschirm hat vier Reihen à vier Apps: acht Standard-Apps plus bis zu
-// acht weitere (gewählte und eigene zusammen).
-export const MAX_EXTRA_APPS = 16 - STANDARD_APPS.length;
+// Der Startbildschirm hat vier Reihen à vier Apps. Alle zählen: die Standard-Apps
+// (Fotos, Notizen, Einstellungen fest, Deko abwählbar) plus gewählte und eigene.
+export const HOME_APP_SLOTS = 16; // 4 × 4 Plätze auf dem Startbildschirm (ohne Dock)
+// Standard-Apps, die gerade auf dem Startbildschirm stehen (abgewählte Deko fehlt)
+export const shownStandardApps = (p: PhoneSettings | null | undefined) =>
+  STANDARD_APPS.filter((a) => !DECOR_APPS.includes(a.key) || !(p?.hidden_apps ?? []).includes(a.key));
+// Plätze für weitere und eigene Apps: was die Standard-Apps übrig lassen
+export const extraAppSlots = (p: PhoneSettings | null | undefined) =>
+  HOME_APP_SLOTS - shownStandardApps(p).length;
 
 export interface ResolvedPhone {
   model: PhoneModel;
@@ -140,8 +146,8 @@ export function resolvePhone(c: Pick<Character, "phone"> | null | undefined): Re
       !!p.wallpaper?.startsWith("preset:") &&
       !!PHONE_WALLPAPERS.find((w) => w.key === p.wallpaper!.slice("preset:".length))?.light,
     apps: [
-      ...STANDARD_APPS.filter((a) => !DECOR_APPS.includes(a.key) || !(p.hidden_apps ?? []).includes(a.key)),
-      ...[...chosen, ...custom].slice(0, MAX_EXTRA_APPS),
+      ...shownStandardApps(p),
+      ...[...chosen, ...custom].slice(0, extraAppSlots(p)),
     ],
     captic: model !== "burner" && !!p.captic?.enabled,
   };

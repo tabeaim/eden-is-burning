@@ -7,9 +7,10 @@ import { useStore } from "@/lib/store";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import {
   DECOR_APPS,
-  MAX_EXTRA_APPS,
+  HOME_APP_SLOTS,
   OPTIONAL_APPS,
   STANDARD_APPS,
+  shownStandardApps,
   PHONE_COLORS,
   PHONE_MODELS,
   PHONE_WALLPAPERS,
@@ -43,8 +44,9 @@ export function PhoneSettings({
   // Gewählte optionale Apps und eigene Apps teilen sich die freien Plätze
   const chosen = (raw.apps ?? []).filter((k) => OPTIONAL_APPS.some((a) => a.key === k));
   const custom = raw.custom_apps ?? [];
-  const extraCount = chosen.length + custom.length;
-  const full = extraCount >= MAX_EXTRA_APPS;
+  // Alle Apps auf dem Startbildschirm zählen zum Limit (4 × 4 Plätze)
+  const appCount = shownStandardApps(raw).length + chosen.length + custom.length;
+  const full = appCount >= HOME_APP_SLOTS;
   // Eigene Apps der anderen Spieler*innen zum Übernehmen – jede nur einmal
   // (gleicher Name + gleiches Icon) und ohne die, die dieses Handy schon hat
   const sameApp = (a: { name: string; icon: string }, b: { name: string; icon: string }) =>
@@ -123,7 +125,7 @@ export function PhoneSettings({
       active ? "bg-accent text-black" : "bg-white/[0.06] text-text-secondary hover:text-text-primary"
     }`;
   const swatch = (active: boolean) =>
-    `h-9 w-9 rounded-full border border-border-subtle ${active ? "ring-2 ring-accent ring-offset-2 ring-offset-bg-surface" : ""}`;
+    `h-8 w-8 shrink-0 rounded-full border border-border-subtle ${active ? "ring-2 ring-accent ring-offset-2 ring-offset-bg-surface" : ""}`;
   const label = "mb-2 text-[0.8125rem] font-medium text-text-secondary";
 
   return (
@@ -144,18 +146,17 @@ export function PhoneSettings({
       <Toggle checked={!raw.disabled} onChange={(on) => save({ disabled: !on })}>
         Hat ein Handy{" "}
         <span className="text-text-tertiary">
-          (aus: kein Handy im Profil, keine SMS und Anrufe, nicht in Kontaktlisten)
+          (aus: keine SMS, Anrufe und Kontakte)
         </span>
       </Toggle>
       </>
       )}
       {raw.disabled ? null : (
       <>
-      <Group title="profil">
+      <Group>
       <div>
         <div className={label}>
-          Profilbild im Messenger{" "}
-          <span className="text-text-tertiary">(so sehen andere den Charakter auf dem Handy)</span>
+          Profilbild im Messenger
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <PhoneAvatar character={character} size={56} className="ring-1 ring-border-subtle" link={false} />
@@ -184,7 +185,7 @@ export function PhoneSettings({
       </div>
       </Group>
 
-      <Group title="look">
+      <Group>
       <div>
         <div className={label}>Modell</div>
         <div className="flex flex-wrap gap-1.5">
@@ -198,7 +199,7 @@ export function PhoneSettings({
 
       <div>
         <div className={label}>Gehäusefarbe</div>
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex gap-2">
           {PHONE_COLORS.map((c) => (
             <button
               key={c.key}
@@ -245,10 +246,10 @@ export function PhoneSettings({
 
       {/* Akku: fester Wert, sinkt und lädt nicht von selbst (auch per Doppelklick
           aufs Akku-Symbol in der Statusleiste) */}
-      <Group title="akku" hint="Ändert sich nur von Hand – oder per Doppelklick aufs Akku-Symbol im Handy.">
+      <Group>
       <div>
         <div className={label}>
-          Akkustand <span className="text-text-tertiary">({batteryDraft ?? phone.battery} %)</span>
+          Akku <span className="text-text-tertiary">{batteryDraft ?? phone.battery} %</span>
         </div>
         <input
           type="range"
@@ -268,28 +269,24 @@ export function PhoneSettings({
 
       {/* Captic gibt es auch für Supporting Characters */}
       {!phone.burner && (
-        <Group title="captic">
+        <Group>
         <Toggle
           checked={phone.captic}
           onChange={(on) => save({ captic: { ...raw.captic, enabled: on } })}
         >
-          Captic{" "}
-          <span className="text-text-tertiary">
-            (Foto-Netzwerk – das Profil bearbeitest du danach direkt in der App auf dem Handy)
-          </span>
+          Captic
         </Toggle>
         </Group>
       )}
 
       {reduced ? null : phone.burner ? (
-        <Group title="startbildschirm">
+        <Group>
         <p className="text-[0.8125rem] text-text-tertiary">
-          Das Burner Phone ist ein altes Tastenhandy: kein Hintergrundbild, keine Apps, kein
-          Captic – nur SMS.
+          Burner Phone: nur SMS, keine Apps.
         </p>
         </Group>
       ) : (
-        <Group title="startbildschirm">
+        <Group>
           <div>
             <div className={label}>Hintergrundbild</div>
             <div className="flex flex-wrap items-center gap-2.5">
@@ -334,7 +331,7 @@ export function PhoneSettings({
             <div className={label}>
               Apps{" "}
               <span className="text-text-tertiary">
-                (nur Deko · Fotos und Notizen bleiben immer · weitere {extraCount}/{MAX_EXTRA_APPS})
+                {appCount}/{HOME_APP_SLOTS}
               </span>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -344,10 +341,11 @@ export function PhoneSettings({
                 return (
                   <button
                     key={a.key}
+                    disabled={!on && full}
                     onClick={() =>
                       save({ hidden_apps: on ? [...hidden, a.key] : hidden.filter((k) => k !== a.key) })
                     }
-                    className={pill(on)}
+                    className={`${pill(on)} disabled:opacity-40`}
                   >
                     {a.glyph} {a.label}
                   </button>
@@ -418,8 +416,7 @@ export function PhoneSettings({
             {shared.length > 0 && (
               <div className="mt-4">
                 <div className={label}>
-                  Apps von anderen Spieler*innen{" "}
-                  <span className="text-text-tertiary">(antippen zum Hinzufügen)</span>
+                  Von anderen Spieler*innen
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {shared.map((a) => (
@@ -453,15 +450,11 @@ export function PhoneSettings({
   );
 }
 
-// Bereich der Handy-Einstellungen: Karte mit kleingeschriebener Überschrift mit
-// Punkt (wie „facts.") und optionalem Hinweis darunter
-function Group({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+// Bereich der Handy-Einstellungen: schlichte Karte ohne Überschrift – die
+// Beschriftungen der Felder reichen
+function Group({ children }: { children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-border-subtle bg-white/[0.03] p-4">
-      <div className="-mb-1">
-        <h3 className="font-display text-[1.25rem] leading-tight text-text-primary">{title}.</h3>
-        {hint && <p className="mt-0.5 text-[0.75rem] text-text-tertiary">{hint}</p>}
-      </div>
+    <section className="flex flex-col gap-4 rounded-xl border border-border-subtle bg-white/[0.03] p-3">
       {children}
     </section>
   );

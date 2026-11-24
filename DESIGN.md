@@ -538,10 +538,12 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Standard-Apps (Fotos, Notizen, Einstellungen) sind immer da; die reinen
   Deko-Standard-Apps (`DECOR_APPS`: Rechner, Kamera, Uhr, Wetter, Karten) lassen
   sich abwählen (`hidden_apps`); dazu optionale und selbst erstellte (Name + Icon),
-  zusammen höchstens so viele, wie auf einen Startbildschirm passen – alles in
+  zusammen höchstens so viele, wie auf einen Startbildschirm passen (`HOME_APP_SLOTS`
+  = 16, 4 × 4; alle Apps zählen, auch Fotos, Notizen und Einstellungen) – alles in
   einem gemeinsamen Bereich „Apps" in den Einstellungen. Die Handy-Einstellungen
-  sind in Karten gruppiert („profil.", „look.", „akku.", „captic.",
-  „startbildschirm.", Überschrift in `font-display` `1.25rem` mit Punkt). Dieselben
+  sind in schlichte Karten ohne Überschrift gruppiert (Profilbild · Look · Akku ·
+  Captic · Startbildschirm), mit möglichst wenig Erklärtext; die Farben passen in
+  eine Zeile. Dieselben
   Handy-Einstellungen öffnet auch die Einstellungen-App im Handy selbst
   (`/handy/einstellungen`, `PhoneSettings inPhone`, nur fürs eigene Handy) –
   dort ohne den Schalter „Hat ein Handy", damit man sich nicht aussperrt; ein

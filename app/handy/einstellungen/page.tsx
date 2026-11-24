@@ -26,7 +26,7 @@ export default function PhoneSettingsPage() {
       <PhoneHeader back="/handy">
         <span className="text-[1rem] font-semibold text-text-primary">Einstellungen</span>
       </PhoneHeader>
-      <div className="min-h-0 flex-1 overflow-y-auto bg-bg-surface px-4 py-4">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-bg-surface px-3 py-3">
         <PhoneSettings key={me.id} character={me} reduced={me.is_npc} inPhone />
         <Link
           href={`/einstellungen#handy-${me.id}`}
