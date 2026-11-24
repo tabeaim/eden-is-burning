@@ -28,11 +28,11 @@ export default function OtherPhonesPage() {
   const [opened, setOpened] = useState<{ id: string; list: string[] } | null>(null);
 
   const query = q.trim().toLowerCase();
-  // eigene Charaktere tauchen nie auf; die Reihen gelten nur für das Handy, das ich gerade in der Hand habe
+  // alle Handys außer dem, das ich gerade in der Hand habe (auch meine anderen Charaktere); die Reihenfolge gilt aus seiner Sicht
   const mine = new Set(myChars.map((c) => c.id));
   const meId = me?.id ?? "";
   const all = [...characters, ...npcs]
-    .filter((c) => hasPhone(c) && !mine.has(c.id) && c.player_id !== me?.player_id)
+    .filter((c) => hasPhone(c) && c.id !== me?.id)
     .sort((a, b) => a.name.localeCompare(b.name, "de"));
   const byId = new Map(all.map((c) => [c.id, c]));
 
@@ -51,7 +51,7 @@ export default function OtherPhonesPage() {
     // 2. Schreibt mit dir: SMS oder Anrufe mit diesem Charakter, zuletzt aktiv vorn
     const last = new Map<string, string>();
     const touch = (id: string, at: string) => {
-      if (!mine.has(id) && at > (last.get(id) ?? "")) last.set(id, at);
+      if (id !== meId && at > (last.get(id) ?? "")) last.set(id, at);
     };
     const newestIn = new Map<string, string>();
     for (const m of chatMessages) if (m.created_at > (newestIn.get(m.chat_id) ?? "")) newestIn.set(m.chat_id, m.created_at);
@@ -248,6 +248,19 @@ export default function OtherPhonesPage() {
 
             {me && (
               <div className="flex flex-wrap justify-center gap-2">
+                {/* eigener Charakter: direkt auf sein Handy wechseln */}
+                {mine.has(open.id) && (
+                  <button
+                    onClick={() => {
+                      setOwner(open.id);
+                      router.push("/handy");
+                    }}
+                    className={actionBtn}
+                  >
+                    <Icon name="phone" size={15} className="text-accent" />
+                    Dieses Handy nehmen
+                  </button>
+                )}
                 <button onClick={() => go(SMS_TO_KEY, open.id, "/handy/neu")} className={actionBtn}>
                   <Icon name="message" size={15} className="text-accent" />
                   SMS schreiben
