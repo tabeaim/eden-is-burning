@@ -657,23 +657,23 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   immer aus Sicht des Handys, das ich gerade in der Hand habe. Oben der
   Zurück-Link mit Namen („‹ Alexanders Handy"), neben dem Titel bei mehreren
   Charakteren der Chip „aus Sicht von …" ▾ (`OwnerPicker`, derselbe wie in der
-  Leiste über dem Gerät). Eine einzige Liste ohne Überschriften, nach Relevanz für diesen
-  Charakter sortiert: zuerst Favoriten dieses Handys, dann wer mit ihm schreibt
-  oder telefoniert (zuletzt aktiv vorn), dann gemeinsame Szenen (nach Anzahl),
-  dann sonst unter „Relevante" (von Hand hinzugefügt oder mit eigenem
-  Kontakt-Eintrag), dann „neu dabei" (letzte 14 Tage). Alle übrigen stehen
-  alphabetisch darunter im eingeklappten „Weitere". Wer in diesem Handy aus „Relevante" entfernt wurde
-  (`not_relevant`), rutscht zu den übrigen (außer Favoriten). Die kleine Zeile
-  unter dem Namen zeigt den Grund („★ Favorit", „gestern", „3 Szenen",
-  „neu dabei"), sonst das Modell. Die eigenen anderen Charaktere stehen mit in der Liste
-  (nur das gerade gewählte Handy fehlt); bei ihnen führt „Dieses Handy nehmen"
-  direkt auf ihr Handy. Die Suche
-  zeigt alle Treffer in einer Liste (Relevante zuerst). Ein Handy öffnet groß
-  als `PhonePreview`, ‹ › bzw. Pfeiltasten blättern durch die Liste, aus der es
-  geöffnet wurde.
-  Von dort aus dem eigenen Handy: „SMS schreiben" (`SMS_TO_KEY`),
-  „Anrufen" (`CALL_TO_KEY` öffnet den Anruf-Dialog), „Captic-Profil"
-  (`CAPTIC_OPEN_KEY` = `profile:<id>`).
+  Leiste über dem Gerät). Oben alphabetisch alle, die für diesen Charakter relevant
+  sind: Favoriten dieses Handys, wer mit ihm schreibt oder telefoniert, gemeinsame
+  Szenen, sonst unter „Relevante" (von Hand hinzugefügt oder mit eigenem
+  Kontakt-Eintrag) und „neu dabei" (letzte 14 Tage). Alle übrigen stehen
+  alphabetisch darunter im eingeklappten Abschnitt „weitere." (Abschnitts-Überschrift
+  mit Anzahl und ▾). Wer in diesem Handy aus „Relevante" entfernt wurde
+  (`not_relevant`), rutscht zu den übrigen (außer Favoriten). Kacheln zeigen das
+  Kontaktfoto dieses Handys (`ContactAvatar`, sonst das Profilbild) und den
+  echten Namen – keine Zeile darunter (kein Grund, kein Modell). Die eigenen
+  anderen Charaktere stehen mit in der Liste (nur das gerade gewählte Handy
+  fehlt); bei ihnen führt „Dieses Handy nehmen" direkt auf ihr Handy. Die Suche
+  zeigt alle Treffer in einer alphabetischen Liste. Ein Handy öffnet groß als
+  `PhonePreview`; über dem Gerät nur „Handy von …" und „3 / 8", ‹ › stehen links
+  und rechts neben dem Gerät (auch Pfeiltasten) und blättern durch die Liste, aus
+  der es geöffnet wurde. Darüber die normalen Buttons (`btn`): „SMS schreiben"
+  (`SMS_TO_KEY`) und „Anrufen" (`CALL_TO_KEY` öffnet den Anruf-Dialog) aus dem
+  eigenen Handy. Kein eigener Captic-Knopf – Captic öffnet man über die App im Gerät.
 - **Handy im Charakterprofil** (Reiter „Handy", `PhonePreview`): Look,
   Startbildschirm und Kontaktliste nur zum Ansehen (`PhoneFrame preview`,
   `PhoneHome readOnly`) – nichts führt irgendwohin, nichts ist bearbeitbar.
