@@ -674,8 +674,10 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   anderen Charaktere stehen mit in der Liste (nur das gerade gewählte Handy
   fehlt); bei ihnen führt „Dieses Handy nehmen" direkt auf ihr Handy. Die Suche
   zeigt alle Treffer in einer Liste (Relevante zuerst). Ein Handy öffnet groß als
-  `PhonePreview`; über dem Gerät nur „Handy von …" und „3 / 8", ‹ › stehen links
-  und rechts neben dem Gerät (auch Pfeiltasten) und blättern durch die Liste, aus
+  `PhonePreview`, senkrecht mittig, mit gleichem Abstand (`gap-4`) zwischen Kopf,
+  Gerät, Buttons und „Schließen". Über dem Gerät nur „Handy von …" (Name führt
+  aufs Profil) und „3 / 8"; ‹ › stehen links und rechts neben dem Gerät, am
+  Handy-Bildschirm klein neben dem Zähler (auch Pfeiltasten) und blättern durch die Liste, aus
   der es geöffnet wurde. Unter dem Gerät die normalen Buttons (`btn`): „SMS schreiben"
   (`SMS_TO_KEY`) und „Anrufen" (`CALL_TO_KEY` öffnet den Anruf-Dialog) aus dem
   eigenen Handy. Kein eigener Captic-Knopf – Captic öffnet man über die App im Gerät.

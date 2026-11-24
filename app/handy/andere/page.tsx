@@ -10,6 +10,7 @@ import { Icon } from "@/components/Icon";
 import { ContactAvatar, OwnerPicker, useMyPhone } from "@/components/phone/PhoneFrame";
 import { PhonePreview } from "@/components/phone/PhonePreview";
 import { btn } from "@/components/admin/ui";
+import { ProfileName } from "@/components/ProfileName";
 
 // „Andere Handys": alle Handys fremder Charaktere zum Ansehen. Übersicht mit
 // Hintergrund, Profilbild (das Kontaktfoto dieses Handys, sonst das eigene) und
@@ -155,7 +156,7 @@ export default function OtherPhonesPage() {
   };
 
   const arrowBtn =
-    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-text-primary hover:bg-white/[0.14]";
+    "hidden h-9 w-9 shrink-0 sm:flex items-center justify-center rounded-full bg-white/[0.08] text-text-primary hover:bg-white/[0.14]";
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-3 py-4 sm:px-6">
@@ -224,19 +225,30 @@ export default function OtherPhonesPage() {
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center overflow-y-auto bg-black/75 p-3 pt-6"
+          className="fixed inset-0 z-50 flex flex-col items-center overflow-y-auto bg-black/75 p-4 sm:p-6"
           onClick={() => setOpenId(null)}
         >
-          <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-3">
+          {/* my-auto: mittig, solange alles passt; sonst scrollt es von oben. Überall
+              derselbe Abstand (gap-4) zwischen Kopf, Gerät, Buttons und „Schließen" */}
+          <div onClick={(e) => e.stopPropagation()} className="my-auto flex flex-col items-center gap-4">
             <div className="min-w-0 max-w-full text-center">
-              <div className="truncate text-[1rem] font-semibold text-text-primary">Handy von {open.name}</div>
-              <div className="text-[0.75rem] text-text-tertiary">
+              <div className="truncate text-[1rem] font-semibold text-text-primary">
+                Handy von <ProfileName id={open.id}>{open.name}</ProfileName>
+              </div>
+              {/* am Handy-Bildschirm stehen die Pfeile hier, neben dem Gerät ist kein Platz */}
+              <div className="mt-0.5 flex items-center justify-center gap-3 text-[0.75rem] text-text-tertiary">
+                <button onClick={() => step(-1)} aria-label="Voriges Handy" className="p-1 hover:text-text-primary sm:hidden">
+                  <Icon name="chevron-right" size={16} className="rotate-180" />
+                </button>
                 {index + 1} / {openList.length}
+                <button onClick={() => step(1)} aria-label="Nächstes Handy" className="p-1 hover:text-text-primary sm:hidden">
+                  <Icon name="chevron-right" size={16} />
+                </button>
               </div>
             </div>
 
             {/* key: beim Blättern beginnt die Vorschau wieder auf dem Startbildschirm */}
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-4">
               <button onClick={() => step(-1)} aria-label="Voriges Handy" className={arrowBtn}>
                 <Icon name="chevron-right" size={18} className="rotate-180" />
               </button>
@@ -274,7 +286,7 @@ export default function OtherPhonesPage() {
 
             <button
               onClick={() => setOpenId(null)}
-              className="py-1 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
+              className="text-[0.8125rem] text-text-tertiary hover:text-text-primary"
             >
               Schließen
             </button>
