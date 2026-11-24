@@ -52,6 +52,11 @@ export function CapticApp({ me }: { me: Character }) {
       if (sessionStorage.getItem(CAPTIC_OPEN_KEY) === "activity") {
         return [{ t: "feed" }, { t: "activity" }];
       }
+      // „Andere Handys" → Captic-Profil: „profile:<Charakter-ID>"
+      const open = sessionStorage.getItem(CAPTIC_OPEN_KEY);
+      if (open?.startsWith("profile:")) {
+        return [{ t: "feed" }, { t: "profile", id: open.slice("profile:".length) }];
+      }
     } catch {
       /* ignore */
     }

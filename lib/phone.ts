@@ -164,6 +164,8 @@ export function contactPhoto(owner: Owner, other: Other): string | null {
 export const SMS_TO_KEY = "eden:sms-to";
 // Dashboard → Telefon-App: Anruf, zu dem gleich „Auf die Mailbox sprechen" aufgeht
 export const MAILBOX_KEY = "eden:mailbox";
+// „Andere Handys" → Anrufen: öffnet in der Telefon-App den Anruf-Dialog
+export const CALL_TO_KEY = "eden:call-to";
 // Längste Mailbox-Nachricht (Zeichen)
 export const VOICEMAIL_MAX = 300;
 

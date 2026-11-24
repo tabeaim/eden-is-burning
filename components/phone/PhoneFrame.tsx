@@ -274,6 +274,16 @@ function OwnerBar({
           />
         )}
       </button>
+      {/* fremde Handys ansehen (Übersicht mit Suche) */}
+      <Link
+        href="/handy/andere"
+        title="Andere Handys ansehen"
+        className="ml-2 flex shrink-0 items-center gap-1 rounded-full border border-border-subtle bg-bg-surface px-2.5 py-1 text-[0.8125rem] text-text-secondary hover:text-text-primary"
+      >
+        <span aria-hidden>👀</span>
+        <span className="hidden sm:inline">Andere Handys</span>
+        <span className="sr-only sm:hidden">Andere Handys</span>
+      </Link>
       {open && (
         <div
           role="listbox"

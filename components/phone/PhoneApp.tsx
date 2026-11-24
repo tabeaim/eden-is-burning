@@ -26,7 +26,7 @@ import {
 } from "@/components/phone/PhoneFrame";
 import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
 import { useLongPress } from "@/components/phone/useLongPress";
-import { MAILBOX_KEY, SMS_TO_KEY, VOICEMAIL_MAX } from "@/lib/phone";
+import { CALL_TO_KEY, MAILBOX_KEY, SMS_TO_KEY, VOICEMAIL_MAX } from "@/lib/phone";
 
 const first = (c: Character | undefined) => c?.name.split(" ")[0] ?? "?";
 const when = (c: Pick<PhoneCall, "inplay_date" | "inplay_time">) =>
@@ -59,9 +59,15 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
       sessionStorage.removeItem(MAILBOX_KEY);
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (id) setMailboxFor(id);
+      // von „Andere Handys" („Anrufen")
+      const to = sessionStorage.getItem(CALL_TO_KEY);
+      sessionStorage.removeItem(CALL_TO_KEY);
+      const callee = to ? character(to) : undefined;
+      if (callee) setContact(callee);
     } catch {
       /* ignore */
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!me) {
