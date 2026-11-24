@@ -631,8 +631,9 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Gerät). Oben waagerechte Reihen kleiner Handy-Vorschauen nach Wichtigkeit, nur
   für diesen Charakter – „★ Favoriten" (in diesem Handy markiert), „Schreibt mit
   dir" (SMS/Anrufe mit diesem Charakter, zuletzt aktiv vorn, „gestern" usw.),
-  „Aus deinen Szenen" (nach Anzahl gemeinsamer Szenen), „Neu dabei" (letzte 14
-  Tage); jede Person nur in der ersten passenden Reihe. Wer in diesem Handy aus
+  „Aus deinen Szenen" (nach Anzahl gemeinsamer Szenen), „Relevante" (wer in
+  diesem Handy sonst unter „Relevante" steht: von Hand hinzugefügt oder mit
+  eigenem Kontakt-Eintrag), „Neu dabei" (letzte 14 Tage); jede Person nur in der ersten passenden Reihe. Wer in diesem Handy aus
   „Relevante" entfernt wurde (`not_relevant`), steht in keiner Reihe außer den
   Favoriten. Eigene Charaktere erscheinen nie.
   Darunter eingeklappt „Weitere" (nur, wer oben in keiner Reihe steht); die

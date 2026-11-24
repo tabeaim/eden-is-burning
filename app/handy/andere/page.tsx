@@ -74,7 +74,15 @@ export default function OtherPhonesPage() {
     }
     const fromScenes = take([...together.keys()].sort((a, b) => together.get(b)! - together.get(a)!));
 
-    // 4. Neu dabei: in den letzten 14 Tagen angelegt
+    // 4. Relevante: wer in diesem Handy unter „Relevante" steht (von Hand
+    // hinzugefügt oder mit eigenem Kontakt-Eintrag) und oben noch fehlt
+    const relevantIds = new Set([
+      ...(me?.phone?.relevant ?? []),
+      ...Object.keys(me?.phone?.contacts ?? {}).filter((id) => !notRelevant.has(id)),
+    ]);
+    const relevant = take(all.filter((c) => relevantIds.has(c.id)).map((c) => c.id));
+
+    // 5. Neu dabei: in den letzten 14 Tagen angelegt
     const since = new Date(now - 14 * 86_400_000).toISOString();
     const fresh = take(
       all
@@ -87,6 +95,7 @@ export default function OtherPhonesPage() {
       { key: "fav", title: "★ Favoriten", list: favorites, sub: (): string | null => null },
       { key: "chat", title: "Schreibt mit dir", list: writing, sub: (c: Character) => relativeDay(last.get(c.id)) },
       { key: "scenes", title: "Aus deinen Szenen", list: fromScenes, sub: (c: Character) => `${together.get(c.id)} ${together.get(c.id) === 1 ? "Szene" : "Szenen"}` },
+      { key: "relevant", title: "Relevante", list: relevant, sub: (): string | null => null },
       { key: "new", title: "Neu dabei", list: fresh, sub: (c: Character) => relativeDay(c.created_at) },
     ].filter((r) => r.list.length > 0);
   })();
