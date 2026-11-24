@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Icon } from "@/components/Icon";
 import { PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
 import { useDragSort } from "@/lib/useDragSort";
+import { plainText } from "@/lib/html";
 
 const newId = () => `note_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
@@ -188,14 +189,14 @@ export default function NotesPage() {
         )}
         {sort.list.map((n, i) => {
           const drag = sort.itemProps(n.id);
-          const firstLine = n.text.split("\n").find((l) => l.trim()) ?? "";
+          const firstLine = plainText(n.text).split("\n").find((l) => l.trim()) ?? "";
           const body = (
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[0.9375rem] font-semibold text-text-primary">
                 {n.title.trim() || firstLine || "Neue Notiz"}
               </span>
               <span className="block truncate text-[0.8125rem] text-text-tertiary">
-                {(n.title.trim() ? firstLine : n.text.split("\n").filter((l) => l.trim())[1]) || "Kein weiterer Text"}
+                {(n.title.trim() ? firstLine : plainText(n.text).split("\n").filter((l) => l.trim())[1]) || "Kein weiterer Text"}
               </span>
             </span>
           );

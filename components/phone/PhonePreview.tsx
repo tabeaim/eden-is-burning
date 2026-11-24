@@ -7,6 +7,8 @@ import { Icon } from "@/components/Icon";
 import { ContactList } from "./ContactList";
 import { PhoneFrame } from "./PhoneFrame";
 import { PhoneHome } from "./PhoneHome";
+import { RichText } from "@/components/RichText";
+import { plainText } from "@/lib/html";
 
 type View = "home" | "contacts" | "notizen" | "fotos";
 const TITLES: Record<Exclude<View, "home">, string> = { contacts: "Kontakte", notizen: "Notizen", fotos: "Fotos" };
@@ -52,15 +54,13 @@ export function PhonePreview({ character }: { character: Character }) {
               (openNote ? (
                 <div className="px-4 py-3">
                   <div className="text-[1.25rem] font-bold text-text-primary">{openNote.title || "Neue Notiz"}</div>
-                  <p className="mt-2 whitespace-pre-wrap break-words text-[0.9375rem] leading-relaxed text-text-primary">
-                    {openNote.text}
-                  </p>
+                  <RichText html={openNote.text} className="mt-2 text-[0.9375rem] leading-relaxed text-text-primary" />
                 </div>
               ) : notes.length === 0 ? (
                 empty("Keine Notizen.")
               ) : (
                 notes.map((n) => {
-                  const lines = n.text.split("\n").filter((l) => l.trim());
+                  const lines = plainText(n.text).split("\n").filter((l) => l.trim());
                   return (
                     <button
                       key={n.id}
