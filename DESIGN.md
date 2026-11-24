@@ -527,7 +527,9 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Look pro Charakter** (`lib/phone.ts`, Einstellungen → Meine Charaktere →
   `PhoneSettings`): Modell (iPhone neu/alt, Android, Burner Phone), Gehäusefarbe
   (Vorschläge – beim Burner Phone kräftige Plastikfarben (`BURNER_COLORS`) – oder
-  jede Farbe über den bunten Farbwähler, `phone.color` = `#rrggbb`),
+  jede Farbe über den bunten Farbwähler, `phone.color` = `#rrggbb`; die Farbkreise
+  schrumpfen mit und bleiben in einer Zeile; im grünlichen Burner-Display stehen
+  die Farben als Namen statt Kreisen),
   Zustand (Kratzer/Sprünge liegen als Overlay über dem Display – auch mobil),
   Akku (`phone.battery`, 0–100, ohne Angabe 75 %; fester Wert, sinkt und lädt
   nicht von selbst, keine Auswirkungen. Das Symbol in der Statusleiste füllt

@@ -131,7 +131,8 @@ export function PhoneSettings({
       active ? "bg-accent text-black" : "bg-white/[0.06] text-text-secondary hover:text-text-primary"
     }`;
   const swatch = (active: boolean) =>
-    `h-8 w-8 shrink-0 rounded-full border border-border-subtle ${active ? "ring-2 ring-accent ring-offset-2 ring-offset-bg-surface" : ""}`;
+    // schrumpft mit, damit alle Farben auch im schmalen Burner-Display in eine Zeile passen
+    `aspect-square min-w-0 max-w-8 flex-1 rounded-full border border-border-subtle ${active ? "ring-2 ring-accent ring-offset-2 ring-offset-bg-surface" : ""}`;
   const label = "mb-2 text-[0.8125rem] font-medium text-text-secondary";
 
   return (
@@ -205,7 +206,31 @@ export function PhoneSettings({
 
       <div>
         <div className={label}>Gehäusefarbe</div>
-        <div className="flex gap-2">
+        {/* Im grünlichen Burner-Display sähe man keine Farben – dort mit Namen */}
+        {phone.burner && inPhone ? (
+          <div className="flex flex-wrap gap-1.5">
+            {palette.map((c) => (
+              <button
+                key={c.key}
+                onClick={() => save({ color: c.key })}
+                className={pill(!colorDraft && phone.frame === c.hex)}
+              >
+                {c.label}
+              </button>
+            ))}
+            <label className={`${pill(customColor)} relative cursor-pointer`}>
+              Eigene…
+              <input
+                type="color"
+                value={colorDraft ?? phone.frame}
+                onChange={(e) => pickColor(e.target.value)}
+                aria-label="Eigene Gehäusefarbe"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </label>
+          </div>
+        ) : (
+        <div className="flex gap-1.5 px-0.5">
           {palette.map((c) => (
             <button
               key={c.key}
@@ -235,6 +260,7 @@ export function PhoneSettings({
             />
           </label>
         </div>
+        )}
       </div>
 
       <div>
