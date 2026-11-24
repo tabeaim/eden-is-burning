@@ -240,9 +240,10 @@ export function estimateReplyTime(
 
 export function autoTimeEnabled(): boolean {
   try {
-    return localStorage.getItem(AUTO_TIME_KEY) === "1";
+    // Standard: an – nur wer „✨ Auto" ausschaltet, bekommt wieder „+1 Minute"
+    return localStorage.getItem(AUTO_TIME_KEY) !== "0";
   } catch {
-    return false;
+    return true;
   }
 }
 export function setAutoTimeEnabled(on: boolean) {
