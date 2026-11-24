@@ -732,7 +732,7 @@ function PostRow({
   const wrapRef = useRef<HTMLDivElement>(null);
   const proseRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLDivElement>(null);
-  const [quoteBtn, setQuoteBtn] = useState<{ x: number; y: number; text: string } | null>(
+  const [quoteBtn, setQuoteBtn] = useState<{ outside: boolean; y: number; text: string } | null>(
     null,
   );
   const [editing, setEditing] = useState(false);
@@ -788,8 +788,11 @@ function PostRow({
     }
     const rect = sel.getRangeAt(0).getBoundingClientRect();
     const wrap = wrapRef.current.getBoundingClientRect();
+    // Knopf rechts neben dem Textblock auf Höhe der Auswahl, damit er keinen Text
+    // verdeckt. Nur wenn rechts kein Platz ist (schmale Fenster), an den rechten
+    // Rand oberhalb der Auswahl.
     setQuoteBtn({
-      x: rect.left - wrap.left + rect.width / 2,
+      outside: window.innerWidth - wrap.right >= 56,
       y: rect.top - wrap.top,
       text,
     });
@@ -908,15 +911,19 @@ function PostRow({
       )}
       {quoteBtn && (
         <div
-          style={{ left: quoteBtn.x, top: quoteBtn.y }}
-          className="absolute z-20 -mt-1 flex -translate-x-1/2 -translate-y-full items-center gap-1 whitespace-nowrap rounded-md border border-border-subtle bg-bg-surface-2 px-1 py-1 text-[0.8125rem] text-text-secondary shadow-lg"
+          style={{ top: quoteBtn.y }}
+          className={`absolute z-20 flex items-center rounded-md border border-border-subtle bg-bg-surface-2 p-1 text-text-secondary shadow-lg ${
+            quoteBtn.outside ? "left-full ml-3" : "right-0 -mt-1 -translate-y-full"
+          }`}
         >
           <button
             onMouseDown={(e) => e.preventDefault()}
             onClick={saveQuote}
-            className="flex items-center gap-1 px-1.5 hover:text-accent"
+            title="Zitat hinzufügen"
+            aria-label="Zitat hinzufügen"
+            className="flex items-center rounded p-1 hover:text-accent"
           >
-            <Icon name="quote" size={12} /> Zitat hinzufügen
+            <Icon name="quote" size={14} />
           </button>
         </div>
       )}
