@@ -55,6 +55,12 @@ export function PhoneSettings({
     .filter((a, i, all) => all.findIndex((x) => sameApp(x, a)) === i && !custom.some((x) => sameApp(x, a)))
     .sort((a, b) => a.name.localeCompare(b.name, "de"));
   const [appName, setAppName] = useState("");
+  // Akku beim Ziehen nur anzeigen, beim Loslassen speichern
+  const [batteryDraft, setBatteryDraft] = useState<number | null>(null);
+  const commitBattery = () => {
+    if (batteryDraft !== null && batteryDraft !== phone.battery) save({ battery: batteryDraft });
+    setBatteryDraft(null);
+  };
   const [uploadingIcon, setUploadingIcon] = useState(false);
   const iconFile = useRef<HTMLInputElement>(null);
   const customWallpaper = raw.wallpaper && !raw.wallpaper.startsWith("preset:") ? raw.wallpaper : null;
@@ -200,6 +206,27 @@ export function PhoneSettings({
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Akku: fester Wert, sinkt und lädt nicht von selbst (auch per Doppelklick
+          aufs Akku-Symbol in der Statusleiste) */}
+      <div>
+        <div className={label}>
+          Akku{" "}
+          <span className="text-text-tertiary">({batteryDraft ?? phone.battery} % · ändert sich nur von Hand)</span>
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={batteryDraft ?? phone.battery}
+          onChange={(e) => setBatteryDraft(Number(e.target.value))}
+          onPointerUp={commitBattery}
+          onKeyUp={commitBattery}
+          onBlur={commitBattery}
+          aria-label="Akkustand"
+          className="w-full max-w-xs accent-[var(--color-accent,#f2b25a)]"
+        />
       </div>
 
       {/* Captic gibt es auch für Supporting Characters */}

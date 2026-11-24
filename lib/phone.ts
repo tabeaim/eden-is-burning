@@ -85,6 +85,7 @@ export interface ResolvedPhone {
   burner: boolean;
   frame: string; // Gehäusefarbe (hex)
   wear: number;
+  battery: number; // 0–100
   wallpaper: string; // fertiger CSS-`background`-Wert
   wallpaperLight: boolean; // helle Vorlage: Beschriftung dunkel statt weiß
   apps: PhoneApp[]; // Standard + gewählte + eigene, in Anzeige-Reihenfolge
@@ -107,6 +108,13 @@ export function wallpaperCss(value: string | null | undefined): string {
   return (PHONE_WALLPAPERS.find((w) => w.key === key) ?? PHONE_WALLPAPERS[0]).css;
 }
 
+// Akkustand: 0–100, ohne Angabe 75 %. Er sinkt und lädt nicht von selbst.
+export const DEFAULT_BATTERY = 75;
+export const clampBattery = (v: number | null | undefined) =>
+  typeof v === "number" && Number.isFinite(v) ? Math.min(100, Math.max(0, Math.round(v))) : DEFAULT_BATTERY;
+// Farbe der Akku-Füllung: rot unter 15 %, gelb unter 30 %, sonst Schriftfarbe
+export const batteryColor = (v: number) => (v < 15 ? "#ff453a" : v < 30 ? "#ffd60a" : "currentColor");
+
 export function resolvePhone(c: Pick<Character, "phone"> | null | undefined): ResolvedPhone {
   const p: PhoneSettings = c?.phone ?? {};
   const model = PHONE_MODELS.find((m) => m.key === p.model)?.key ?? "island";
@@ -123,6 +131,7 @@ export function resolvePhone(c: Pick<Character, "phone"> | null | undefined): Re
     burner: model === "burner",
     frame,
     wear,
+    battery: clampBattery(p.battery),
     wallpaper: wallpaperCss(p.wallpaper),
     wallpaperLight:
       !!p.wallpaper?.startsWith("preset:") &&

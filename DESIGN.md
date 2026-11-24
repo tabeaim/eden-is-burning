@@ -527,6 +527,11 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Look pro Charakter** (`lib/phone.ts`, Einstellungen → Meine Charaktere →
   `PhoneSettings`): Modell (iPhone neu/alt, Android, Burner Phone), Gehäusefarbe,
   Zustand (Kratzer/Sprünge liegen als Overlay über dem Display – auch mobil),
+  Akku (`phone.battery`, 0–100, ohne Angabe 75 %; fester Wert, sinkt und lädt
+  nicht von selbst, keine Auswirkungen. Das Symbol in der Statusleiste füllt
+  sich passend, unter 30 % gelb, unter 15 % rot. Am eigenen Handy öffnet ein
+  Doppelklick, Rechtsklick oder Enter auf das Symbol einen Regler mit „Fertig";
+  fremde Handys zeigen ihn nur an),
   Hintergrundbild (dunkle und helle Vorlagen oder eigenes Bild; auf hellen Vorlagen stehen Uhr und App-Namen dunkel), Apps, eigenes Profilbild
   fürs Handy (`PhoneAvatar` zeigt es überall im Handy statt des Charakterbilds). Funktionierende
   Standard-Apps (Fotos, Notizen, Einstellungen) sind immer da; die reinen

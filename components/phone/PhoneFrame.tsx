@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { characterImage } from "@/lib/avatar";
-import { PHONE_OWNER_KEY, contactName, contactPhoto, hasPhone, resolvePhone, type PhoneModel } from "@/lib/phone";
+import { PHONE_OWNER_KEY, batteryColor, contactName, contactPhoto, hasPhone, resolvePhone, type PhoneModel } from "@/lib/phone";
 import { Icon } from "@/components/Icon";
 import { PhotoZoom } from "@/components/PhotoZoom";
 import { tierLabel } from "@/lib/characters";
@@ -33,7 +33,8 @@ export function PhoneFrame({
   preview?: boolean;
   children: React.ReactNode;
 }) {
-  const { character, calls } = useStore();
+  const { character, calls, updateCharacter } = useStore();
+  const { myChars } = useMyPhone();
   const ownerChar = owner ? character(owner) : undefined;
   const phone = resolvePhone(ownerChar);
   const ringing = callBanner && !preview
@@ -108,7 +109,17 @@ export function PhoneFrame({
             burner ? "phone-burner" : ""
           } ${tone === "home" ? `phone-home ${phone.wallpaperLight ? "phone-home-light" : ""}` : ""}`}
         >
-          <StatusBar model={phone.model} tone={tone} />
+          <StatusBar
+            model={phone.model}
+            tone={tone}
+            battery={phone.battery}
+            // Akku einstellen nur am eigenen Handy, nicht in der Vorschau fremder Handys
+            onBattery={
+              !preview && ownerChar && myChars.some((c) => c.id === ownerChar.id)
+                ? (battery) => updateCharacter(ownerChar.id, { phone: { ...ownerChar.phone, battery } })
+                : undefined
+            }
+          />
           {ringing && (
             <Link
               href="/handy/telefon"
@@ -317,8 +328,23 @@ function OwnerBar({
 }
 
 // Statusleiste des Displays: Uhrzeit, Kamera je nach Modell, Empfang und Akku.
-function StatusBar({ model, tone }: { model: PhoneModel; tone: "app" | "home" }) {
+// Akku: Füllung nach Prozent (rot unter 15 %, gelb unter 30 %). Am eigenen Handy
+// öffnet ein Doppelklick (oder Rechtsklick, Enter) einen Regler mit „Fertig".
+function StatusBar({
+  model,
+  tone,
+  battery,
+  onBattery,
+}: {
+  model: PhoneModel;
+  tone: "app" | "home";
+  battery: number;
+  onBattery?: (v: number) => void;
+}) {
   const [now, setNow] = useState(() => new Date());
+  const [editing, setEditing] = useState<number | null>(null);
+  const shown = editing ?? battery;
+  const toggle = () => onBattery && setEditing((v) => (v === null ? battery : null));
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 20_000);
     return () => clearInterval(t);
@@ -346,12 +372,68 @@ function StatusBar({ model, tone }: { model: PhoneModel; tone: "app" | "home" })
           <rect x="9" y="2.5" width="3" height="8.5" rx="0.8" />
           <rect x="13.5" y="0" width="3" height="11" rx="0.8" opacity="0.35" />
         </svg>
-        <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden>
-          <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity="0.45" />
-          <rect x="2" y="2" width="13" height="8" rx="1.6" fill="currentColor" />
-          <rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.45" />
-        </svg>
+        <span
+          role={onBattery ? "button" : undefined}
+          tabIndex={onBattery ? 0 : undefined}
+          aria-label={`Akku ${shown} %`}
+          title={onBattery ? "Doppelklick: Akku einstellen" : `Akku ${shown} %`}
+          onDoubleClick={toggle}
+          onContextMenu={(e) => {
+            if (!onBattery) return;
+            e.preventDefault();
+            toggle();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggle();
+            }
+          }}
+          className={onBattery ? "cursor-pointer select-none" : undefined}
+        >
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden>
+            <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" opacity="0.45" />
+            <rect
+              x="2"
+              y="2"
+              width={Math.max(shown > 0 ? 1 : 0, (18 * shown) / 100)}
+              height="8"
+              rx="1.6"
+              fill={batteryColor(shown)}
+            />
+            <rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.45" />
+          </svg>
+        </span>
       </span>
+      {editing !== null && onBattery && (
+        <div
+          onDoubleClick={(e) => e.stopPropagation()}
+          className="absolute right-3 top-full z-50 w-44 select-none rounded-xl border border-white/15 bg-[#1c1c1e]/95 p-3 text-white shadow-xl shadow-black/60 backdrop-blur"
+        >
+          <div className="mb-2 flex justify-between text-[0.8125rem] font-normal">
+            <span>Akku</span>
+            <strong>{editing} %</strong>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={editing}
+            onChange={(e) => setEditing(Number(e.target.value))}
+            aria-label="Akkustand"
+            className="w-full accent-[var(--color-accent,#f2b25a)]"
+          />
+          <button
+            onClick={() => {
+              if (editing !== battery) onBattery(editing);
+              setEditing(null);
+            }}
+            className="mt-2 w-full rounded-md bg-accent/90 py-1 text-[0.8125rem] font-medium text-black hover:bg-accent"
+          >
+            Fertig
+          </button>
+        </div>
+      )}
     </div>
   );
 }
