@@ -662,11 +662,13 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   aktiv vorn), dann gemeinsame Szenen (nach Anzahl), dann sonst unter „Relevante"
   (von Hand hinzugefügt oder mit eigenem Kontakt-Eintrag), dann „neu dabei"
   (letzte 14 Tage). Alle übrigen stehen
-  alphabetisch darunter im eingeklappten Abschnitt „weitere." (Abschnitts-Überschrift
-  mit Anzahl und ▾). Wer in diesem Handy aus „Relevante" entfernt wurde
+  alphabetisch darunter im eingeklappten „Weitere · 5" (Stil wie die aufklappbaren
+  Abschnitte der Karte: ›, Großbuchstaben, grau). Der Seitentitel „andere handys."
+  steht wie eine Abschnitts-Überschrift. Wer in diesem Handy aus „Relevante" entfernt wurde
   (`not_relevant`), rutscht zu den übrigen (außer Favoriten). Kacheln zeigen das
   Kontaktfoto dieses Handys (`ContactAvatar`, sonst das Profilbild) und den
-  echten Namen – keine Zeile darunter (kein Grund, kein Modell). Die eigenen
+  echten Vornamen, bei Favoriten darunter das Datum der letzten SMS bzw. des
+  letzten Anrufs mit diesem Handy, sonst keine Zeile darunter. Die eigenen
   anderen Charaktere stehen mit in der Liste (nur das gerade gewählte Handy
   fehlt); bei ihnen führt „Dieses Handy nehmen" direkt auf ihr Handy. Die Suche
   zeigt alle Treffer in einer Liste (Relevante zuerst). Ein Handy öffnet groß als

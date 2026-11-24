@@ -98,7 +98,9 @@ export default function OtherPhonesPage() {
     // ohne Überschriften: die Gruppen geben nur die Reihenfolge vor
     const front = [...favorites, ...writing, ...fromScenes, ...relevant, ...fresh];
     const inFront = new Set(front.map((c) => c.id));
-    return { front, rest: all.filter((c) => !inFront.has(c.id)) };
+    // Favoriten: Datum der letzten SMS bzw. des letzten Anrufs mit diesem Handy
+    const lastContact = new Map(favorites.map((c) => [c.id, last.get(c.id)]));
+    return { front, rest: all.filter((c) => !inFront.has(c.id)), lastContact };
   })();
 
   // oben die nach Relevanz sortierten (ohne Überschriften), darunter eingeklappt
@@ -152,7 +154,7 @@ export default function OtherPhonesPage() {
         {me ? `${possessive(me.name.split(" ")[0])} Handy` : "Zum Handy"}
       </Link>
       <div className="mt-1 flex flex-wrap items-center gap-3">
-        <h1 className="text-[1.25rem] font-bold text-text-primary">Andere Handys</h1>
+        <h1 className="font-display lowercase text-[1.625rem] leading-none text-accent">andere handys.</h1>
         {me && myChars.length > 1 && (
           <OwnerPicker
             owner={me.id}
@@ -181,7 +183,7 @@ export default function OtherPhonesPage() {
       {/* alle Handys in einer Liste: wer für dieses Handy wichtig ist, steht vorn */}
       <div className="mt-5 grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
         {grid.map((c) => (
-          <PhoneTile key={c.id} c={c} owner={me} onOpen={() => setOpenId(c.id, grid)} />
+          <PhoneTile key={c.id} c={c} owner={me} sub={shortDate(ranked.lastContact.get(c.id))} onOpen={() => setOpenId(c.id, grid)} />
         ))}
       </div>
 
@@ -189,11 +191,15 @@ export default function OtherPhonesPage() {
         <button
           onClick={() => setRestOpen((v) => !v)}
           aria-expanded={restOpen}
-          className="group mb-3 mt-8 flex items-baseline gap-2.5 font-display lowercase text-[1.625rem] leading-none text-accent"
+          className="group mb-2 mt-6 flex items-center gap-1.5 text-left"
         >
-          weitere.
-          <span className="font-sans text-[0.8125rem] text-text-tertiary group-hover:text-text-secondary">
-            {rest.length} <span className={`inline-block transition-transform ${restOpen ? "rotate-180" : ""}`}>▾</span>
+          <Icon
+            name="chevron-right"
+            size={12}
+            className={`text-text-tertiary transition-transform ${restOpen ? "rotate-90" : ""}`}
+          />
+          <span className="text-[0.875rem] font-semibold uppercase tracking-wider text-text-tertiary transition-colors group-hover:text-text-secondary">
+            Weitere · {rest.length}
           </span>
         </button>
       )}
@@ -268,9 +274,25 @@ export default function OtherPhonesPage() {
   );
 }
 
+// „24. Nov." – Datum der letzten Interaktion (Favoriten)
+function shortDate(iso: string | undefined): string | null {
+  return iso ? new Date(iso).toLocaleDateString("de-DE", { day: "numeric", month: "short" }) : null;
+}
+
 // Kleine Handy-Vorschau: Gehäusefarbe als Rahmen, Hintergrund, Profilbild (Kontaktfoto
-// des eigenen Handys, sonst das des Charakters), darunter der echte Name
-function PhoneTile({ c, owner, onOpen }: { c: Character; owner: Character | null | undefined; onOpen: () => void }) {
+// des eigenen Handys, sonst das des Charakters), darunter der echte Vorname und
+// bei Favoriten das Datum der letzten Interaktion
+function PhoneTile({
+  c,
+  owner,
+  sub,
+  onOpen,
+}: {
+  c: Character;
+  owner: Character | null | undefined;
+  sub?: string | null;
+  onOpen: () => void;
+}) {
   const phone = resolvePhone(c);
   return (
     <button
@@ -288,8 +310,9 @@ function PhoneTile({ c, owner, onOpen }: { c: Character; owner: Character | null
       </span>
       <span className="block bg-bg-surface px-2 py-1">
         <span className="block truncate text-[0.75rem] font-semibold text-text-primary" title={c.name}>
-          {c.name}
+          {c.name.split(" ")[0]}
         </span>
+        {sub && <span className="block truncate text-[0.625rem] text-text-tertiary">{sub}</span>}
       </span>
     </button>
   );
