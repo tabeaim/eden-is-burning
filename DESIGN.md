@@ -533,7 +533,11 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Deko-Standard-Apps (`DECOR_APPS`: Rechner, Kamera, Uhr, Wetter, Karten) lassen
   sich abwählen (`hidden_apps`); dazu optionale und selbst erstellte (Name + Icon),
   zusammen höchstens so viele, wie auf einen Startbildschirm passen – alles in
-  einem gemeinsamen Bereich „Apps" in den Einstellungen. App-Icons
+  einem gemeinsamen Bereich „Apps" in den Einstellungen. Dieselben
+  Handy-Einstellungen öffnet auch die Einstellungen-App im Handy selbst
+  (`/handy/einstellungen`, `PhoneSettings inPhone`, nur fürs eigene Handy) –
+  dort ohne den Schalter „Hat ein Handy", damit man sich nicht aussperrt; ein
+  Link führt zu allen Einstellungen des Charakters. App-Icons
   (`AppIcon`) tragen einen Glanz (heller Schimmer oben, feiner Lichtrand).
 - **Mitlesen:** Ist kein eigener Charakter im Chat, bleibt man auf dem eigenen
   Handy; alle Blasen stehen links mit Vorname und Avatar (wie ein Gruppenchat).

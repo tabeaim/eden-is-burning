@@ -83,7 +83,7 @@ export function PhoneHome({
           <span>☺ Kontakte</span>
           <span>›</span>
         </Go>
-        <Go readOnly={readOnly} href={`/einstellungen#handy-${character.id}`} className={item}>
+        <Go readOnly={readOnly} href="/handy/einstellungen" className={item}>
           <span>⚙ Einstellungen</span>
           <span>›</span>
         </Go>
