@@ -125,7 +125,7 @@ export default function PhotosPage() {
                 onClick={() => file.current?.click()}
                 disabled={!!uploading || photos.length >= PHOTOS_MAX}
                 aria-label="Fotos hinzufügen"
-                title="Fotos hinzufügen (oder Bild mit Strg+V einfügen)"
+                title="Fotos hinzufügen – oder Bild mit Strg+V / Cmd+V einfügen"
                 className="flex h-9 w-9 items-center justify-center text-accent disabled:opacity-40"
               >
                 <Icon name="plus" size={22} />
@@ -196,11 +196,6 @@ export default function PhotosPage() {
             </div>
           ))}
         </div>
-        {photos.length > 0 && (
-          <p className="px-4 py-3 text-center text-[0.75rem] text-text-tertiary">
-            Tipp: Kopierte Bilder mit Strg+V (Mac: Cmd+V) einfügen.
-          </p>
-        )}
       </div>
 
       {/* Großansicht im Display: ‹ › blättern, darunter die Bildunterschrift */}
