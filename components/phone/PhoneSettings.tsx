@@ -45,8 +45,11 @@ export function PhoneSettings({
   const chosen = (raw.apps ?? []).filter((k) => OPTIONAL_APPS.some((a) => a.key === k));
   const custom = raw.custom_apps ?? [];
   // Alle Apps auf dem Startbildschirm zählen zum Limit (4 × 4 Plätze)
-  const appCount = shownStandardApps(raw).length + chosen.length + custom.length;
-  const full = appCount >= HOME_APP_SLOTS;
+  // Fotos, Notizen und Einstellungen sind fest – gezählt wird nur, was man wählt
+  const fixedApps = STANDARD_APPS.length - DECOR_APPS.length;
+  const freeSlots = HOME_APP_SLOTS - fixedApps;
+  const appCount = shownStandardApps(raw).length - fixedApps + chosen.length + custom.length;
+  const full = appCount >= freeSlots;
   // Eigene Apps der anderen Spieler*innen zum Übernehmen – jede nur einmal
   // (gleicher Name + gleiches Icon) und ohne die, die dieses Handy schon hat
   const sameApp = (a: { name: string; icon: string }, b: { name: string; icon: string }) =>
@@ -274,7 +277,7 @@ export function PhoneSettings({
           checked={phone.captic}
           onChange={(on) => save({ captic: { ...raw.captic, enabled: on } })}
         >
-          Captic
+          Captic <span className="text-text-tertiary">· Foto-Netzwerk</span>
         </Toggle>
         </Group>
       )}
@@ -331,7 +334,7 @@ export function PhoneSettings({
             <div className={label}>
               Apps{" "}
               <span className="text-text-tertiary">
-                {appCount}/{HOME_APP_SLOTS}
+                {appCount}/{freeSlots}
               </span>
             </div>
             <div className="flex flex-wrap gap-1.5">
