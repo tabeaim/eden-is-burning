@@ -4,6 +4,7 @@ import { playerImage } from "@/lib/avatar";
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
+import { useCurrentAge } from "@/lib/use-age";
 import { useSetPageMeta } from "@/lib/page-meta";
 import { GONE_PLAYER_CLASS } from "@/lib/gone";
 import { areaName } from "@/lib/world";
@@ -16,7 +17,6 @@ import { SceneFilterList } from "@/components/SceneFilterList";
 import {
   RELATION_CATEGORIES,
   TIER_NAMES,
-  ageAt,
   isHidden,
   ownerGone,
   playsAs,
@@ -652,6 +652,7 @@ function RelationRow({
   canEdit: boolean;
 }) {
   const { updateCharacter } = useStore();
+  const currentAge = useCurrentAge();
   const rel = c.relationships?.[rc.id] ?? {};
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(rel.label ?? "");
@@ -669,7 +670,7 @@ function RelationRow({
     setEditing(false);
   }
 
-  const rcAge = ageAt(rc);
+  const rcAge = currentAge(rc);
   const facts = [rcAge != null ? `${rcAge}` : null, capFirst(rc.role), rel.label].filter(Boolean).join(" · ");
 
   return (

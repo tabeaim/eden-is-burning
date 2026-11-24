@@ -2,7 +2,7 @@
 // (Nebenfigur, bestimmten Spieler*innen zugeordnet und nur von ihnen bespielt und
 // bearbeitet) und Statist*in (Nebenfigur für alle: jede*r darf sie bearbeiten und
 // zeitweise bespielen).
-import type { Character, RelationCategory } from "./types";
+import type { Character, RelationCategory, Scene } from "./types";
 
 export type Tier = "main" | "supporting" | "extra";
 
@@ -76,6 +76,22 @@ export function ageAt(c: Pick<Character, "age" | "profile">, at: string = DEFAUL
   if (!born || !ref) return c.age ?? null;
   const hadBirthday = ref[1] > born[1] || (ref[1] === born[1] && ref[2] >= born[2]);
   return Math.max(0, ref[0] - born[0] - (hadBirthday ? 0 : 1));
+}
+
+// Stichtag fürs Alter im Profil und in Listen: das Datum der neuesten Szene des
+// Charakters (ohne AU-Szenen und Entwürfe); ohne Szene der feste Stichtag.
+export function latestSceneDates(
+  scenes: Pick<Scene, "participant_ids" | "inplay_date" | "au" | "draft">[],
+): Map<string, string> {
+  const latest = new Map<string, string>();
+  for (const s of scenes) {
+    if (s.au || s.draft || !s.inplay_date) continue;
+    for (const id of s.participant_ids) {
+      const cur = latest.get(id);
+      if (!cur || s.inplay_date > cur) latest.set(id, s.inplay_date);
+    }
+  }
+  return latest;
 }
 
 // Studienjahr am Stichtag (1 = erstes Jahr); null, wenn noch nicht begonnen

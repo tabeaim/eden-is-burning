@@ -5,7 +5,6 @@ import type { Character, CharacterProfile, FamilyMember } from "@/lib/types";
 import {
   DEGREES,
   TIER_NAMES,
-  ageAt,
   isHidden,
   isStudent,
   isWorking,
@@ -19,6 +18,7 @@ import { AREA_ORDER, areaName } from "@/lib/world";
 import { capFirst } from "@/lib/format";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
+import { useCurrentAge } from "@/lib/use-age";
 import { DEFAULT_AVATAR, characterImage } from "@/lib/avatar";
 import { Facts, FactRow } from "./Facts";
 import { Bubble, LocationBubble } from "./Bubble";
@@ -65,7 +65,7 @@ function shown(c: Character, key: string, value: string | null | undefined): str
 export function ProfileFacts({ c, merged = false }: { c: Character; merged?: boolean }) {
   const { locations, scenes } = useStore();
   const p = c.profile ?? {};
-  const age = ageAt(c);
+  const age = useCurrentAge()(c);
   const year = studyYearAt(c);
   const full = tierOf(c) !== "extra";
 

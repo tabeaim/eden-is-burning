@@ -47,10 +47,13 @@ export function PhoneHome({
   character,
   readOnly = false,
   onOpenContacts,
+  onOpenApp,
 }: {
   character: Character;
   readOnly?: boolean;
   onOpenContacts?: () => void;
+  // nur ansehen (fremdes Handy): Notizen und Fotos lassen sich trotzdem öffnen
+  onOpenApp?: (key: "notizen" | "fotos") => void;
 }) {
   const { chats, calls, isChatNew, capticNews } = useStore();
   const phone = resolvePhone(character);
@@ -96,14 +99,24 @@ export function PhoneHome({
         phone.wallpaperLight ? "" : "bg-black/15"
       }`}
     >
-      {/* Angedeutete Apps – nicht anklickbar (außer Einstellungen, Fotos und Notizen) */}
+      {/* Angedeutete Apps – nicht anklickbar (außer Einstellungen, Fotos und Notizen; Fotos zeigt das neueste Foto) */}
       <div className="grid grid-cols-4 justify-items-center gap-y-5">
         {phone.apps.map((a) => {
+          // Fotos zeigt das zuletzt hinzugefügte Foto als Icon
+          const lastPhoto = a.key === "fotos" ? character.phone?.photos?.[0]?.url : undefined;
           const icon = (
-            <AppIcon label={a.label} bg={a.bg} icon={a.icon}>
-              {a.glyph}
+            <AppIcon label={a.label} bg={a.bg} icon={lastPhoto ?? a.icon}>
+              {lastPhoto ? null : a.glyph}
             </AppIcon>
           );
+          if (readOnly && onOpenApp && (a.key === "notizen" || a.key === "fotos")) {
+            const key = a.key;
+            return (
+              <button key={a.key} onClick={() => onOpenApp(key)}>
+                {icon}
+              </button>
+            );
+          }
           return a.href && !readOnly ? (
             <Link key={a.key} href={`${a.href}#handy-${character.id}`}>
               {icon}

@@ -626,9 +626,23 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Rechtsklick auf einen Eintrag: „Anruf abbrechen" (eigener,
   klingelnder) und „Aus der Anrufliste löschen" (nur auf diesem Handy).
 - **Andere Handys** (`/handy/andere`, „👀" in der Leiste über dem Gerät):
-  Übersicht aller Handys fremder Charaktere (Hintergrund, Profilbild, Modell;
-  Suche). Ein Handy öffnet groß als `PhonePreview`, ‹ › bzw. Pfeiltasten
-  blättern. Von dort aus dem eigenen Handy: „SMS schreiben" (`SMS_TO_KEY`),
+  immer aus Sicht des Handys, das ich gerade in der Hand habe („aus Sicht von …",
+  bei mehreren Charakteren umschaltbar, gleiche Auswahl wie die Leiste über dem
+  Gerät). Eine einzige Liste ohne Überschriften, nach Relevanz für diesen
+  Charakter sortiert: zuerst Favoriten dieses Handys, dann wer mit ihm schreibt
+  oder telefoniert (zuletzt aktiv vorn), dann gemeinsame Szenen (nach Anzahl),
+  dann sonst unter „Relevante" (von Hand hinzugefügt oder mit eigenem
+  Kontakt-Eintrag), dann „neu dabei" (letzte 14 Tage). Alle übrigen stehen
+  alphabetisch darunter im eingeklappten „Weitere". Wer in diesem Handy aus „Relevante" entfernt wurde
+  (`not_relevant`), rutscht zu den übrigen (außer Favoriten). Die kleine Zeile
+  unter dem Namen zeigt den Grund („★ Favorit", „gestern", „3 Szenen",
+  „neu dabei"), sonst das Modell. Die eigenen anderen Charaktere stehen mit in der Liste
+  (nur das gerade gewählte Handy fehlt); bei ihnen führt „Dieses Handy nehmen"
+  direkt auf ihr Handy. Die Suche
+  zeigt alle Treffer in einer Liste (Relevante zuerst). Ein Handy öffnet groß
+  als `PhonePreview`, ‹ › bzw. Pfeiltasten blättern durch die Liste, aus der es
+  geöffnet wurde.
+  Von dort aus dem eigenen Handy: „SMS schreiben" (`SMS_TO_KEY`),
   „Anrufen" (`CALL_TO_KEY` öffnet den Anruf-Dialog), „Captic-Profil"
   (`CAPTIC_OPEN_KEY` = `profile:<id>`).
 - **Handy im Charakterprofil** (Reiter „Handy", `PhonePreview`): Look,
@@ -668,6 +682,9 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Bildunterschrift; Mülleimer oben rechts löscht. „Ordnen": ‹ › verschieben,
   ✕ löschen (beides mit `ConfirmDialog`).
   Beides liegt im Handy des Charakters (`characters.phone`) – keine eigene Tabelle.
+  Das Fotos-Icon auf dem Startbildschirm zeigt das neueste Foto. Fremde Handys
+  (`PhonePreview`: Charakterprofil, „Andere Handys") zeigen Notizen und Fotos
+  zum Ansehen, ohne Bearbeiten.
 - **Captic** (`/handy/captic`, `components/phone/captic/`, `lib/captic.ts`):
   fiktives Foto-Netzwerk, immer aus Sicht des Charakters, dessen Handy man in der
   Hand hat. Leiste unten: Feed · Entdecken · Neuer Beitrag · Mein Profil; die
@@ -761,6 +778,13 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Hand gesetzte Uhrzeit ist der neue Ausgangspunkt. Über dem Eingabefeld steht sie eingeklappt als kleiner Chip
   („🕐 23:42 · auto"); aufgeklappt lässt sie sich per Zeitfeld oder
   +1/+3/+9/+24 von Hand setzen, „✨ Automatisch" schaltet zurück.
+
+## Alter
+
+Im Profil und in den Listen (Charaktere, Spieler*innen, Beziehungen) steht das
+Alter am Datum der neuesten Szene des Charakters (ohne AU-Szenen und Entwürfe,
+`useCurrentAge`); ohne Szene am festen Stichtag `DEFAULT_AGE_DATE`. In einer
+Szene gilt wie bisher deren eigenes Datum.
 
 ## Detailseiten (Szene, Charakter, Ort)
 
