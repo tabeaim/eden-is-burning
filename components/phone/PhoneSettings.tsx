@@ -24,7 +24,17 @@ import { PhoneAvatar } from "./PhoneFrame";
 // Änderung wird sofort gespeichert – unabhängig vom „Speichern" des Profils.
 // `reduced` (Supporting Characters): nur Profilbild, Modell, Farbe und Zustand –
 // dazu Captic, aber kein Hintergrundbild und keine Apps.
-export function PhoneSettings({ character, reduced = false }: { character: Character; reduced?: boolean }) {
+// `inPhone`: in der Einstellungen-App des Handys selbst – ohne Kopfzeile und ohne
+// den Schalter „Hat ein Handy" (sonst sperrt man sich aus).
+export function PhoneSettings({
+  character,
+  reduced = false,
+  inPhone = false,
+}: {
+  character: Character;
+  reduced?: boolean;
+  inPhone?: boolean;
+}) {
   const { updateCharacter, characters, npcs } = useStore();
   const [uploading, setUploading] = useState(false);
   const file = useRef<HTMLInputElement>(null);
@@ -100,6 +110,8 @@ export function PhoneSettings({ character, reduced = false }: { character: Chara
 
   return (
     <div className="flex flex-col gap-4">
+      {!inPhone && (
+      <>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-[0.8125rem] text-text-tertiary">
           <Icon name="phone" size={17} className="text-accent" /> Look und Apps des Handys
@@ -117,6 +129,8 @@ export function PhoneSettings({ character, reduced = false }: { character: Chara
           (aus: kein Handy im Profil, keine SMS und Anrufe, nicht in Kontaktlisten)
         </span>
       </Toggle>
+      </>
+      )}
       {raw.disabled ? null : (
       <>
       <div>

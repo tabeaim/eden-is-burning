@@ -55,7 +55,7 @@ export const STANDARD_APPS: PhoneApp[] = [
   { key: "karten", label: "Karten", glyph: "🗺️", bg: "linear-gradient(#7ed0a0, #3c8f6a)" },
   { key: "notizen", label: "Notizen", glyph: "📝", bg: "linear-gradient(#ffe27a, #f2b824)", href: "/handy/notizen" },
   // führt zu den Handy-Einstellungen des Charakters (Look, Captic, Apps)
-  { key: "einstellungen", label: "Einstellungen", glyph: "⚙️", bg: "linear-gradient(#a9a9af, #6b6b70)", href: "/einstellungen" },
+  { key: "einstellungen", label: "Einstellungen", glyph: "⚙️", bg: "linear-gradient(#a9a9af, #6b6b70)", href: "/handy/einstellungen" },
 ];
 
 // Standard-Apps, die nur Deko sind – lassen sich in den Handy-Einstellungen
