@@ -653,10 +653,19 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Farb-Tokens auf Graustufen um, darüber liegt ein grünes LCD-Overlay – im
   Burner-Display deshalb keine festen Farben verwenden.
 - **Startbildschirm** (`/handy`): kein Datum, nur Apps. Angedeutete Apps sind
-  reine Deko (`AppIcon` ohne Link) – Ausnahme „Einstellungen", die in die
-  Charakter-Einstellungen führt; echte Apps (Telefon, Nachrichten, Captic)
+  reine Deko (`AppIcon` ohne Link) – Ausnahmen „Einstellungen", die in die
+  Charakter-Einstellungen führt, sowie „Notizen" und „Fotos" (siehe unten); echte Apps (Telefon, Nachrichten, Captic)
   stehen im Dock. Die Home-Leiste unten (bzw. der
   Home-Button des alten Modells) führt immer dorthin zurück.
+- **Notizen** (`/handy/notizen`, `phone.notes`): Liste mit Titel und erster
+  Zeile, Stift oben rechts legt eine neue an, Antippen öffnet sie zum Schreiben
+  („Fertig" bzw. Zurück speichert, leere Notizen verschwinden). „Ordnen": ↑ ↓
+  verschieben, ✕ löschen (mit `ConfirmDialog`).
+- **Fotos** (`/handy/fotos`, `phone.photos`): Dreier-Raster, Plus oben rechts lädt
+  mehrere auf einmal hoch (`PHOTOS_PER_UPLOAD`, insgesamt `PHOTOS_MAX`, neueste
+  vorne). Antippen öffnet die Großansicht im Display mit ‹ ›, Zähler und
+  Bildunterschrift. „Ordnen": ‹ › verschieben, ✕ löschen (mit `ConfirmDialog`).
+  Beides liegt im Handy des Charakters (`characters.phone`) – keine eigene Tabelle.
 - **Captic** (`/handy/captic`, `components/phone/captic/`, `lib/captic.ts`):
   fiktives Foto-Netzwerk, immer aus Sicht des Charakters, dessen Handy man in der
   Hand hat. Leiste unten: Feed · Entdecken · Neuer Beitrag · Mein Profil; die

@@ -49,11 +49,11 @@ export interface PhoneApp {
 export const STANDARD_APPS: PhoneApp[] = [
   { key: "rechner", label: "Rechner", glyph: "🧮", bg: "linear-gradient(#48484c, #1c1c1e)" },
   { key: "kamera", label: "Kamera", glyph: "📷", bg: "linear-gradient(#8e8e93, #48484c)" },
-  { key: "fotos", label: "Fotos", glyph: "🌸", bg: "linear-gradient(#ffffff, #dcdce0)" },
+  { key: "fotos", label: "Fotos", glyph: "🌸", bg: "linear-gradient(#ffffff, #dcdce0)", href: "/handy/fotos" },
   { key: "uhr", label: "Uhr", glyph: "⏰", bg: "linear-gradient(#2c2c2e, #111113)" },
   { key: "wetter", label: "Wetter", glyph: "⛅", bg: "linear-gradient(#4aa3f0, #1d5fc2)" },
   { key: "karten", label: "Karten", glyph: "🗺️", bg: "linear-gradient(#7ed0a0, #3c8f6a)" },
-  { key: "notizen", label: "Notizen", glyph: "📝", bg: "linear-gradient(#ffe27a, #f2b824)" },
+  { key: "notizen", label: "Notizen", glyph: "📝", bg: "linear-gradient(#ffe27a, #f2b824)", href: "/handy/notizen" },
   // führt zu den Handy-Einstellungen des Charakters (Look, Captic, Apps)
   { key: "einstellungen", label: "Einstellungen", glyph: "⚙️", bg: "linear-gradient(#a9a9af, #6b6b70)", href: "/einstellungen" },
 ];
@@ -168,6 +168,9 @@ export const MAILBOX_KEY = "eden:mailbox";
 export const CALL_TO_KEY = "eden:call-to";
 // Längste Mailbox-Nachricht (Zeichen)
 export const VOICEMAIL_MAX = 300;
+// Fotos-App: höchstens so viele auf einmal hochladen bzw. insgesamt auf einem Handy
+export const PHOTOS_PER_UPLOAD = 24;
+export const PHOTOS_MAX = 120;
 
 // „2021-12-31" → „2022-01-01"
 export function nextDay(day: string): string {

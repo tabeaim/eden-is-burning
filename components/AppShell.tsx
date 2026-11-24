@@ -206,6 +206,8 @@ const PHONE_TITLES: Record<string, string> = {
   "/handy/telefon": "Telefon",
   "/handy/kontakte": "Kontakte",
   "/handy/andere": "Andere Handys",
+  "/handy/notizen": "Notizen",
+  "/handy/fotos": "Fotos",
 };
 // Hintergrundbild der Seiten (Einstellungen → Admin → Design): reicht Bild und
 // Deckkraft des aktuellen Stils als CSS-Variablen an die Ebene in globals.css.

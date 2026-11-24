@@ -239,6 +239,21 @@ export interface PhoneSettings {
   // Captic ist optional: erst nach dem Aktivieren liegt die App auf dem Handy.
   // Profilangaben werden in der App selbst bearbeitet.
   captic?: CapticProfile | null;
+  // Notizen- und Fotos-App: in der App selbst angelegt, in dieser Reihenfolge angezeigt
+  notes?: PhoneNote[] | null;
+  photos?: PhonePhoto[] | null;
+}
+
+export interface PhoneNote {
+  id: string;
+  title: string;
+  text: string;
+}
+
+export interface PhonePhoto {
+  id: string;
+  url: string;
+  caption?: string;
 }
 
 // Captic-Profil eines Charakters. Follower-Zahlen sind frei gesetzt (wie viele
