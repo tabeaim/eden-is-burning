@@ -20,6 +20,9 @@ export function Composer({
   onTime,
   placeholder = "Nachricht",
   above,
+  auto,
+  onAuto,
+  onDraft,
 }: {
   onSend: (kind: ChatMessageKind, content: string) => void;
   onDate?: () => void; // „Inplay-Datum" im Plus-Menü
@@ -28,8 +31,16 @@ export function Composer({
   onTime?: (time: string) => void;
   placeholder?: string;
   above?: React.ReactNode; // z.B. die Vorschau der Nachricht, auf die geantwortet wird
+  auto?: boolean; // Uhrzeit wird gerade automatisch geschätzt
+  onAuto?: () => void; // zurück auf „Automatisch"
+  onDraft?: (text: string) => void; // getippter Text (für die automatische Uhrzeit)
 }) {
-  const [text, setText] = useState("");
+  const [text, setTextState] = useState("");
+  const setText = (t: string) => {
+    setTextState(t);
+    onDraft?.(t);
+  };
+  const [timeOpen, setTimeOpen] = useState(false);
   const [panel, setPanel] = useState<null | "emoji" | "gif" | "plus">(null);
   const [uploading, setUploading] = useState(false);
   // Sprachnachricht: der getippte Text geht als (textbasierte) Sprachnachricht raus
@@ -81,8 +92,24 @@ export function Composer({
   return (
     <div className="shrink-0 border-t border-border-subtle bg-bg-surface px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
       {above}
-      {time !== undefined && onTime && (
-        <div className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] text-text-tertiary">
+      {/* Uhrzeit der nächsten Nachricht: eingeklappt nur ein kleiner Chip, die Zeit
+          läuft automatisch. Aufklappen nur, um sie von Hand zu ändern. */}
+      {time !== undefined && onTime && !timeOpen && (
+        <div className="mb-1.5 flex">
+          <button
+            type="button"
+            onClick={() => setTimeOpen(true)}
+            title="Uhrzeit ändern"
+            className="flex items-center gap-1 rounded-full bg-white/[0.06] px-2.5 py-0.5 text-[0.75rem] tabular-nums text-text-tertiary hover:bg-white/[0.1] hover:text-text-secondary"
+          >
+            🕐 {time}
+            {auto !== undefined && <span>· {auto ? "auto" : "von Hand"}</span>}
+            <Icon name="chevron-right" size={12} className="rotate-90" />
+          </button>
+        </div>
+      )}
+      {time !== undefined && onTime && timeOpen && (
+        <div className="mb-1.5 flex flex-wrap items-center gap-1.5 text-[0.75rem] text-text-tertiary">
           <label className="flex items-center gap-1.5 rounded-full bg-white/[0.06] py-0.5 pl-2.5 pr-1.5">
             Uhrzeit
             <input
@@ -103,6 +130,24 @@ export function Composer({
             </button>
           ))}
           <span>Min</span>
+          {onAuto && !auto && (
+            <button
+              type="button"
+              onClick={onAuto}
+              title="Zurück zur automatischen Uhrzeit (Lesen + kurze Pause + Tippen)"
+              className="rounded-full bg-white/[0.06] px-2.5 py-1.5 font-semibold text-text-secondary hover:bg-white/[0.12]"
+            >
+              ✨ Automatisch
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setTimeOpen(false)}
+            aria-label="Einklappen"
+            className="ml-auto flex h-7 w-7 items-center justify-center rounded-full text-text-tertiary hover:bg-white/[0.08]"
+          >
+            <Icon name="chevron-right" size={14} className="-rotate-90" />
+          </button>
         </div>
       )}
       {voice && (

@@ -7,7 +7,14 @@ import { useStore } from "@/lib/store";
 import type { Character, Chat, ChatMessageKind, ChatScene } from "@/lib/types";
 import { formatDateTime, formatInplayDate, formatInplayDateShort } from "@/lib/format";
 import { isEmojiOnly, QUICK_REACTIONS } from "@/lib/emoji";
-import { addMinutes, contactShortName, hasPhone, nextDay, resolvePhone } from "@/lib/phone";
+import {
+  addMinutes,
+  contactShortName,
+  estimateReplyTime,
+  hasPhone,
+  nextDay,
+  resolvePhone,
+} from "@/lib/phone";
 import {
   chatTitle,
   chatUnits,
@@ -200,9 +207,15 @@ function ChatView({ chat }: { chat: Chat }) {
   // weiter (Tag der letzten Nachricht dort, Uhrzeit eine Minute später) und lassen
   // sich über dem Eingabefeld überschreiben.
   const [dayOverride, setDayOverride] = useState<string | null>(null);
-  const lastTime = newestMessage(targetMsgs.filter((m) => m.inplay_time))?.inplay_time;
+  const lastTimed = newestMessage(targetMsgs.filter((m) => m.inplay_time));
+  const lastTime = lastTimed?.inplay_time;
   const [timeOverride, setTimeOverride] = useState<string | null>(null);
-  const time = timeOverride ?? (lastTime ? addMinutes(lastTime, 1) : "12:00");
+  // Automatisch (Standard): statt „+1 Minute" schätzen, wie lange Lesen und
+  // Tippen dauern – wächst beim Tippen mit. Eine von Hand gesetzte Uhrzeit hat Vorrang.
+  const [draft, setDraft] = useState("");
+  const time =
+    timeOverride ??
+    (lastTimed ? estimateReplyTime(targetMsgs, self, draft) : lastTime ? addMinutes(lastTime, 1) : "12:00");
   // Nach Mitternacht beginnt von selbst der nächste Tag: Die letzte Nachricht war
   // am Abend, die nächste hat eine frühere Uhrzeit am Morgen („23:58" → „00:03").
   const pastMidnight = !!lastTime && lastTime >= "12:00" && time < "12:00";
@@ -849,6 +862,9 @@ function ChatView({ chat }: { chat: Chat }) {
           media={!burner}
           time={time}
           onTime={setTimeOverride}
+          auto={!timeOverride}
+          onAuto={() => setTimeOverride(null)}
+          onDraft={setDraft}
           placeholder={`Nachricht als ${selfChar?.name.split(" ")[0] ?? "…"}`}
           above={
             <>

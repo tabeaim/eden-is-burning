@@ -737,8 +737,13 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   iOS hinein).
 - **Zeit:** nie die echte. Jeder Chat beginnt mit einem Tagestrenner
   (Inplay-Datum, Pflicht bei „Neue SMS"; weitere über Plus → „Inplay-Datum").
-  Jede Nachricht trägt eine Inplay-Uhrzeit: Die Eingabezeile schlägt die letzte
-  Uhrzeit + 1 Minute vor, änderbar per Zeitfeld oder +1/+3/+9/+24.
+  Jede Nachricht trägt eine Inplay-Uhrzeit, automatisch geschätzt: letzte fremde
+  Nachricht lesen + kurze Pause + eigene tippen (`estimateReplyTime`), wächst beim
+  Tippen mit. Die Sekunden laufen über den ganzen Verlauf weiter, so schieben
+  auch viele kurze Nachrichten die Uhr (etwa drei kurze pro Minute); eine von
+  Hand gesetzte Uhrzeit ist der neue Ausgangspunkt. Über dem Eingabefeld steht sie eingeklappt als kleiner Chip
+  („🕐 23:42 · auto"); aufgeklappt lässt sie sich per Zeitfeld oder
+  +1/+3/+9/+24 von Hand setzen, „✨ Automatisch" schaltet zurück.
 
 ## Detailseiten (Szene, Charakter, Ort)
 
