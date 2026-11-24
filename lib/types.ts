@@ -223,7 +223,8 @@ export interface PhoneSettings {
   color?: string; // Schlüssel aus PHONE_COLORS
   wear?: number; // 0 wie neu … 3 Display gesprungen
   wallpaper?: string | null; // "preset:<key>" oder Bild-Adresse
-  apps?: string[]; // zusätzlich gewählte Apps (OPTIONAL_APPS); Standard-Apps sind immer da
+  apps?: string[]; // zusätzlich gewählte Apps (OPTIONAL_APPS)
+  hidden_apps?: string[] | null; // abgewählte Deko-Standard-Apps (DECOR_APPS); echte Apps sind immer da
   custom_apps?: CustomPhoneApp[]; // selbst erstellte Apps (Name + Icon)
   // Eigene Kontakt-Einträge dieses Handys: Charakter-ID -> abweichender Name und
   // Foto. Der Name gilt überall auf diesem Handy, das Foto nur bei Kontakten und

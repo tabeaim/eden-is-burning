@@ -25,6 +25,11 @@ export function AppIcon({
           <img src={icon} alt="" className="absolute inset-0 h-full w-full rounded-[0.95rem] object-cover" />
         )}
         {children}
+        {/* Glanz wie bei echten App-Icons: heller Schimmer oben, feiner Lichtrand */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-[0.95rem] bg-[linear-gradient(160deg,rgba(255,255,255,0.42)_0%,rgba(255,255,255,0.12)_38%,rgba(255,255,255,0)_55%,rgba(0,0,0,0.12)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),inset_0_0_0_0.5px_rgba(255,255,255,0.18)]"
+        />
         {badge > 0 && (
           <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[0.6875rem] font-bold text-black">
             {badge}

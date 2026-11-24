@@ -6,8 +6,10 @@ import type { Character, PhoneSettings as Settings } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import {
+  DECOR_APPS,
   MAX_EXTRA_APPS,
   OPTIONAL_APPS,
+  STANDARD_APPS,
   PHONE_COLORS,
   PHONE_MODELS,
   PHONE_WALLPAPERS,
@@ -244,14 +246,31 @@ export function PhoneSettings({ character, reduced = false }: { character: Chara
             </div>
           </div>
 
+          {/* Apps: Deko-Standard-Apps an-/abwählen (Fotos, Notizen, Einstellungen
+              bleiben immer) und weitere Apps dazunehmen – alles in einem Bereich */}
           <div>
             <div className={label}>
-              Weitere Apps{" "}
+              Apps{" "}
               <span className="text-text-tertiary">
-                ({extraCount}/{MAX_EXTRA_APPS} · nur angedeutet; Telefon, Kamera & Co. sind immer da)
+                (nur Deko · Fotos und Notizen bleiben immer · weitere {extraCount}/{MAX_EXTRA_APPS})
               </span>
             </div>
             <div className="flex flex-wrap gap-1.5">
+              {STANDARD_APPS.filter((a) => DECOR_APPS.includes(a.key)).map((a) => {
+                const hidden = raw.hidden_apps ?? [];
+                const on = !hidden.includes(a.key);
+                return (
+                  <button
+                    key={a.key}
+                    onClick={() =>
+                      save({ hidden_apps: on ? [...hidden, a.key] : hidden.filter((k) => k !== a.key) })
+                    }
+                    className={pill(on)}
+                  >
+                    {a.glyph} {a.label}
+                  </button>
+                );
+              })}
               {OPTIONAL_APPS.map((a) => {
                 const on = chosen.includes(a.key);
                 return (
