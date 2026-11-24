@@ -90,12 +90,15 @@ export const OPTIONAL_APPS: PhoneApp[] = [
 // üblichen Handys ohne Scrollen). Alle zählen: die Standard-Apps
 // (Fotos, Notizen, Einstellungen fest, Deko abwählbar) plus gewählte und eigene.
 export const HOME_APP_SLOTS = 24; // 6 Reihen à 4 auf dem Startbildschirm (ohne Dock)
+// Das alte iPhone hat oben und unten breite Ränder (Home-Taste): eine Reihe weniger
+export const homeAppSlots = (p: PhoneSettings | null | undefined) =>
+  p?.model === "classic" ? HOME_APP_SLOTS - 4 : HOME_APP_SLOTS;
 // Standard-Apps, die gerade auf dem Startbildschirm stehen (abgewählte Deko fehlt)
 export const shownStandardApps = (p: PhoneSettings | null | undefined) =>
   STANDARD_APPS.filter((a) => !DECOR_APPS.includes(a.key) || !(p?.hidden_apps ?? []).includes(a.key));
 // Plätze für weitere und eigene Apps: was die Standard-Apps übrig lassen
 export const extraAppSlots = (p: PhoneSettings | null | undefined) =>
-  HOME_APP_SLOTS - shownStandardApps(p).length;
+  homeAppSlots(p) - shownStandardApps(p).length;
 
 export interface ResolvedPhone {
   model: PhoneModel;

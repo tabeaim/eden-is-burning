@@ -7,7 +7,7 @@ import { useStore } from "@/lib/store";
 import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import {
   DECOR_APPS,
-  HOME_APP_SLOTS,
+  homeAppSlots,
   OPTIONAL_APPS,
   STANDARD_APPS,
   shownStandardApps,
@@ -48,7 +48,7 @@ export function PhoneSettings({
   // Alle Apps auf dem Startbildschirm zählen zum Limit (4 × 4 Plätze)
   // Fotos, Notizen und Einstellungen sind fest – gezählt wird nur, was man wählt
   const fixedApps = STANDARD_APPS.length - DECOR_APPS.length;
-  const freeSlots = HOME_APP_SLOTS - fixedApps;
+  const freeSlots = homeAppSlots(raw) - fixedApps;
   const appCount = shownStandardApps(raw).length - fixedApps + chosen.length + custom.length;
   const full = appCount >= freeSlots;
   // Eigene Apps der anderen Spieler*innen zum Übernehmen – jede nur einmal
