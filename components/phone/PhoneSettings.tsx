@@ -130,6 +130,27 @@ export function PhoneSettings({
     `rounded-full px-3 py-1.5 text-[0.8125rem] transition-colors ${
       active ? "bg-accent text-black" : "bg-white/[0.06] text-text-secondary hover:text-text-primary"
     }`;
+  // Gewählte App als Pille mit Schloss-Knopf (im Spiel verstecken)
+  const onPill = `${pill(true)} inline-flex items-center gap-1 !py-1 !pr-1`;
+  const secretApps = raw.secret_apps ?? [];
+  const lockBtn = (key: string, name: string) => {
+    const on = secretApps.includes(key);
+    return (
+      <button
+        onClick={() =>
+          save({ secret_apps: on ? secretApps.filter((k) => k !== key) : [...secretApps, key] })
+        }
+        aria-pressed={on}
+        aria-label={`${name} im Spiel verstecken`}
+        title={on ? "Im Spiel versteckt – antippen zum Zeigen" : "Im Spiel verstecken"}
+        className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors ${
+          on ? "bg-black/80 text-white" : "text-black/35 hover:bg-black/10 hover:text-black/70"
+        }`}
+      >
+        <Icon name="lock" size={12} />
+      </button>
+    );
+  };
   const swatch = (active: boolean) =>
     // schrumpft mit, damit alle Farben auch im schmalen Burner-Display in eine Zeile passen
     `aspect-square min-w-0 max-w-8 flex-1 rounded-full border border-border-subtle ${active ? "ring-2 ring-accent ring-offset-2 ring-offset-bg-surface" : ""}`;
@@ -366,48 +387,62 @@ export function PhoneSettings({
                 {appCount}/{freeSlots}
               </span>
             </div>
+            {/* Gewählte Apps haben rechts ein Schloss: „im Spiel versteckt" –
+                alle sehen die App weiter, auf dem Startbildschirm markiert */}
             <div className="flex flex-wrap gap-1.5">
+              {STANDARD_APPS.filter((a) => !DECOR_APPS.includes(a.key)).map((a) => (
+                <span key={a.key} className={onPill}>
+                  <span className="px-1">
+                    {a.glyph} {a.label}
+                  </span>
+                  {lockBtn(a.key, a.label)}
+                </span>
+              ))}
               {STANDARD_APPS.filter((a) => DECOR_APPS.includes(a.key)).map((a) => {
                 const hidden = raw.hidden_apps ?? [];
                 const on = !hidden.includes(a.key);
-                return (
-                  <button
-                    key={a.key}
-                    disabled={!on && full}
-                    onClick={() =>
-                      save({ hidden_apps: on ? [...hidden, a.key] : hidden.filter((k) => k !== a.key) })
-                    }
-                    className={`${pill(on)} disabled:opacity-40`}
-                  >
+                const toggle = () =>
+                  save({ hidden_apps: on ? [...hidden, a.key] : hidden.filter((k) => k !== a.key) });
+                return on ? (
+                  <span key={a.key} className={onPill}>
+                    <button onClick={toggle} className="px-1">
+                      {a.glyph} {a.label}
+                    </button>
+                    {lockBtn(a.key, a.label)}
+                  </span>
+                ) : (
+                  <button key={a.key} disabled={full} onClick={toggle} className={`${pill(false)} disabled:opacity-40`}>
                     {a.glyph} {a.label}
                   </button>
                 );
               })}
               {OPTIONAL_APPS.map((a) => {
                 const on = chosen.includes(a.key);
-                return (
-                  <button
-                    key={a.key}
-                    disabled={!on && full}
-                    onClick={() =>
-                      save({ apps: on ? chosen.filter((k) => k !== a.key) : [...chosen, a.key] })
-                    }
-                    className={`${pill(on)} disabled:opacity-40`}
-                  >
+                const toggle = () => save({ apps: on ? chosen.filter((k) => k !== a.key) : [...chosen, a.key] });
+                return on ? (
+                  <span key={a.key} className={onPill}>
+                    <button onClick={toggle} className="px-1">
+                      {a.glyph} {a.label}
+                    </button>
+                    {lockBtn(a.key, a.label)}
+                  </span>
+                ) : (
+                  <button key={a.key} disabled={full} onClick={toggle} className={`${pill(false)} disabled:opacity-40`}>
                     {a.glyph} {a.label}
                   </button>
                 );
               })}
               {custom.map((a) => (
-                <span key={a.id} className={`${pill(true)} inline-flex items-center gap-1.5 !py-1 !pl-1`}>
+                <span key={a.id} className={`${onPill} !pl-1`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={a.icon} alt="" className="h-6 w-6 rounded-md object-cover" />
-                  {a.name}
+                  <span className="px-0.5">{a.name}</span>
+                  {lockBtn(a.id, a.name)}
                   <button
                     onClick={() => save({ custom_apps: custom.filter((x) => x.id !== a.id) })}
                     aria-label={`${a.name} entfernen`}
                     title="Entfernen"
-                    className="px-0.5 text-black/60 hover:text-black"
+                    className="px-1 text-black/60 hover:text-black"
                   >
                     ✕
                   </button>
@@ -473,35 +508,6 @@ export function PhoneSettings({
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Im Spiel versteckt: der Charakter hat die App versteckt – alle
-              Spieler*innen sehen sie weiter, nur markiert */}
-          <div>
-            <div className={label}>Im Spiel versteckt</div>
-            <div className="flex flex-wrap gap-1.5">
-              {phone.apps.map((a) => {
-                const secret = raw.secret_apps ?? [];
-                const on = secret.includes(a.key);
-                return (
-                  <button
-                    key={a.key}
-                    onClick={() =>
-                      save({ secret_apps: on ? secret.filter((k) => k !== a.key) : [...secret, a.key] })
-                    }
-                    className={`${pill(on)} inline-flex items-center gap-1.5 ${a.icon ? "!py-1 !pl-1" : ""}`}
-                  >
-                    {a.icon ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.icon} alt="" className="h-6 w-6 rounded-md object-cover" />
-                    ) : (
-                      <span>{a.glyph}</span>
-                    )}
-                    <span>{a.label}</span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </Group>
       )}
