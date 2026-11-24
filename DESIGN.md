@@ -664,17 +664,18 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   (letzte 14 Tage). Alle übrigen stehen
   alphabetisch darunter im eingeklappten „Weitere · 5" (Stil wie die aufklappbaren
   Abschnitte der Karte: ›, Großbuchstaben, grau). Der Seitentitel „andere handys."
-  steht wie eine Abschnitts-Überschrift. Wer in diesem Handy aus „Relevante" entfernt wurde
+  steht in der Schrift einer Abschnitts-Überschrift, aber weiß. Wer in diesem Handy aus „Relevante" entfernt wurde
   (`not_relevant`), rutscht zu den übrigen (außer Favoriten). Kacheln zeigen das
   Kontaktfoto dieses Handys (`ContactAvatar`, sonst das Profilbild) und den
-  echten Vornamen, bei Favoriten darunter das Datum der letzten SMS bzw. des
-  letzten Anrufs mit diesem Handy, sonst keine Zeile darunter. Die eigenen
+  echten Vornamen (mittig), darunter das Datum der letzten Interaktion mit dem
+  gewählten Handy-Charakter (SMS, Anruf oder Post in einer gemeinsamen Szene;
+  ohne Interaktion keine Zeile). Die eigenen
   anderen Charaktere stehen mit in der Liste (nur das gerade gewählte Handy
   fehlt); bei ihnen führt „Dieses Handy nehmen" direkt auf ihr Handy. Die Suche
   zeigt alle Treffer in einer Liste (Relevante zuerst). Ein Handy öffnet groß als
   `PhonePreview`; über dem Gerät nur „Handy von …" und „3 / 8", ‹ › stehen links
   und rechts neben dem Gerät (auch Pfeiltasten) und blättern durch die Liste, aus
-  der es geöffnet wurde. Darüber die normalen Buttons (`btn`): „SMS schreiben"
+  der es geöffnet wurde. Unter dem Gerät die normalen Buttons (`btn`): „SMS schreiben"
   (`SMS_TO_KEY`) und „Anrufen" (`CALL_TO_KEY` öffnet den Anruf-Dialog) aus dem
   eigenen Handy. Kein eigener Captic-Knopf – Captic öffnet man über die App im Gerät.
 - **Handy im Charakterprofil** (Reiter „Handy", `PhonePreview`): Look,

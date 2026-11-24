@@ -23,7 +23,7 @@ const possessive = (first: string) => (/[sxzß]$/i.test(first) ? `${first}'` : `
 
 export default function OtherPhonesPage() {
   const router = useRouter();
-  const { characters, npcs, chats, chatMessages, calls, scenes } = useStore();
+  const { characters, npcs, chats, chatMessages, calls, scenes, posts } = useStore();
   const { me, myChars, setOwner } = useMyPhone();
   const [q, setQ] = useState("");
   const [now] = useState(() => Date.now());
@@ -98,8 +98,16 @@ export default function OtherPhonesPage() {
     // ohne Überschriften: die Gruppen geben nur die Reihenfolge vor
     const front = [...favorites, ...writing, ...fromScenes, ...relevant, ...fresh];
     const inFront = new Set(front.map((c) => c.id));
-    // Favoriten: Datum der letzten SMS bzw. des letzten Anrufs mit diesem Handy
-    const lastContact = new Map(favorites.map((c) => [c.id, last.get(c.id)]));
+    // Datum der letzten Interaktion mit diesem Charakter: SMS, Anruf oder Post
+    // in einer gemeinsamen Szene (echte Zeit)
+    const lastContact = new Map(last);
+    const sceneById = new Map(scenes.map((sc) => [sc.id, sc]));
+    for (const p of posts) {
+      const sc = sceneById.get(p.scene_id);
+      if (!sc?.participant_ids.includes(meId)) continue;
+      for (const id of sc.participant_ids)
+        if (id !== meId && p.created_at > (lastContact.get(id) ?? "")) lastContact.set(id, p.created_at);
+    }
     return { front, rest: all.filter((c) => !inFront.has(c.id)), lastContact };
   })();
 
@@ -154,7 +162,7 @@ export default function OtherPhonesPage() {
         {me ? `${possessive(me.name.split(" ")[0])} Handy` : "Zum Handy"}
       </Link>
       <div className="mt-1 flex flex-wrap items-center gap-3">
-        <h1 className="font-display lowercase text-[1.625rem] leading-none text-accent">andere handys.</h1>
+        <h1 className="font-display lowercase text-[1.625rem] leading-none text-text-primary">andere handys.</h1>
         {me && myChars.length > 1 && (
           <OwnerPicker
             owner={me.id}
@@ -206,7 +214,7 @@ export default function OtherPhonesPage() {
       {rest.length > 0 && restShown && (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
           {rest.map((c) => (
-            <PhoneTile key={c.id} c={c} owner={me} onOpen={() => setOpenId(c.id, rest)} />
+            <PhoneTile key={c.id} c={c} owner={me} sub={shortDate(ranked.lastContact.get(c.id))} onOpen={() => setOpenId(c.id, rest)} />
           ))}
         </div>
       )}
@@ -222,6 +230,17 @@ export default function OtherPhonesPage() {
               <div className="text-[0.75rem] text-text-tertiary">
                 {index + 1} / {openList.length}
               </div>
+            </div>
+
+            {/* key: beim Blättern beginnt die Vorschau wieder auf dem Startbildschirm */}
+            <div className="flex items-center gap-2 sm:gap-4">
+              <button onClick={() => step(-1)} aria-label="Voriges Handy" className={arrowBtn}>
+                <Icon name="chevron-right" size={18} className="rotate-180" />
+              </button>
+              <PhonePreview key={open.id} character={open} />
+              <button onClick={() => step(1)} aria-label="Nächstes Handy" className={arrowBtn}>
+                <Icon name="chevron-right" size={18} />
+              </button>
             </div>
 
             {me && (
@@ -250,17 +269,6 @@ export default function OtherPhonesPage() {
               </div>
             )}
 
-            {/* key: beim Blättern beginnt die Vorschau wieder auf dem Startbildschirm */}
-            <div className="flex items-center gap-2 sm:gap-4">
-              <button onClick={() => step(-1)} aria-label="Voriges Handy" className={arrowBtn}>
-                <Icon name="chevron-right" size={18} className="rotate-180" />
-              </button>
-              <PhonePreview key={open.id} character={open} />
-              <button onClick={() => step(1)} aria-label="Nächstes Handy" className={arrowBtn}>
-                <Icon name="chevron-right" size={18} />
-              </button>
-            </div>
-
             <button
               onClick={() => setOpenId(null)}
               className="py-1 text-[0.8125rem] text-text-tertiary hover:text-text-primary"
@@ -274,14 +282,14 @@ export default function OtherPhonesPage() {
   );
 }
 
-// „24. Nov." – Datum der letzten Interaktion (Favoriten)
+// „24. Nov." – Datum der letzten Interaktion
 function shortDate(iso: string | undefined): string | null {
   return iso ? new Date(iso).toLocaleDateString("de-DE", { day: "numeric", month: "short" }) : null;
 }
 
 // Kleine Handy-Vorschau: Gehäusefarbe als Rahmen, Hintergrund, Profilbild (Kontaktfoto
-// des eigenen Handys, sonst das des Charakters), darunter der echte Vorname und
-// bei Favoriten das Datum der letzten Interaktion
+// des eigenen Handys, sonst das des Charakters), darunter mittig der echte
+// Vorname und das Datum der letzten Interaktion
 function PhoneTile({
   c,
   owner,
@@ -308,7 +316,7 @@ function PhoneTile({
           <ContactAvatar owner={owner} character={c} size={52} />
         </span>
       </span>
-      <span className="block bg-bg-surface px-2 py-1">
+      <span className="block bg-bg-surface px-2 py-1 text-center">
         <span className="block truncate text-[0.75rem] font-semibold text-text-primary" title={c.name}>
           {c.name.split(" ")[0]}
         </span>
