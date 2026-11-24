@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
 
 # vercel
 .vercel
@@ -42,3 +43,8 @@ next-env.d.ts
 
 # lokale Sicherungen und Protokolle (scripts/backup-db.ts, migrate-images)
 /backups/
+
+# Datenbank-Dumps nie ins (öffentliche) Repo
+backup_*.sql
+backup_*.sql.gz
+*.dump
