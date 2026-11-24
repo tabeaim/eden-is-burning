@@ -120,7 +120,8 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   (`lib/world.ts`: Stadtteile, Industrial District, „Eden (ohne Bezirk)", „Rest
   der Welt"), Filter `areaFilterOptions`/`areaMatches` aus `lib/plots.ts`.
 - **Datum:** immer `components/DatePicker.tsx` (kleiner Kalender, öffnet ohne Wert
-  im Jahr 2021), nie `<input type="date">`.
+  im Jahr 2021), nie `<input type="date">`. Ausnahme Geburtstag:
+  `components/AgeBirthdayInput.tsx` – Alter + Tag + Monat, ohne Jahr.
 - **Endgültige Aktionen** (löschen): `components/ConfirmDialog.tsx` mit klar
   benanntem Knopf („Plot löschen"), nie `window.confirm`.
 - **Mehrfach-Filter:** `components/MultiSelect.tsx`.
@@ -176,11 +177,11 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   endgültig löschen.
 - **Charakter: Grunddaten vs. Profil.** Die Grunddaten („hard facts") stehen
   unter Einstellungen → Meine Charaktere (`CharacterBasicsForm`): Anzeigename,
-  voller Name, Geburtsdatum, Geschlecht, Faceclaim, Tagline, Kurzbeschreibung,
+  voller Name, Alter & Geburtstag, Geschlecht, Faceclaim, Tagline, Kurzbeschreibung,
   Wohngegend, Herkunft, Beziehungsstatus, sexuelle Orientierung, Beschäftigung
   (dazu per Schalter Student*in mit Universität/Studiengang/Abschluss/
   Studienbeginn und/oder arbeitstätig mit Arbeitgeber – beides zugleich möglich), Größe, Figur, Haare, Augen. Pflicht für Main
-  Characters: Name, Geburtsdatum, Faceclaim, Beschäftigung. Jede Angabe lässt
+  Characters: Name, Alter & Geburtstag, Faceclaim, Beschäftigung. Jede Angabe lässt
   sich im Profil verstecken („sichtbar/versteckt" am Feld).
 - **Profil bearbeiten:** Im Profil gibt es genau einen Knopf „Bearbeiten"; er
   öffnet `ProfileEditPanel` mit allem Beschreibenden: Zitat, Banner, ausführliche
@@ -319,9 +320,14 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
   Beschreibung) dürfen ebenfalls HTML enthalten. Angezeigt werden sie immer über
   `RichText` (gleicher Filter wie die Signatur) – auch die Hover-Bio in
   Charakterliste und Szene. Nie roh als `{c.bio}` ausgeben.
-- **Geburtsdatum nachtragen:** Hat ein (importierter) Charakter nur eine
-  Alterszahl (`needsBirthdate`), klappen die Grunddaten „Identität" auf, das
-  Feld ist orange markiert und bittet um ein Geburtsdatum; das Alter bleibt bis
+- **Alter & Geburtstag:** Eingegeben werden nur Alter und Geburtstag (Tag,
+  Monat). Das Alter gilt zur neuesten Szene des Charakters (ohne AU-Szenen und
+  Entwürfe; ohne Szene zum `DEFAULT_AGE_DATE`), daraus berechnet
+  `birthdateFrom` das Geburtsjahr; gespeichert bleibt ein volles
+  `profile.birthdate`. Unter dem Feld: „geboren 1999 · Sternzeichen".
+- **Geburtstag nachtragen:** Hat ein (importierter) Charakter nur eine
+  Alterszahl (`needsBirthdate`), klappen die Grunddaten „Identität" auf, Tag und
+  Monat sind orange markiert und bitten um den Geburtstag; das Alter bleibt bis
   dahin stehen.
 - **GIF in Szenen** (`profile.scene_gif_url`, ebenda): steht in der Szene unter
   dem Avatar (`SceneCharacterCard`), höchstens so breit wie der Avatar und halb

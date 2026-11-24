@@ -78,6 +78,17 @@ export function ageAt(c: Pick<Character, "age" | "profile">, at: string = DEFAUL
   return Math.max(0, ref[0] - born[0] - (hadBirthday ? 0 : 1));
 }
 
+// Geburtsdatum aus Alter und Geburtstag (ohne Jahr): Das Alter gilt am Stichtag
+// `at` – das Jahr ergibt sich daraus, ob der Geburtstag dann schon war.
+export function birthdateFrom(age: number, month: number, day: number, at: string = DEFAULT_AGE_DATE): string | null {
+  const ref = parts(at);
+  if (!ref || !Number.isFinite(age) || age < 0 || month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const had = ref[1] > month || (ref[1] === month && ref[2] >= day);
+  const y = ref[0] - Math.round(age) - (had ? 0 : 1);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${String(y).padStart(4, "0")}-${pad(month)}-${pad(day)}`;
+}
+
 // Stichtag fürs Alter im Profil und in Listen: das Datum der neuesten Szene des
 // Charakters (ohne AU-Szenen und Entwürfe); ohne Szene der feste Stichtag.
 export function latestSceneDates(

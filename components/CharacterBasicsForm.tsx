@@ -5,8 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import type { Character, CharacterProfile } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import {
+  DEFAULT_AGE_DATE,
   DEGREES,
   ageAt,
+  latestSceneDates,
   isStudent,
   isWorking,
   needsBirthdate,
@@ -27,6 +29,7 @@ import { GifPicker } from "./phone/GifPicker";
 import { characterImage } from "@/lib/avatar";
 import { capFirst, formatInplayDate } from "@/lib/format";
 import { DatePicker } from "./DatePicker";
+import { AgeBirthdayInput } from "./AgeBirthdayInput";
 import { Icon } from "./Icon";
 import { SuggestInput } from "./SuggestInput";
 import { SignatureText, signatureAlign } from "./SignatureText";
@@ -54,7 +57,9 @@ export function useCharacterBasics(
   mode: "settings" | "profile",
   slots: { top?: React.ReactNode; looks?: React.ReactNode } = {},
 ) {
-  const { updateCharacter, locations } = useStore();
+  const { updateCharacter, locations, scenes } = useStore();
+  // Stichtag fürs eingetippte Alter: wie im Profil die neueste Szene des Charakters
+  const ageDate = latestSceneDates(scenes).get(character.id) ?? DEFAULT_AGE_DATE;
   const main = tierOf(character) === "main";
   const extra = tierOf(character) === "extra";
   // Angabe über die Grundangaben hinaus: für Statist*innen nur in den
@@ -80,7 +85,6 @@ export function useCharacterBasics(
   const toggleHidden = (key: string) =>
     setProfile({ hidden: hidden.includes(key) ? hidden.filter((k) => k !== key) : [...hidden, key] });
 
-  const age = ageAt({ age: d.age, profile: p });
   const studyYear = studyYearAt({ profile: p });
   const missing = {
     name: !d.name.trim(),
@@ -294,18 +298,28 @@ export function useCharacterBasics(
             children: <input {...text("full_name")} placeholder={d.name} />,
           })}
           {F({
-            label: "Geburtsdatum",
+            label: "Alter & Geburtstag",
             required: main,
             hideKey: "age",
             error: missing.age,
-            hint: [age != null ? `${age} Jahre` : null, zodiac?.de, "Spieljahr 2021"].filter(Boolean).join(" · "),
-            notice: askBirthdate
-              ? "Bisher ist nur das Alter hinterlegt – bitte trag ein Geburtsdatum ein."
+            // Jahr und Sternzeichen werden aus Alter und Geburtstag berechnet
+            hint: p.birthdate
+              ? [`geboren ${parseInt(p.birthdate.slice(0, 4), 10)}`, zodiac?.de].filter(Boolean).join(" · ")
               : null,
+            notice: askBirthdate ? "Bisher ist nur das Alter hinterlegt – bitte trag den Geburtstag ein." : null,
             children: (
-              <div className={askBirthdate ? "rounded-md ring-2 ring-accent/70" : ""}>
-                <DatePicker value={p.birthdate ?? ""} onChange={(iso) => setProfile({ birthdate: iso || null })} />
-              </div>
+              <AgeBirthdayInput
+                key={character.id}
+                birthdate={p.birthdate}
+                age={d.age}
+                at={ageDate}
+                field={field}
+                highlightBirthday={askBirthdate}
+                onChange={(birthdate, age) => {
+                  setProfile({ birthdate });
+                  set("age", age);
+                }}
+              />
             ),
           })}
           {F({
@@ -341,9 +355,9 @@ export function useCharacterBasics(
         </div>
       </div>
       <p className="text-[0.8125rem] text-text-tertiary">
-        Das aktuelle Spieljahr ist 2021. Alter und Sternzeichen werden aus dem Geburtsdatum
-        berechnet: das Alter im Profil zum {formatInplayDate("2022-01-01")} (Ende des Spieljahrs),
-        in einer Szene zum Datum der Szene.
+        Das Alter gilt zur neuesten Szene des Charakters (ohne Szene zum{" "}
+        {formatInplayDate(DEFAULT_AGE_DATE)}); Geburtsjahr und Sternzeichen werden daraus berechnet.
+        In einer Szene steht das Alter zum Datum der Szene.
       </p>
       {more(!!character.bio) &&
         F({
