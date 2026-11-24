@@ -246,10 +246,14 @@ export function PhoneSettings({ character, reduced = false }: { character: Chara
             </div>
           </div>
 
-          {/* Deko-Standard-Apps: an- und abwählbar (Fotos, Notizen, Einstellungen bleiben) */}
+          {/* Apps: Deko-Standard-Apps an-/abwählen (Fotos, Notizen, Einstellungen
+              bleiben immer) und weitere Apps dazunehmen – alles in einem Bereich */}
           <div>
             <div className={label}>
-              Standard-Apps <span className="text-text-tertiary">(nur Deko · Fotos und Notizen bleiben immer)</span>
+              Apps{" "}
+              <span className="text-text-tertiary">
+                (nur Deko · Fotos und Notizen bleiben immer · weitere {extraCount}/{MAX_EXTRA_APPS})
+              </span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {STANDARD_APPS.filter((a) => DECOR_APPS.includes(a.key)).map((a) => {
@@ -267,17 +271,6 @@ export function PhoneSettings({ character, reduced = false }: { character: Chara
                   </button>
                 );
               })}
-            </div>
-          </div>
-
-          <div>
-            <div className={label}>
-              Weitere Apps{" "}
-              <span className="text-text-tertiary">
-                ({extraCount}/{MAX_EXTRA_APPS} · nur angedeutet)
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
               {OPTIONAL_APPS.map((a) => {
                 const on = chosen.includes(a.key);
                 return (
