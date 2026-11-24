@@ -214,7 +214,7 @@ function ChatView({ chat }: { chat: Chat }) {
   const [timeOverride, setTimeOverride] = useState<string | null>(null);
   // „✨ Auto" (pro Gerät): statt „+1 Minute" schätzen, wie lange Lesen und Tippen
   // dauern – wächst beim Tippen mit. Eine von Hand gesetzte Uhrzeit hat Vorrang.
-  const [auto, setAuto] = useState(false);
+  const [auto, setAuto] = useState(true);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setAuto(autoTimeEnabled()), []);
   const [draft, setDraft] = useState("");
