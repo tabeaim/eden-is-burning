@@ -794,6 +794,7 @@ function PostRow({
     // Knopf rechts neben dem Textblock auf Höhe der Auswahl, damit er keinen Text
     // verdeckt. Nur wenn rechts kein Platz ist (schmale Fenster), an den rechten
     // Rand oberhalb der Auswahl.
+    setQuoteHover(false);
     setQuoteBtn({
       outside: window.innerWidth - wrap.right >= 56,
       y: rect.top - wrap.top,
@@ -802,10 +803,28 @@ function PostRow({
     });
   }
 
+  // Der Zitat-Knopf verschwindet wieder, sobald nichts mehr im Post markiert ist,
+  // und spätestens nach ein paar Sekunden (solange die Maus nicht darauf steht)
+  const [quoteHover, setQuoteHover] = useState(false);
+  useEffect(() => {
+    if (!quoteBtn) return;
+    const onSelection = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.anchorNode || !proseRef.current?.contains(sel.anchorNode)) setQuoteBtn(null);
+    };
+    document.addEventListener("selectionchange", onSelection);
+    const timer = quoteHover ? undefined : setTimeout(() => setQuoteBtn(null), 4000);
+    return () => {
+      document.removeEventListener("selectionchange", onSelection);
+      clearTimeout(timer);
+    };
+  }, [quoteBtn, quoteHover]);
+
   function saveQuote() {
     if (!quoteBtn) return;
     addQuote(post.id, quoteBtn.text);
     setQuoteBtn(null);
+    setQuoteHover(false);
   }
 
   function startEdit() {
@@ -920,6 +939,8 @@ function PostRow({
           className={`absolute z-20 flex items-center rounded-md border border-border-subtle bg-bg-surface-2 p-1 text-text-secondary shadow-lg ${
             quoteBtn.outside ? "left-full ml-3 -translate-y-1/2" : "right-0 -mt-1 -translate-y-full"
           }`}
+          onMouseEnter={() => setQuoteHover(true)}
+          onMouseLeave={() => setQuoteHover(false)}
         >
           <button
             onMouseDown={(e) => e.preventDefault()}

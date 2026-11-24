@@ -142,7 +142,9 @@ Beim Bearbeiten bleibt der Ortsname freiwillig (Altbestand/Migration).
 - **Charakter wählen:** `components/CharacterSelect.tsx` (Aufklappliste mit
   Avatar), nie das Browser-eigene `<select>` – das lässt sich nicht stylen.
 - **Text im Post markieren:** Die Auswahl bleibt stehen (normal kopierbar),
-  darüber erscheint nur „Zitat hinzufügen".
+  daneben erscheint nur „Zitat hinzufügen". Der Knopf verschwindet wieder, sobald
+  nichts mehr im Post markiert ist, und nach 4 Sekunden (nicht, solange die Maus
+  darauf steht).
 - **Hover in der Szene:** Die Bio erscheint nur über dem Avatar (benannte Gruppe
   `group/ava`), Kopieren/Bearbeiten/Löschen eines Posts beim Hovern über dem Post
   (`group/post`) – verschachtelte Hover immer als benannte Gruppen. „Kopieren"
