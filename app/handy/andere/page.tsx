@@ -21,6 +21,7 @@ export default function OtherPhonesPage() {
   const { me, myChars } = useMyPhone();
   const [q, setQ] = useState("");
   const [now] = useState(() => Date.now());
+  const [restOpen, setRestOpen] = useState(false);
   // offenes Handy und die Reihe, aus der es geöffnet wurde (‹ › blättert darin)
   const [opened, setOpened] = useState<{ id: string; list: string[] } | null>(null);
 
@@ -34,12 +35,15 @@ export default function OtherPhonesPage() {
 
   // Reihen oben, nach Wichtigkeit – jede Person nur in der ersten passenden Reihe
   const rows = (() => {
+    // in einem meiner Handys aus „Relevante" entfernt: nicht in den Reihen (außer Favoriten)
+    const notRelevant = new Set(myChars.flatMap((c) => c.phone?.not_relevant ?? []));
     const used = new Set<string>();
     const take = (ids: string[]) =>
       ids.filter((id) => byId.has(id) && !used.has(id) && (used.add(id), true)).map((id) => byId.get(id)!);
 
     // 1. Favoriten in einem meiner Handys
     const favorites = take([...new Set(myChars.flatMap((c) => c.phone?.favorites ?? []))]);
+    for (const id of notRelevant) used.add(id);
 
     // 2. Schreibt mit dir: SMS oder Anrufe mit meinen Charakteren, zuletzt aktiv vorn
     const last = new Map<string, string>();
@@ -163,16 +167,29 @@ export default function OtherPhonesPage() {
           </section>
         ))}
 
-      {grid.length > 0 && (
-        <h2 className="mb-2 mt-6 text-[0.75rem] font-semibold uppercase tracking-wider text-text-tertiary">
-          {query ? "Suchergebnis" : rows.length ? "Weitere" : "Alle"} <span className="font-normal">· {grid.length}</span>
-        </h2>
-      )}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
-        {grid.map((c) => (
-          <PhoneTile key={c.id} c={c} sub={modelLabel(c)} onOpen={() => setOpenId(c.id, grid)} />
+      {/* Rest eingeklappt (ohne Suche): nur, wer oben in keiner Reihe steht */}
+      {grid.length > 0 &&
+        (query || !rows.length ? (
+          <h2 className="mb-2 mt-6 text-[0.75rem] font-semibold uppercase tracking-wider text-text-tertiary">
+            {query ? "Suchergebnis" : "Alle"} <span className="font-normal">· {grid.length}</span>
+          </h2>
+        ) : (
+          <button
+            onClick={() => setRestOpen((v) => !v)}
+            aria-expanded={restOpen}
+            className="mb-2 mt-6 flex items-center gap-1 text-[0.75rem] font-semibold uppercase tracking-wider text-text-tertiary hover:text-text-secondary"
+          >
+            Weitere <span className="font-normal">· {grid.length}</span>
+            <Icon name="chevron-right" size={14} className={`transition-transform ${restOpen ? "-rotate-90" : "rotate-90"}`} />
+          </button>
         ))}
-      </div>
+      {(query || !rows.length || restOpen) && (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
+          {grid.map((c) => (
+            <PhoneTile key={c.id} c={c} sub={modelLabel(c)} onOpen={() => setOpenId(c.id, grid)} />
+          ))}
+        </div>
+      )}
 
       {open && (
         <div
