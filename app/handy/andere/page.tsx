@@ -15,14 +15,15 @@ import { CAPTIC_OPEN_KEY } from "@/components/phone/captic/CapticApp";
 // Hintergrund, Profilbild und Modell (mit Suche); ein Handy lässt sich groß
 // öffnen, mit ‹ › weiterblättern, und von dort aus SMS schreiben, anrufen oder
 // das Captic-Profil öffnen – immer aus Sicht des Handys, das ich gerade in der
-// Hand habe (umschaltbar). Eine einzige Liste, nach Relevanz für diesen
-// Charakter sortiert (ohne Überschriften).
+// Hand habe (umschaltbar). Oben nach Relevanz für diesen Charakter sortiert
+// (ohne Überschriften), darunter eingeklappt „Weitere".
 export default function OtherPhonesPage() {
   const router = useRouter();
   const { characters, npcs, chats, chatMessages, calls, scenes } = useStore();
   const { me, myChars, setOwner } = useMyPhone();
   const [q, setQ] = useState("");
   const [now] = useState(() => Date.now());
+  const [restOpen, setRestOpen] = useState(false);
   // offenes Handy und die Liste, aus der es geöffnet wurde (‹ › blättert darin)
   const [opened, setOpened] = useState<{ id: string; list: string[] } | null>(null);
 
@@ -99,11 +100,16 @@ export default function OtherPhonesPage() {
     for (const c of fresh) hint.set(c.id, "neu dabei");
     const front = [...favorites, ...writing, ...fromScenes, ...relevant, ...fresh];
     const inFront = new Set(front.map((c) => c.id));
-    return { list: [...front, ...all.filter((c) => !inFront.has(c.id))], hint };
+    return { front, rest: all.filter((c) => !inFront.has(c.id)), hint };
   })();
 
-  // eine einzige Liste, nach Relevanz sortiert; die Suche filtert sie nur
-  const grid = ranked.list.filter((c) => !query || c.name.toLowerCase().includes(query));
+  // oben die nach Relevanz sortierten (ohne Überschriften), darunter eingeklappt
+  // „Weitere" (alphabetisch); die Suche zeigt alle Treffer in einer Liste
+  const hit = (c: Character) => c.name.toLowerCase().includes(query);
+  const grid = query ? [...ranked.front, ...ranked.rest].filter(hit) : ranked.front;
+  const rest = query ? [] : ranked.rest;
+  // ohne Relevante gibt es nichts einzuklappen
+  const restShown = restOpen || grid.length === 0;
 
   const openList = opened?.list ?? [];
   const index = opened ? openList.indexOf(opened.id) : -1;
@@ -180,7 +186,7 @@ export default function OtherPhonesPage() {
         </label>
       </div>
 
-      {grid.length === 0 && (
+      {grid.length === 0 && rest.length === 0 && (
         <p className="pt-16 text-center text-[0.875rem] text-text-tertiary">
           {query ? "Kein Handy gefunden." : "Noch keine anderen Handys."}
         </p>
@@ -192,6 +198,24 @@ export default function OtherPhonesPage() {
           <PhoneTile key={c.id} c={c} sub={ranked.hint.get(c.id) ?? modelLabel(c)} onOpen={() => setOpenId(c.id, grid)} />
         ))}
       </div>
+
+      {rest.length > 0 && grid.length > 0 && (
+        <button
+          onClick={() => setRestOpen((v) => !v)}
+          aria-expanded={restOpen}
+          className="mb-2 mt-6 flex items-center gap-1 text-[0.75rem] font-semibold uppercase tracking-wider text-text-tertiary hover:text-text-secondary"
+        >
+          Weitere <span className="font-normal">· {rest.length}</span>
+          <Icon name="chevron-right" size={14} className={`transition-transform ${restOpen ? "-rotate-90" : "rotate-90"}`} />
+        </button>
+      )}
+      {rest.length > 0 && restShown && (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
+          {rest.map((c) => (
+            <PhoneTile key={c.id} c={c} sub={modelLabel(c)} onOpen={() => setOpenId(c.id, rest)} />
+          ))}
+        </div>
+      )}
 
       {open && (
         <div
