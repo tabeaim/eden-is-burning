@@ -266,9 +266,7 @@ function PersonCard({ person }: { person: LocationPerson }) {
         {facts && <span className="text-[0.875rem] text-text-tertiary">{facts}</span>}
       </div>
       {person.note && (
-        <p className="mt-2 text-[0.875rem] text-text-secondary leading-relaxed">
-          {person.note}
-        </p>
+        <RichText html={person.note} className="mt-2 text-[0.875rem] text-text-secondary leading-relaxed" />
       )}
     </div>
   );

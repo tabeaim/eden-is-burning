@@ -30,6 +30,7 @@ import { CharacterSelect } from "@/components/CharacterSelect";
 import type { Character, Post, PostDraft, Scene } from "@/lib/types";
 import { useCharacterIn } from "@/lib/use-versions";
 import { characterIn } from "@/lib/versions";
+import { RichText } from "@/components/RichText";
 
 function focusReplyEditor() {
   const el = document.getElementById("reply-box");
@@ -650,9 +651,7 @@ function SceneHeader({
 
       {/* Beschreibungssatz */}
       {scene.summary && (
-        <p className="mt-3 font-serif text-[0.875rem] italic text-text-secondary leading-relaxed">
-          {scene.summary}
-        </p>
+        <RichText html={scene.summary} className="mt-3 font-serif text-[0.875rem] italic text-text-secondary leading-relaxed" />
       )}
     </div>
   );

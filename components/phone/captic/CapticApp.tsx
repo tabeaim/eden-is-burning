@@ -27,6 +27,8 @@ import { CapticHighlightEditor, HighlightRow } from "./CapticHighlights";
 import { CapticPostCard } from "./CapticPost";
 import { CapticCompose, capticField } from "./CapticCompose";
 import { OwnStoryAvatar, StoryAvatar, StoryRow, StoryViewer } from "./CapticStories";
+import { RichText } from "@/components/RichText";
+import { plainText } from "@/lib/html";
 
 // Übergabe vom Dashboard („Neue Aktivität auf Captic"): gleich die Aktivitäten öffnen
 export const CAPTIC_OPEN_KEY = "eden:captic-open";
@@ -417,7 +419,7 @@ function Activity({
                   {e.kind === "comment_like" && "gefällt dein Kommentar"}
                   {e.kind === "mention" && "hat dich in einem Kommentar erwähnt"}
                   {comment ? ": " : "."}
-                  {comment && <span className="text-text-primary">{comment.content}</span>}
+                  {comment && <span className="text-text-primary">{plainText(comment.content)}</span>}
                 </>
               )}
             </button>
@@ -762,7 +764,7 @@ function Profile({
             {isPrivate(who) && " · privat"}
           </div>
           {bio && (
-            <p className="mt-1 whitespace-pre-wrap break-words text-[0.8125rem] text-text-secondary">{bio}</p>
+            <RichText html={bio} className="mt-1 text-[0.8125rem] text-text-secondary" />
           )}
           <div className="mt-3 flex gap-2">
             {own ? (

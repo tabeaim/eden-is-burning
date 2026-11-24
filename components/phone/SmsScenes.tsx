@@ -10,6 +10,7 @@ import { AuNameField, auNames } from "@/components/AuNameField";
 import { DatePicker } from "@/components/DatePicker";
 import { Toggle } from "@/components/Toggle";
 import { Sheet, SheetButton, SheetList } from "./Sheet";
+import { plainText } from "@/lib/html";
 
 // Bausteine für SMS-Szenen im Chat (siehe DESIGN.md → Messenger): Formular,
 // Szenen-Auswahl über dem Eingabefeld und das Verzeichnis hinter der Kopfzeile.
@@ -265,7 +266,7 @@ export function SceneDirectory({
                 </span>
                 {e.scene?.summary && (
                   <span className="block truncate text-[0.75rem] italic text-text-tertiary">
-                    {e.scene.summary}
+                    {plainText(e.scene.summary)}
                   </span>
                 )}
               </span>

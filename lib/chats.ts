@@ -2,6 +2,7 @@
 import type { Character, Chat, ChatMessage, ChatScene, Scene } from "./types";
 import { PHONE_AREA, PHONE_LOCATION, contactName, contactShortName } from "./phone";
 import { EDEN_AREA, areaName } from "./world";
+import { plainText } from "./html";
 
 // Nachricht mit ihrem Inplay-Tag („" = unbekannt, Altbestand ohne Trenner)
 export type DatedMessage = ChatMessage & { day: string };
@@ -200,7 +201,7 @@ export function messageSnippet(m: ChatMessage): string {
   if (m.kind === "gif") return "GIF";
   if (m.kind === "image") return "Foto";
   if (m.kind === "voice") return `Sprachnachricht (${voiceDuration(m.content)})`;
-  return m.content;
+  return plainText(m.content);
 }
 
 // Länge einer (textbasierten) Sprachnachricht, aus dem Text geschätzt: gut zwei

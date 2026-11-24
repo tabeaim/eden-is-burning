@@ -254,7 +254,7 @@ function Tags({ items }: { items: string[] }) {
           key={`${t}-${i}`}
           className="rounded-md bg-white/[0.08] px-2.5 py-1 text-[0.6875rem] uppercase tracking-wider text-text-primary"
         >
-          {t}
+          <RichText inline html={t} />
         </span>
       ))}
     </div>

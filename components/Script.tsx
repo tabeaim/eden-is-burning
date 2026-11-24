@@ -10,6 +10,7 @@ import { CharacterSelect } from "./CharacterSelect";
 import { Icon } from "./Icon";
 import { PhotoZoom } from "./PhotoZoom";
 import { ProfileName } from "./ProfileName";
+import { RichText } from "./RichText";
 
 // Wer spricht: für Mitlesende mit eigenem Charakter in der Szene (`viewer`) so,
 // wie die Person in dessen Handy steht (Kontaktname, Kontakt- bzw. Messenger-
@@ -50,9 +51,7 @@ export function ScriptView({ lines, viewer }: { lines: ScriptLine[]; viewer?: Ch
       {lines.map((l, i) => {
         if (l.k === "dir") {
           return (
-            <p key={i} className="whitespace-pre-wrap break-words italic text-text-tertiary">
-              {l.text}
-            </p>
+            <RichText key={i} html={l.text} className="italic text-text-tertiary" />
           );
         }
         const { who, name } = speaker(l);
@@ -73,7 +72,7 @@ export function ScriptView({ lines, viewer }: { lines: ScriptLine[]; viewer?: Ch
             <p className="min-w-0 flex-1 whitespace-pre-wrap break-words pt-0.5">
               <ProfileName id={who?.id} className="font-semibold">{name}</ProfileName>
               {l.tone && <span className="italic text-text-tertiary"> ({l.tone})</span>}
-              <span className="font-semibold">:</span> {l.text}
+              <span className="font-semibold">:</span> <RichText inline html={l.text} />
             </p>
           </div>
         );
