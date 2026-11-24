@@ -96,7 +96,7 @@ export function PhoneHome({
         phone.wallpaperLight ? "" : "bg-black/15"
       }`}
     >
-      {/* Angedeutete Apps – nicht anklickbar (außer „Einstellungen") */}
+      {/* Angedeutete Apps – nicht anklickbar (außer Einstellungen, Fotos und Notizen) */}
       <div className="grid grid-cols-4 justify-items-center gap-y-5">
         {phone.apps.map((a) => {
           const icon = (
