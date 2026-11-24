@@ -631,17 +631,18 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
 - **Andere Handys** (`/handy/andere`, „👀" in der Leiste über dem Gerät):
   immer aus Sicht des Handys, das ich gerade in der Hand habe („aus Sicht von …",
   bei mehreren Charakteren umschaltbar, gleiche Auswahl wie die Leiste über dem
-  Gerät). Oben waagerechte Reihen kleiner Handy-Vorschauen nach Wichtigkeit, nur
-  für diesen Charakter – „★ Favoriten" (in diesem Handy markiert), „Schreibt mit
-  dir" (SMS/Anrufe mit diesem Charakter, zuletzt aktiv vorn, „gestern" usw.),
-  „Aus deinen Szenen" (nach Anzahl gemeinsamer Szenen), „Relevante" (wer in
-  diesem Handy sonst unter „Relevante" steht: von Hand hinzugefügt oder mit
-  eigenem Kontakt-Eintrag), „Neu dabei" (letzte 14 Tage); jede Person nur in der ersten passenden Reihe. Wer in diesem Handy aus
-  „Relevante" entfernt wurde (`not_relevant`), steht in keiner Reihe außer den
-  Favoriten. Eigene Charaktere erscheinen nie.
-  Darunter eingeklappt „Weitere" (nur, wer oben in keiner Reihe steht); die
-  Suche blendet die Reihen aus und durchsucht alle. Ein Handy öffnet groß als `PhonePreview`, ‹ › bzw. Pfeiltasten
-  blättern innerhalb der Reihe, aus der es geöffnet wurde. Von dort aus dem eigenen Handy: „SMS schreiben" (`SMS_TO_KEY`),
+  Gerät). Eine einzige Liste ohne Überschriften, nach Relevanz für diesen
+  Charakter sortiert: zuerst Favoriten dieses Handys, dann wer mit ihm schreibt
+  oder telefoniert (zuletzt aktiv vorn), dann gemeinsame Szenen (nach Anzahl),
+  dann sonst unter „Relevante" (von Hand hinzugefügt oder mit eigenem
+  Kontakt-Eintrag), dann „neu dabei" (letzte 14 Tage), danach alle übrigen
+  alphabetisch. Wer in diesem Handy aus „Relevante" entfernt wurde
+  (`not_relevant`), rutscht zu den übrigen (außer Favoriten). Die kleine Zeile
+  unter dem Namen zeigt den Grund („★ Favorit", „gestern", „3 Szenen",
+  „neu dabei"), sonst das Modell. Eigene Charaktere erscheinen nie. Die Suche
+  filtert die Liste und behält die Reihenfolge. Ein Handy öffnet groß als
+  `PhonePreview`, ‹ › bzw. Pfeiltasten blättern durch die (gefilterte) Liste.
+  Von dort aus dem eigenen Handy: „SMS schreiben" (`SMS_TO_KEY`),
   „Anrufen" (`CALL_TO_KEY` öffnet den Anruf-Dialog), „Captic-Profil"
   (`CAPTIC_OPEN_KEY` = `profile:<id>`).
 - **Handy im Charakterprofil** (Reiter „Handy", `PhonePreview`): Look,

@@ -15,15 +15,15 @@ import { CAPTIC_OPEN_KEY } from "@/components/phone/captic/CapticApp";
 // Hintergrund, Profilbild und Modell (mit Suche); ein Handy lässt sich groß
 // öffnen, mit ‹ › weiterblättern, und von dort aus SMS schreiben, anrufen oder
 // das Captic-Profil öffnen – immer aus Sicht des Handys, das ich gerade in der
-// Hand habe (umschaltbar). Die Reihen oben hängen nur an diesem Charakter.
+// Hand habe (umschaltbar). Eine einzige Liste, nach Relevanz für diesen
+// Charakter sortiert (ohne Überschriften).
 export default function OtherPhonesPage() {
   const router = useRouter();
   const { characters, npcs, chats, chatMessages, calls, scenes } = useStore();
   const { me, myChars, setOwner } = useMyPhone();
   const [q, setQ] = useState("");
   const [now] = useState(() => Date.now());
-  const [restOpen, setRestOpen] = useState(false);
-  // offenes Handy und die Reihe, aus der es geöffnet wurde (‹ › blättert darin)
+  // offenes Handy und die Liste, aus der es geöffnet wurde (‹ › blättert darin)
   const [opened, setOpened] = useState<{ id: string; list: string[] } | null>(null);
 
   const query = q.trim().toLowerCase();
@@ -34,10 +34,9 @@ export default function OtherPhonesPage() {
     .filter((c) => hasPhone(c) && !mine.has(c.id) && c.player_id !== me?.player_id)
     .sort((a, b) => a.name.localeCompare(b.name, "de"));
   const byId = new Map(all.map((c) => [c.id, c]));
-  const shown = all.filter((c) => !query || c.name.toLowerCase().includes(query));
 
-  // Reihen oben, nach Wichtigkeit – jede Person nur in der ersten passenden Reihe
-  const rows = (() => {
+  // Reihenfolge nach Wichtigkeit – jede Person nur in der ersten passenden Gruppe
+  const ranked = (() => {
     // in diesem Handy aus „Relevante" entfernt: nicht in den Reihen (außer Favoriten)
     const notRelevant = new Set(me?.phone?.not_relevant ?? []);
     const used = new Set<string>();
@@ -91,18 +90,20 @@ export default function OtherPhonesPage() {
         .map((c) => c.id),
     );
 
-    return [
-      { key: "fav", title: "★ Favoriten", list: favorites, sub: (): string | null => null },
-      { key: "chat", title: "Schreibt mit dir", list: writing, sub: (c: Character) => relativeDay(last.get(c.id)) },
-      { key: "scenes", title: "Aus deinen Szenen", list: fromScenes, sub: (c: Character) => `${together.get(c.id)} ${together.get(c.id) === 1 ? "Szene" : "Szenen"}` },
-      { key: "relevant", title: "Relevante", list: relevant, sub: (): string | null => null },
-      { key: "new", title: "Neu dabei", list: fresh, sub: (c: Character) => relativeDay(c.created_at) },
-    ].filter((r) => r.list.length > 0);
+    // ohne Überschriften: die Gruppen geben nur die Reihenfolge vor, die
+    // kleine Zeile unter dem Namen verrät, warum jemand weit vorn steht
+    const hint = new Map<string, string | null>();
+    for (const c of favorites) hint.set(c.id, "★ Favorit");
+    for (const c of writing) hint.set(c.id, relativeDay(last.get(c.id)));
+    for (const c of fromScenes) hint.set(c.id, `${together.get(c.id)} ${together.get(c.id) === 1 ? "Szene" : "Szenen"}`);
+    for (const c of fresh) hint.set(c.id, "neu dabei");
+    const front = [...favorites, ...writing, ...fromScenes, ...relevant, ...fresh];
+    const inFront = new Set(front.map((c) => c.id));
+    return { list: [...front, ...all.filter((c) => !inFront.has(c.id))], hint };
   })();
 
-  // Raster unten: ohne Suche nur, wer oben in keiner Reihe steht; mit Suche alle Treffer
-  const inRows = new Set(rows.flatMap((r) => r.list.map((c) => c.id)));
-  const grid = query ? shown : shown.filter((c) => !inRows.has(c.id));
+  // eine einzige Liste, nach Relevanz sortiert; die Suche filtert sie nur
+  const grid = ranked.list.filter((c) => !query || c.name.toLowerCase().includes(query));
 
   const openList = opened?.list ?? [];
   const index = opened ? openList.indexOf(opened.id) : -1;
@@ -111,7 +112,7 @@ export default function OtherPhonesPage() {
     if (!opened || !openList.length) return;
     setOpened({ ...opened, id: openList[(index + dir + openList.length) % openList.length] });
   };
-  const setOpenId = (id: string | null, list: Character[] = shown) =>
+  const setOpenId = (id: string | null, list: Character[] = grid) =>
     setOpened(id ? { id, list: list.map((c) => c.id) } : null);
 
   // Pfeiltasten blättern, Esc schließt
@@ -179,50 +180,18 @@ export default function OtherPhonesPage() {
         </label>
       </div>
 
-      {shown.length === 0 && (
+      {grid.length === 0 && (
         <p className="pt-16 text-center text-[0.875rem] text-text-tertiary">
           {query ? "Kein Handy gefunden." : "Noch keine anderen Handys."}
         </p>
       )}
 
-      {/* Reihen nach Wichtigkeit (nur ohne Suche) – waagerecht scrollbar */}
-      {!query &&
-        rows.map((r) => (
-          <section key={r.key} className="mt-5">
-            <h2 className="mb-2 text-[0.75rem] font-semibold uppercase tracking-wider text-text-tertiary">
-              {r.title} <span className="font-normal">· {r.list.length}</span>
-            </h2>
-            <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
-              {r.list.map((c) => (
-                <PhoneTile key={c.id} c={c} small sub={r.sub(c)} onOpen={() => setOpenId(c.id, r.list)} />
-              ))}
-            </div>
-          </section>
+      {/* alle Handys in einer Liste: wer für dieses Handy wichtig ist, steht vorn */}
+      <div className="mt-5 grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
+        {grid.map((c) => (
+          <PhoneTile key={c.id} c={c} sub={ranked.hint.get(c.id) ?? modelLabel(c)} onOpen={() => setOpenId(c.id, grid)} />
         ))}
-
-      {/* Rest eingeklappt (ohne Suche): nur, wer oben in keiner Reihe steht */}
-      {grid.length > 0 &&
-        (query || !rows.length ? (
-          <h2 className="mb-2 mt-6 text-[0.75rem] font-semibold uppercase tracking-wider text-text-tertiary">
-            {query ? "Suchergebnis" : "Alle"} <span className="font-normal">· {grid.length}</span>
-          </h2>
-        ) : (
-          <button
-            onClick={() => setRestOpen((v) => !v)}
-            aria-expanded={restOpen}
-            className="mb-2 mt-6 flex items-center gap-1 text-[0.75rem] font-semibold uppercase tracking-wider text-text-tertiary hover:text-text-secondary"
-          >
-            Weitere <span className="font-normal">· {grid.length}</span>
-            <Icon name="chevron-right" size={14} className={`transition-transform ${restOpen ? "-rotate-90" : "rotate-90"}`} />
-          </button>
-        ))}
-      {(query || !rows.length || restOpen) && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
-          {grid.map((c) => (
-            <PhoneTile key={c.id} c={c} sub={modelLabel(c)} onOpen={() => setOpenId(c.id, grid)} />
-          ))}
-        </div>
-      )}
+      </div>
 
       {open && (
         <div
@@ -302,22 +271,20 @@ function relativeDay(iso: string | undefined): string | null {
 }
 
 // Kleine Handy-Vorschau: Gehäusefarbe als Rahmen, Hintergrund, Profilbild, Name
-function PhoneTile({ c, sub, small = false, onOpen }: { c: Character; sub?: string | null; small?: boolean; onOpen: () => void }) {
+function PhoneTile({ c, sub, onOpen }: { c: Character; sub?: string | null; onOpen: () => void }) {
   const phone = resolvePhone(c);
   return (
     <button
       onClick={onOpen}
       style={{ ["--frame" as string]: phone.frame }}
-      className={`group flex shrink-0 flex-col overflow-hidden rounded-2xl border-[4px] border-[var(--frame)] text-left shadow-lg shadow-black/40 transition-transform hover:-translate-y-0.5 ${
-        small ? "w-[96px]" : ""
-      }`}
+      className={`group flex shrink-0 flex-col overflow-hidden rounded-2xl border-[4px] border-[var(--frame)] text-left shadow-lg shadow-black/40 transition-transform hover:-translate-y-0.5`}
     >
       <span
         style={{ background: phone.wallpaper }}
         className={`flex aspect-[9/13] items-center justify-center p-2 ${phone.burner ? "grayscale" : ""}`}
       >
         <span className="pointer-events-none">
-          <PhoneAvatar character={c} size={small ? 44 : 52} />
+          <PhoneAvatar character={c} size={52} />
         </span>
       </span>
       <span className="block bg-bg-surface px-2 py-1">
