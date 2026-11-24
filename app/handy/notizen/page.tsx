@@ -218,15 +218,6 @@ export default function NotesPage() {
             </button>
           );
         })}
-        {!ordering && (
-          <button
-            onClick={newNote}
-            className="flex w-full items-center gap-2 px-3 py-3 text-left text-[0.9375rem] font-medium text-accent hover:bg-white/[0.03]"
-          >
-            <Icon name="plus" size={18} />
-            Neue Notiz
-          </button>
-        )}
       </div>
       {confirmDialog}
     </PhoneFrame>

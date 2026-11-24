@@ -695,8 +695,8 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Home-Button des alten Modells) führt immer dorthin zurück.
 - **Notizen** (`/handy/notizen`, `phone.notes`): Liste mit Titel und erster
   Zeile, Stift oben rechts legt eine neue an, Antippen öffnet sie zum Schreiben
-  (gespeichert wird laufend beim Tippen, leere Notizen verschwinden), unter der
-  Liste „+ Neue Notiz". Löschen: Mülleimer in der offenen Notiz oder „Ordnen"
+  (gespeichert wird laufend beim Tippen, leere Notizen verschwinden) – kein
+  zweiter „Neue Notiz"-Knopf unter der Liste. Löschen: Mülleimer in der offenen Notiz oder „Ordnen"
   (↑ ↓ verschieben, ✕ löschen), immer mit `ConfirmDialog`.
 - **Fotos** (`/handy/fotos`, `phone.photos`): Dreier-Raster, Plus oben rechts lädt
   mehrere auf einmal hoch (`PHOTOS_PER_UPLOAD`, insgesamt `PHOTOS_MAX`, neueste
