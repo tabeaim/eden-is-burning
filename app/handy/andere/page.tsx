@@ -17,22 +17,82 @@ import { CAPTIC_OPEN_KEY } from "@/components/phone/captic/CapticApp";
 // das Captic-Profil öffnen – immer aus Sicht des eigenen Handys.
 export default function OtherPhonesPage() {
   const router = useRouter();
-  const { characters, npcs } = useStore();
-  const { me } = useMyPhone();
+  const { characters, npcs, chats, chatMessages, calls, scenes } = useStore();
+  const { me, myChars } = useMyPhone();
   const [q, setQ] = useState("");
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [now] = useState(() => Date.now());
+  // offenes Handy und die Reihe, aus der es geöffnet wurde (‹ › blättert darin)
+  const [opened, setOpened] = useState<{ id: string; list: string[] } | null>(null);
 
   const query = q.trim().toLowerCase();
+  const mine = new Set(myChars.map((c) => c.id));
   const all = [...characters, ...npcs]
-    .filter((c) => hasPhone(c) && c.player_id !== me?.player_id)
+    .filter((c) => hasPhone(c) && !mine.has(c.id) && c.player_id !== me?.player_id)
     .sort((a, b) => a.name.localeCompare(b.name, "de"));
+  const byId = new Map(all.map((c) => [c.id, c]));
   const shown = all.filter((c) => !query || c.name.toLowerCase().includes(query));
-  const index = shown.findIndex((c) => c.id === openId);
-  const open = index >= 0 ? shown[index] : null;
+
+  // Reihen oben, nach Wichtigkeit – jede Person nur in der ersten passenden Reihe
+  const rows = (() => {
+    const used = new Set<string>();
+    const take = (ids: string[]) =>
+      ids.filter((id) => byId.has(id) && !used.has(id) && (used.add(id), true)).map((id) => byId.get(id)!);
+
+    // 1. Favoriten in einem meiner Handys
+    const favorites = take([...new Set(myChars.flatMap((c) => c.phone?.favorites ?? []))]);
+
+    // 2. Schreibt mit dir: SMS oder Anrufe mit meinen Charakteren, zuletzt aktiv vorn
+    const last = new Map<string, string>();
+    const touch = (id: string, at: string) => {
+      if (!mine.has(id) && at > (last.get(id) ?? "")) last.set(id, at);
+    };
+    const newestIn = new Map<string, string>();
+    for (const m of chatMessages) if (m.created_at > (newestIn.get(m.chat_id) ?? "")) newestIn.set(m.chat_id, m.created_at);
+    for (const c of chats) {
+      if (!c.participant_ids.some((id) => mine.has(id))) continue;
+      const at = newestIn.get(c.id);
+      if (at) for (const id of c.participant_ids) touch(id, at);
+    }
+    for (const call of calls) {
+      if (mine.has(call.caller_id)) touch(call.callee_id, call.created_at);
+      if (mine.has(call.callee_id)) touch(call.caller_id, call.created_at);
+    }
+    const writing = take([...last.keys()].sort((a, b) => last.get(b)!.localeCompare(last.get(a)!)));
+
+    // 3. Aus deinen Szenen
+    const together = new Map<string, number>();
+    for (const sc of scenes) {
+      if (!sc.participant_ids.some((id) => mine.has(id))) continue;
+      for (const id of sc.participant_ids) together.set(id, (together.get(id) ?? 0) + 1);
+    }
+    const fromScenes = take([...together.keys()].sort((a, b) => together.get(b)! - together.get(a)!));
+
+    // 4. Neu dabei: in den letzten 14 Tagen angelegt
+    const since = new Date(now - 14 * 86_400_000).toISOString();
+    const fresh = take(
+      all
+        .filter((c) => c.created_at && c.created_at >= since)
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))
+        .map((c) => c.id),
+    );
+
+    return [
+      { key: "fav", title: "★ Favoriten", list: favorites, sub: (): string | null => null },
+      { key: "chat", title: "Schreibt mit dir", list: writing, sub: (c: Character) => relativeDay(last.get(c.id)) },
+      { key: "scenes", title: "Aus deinen Szenen", list: fromScenes, sub: (c: Character) => `${together.get(c.id)} ${together.get(c.id) === 1 ? "Szene" : "Szenen"}` },
+      { key: "new", title: "Neu dabei", list: fresh, sub: (c: Character) => relativeDay(c.created_at) },
+    ].filter((r) => r.list.length > 0);
+  })();
+
+  const openList = opened?.list ?? [];
+  const index = opened ? openList.indexOf(opened.id) : -1;
+  const open = opened ? (byId.get(opened.id) ?? null) : null;
   const step = (dir: -1 | 1) => {
-    if (!shown.length) return;
-    setOpenId(shown[(index + dir + shown.length) % shown.length].id);
+    if (!opened || !openList.length) return;
+    setOpened({ ...opened, id: openList[(index + dir + openList.length) % openList.length] });
   };
+  const setOpenId = (id: string | null, list: Character[] = shown) =>
+    setOpened(id ? { id, list: list.map((c) => c.id) } : null);
 
   // Pfeiltasten blättern, Esc schließt
   useEffect(() => {
@@ -56,8 +116,6 @@ export default function OtherPhonesPage() {
     router.push(href);
   };
 
-  const modelLabel = (c: Character) =>
-    PHONE_MODELS.find((m) => m.key === resolvePhone(c).model)?.label ?? "";
   const actionBtn =
     "flex items-center gap-1.5 rounded-md border border-border-subtle bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] font-medium text-text-primary hover:bg-white/[0.08]";
 
@@ -86,31 +144,28 @@ export default function OtherPhonesPage() {
         </p>
       )}
 
-      <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-3">
-        {shown.map((c) => {
-          const phone = resolvePhone(c);
-          return (
-            <button
-              key={c.id}
-              onClick={() => setOpenId(c.id)}
-              style={{ ["--frame" as string]: phone.frame }}
-              className="group flex flex-col overflow-hidden rounded-2xl border-[5px] border-[var(--frame)] text-left shadow-lg shadow-black/40 transition-transform hover:-translate-y-0.5"
-            >
-              <span
-                style={{ background: phone.wallpaper }}
-                className={`flex aspect-[9/14] flex-col items-center justify-center gap-2 p-2 ${phone.burner ? "grayscale" : ""}`}
-              >
-                <span className="pointer-events-none">
-                  <PhoneAvatar character={c} size={56} />
-                </span>
-              </span>
-              <span className="block bg-bg-surface px-2 py-1.5">
-                <span className="block truncate text-[0.8125rem] font-semibold text-text-primary">{c.name}</span>
-                <span className="block truncate text-[0.6875rem] text-text-tertiary">{modelLabel(c)}</span>
-              </span>
-            </button>
-          );
-        })}
+      {/* Reihen nach Wichtigkeit (nur ohne Suche) – waagerecht scrollbar */}
+      {!query &&
+        rows.map((r) => (
+          <section key={r.key} className="mt-5">
+            <h2 className="mb-2 text-[0.75rem] font-semibold uppercase tracking-wider text-text-tertiary">
+              {r.title} <span className="font-normal">· {r.list.length}</span>
+            </h2>
+            <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
+              {r.list.map((c) => (
+                <PhoneTile key={c.id} c={c} small sub={r.sub(c)} onOpen={() => setOpenId(c.id, r.list)} />
+              ))}
+            </div>
+          </section>
+        ))}
+
+      <h2 className="mb-2 mt-6 text-[0.75rem] font-semibold uppercase tracking-wider text-text-tertiary">
+        {query ? "Suchergebnis" : "Alle"} <span className="font-normal">· {shown.length}</span>
+      </h2>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
+        {shown.map((c) => (
+          <PhoneTile key={c.id} c={c} sub={modelLabel(c)} onOpen={() => setOpenId(c.id)} />
+        ))}
       </div>
 
       {open && (
@@ -130,7 +185,7 @@ export default function OtherPhonesPage() {
               <div className="min-w-0 flex-1 text-center">
                 <div className="truncate text-[1rem] font-semibold text-text-primary">Handy von {open.name}</div>
                 <div className="text-[0.75rem] text-text-tertiary">
-                  {index + 1} / {shown.length} · {modelLabel(open)}
+                  {index + 1} / {openList.length} · {modelLabel(open)}
                 </div>
               </div>
               <button
@@ -174,5 +229,45 @@ export default function OtherPhonesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+const modelLabel = (c: Character) => PHONE_MODELS.find((m) => m.key === resolvePhone(c).model)?.label ?? "";
+
+// „heute", „gestern", „vor 3 Tagen", sonst das Datum
+function relativeDay(iso: string | undefined): string | null {
+  if (!iso) return null;
+  const day = (d: Date) => Math.floor((d.getTime() - d.getTimezoneOffset() * 60_000) / 86_400_000);
+  const diff = day(new Date()) - day(new Date(iso));
+  if (diff <= 0) return "heute";
+  if (diff === 1) return "gestern";
+  if (diff < 7) return `vor ${diff} Tagen`;
+  return new Date(iso).toLocaleDateString("de-DE", { day: "numeric", month: "short" });
+}
+
+// Kleine Handy-Vorschau: Gehäusefarbe als Rahmen, Hintergrund, Profilbild, Name
+function PhoneTile({ c, sub, small = false, onOpen }: { c: Character; sub?: string | null; small?: boolean; onOpen: () => void }) {
+  const phone = resolvePhone(c);
+  return (
+    <button
+      onClick={onOpen}
+      style={{ ["--frame" as string]: phone.frame }}
+      className={`group flex shrink-0 flex-col overflow-hidden rounded-2xl border-[4px] border-[var(--frame)] text-left shadow-lg shadow-black/40 transition-transform hover:-translate-y-0.5 ${
+        small ? "w-[96px]" : ""
+      }`}
+    >
+      <span
+        style={{ background: phone.wallpaper }}
+        className={`flex aspect-[9/13] items-center justify-center p-2 ${phone.burner ? "grayscale" : ""}`}
+      >
+        <span className="pointer-events-none">
+          <PhoneAvatar character={c} size={small ? 44 : 52} />
+        </span>
+      </span>
+      <span className="block bg-bg-surface px-2 py-1">
+        <span className="block truncate text-[0.75rem] font-semibold text-text-primary">{c.name.split(" ")[0]}</span>
+        <span className="block truncate text-[0.625rem] text-text-tertiary">{sub || c.name}</span>
+      </span>
+    </button>
   );
 }

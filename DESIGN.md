@@ -626,9 +626,13 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Rechtsklick auf einen Eintrag: „Anruf abbrechen" (eigener,
   klingelnder) und „Aus der Anrufliste löschen" (nur auf diesem Handy).
 - **Andere Handys** (`/handy/andere`, „👀" in der Leiste über dem Gerät):
-  Übersicht aller Handys fremder Charaktere (Hintergrund, Profilbild, Modell;
-  Suche). Ein Handy öffnet groß als `PhonePreview`, ‹ › bzw. Pfeiltasten
-  blättern. Von dort aus dem eigenen Handy: „SMS schreiben" (`SMS_TO_KEY`),
+  oben waagerechte Reihen kleiner Handy-Vorschauen nach Wichtigkeit – „★ Favoriten"
+  (in einem meiner Handys markiert), „Schreibt mit dir" (SMS/Anrufe mit meinen
+  Charakteren, zuletzt aktiv vorn, „gestern" usw.), „Aus deinen Szenen" (nach
+  Anzahl gemeinsamer Szenen), „Neu dabei" (letzte 14 Tage); jede Person nur in
+  der ersten passenden Reihe. Darunter „Alle" als Raster; die Suche blendet die
+  Reihen aus. Ein Handy öffnet groß als `PhonePreview`, ‹ › bzw. Pfeiltasten
+  blättern innerhalb der Reihe, aus der es geöffnet wurde. Von dort aus dem eigenen Handy: „SMS schreiben" (`SMS_TO_KEY`),
   „Anrufen" (`CALL_TO_KEY` öffnet den Anruf-Dialog), „Captic-Profil"
   (`CAPTIC_OPEN_KEY` = `profile:<id>`).
 - **Handy im Charakterprofil** (Reiter „Handy", `PhonePreview`): Look,
