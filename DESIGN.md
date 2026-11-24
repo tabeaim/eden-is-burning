@@ -668,6 +668,9 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Bildunterschrift; Mülleimer oben rechts löscht. „Ordnen": ‹ › verschieben,
   ✕ löschen (beides mit `ConfirmDialog`).
   Beides liegt im Handy des Charakters (`characters.phone`) – keine eigene Tabelle.
+  Das Fotos-Icon auf dem Startbildschirm zeigt das neueste Foto. Fremde Handys
+  (`PhonePreview`: Charakterprofil, „Andere Handys") zeigen Notizen und Fotos
+  zum Ansehen, ohne Bearbeiten.
 - **Captic** (`/handy/captic`, `components/phone/captic/`, `lib/captic.ts`):
   fiktives Foto-Netzwerk, immer aus Sicht des Charakters, dessen Handy man in der
   Hand hat. Leiste unten: Feed · Entdecken · Neuer Beitrag · Mein Profil; die
@@ -761,6 +764,13 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   Hand gesetzte Uhrzeit ist der neue Ausgangspunkt. Über dem Eingabefeld steht sie eingeklappt als kleiner Chip
   („🕐 23:42 · auto"); aufgeklappt lässt sie sich per Zeitfeld oder
   +1/+3/+9/+24 von Hand setzen, „✨ Automatisch" schaltet zurück.
+
+## Alter
+
+Im Profil und in den Listen (Charaktere, Spieler*innen, Beziehungen) steht das
+Alter am Datum der neuesten Szene des Charakters (ohne AU-Szenen und Entwürfe,
+`useCurrentAge`); ohne Szene am festen Stichtag `DEFAULT_AGE_DATE`. In einer
+Szene gilt wie bisher deren eigenes Datum.
 
 ## Detailseiten (Szene, Charakter, Ort)
 

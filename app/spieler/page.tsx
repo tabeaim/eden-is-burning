@@ -4,6 +4,7 @@ import { playerImage } from "@/lib/avatar";
 import Link from "next/link";
 import { useMemo } from "react";
 import { useStore } from "@/lib/store";
+import { useCurrentAge } from "@/lib/use-age";
 import { formatDateTimeShort, formatInplayDateShort, capFirst } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import type { Character, Player } from "@/lib/types";
@@ -141,7 +142,8 @@ function PlayerRow({
 // Eine Zeile in der Charakter-Liste: kleiner rechteckiger Avatar (Ausnahme vom
 // runden Standard, damit die Liste wie eine Galerie wirkt), Name, Alter · Beruf
 function CharacterRow({ c }: { c: Character }) {
-  const facts = [c.age ? `${c.age}` : null, capFirst(c.role)].filter(Boolean).join(" · ");
+  const age = useCurrentAge()(c);
+  const facts = [age != null ? `${age}` : null, capFirst(c.role)].filter(Boolean).join(" · ");
   return (
     <Link
       href={`/charaktere/${c.id}`}

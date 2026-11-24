@@ -8,6 +8,7 @@ import { NewCharacterButton } from "@/components/NewCharacterButton";
 import { TIER_NAMES, isPaused, tierOf } from "@/lib/characters";
 import { StatistActions } from "@/components/StatistActions";
 import { useStore } from "@/lib/store";
+import { useCurrentAge } from "@/lib/use-age";
 import { TabRule } from "@/components/TabRule";
 import { useSessionState } from "@/lib/session-state";
 import { formatInplayDateShort, capFirst } from "@/lib/format";
@@ -221,6 +222,7 @@ function CharacterCard({
   const tier = tierOf(c);
   const gone = useCharacterGone(c);
   const paused = isPaused(c);
+  const shownAge = useCurrentAge()(c);
   return (
     <div
       title={paused ? "Charakter pausiert" : undefined}
@@ -260,7 +262,7 @@ function CharacterCard({
               {/* langer Text lässt sich im Overlay scrollen */}
               <div className="my-auto">
                 <div className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-wider text-text-primary">
-                  {[capFirst(c.role), c.age ? `${c.age}` : null].filter(Boolean).join(" · ")}
+                  {[capFirst(c.role), shownAge != null ? `${shownAge}` : null].filter(Boolean).join(" · ")}
                 </div>
                 <RichText html={c.bio} className="text-[0.8125rem] leading-relaxed text-text-primary/90" />
               </div>
