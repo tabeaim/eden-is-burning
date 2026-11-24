@@ -48,7 +48,8 @@ export default function PhotosPage() {
 
   const save = (next: PhonePhoto[]) => updateCharacter(owner.id, { phone: { ...owner.phone, photos: next } });
 
-  async function add(list: FileList | null) {
+  async function add(list: FileList | File[] | null) {
+    if (uploading) return;
     const files = [...(list ?? [])].filter((f) => f.type.startsWith("image/"));
     if (!files.length) return;
     setError(null);
@@ -106,6 +107,7 @@ export default function PhotosPage() {
         setOwner(id);
       }}
     >
+      <PasteImages onImages={(files) => void add(files)} />
       <PhoneHeader
         back="/handy"
         actions={
@@ -157,7 +159,8 @@ export default function PhotosPage() {
         {error && <p className="px-3 py-2 text-center text-[0.8125rem] text-red-300">{error}</p>}
         {photos.length === 0 && !uploading && (
           <p className="px-8 pt-16 text-center text-[0.875rem] text-text-tertiary">
-            Noch keine Fotos. Mit dem Plus oben rechts fügst du welche hinzu.
+            Noch keine Fotos. Mit dem Plus oben rechts fügst du welche hinzu – oder du fügst ein
+            Bild mit Strg+V ein.
           </p>
         )}
         <div className="grid grid-cols-3 gap-0.5">
@@ -274,4 +277,20 @@ export default function PhotosPage() {
       )}
     </PhoneFrame>
   );
+}
+
+// Strg+V / Cmd+V fügt Bilder aus der Zwischenablage hinzu (auch beim Tippen einer
+// Bildunterschrift – reiner Text wird dann ganz normal eingefügt)
+function PasteImages({ onImages }: { onImages: (files: File[]) => void }) {
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const files = [...(e.clipboardData?.files ?? [])].filter((f) => f.type.startsWith("image/"));
+      if (!files.length) return;
+      e.preventDefault();
+      onImages(files);
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [onImages]);
+  return null;
 }

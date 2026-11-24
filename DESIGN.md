@@ -692,7 +692,7 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   (↑ ↓ verschieben, ✕ löschen), immer mit `ConfirmDialog`.
 - **Fotos** (`/handy/fotos`, `phone.photos`): Dreier-Raster, Plus oben rechts lädt
   mehrere auf einmal hoch (`PHOTOS_PER_UPLOAD`, insgesamt `PHOTOS_MAX`, neueste
-  vorne). Antippen öffnet die Großansicht im Display mit ‹ ›, Zähler und
+  vorne); Strg+V / Cmd+V fügt Bilder aus der Zwischenablage ein. Antippen öffnet die Großansicht im Display mit ‹ ›, Zähler und
   Bildunterschrift; Mülleimer oben rechts löscht. „Ordnen": ‹ › verschieben,
   ✕ löschen (beides mit `ConfirmDialog`).
   Beides liegt im Handy des Charakters (`characters.phone`) – keine eigene Tabelle.
