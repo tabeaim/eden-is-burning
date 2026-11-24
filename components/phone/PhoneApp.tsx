@@ -27,6 +27,7 @@ import {
 import { Sheet, SheetButton, SheetList } from "@/components/phone/Sheet";
 import { useLongPress } from "@/components/phone/useLongPress";
 import { CALL_TO_KEY, MAILBOX_KEY, SMS_TO_KEY, VOICEMAIL_MAX } from "@/lib/phone";
+import { RichText } from "@/components/RichText";
 
 const first = (c: Character | undefined) => c?.name.split(" ")[0] ?? "?";
 const when = (c: Pick<PhoneCall, "inplay_date" | "inplay_time">) =>
@@ -399,7 +400,7 @@ export function PhoneApp({ initialView }: { initialView: "log" | "contacts" }) {
               </div>
             </div>
             <p className="mt-3 whitespace-pre-wrap break-words text-[0.9375rem] leading-relaxed text-text-primary">
-              „{heard.voicemail}“
+              „<RichText inline html={heard.voicemail ?? ""} />“
             </p>
             <div className="mt-4 flex justify-end">
               <button

@@ -37,6 +37,7 @@ import { auNames } from "@/components/AuNameField";
 import { PlayerCharacterBubble } from "@/components/PlayerCharacterBubble";
 import type { Character, OffScene, Plot, Scene } from "@/lib/types";
 import { SCENE_KINDS, sceneHref, sceneKind, scenePlace } from "@/lib/chats";
+import { RichText } from "@/components/RichText";
 
 const MONTHS_DE = [
   "Januar", "Februar", "März", "April", "Mai", "Juni",
@@ -677,7 +678,7 @@ function SceneEntry({
           )}
         </FactsLine>
         {scene.summary && (
-          <p className="mt-2 text-[0.875rem] italic text-text-secondary">{scene.summary}</p>
+          <RichText html={scene.summary} className="mt-2 text-[0.875rem] italic text-text-secondary" />
         )}
         {lastPost && <div className="mt-2 sm:hidden">{lastLink}</div>}
       </div>
@@ -732,7 +733,7 @@ function OffEntry({
         </h3>
         <FactsLine participants={participants} location={off.location_name} />
         {off.summary && (
-          <p className="mt-2 text-[0.875rem] italic text-text-secondary">{off.summary}</p>
+          <RichText html={off.summary} className="mt-2 text-[0.875rem] italic text-text-secondary" />
         )}
       </div>
     </div>

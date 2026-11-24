@@ -67,6 +67,11 @@ function clean(node: Element) {
   }
 }
 
+// Enthält der Text HTML-Tags? („<3" o. Ä. zählt nicht)
+export function hasHtml(input: string | null | undefined): boolean {
+  return /<[a-z!/][^>]*>/i.test(input ?? "");
+}
+
 // Text-Signatur als HTML: reiner Text behält seine Zeilenumbrüche, HTML wird
 // entschärft. Ohne Browser (Server) kommt der Text nur maskiert zurück.
 export function signatureHtml(input: string | null | undefined): string {

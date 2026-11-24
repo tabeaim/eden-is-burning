@@ -48,6 +48,8 @@ import {
   phoneIconBtn,
   useMyPhone,
 } from "@/components/phone/PhoneFrame";
+import { RichText } from "@/components/RichText";
+import { plainText } from "@/lib/html";
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -613,7 +615,7 @@ function ChatView({ chat }: { chat: Chat }) {
                     e.preventDefault();
                     setSceneMenu(sc.id);
                   }}
-                  title={sc.summary || "Szenen-Optionen (beenden, bearbeiten …)"}
+                  title={plainText(sc.summary) || "Szenen-Optionen (beenden, bearbeiten …)"}
                   className={`flex min-w-0 max-w-[72%] items-center gap-1.5 rounded-full border px-3 py-1 text-[0.75rem] font-semibold ${
                     sc.status === "active"
                       ? "border-accent/50 text-text-primary"
@@ -719,7 +721,7 @@ function ChatView({ chat }: { chat: Chat }) {
                 ) : m.kind === "voice" ? (
                   <VoiceMessage id={m.id} text={m.content} />
                 ) : (
-                  <span className="whitespace-pre-wrap break-words">{m.content}</span>
+                  <RichText inline html={m.content} />
                 )}
                 {m.inplay_time &&
                   (media ? (
@@ -1273,7 +1275,7 @@ function ChatView({ chat }: { chat: Chat }) {
               {menuScene.status === "closed" && " · beendet"}
             </div>
             {menuScene.summary && (
-              <p className="mt-1 text-[0.8125rem] italic text-text-secondary">{menuScene.summary}</p>
+              <RichText html={menuScene.summary} className="mt-1 text-[0.8125rem] italic text-text-secondary" />
             )}
           </div>
           <SheetList>
@@ -1701,7 +1703,7 @@ function VoiceMessage({ id, text }: { id: string; text: string }) {
         </span>
         <span className="shrink-0 text-[0.75rem] tabular-nums opacity-70">{voiceDuration(text)}</span>
       </span>
-      {open && <span className="mt-1.5 block whitespace-pre-wrap break-words">{text}</span>}
+      {open && <RichText inline html={text} className="mt-1.5 block" />}
     </span>
   );
 }

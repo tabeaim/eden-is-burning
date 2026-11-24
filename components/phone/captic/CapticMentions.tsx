@@ -5,6 +5,7 @@ import type { Character } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { resolvePhone } from "@/lib/phone";
 import { capticHandle } from "@/lib/captic";
+import { hasHtml, signatureHtml } from "@/lib/html";
 import { CapticAvatar } from "./CapticAvatar";
 
 // Alle Profile, die sich verlinken lassen (Charaktere mit Captic)
@@ -45,8 +46,22 @@ export function normalizeMentions(text: string, profiles: Character[]): string {
 }
 
 // Text mit anklickbaren Verlinkungen: „@nutzername" führt aufs Profil.
+// Mit HTML wird der Text erst entschärft, dann werden die Erwähnungen in den
+// Textknoten markiert (ein Klick darauf führt ebenfalls aufs Profil).
 export function MentionText({ text, onProfile }: { text: string; onProfile: (characterId: string) => void }) {
   const { byHandle } = useCapticProfiles();
+  const html = useMemo(() => (hasHtml(text) ? mentionHtml(signatureHtml(text), byHandle) : null), [text, byHandle]);
+  if (html !== null)
+    return (
+      <span
+        className="rich-text [&_a]:underline [&_img]:inline-block [&_img]:max-w-full"
+        onClick={(e) => {
+          const id = (e.target as HTMLElement).closest<HTMLElement>("[data-mention]")?.dataset.mention;
+          if (id) onProfile(id);
+        }}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
   return (
     <>
       {text.split(/(@[A-Za-z0-9._]+)/).map((part, i) => {
@@ -67,6 +82,39 @@ export function MentionText({ text, onProfile }: { text: string; onProfile: (cha
       })}
     </>
   );
+}
+
+function mentionHtml(html: string, byHandle: Map<string, Character>): string {
+  if (!html.includes("@") || typeof DOMParser === "undefined") return html;
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, "text/html");
+  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+  const nodes: Text[] = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode as Text);
+  for (const node of nodes) {
+    if (!node.data.includes("@") || node.parentElement?.closest("a")) continue;
+    const parts = node.data.split(/(@[A-Za-z0-9._]+)/);
+    const out: Node[] = [];
+    for (const part of parts) {
+      const handle = part.slice(1).replace(/[._]+$/, "");
+      const who = part.startsWith("@")
+        ? (byHandle.get(handle.toLowerCase()) ?? byHandle.get(part.slice(1).toLowerCase()))
+        : undefined;
+      if (!who) {
+        if (part) out.push(doc.createTextNode(part));
+        continue;
+      }
+      const shown = `@${capticHandle(who)}`;
+      const el = doc.createElement("span");
+      el.dataset.mention = who.id;
+      el.setAttribute("role", "button");
+      el.className = "cursor-pointer font-medium text-accent hover:underline";
+      el.textContent = shown;
+      out.push(el);
+      if (part.length > shown.length) out.push(doc.createTextNode(part.slice(shown.length)));
+    }
+    node.replaceWith(...out);
+  }
+  return doc.body.innerHTML;
 }
 
 // Vorschläge, während man „@…" tippt (Nutzername oder Charaktername). Die Auswahl

@@ -8,6 +8,7 @@ import { formatInplayDate } from "@/lib/format";
 import { Icon } from "@/components/Icon";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { CapticAvatar } from "./CapticAvatar";
+import { RichText } from "@/components/RichText";
 
 const STORY_SECONDS = 6;
 
@@ -280,7 +281,7 @@ export function StoryViewer({
         // Text als Blase über dem Bild (wie ein Text-Sticker), im dunklen Glas der App
         <div className="pointer-events-none relative mt-auto flex justify-center px-5 pb-10">
           <p className="max-w-full whitespace-pre-wrap break-words rounded-2xl border border-white/20 bg-black/60 px-3.5 py-2 text-center text-[0.8125rem] font-medium leading-snug text-white shadow-lg shadow-black/50 backdrop-blur-md">
-            {story.caption}
+            <RichText inline html={story.caption} />
           </p>
         </div>
       )}
