@@ -124,7 +124,7 @@ export function PhoneSettings({
     }`;
   const swatch = (active: boolean) =>
     `h-9 w-9 rounded-full border border-border-subtle ${active ? "ring-2 ring-accent ring-offset-2 ring-offset-bg-surface" : ""}`;
-  const label = "mb-1.5 text-[0.875rem] text-text-secondary";
+  const label = "mb-2 text-[0.8125rem] font-medium text-text-secondary";
 
   return (
     <div className="flex flex-col gap-4">
@@ -151,6 +151,7 @@ export function PhoneSettings({
       )}
       {raw.disabled ? null : (
       <>
+      <Group title="profil">
       <div>
         <div className={label}>
           Profilbild im Messenger{" "}
@@ -181,7 +182,9 @@ export function PhoneSettings({
           />
         </div>
       </div>
+      </Group>
 
+      <Group title="look">
       <div>
         <div className={label}>Modell</div>
         <div className="flex flex-wrap gap-1.5">
@@ -238,12 +241,14 @@ export function PhoneSettings({
         </div>
       </div>
 
+      </Group>
+
       {/* Akku: fester Wert, sinkt und lädt nicht von selbst (auch per Doppelklick
           aufs Akku-Symbol in der Statusleiste) */}
+      <Group title="akku" hint="Ändert sich nur von Hand – oder per Doppelklick aufs Akku-Symbol im Handy.">
       <div>
         <div className={label}>
-          Akku{" "}
-          <span className="text-text-tertiary">({batteryDraft ?? phone.battery} % · ändert sich nur von Hand)</span>
+          Akkustand <span className="text-text-tertiary">({batteryDraft ?? phone.battery} %)</span>
         </div>
         <input
           type="range"
@@ -259,8 +264,11 @@ export function PhoneSettings({
         />
       </div>
 
+      </Group>
+
       {/* Captic gibt es auch für Supporting Characters */}
       {!phone.burner && (
+        <Group title="captic">
         <Toggle
           checked={phone.captic}
           onChange={(on) => save({ captic: { ...raw.captic, enabled: on } })}
@@ -270,15 +278,18 @@ export function PhoneSettings({
             (Foto-Netzwerk – das Profil bearbeitest du danach direkt in der App auf dem Handy)
           </span>
         </Toggle>
+        </Group>
       )}
 
       {reduced ? null : phone.burner ? (
+        <Group title="startbildschirm">
         <p className="text-[0.8125rem] text-text-tertiary">
           Das Burner Phone ist ein altes Tastenhandy: kein Hintergrundbild, keine Apps, kein
           Captic – nur SMS.
         </p>
+        </Group>
       ) : (
-        <>
+        <Group title="startbildschirm">
           <div>
             <div className={label}>Hintergrundbild</div>
             <div className="flex flex-wrap items-center gap-2.5">
@@ -434,10 +445,24 @@ export function PhoneSettings({
               </div>
             )}
           </div>
-        </>
+        </Group>
       )}
       </>
       )}
     </div>
+  );
+}
+
+// Bereich der Handy-Einstellungen: Karte mit kleingeschriebener Überschrift mit
+// Punkt (wie „facts.") und optionalem Hinweis darunter
+function Group({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-4 rounded-xl border border-border-subtle bg-white/[0.03] p-4">
+      <div className="-mb-1">
+        <h3 className="font-display text-[1.25rem] leading-tight text-text-primary">{title}.</h3>
+        {hint && <p className="mt-0.5 text-[0.75rem] text-text-tertiary">{hint}</p>}
+      </div>
+      {children}
+    </section>
   );
 }
