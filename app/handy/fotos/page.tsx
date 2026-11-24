@@ -8,12 +8,14 @@ import { uploadImage, IMAGE_SIZES } from "@/lib/images";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Icon } from "@/components/Icon";
 import { PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
+import { useDragSort } from "@/lib/useDragSort";
 
 const newId = () => `photo_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 // Fotos-App des eigenen Handys: Fotos hochladen (mehrere auf einmal), groß
 // ansehen und durchblättern, Bildunterschrift eintragen. „Ordnen" schiebt Fotos
-// nach vorne oder hinten und löscht sie. Gespeichert im Handy (`phone.photos`).
+// nach vorne oder hinten und löscht sie; umsortieren geht auch per Ziehen (Touch:
+// kurz halten). Gespeichert im Handy (`phone.photos`).
 export default function PhotosPage() {
   const { updateCharacter } = useStore();
   const { myChars, me, setOwner } = useMyPhone();
@@ -28,6 +30,12 @@ export default function PhotosPage() {
   const photos = me?.phone?.photos ?? [];
   const index = photos.findIndex((p) => p.id === openId);
   const open = index >= 0 ? photos[index] : null;
+  const sort = useDragSort(
+    photos,
+    (p) => p.id,
+    (next) => me && updateCharacter(me.id, { phone: { ...me.phone, photos: next } }),
+    !uploading,
+  );
 
   // Bildunterschrift des offenen Fotos zum Bearbeiten übernehmen
   useEffect(() => {
@@ -164,8 +172,8 @@ export default function PhotosPage() {
           </p>
         )}
         <div className="grid grid-cols-3 gap-0.5">
-          {photos.map((p, i) => (
-            <div key={p.id} className="relative aspect-square bg-bg-surface-2">
+          {sort.list.map((p, i) => (
+            <div key={p.id} {...sort.itemProps(p.id)} className={`relative aspect-square bg-bg-surface-2 ${sort.itemProps(p.id).className}`}>
               <button
                 onClick={() => !ordering && setOpenId(p.id)}
                 disabled={ordering}

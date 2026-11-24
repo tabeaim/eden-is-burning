@@ -6,11 +6,13 @@ import type { PhoneNote } from "@/lib/types";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Icon } from "@/components/Icon";
 import { PhoneFrame, PhoneHeader, useMyPhone } from "@/components/phone/PhoneFrame";
+import { useDragSort } from "@/lib/useDragSort";
 
 const newId = () => `note_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 // Notizen-App des eigenen Handys: Notizen direkt im Handy anlegen und schreiben.
-// „Ordnen" verschiebt (↑ ↓) und löscht (✕); so wie sortiert, wird angezeigt.
+// Sortieren per Ziehen (Touch: kurz halten); „Ordnen" verschiebt (↑ ↓) und
+// löscht (✕); so wie sortiert, wird angezeigt.
 // Gespeichert wird im Handy des Charakters (`phone.notes`), eine leere Notiz
 // verschwindet beim Schließen von selbst.
 export default function NotesPage() {
@@ -23,6 +25,11 @@ export default function NotesPage() {
   // Beim Tippen wird laufend gespeichert (kurz verzögert) – so geht nichts verloren,
   // auch wenn man das Handy über die Home-Leiste verlässt.
   const saveTimer = useRef<number | null>(null);
+  const sort = useDragSort(
+    me?.phone?.notes ?? [],
+    (n) => n.id,
+    (next) => me && updateCharacter(me.id, { phone: { ...me.phone, notes: next } }),
+  );
 
   if (!me) {
     return (
@@ -179,7 +186,8 @@ export default function NotesPage() {
             Noch keine Notizen. Mit dem Stift oben rechts legst du eine an.
           </p>
         )}
-        {notes.map((n, i) => {
+        {sort.list.map((n, i) => {
+          const drag = sort.itemProps(n.id);
           const firstLine = n.text.split("\n").find((l) => l.trim()) ?? "";
           const body = (
             <span className="min-w-0 flex-1">
@@ -192,7 +200,7 @@ export default function NotesPage() {
             </span>
           );
           return ordering ? (
-            <div key={n.id} className="flex items-center gap-1 border-b border-border-subtle px-3 py-2">
+            <div key={n.id} {...drag} className={`flex items-center gap-1 border-b border-border-subtle bg-[var(--phone-screen,#0c0c0e)] px-3 py-2 ${drag.className}`}>
               {body}
               <button onClick={() => move(i, -1)} disabled={i === 0} aria-label="Nach oben" className={iconBtn}>
                 ↑
@@ -211,8 +219,9 @@ export default function NotesPage() {
           ) : (
             <button
               key={n.id}
+              {...drag}
               onClick={() => openNote(n)}
-              className="flex w-full items-center border-b border-border-subtle px-3 py-2.5 text-left hover:bg-white/[0.03]"
+              className={`flex w-full items-center border-b border-border-subtle bg-[var(--phone-screen,#0c0c0e)] px-3 py-2.5 text-left hover:bg-white/[0.03] ${drag.className}`}
             >
               {body}
             </button>

@@ -100,6 +100,18 @@ export const shownStandardApps = (p: PhoneSettings | null | undefined) =>
 export const extraAppSlots = (p: PhoneSettings | null | undefined) =>
   homeAppSlots(p) - shownStandardApps(p).length;
 
+// Eigene Reihenfolge (per Ziehen) anwenden; Apps ohne Platz darin – z. B. neu
+// gewählte – kommen in ihrer üblichen Reihenfolge dahinter.
+export function orderApps<A extends { key: string }>(apps: A[], order: string[] | null | undefined): A[] {
+  if (!order?.length) return apps;
+  const pos = new Map(order.map((k, i) => [k, i]));
+  const rank = (a: A, i: number) => pos.get(a.key) ?? order.length + i;
+  return apps
+    .map((a, i) => ({ a, r: rank(a, i) }))
+    .sort((x, y) => x.r - y.r)
+    .map((x) => x.a);
+}
+
 export interface ResolvedPhone {
   model: PhoneModel;
   burner: boolean;
@@ -159,10 +171,10 @@ export function resolvePhone(c: Pick<Character, "phone"> | null | undefined): Re
     wallpaperLight:
       !!p.wallpaper?.startsWith("preset:") &&
       !!PHONE_WALLPAPERS.find((w) => w.key === p.wallpaper!.slice("preset:".length))?.light,
-    apps: [
-      ...shownStandardApps(p),
-      ...[...chosen, ...custom].slice(0, extraAppSlots(p)),
-    ],
+    apps: orderApps(
+      [...shownStandardApps(p), ...[...chosen, ...custom].slice(0, extraAppSlots(p))],
+      p.app_order,
+    ),
     captic: model !== "burner" && !!p.captic?.enabled,
   };
 }

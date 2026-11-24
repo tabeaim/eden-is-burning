@@ -692,7 +692,15 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   reine Deko (`AppIcon` ohne Link) – Ausnahmen „Einstellungen", die in die
   Charakter-Einstellungen führt, sowie „Notizen" und „Fotos" (siehe unten); echte Apps (Telefon, Nachrichten, Captic)
   stehen im Dock. Die Home-Leiste unten (bzw. der
-  Home-Button des alten Modells) führt immer dorthin zurück.
+  Home-Button des alten Modells) führt immer dorthin zurück. Auf dem eigenen
+  Handy lassen sich die Apps per Ziehen umsortieren (`phone.app_order`, neu
+  gewählte Apps landen hinten).
+- **Sortieren per Ziehen** (`useDragSort`, `lib/useDragSort.ts`): Startbildschirm-Apps,
+  Notizen und Fotos. Maus: festhalten und ziehen, ein einfacher Klick öffnet
+  weiterhin. Touch: kurz halten (350 ms), bis sich das Element hebt, dann ziehen –
+  normales Wischen scrollt. Das gezogene Element folgt dem Finger, die anderen
+  rücken live nach; gespeichert wird einmal beim Loslassen. „Ordnen" mit Pfeilen
+  bleibt als Alternative (und zum Löschen).
 - **Notizen** (`/handy/notizen`, `phone.notes`): Liste mit Titel und erster
   Zeile, Stift oben rechts legt eine neue an, Antippen öffnet sie zum Schreiben
   (gespeichert wird laufend beim Tippen, leere Notizen verschwinden) – kein
