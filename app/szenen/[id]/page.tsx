@@ -731,7 +731,7 @@ function PostRow({
   const wrapRef = useRef<HTMLDivElement>(null);
   const proseRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLDivElement>(null);
-  const [quoteBtn, setQuoteBtn] = useState<{ outside: boolean; y: number; text: string } | null>(
+  const [quoteBtn, setQuoteBtn] = useState<{ outside: boolean; y: number; h: number; text: string } | null>(
     null,
   );
   const [editing, setEditing] = useState(false);
@@ -785,7 +785,11 @@ function PostRow({
       setQuoteBtn(null);
       return;
     }
-    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    const range = sel.getRangeAt(0);
+    // erste sichtbare Zeile der Auswahl (die Gesamt-Box kann am Ende der Vorzeile
+    // beginnen); daran richtet sich der Knopf aus
+    const rect =
+      Array.from(range.getClientRects()).find((r) => r.width > 1) ?? range.getBoundingClientRect();
     const wrap = wrapRef.current.getBoundingClientRect();
     // Knopf rechts neben dem Textblock auf Höhe der Auswahl, damit er keinen Text
     // verdeckt. Nur wenn rechts kein Platz ist (schmale Fenster), an den rechten
@@ -793,6 +797,7 @@ function PostRow({
     setQuoteBtn({
       outside: window.innerWidth - wrap.right >= 56,
       y: rect.top - wrap.top,
+      h: rect.height,
       text,
     });
   }
@@ -910,9 +915,10 @@ function PostRow({
       )}
       {quoteBtn && (
         <div
-          style={{ top: quoteBtn.y }}
+          // neben dem Text: mittig auf Höhe der markierten Zeile
+          style={{ top: quoteBtn.outside ? quoteBtn.y + quoteBtn.h / 2 : quoteBtn.y }}
           className={`absolute z-20 flex items-center rounded-md border border-border-subtle bg-bg-surface-2 p-1 text-text-secondary shadow-lg ${
-            quoteBtn.outside ? "left-full ml-3" : "right-0 -mt-1 -translate-y-full"
+            quoteBtn.outside ? "left-full ml-3 -translate-y-1/2" : "right-0 -mt-1 -translate-y-full"
           }`}
         >
           <button
@@ -947,7 +953,7 @@ function PostRow({
         // Drehbuch-Posts (ohne Charakter-Karte): Mit Maus schwebt die Leiste im
         // Abstand über dem Post, statt oben Platz zu belegen oder Text zu verdecken
         <div
-          className={`mb-1 flex items-center justify-end gap-0.5 transition-opacity focus-within:opacity-100 group-hover/post:opacity-100 [@media(hover:hover)]:opacity-0 ${
+          className={`mb-1 -mr-1 flex items-center justify-end gap-0.5 transition-opacity focus-within:opacity-100 group-hover/post:opacity-100 [@media(hover:hover)]:opacity-0 ${
             script
               ? "[@media(hover:hover)]:absolute [@media(hover:hover)]:right-0 [@media(hover:hover)]:bottom-full [@media(hover:hover)]:z-10 [@media(hover:hover)]:mb-0.5 [@media(hover:hover)]:rounded-md [@media(hover:hover)]:bg-bg-primary [@media(hover:hover)]:pl-2"
               : ""
