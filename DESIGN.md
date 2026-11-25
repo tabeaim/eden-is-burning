@@ -556,7 +556,9 @@ Plattform: kein Banner, kein Seitentitel (`bare` in `components/AppShell.tsx`).
   zusammen höchstens so viele, wie auf einen Startbildschirm passen (`HOME_APP_SLOTS`
   = 24, 6 Reihen à 4; beim alten iPhone eine Reihe weniger, `homeAppSlots`; alle Apps zählen, auch Fotos, Notizen und Einstellungen – der
   Zähler zeigt nur die frei wählbaren, also x/21 bzw. x/17) – alles in
-  einem gemeinsamen Bereich „Apps" in den Einstellungen. Die Handy-Einstellungen
+  einem gemeinsamen Bereich „Apps" in den Einstellungen. Eigene Apps (Name +
+  Icon) anderer Handys – auch der eigenen anderen Charaktere – stehen darunter
+  unter „Von anderen Handys" zum Übernehmen. Die Handy-Einstellungen
   sind in schlichte Karten ohne Überschrift gruppiert (Profilbild · Look · Akku ·
   Captic · Startbildschirm), mit möglichst wenig Erklärtext; die Farben passen in
   eine Zeile. Dieselben
