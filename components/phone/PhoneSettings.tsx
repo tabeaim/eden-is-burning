@@ -51,13 +51,12 @@ export function PhoneSettings({
   const freeSlots = homeAppSlots(raw) - fixedApps;
   const appCount = shownStandardApps(raw).length - fixedApps + chosen.length + custom.length;
   const full = appCount >= freeSlots;
-  // Eigene Apps anderer Handys zum Übernehmen (auch der eigenen anderen
-  // Charaktere) – jede nur einmal
+  // Eigene Apps der anderen Spieler*innen zum Übernehmen – jede nur einmal
   // (gleicher Name + gleiches Icon) und ohne die, die dieses Handy schon hat
   const sameApp = (a: { name: string; icon: string }, b: { name: string; icon: string }) =>
     a.icon === b.icon && a.name.toLowerCase() === b.name.toLowerCase();
   const shared = [...characters, ...npcs]
-    .filter((c) => c.id !== character.id && !c.deleted_at)
+    .filter((c) => c.player_id !== character.player_id && !c.deleted_at)
     .flatMap((c) => c.phone?.custom_apps ?? [])
     .filter((a, i, all) => all.findIndex((x) => sameApp(x, a)) === i && !custom.some((x) => sameApp(x, a)))
     .sort((a, b) => a.name.localeCompare(b.name, "de"));
@@ -484,7 +483,7 @@ export function PhoneSettings({
             {shared.length > 0 && (
               <div className="mt-4">
                 <div className={label}>
-                  Von anderen Handys
+                  Von anderen Spieler*innen
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {shared.map((a) => (
