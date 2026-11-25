@@ -30,7 +30,7 @@ export default function SpielerOverviewPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
       <PageHeader
-        title="Spieler"
+        title="Spieler*innen"
         subtitle="Alle Spieler*innen von Eden."
         width="max-w-6xl"
       />
