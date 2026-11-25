@@ -604,9 +604,19 @@ function DashHeading({
   ticker?: boolean; // Zähler („8/15"): ebenfalls in der Display-Schrift
   className?: string;
 }) {
+  // Wie die Seitentitel: Text weiß, nur der Punkt in der Akzentfarbe
+  const text =
+    typeof children === "string" && children.endsWith(".") ? (
+      <span>
+        {children.slice(0, -1)}
+        <span className="text-accent">.</span>
+      </span>
+    ) : (
+      children
+    );
   return (
-    <h2 className={`${className} flex items-baseline gap-2.5 font-display lowercase text-[1.5rem] leading-none text-accent`}>
-      {children}
+    <h2 className={`${className} flex items-baseline gap-2.5 font-display lowercase text-[1.5rem] leading-none text-text-primary`}>
+      {text}
       {note && (
         <span
           className={`normal-case tracking-normal text-text-tertiary [-webkit-text-stroke:0] ${

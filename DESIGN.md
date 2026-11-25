@@ -45,7 +45,7 @@ kleingeschriebenen Abschnitts-Überschriften mit Punkt („facts.", „scenes.")
 (Unter-Überschriften `1.25rem`). Schriftgrößen immer aus der vorhandenen Skala
 nehmen, keine krummen Zwischenwerte.
 **Titel mit Punkt** (Seitentitel und weiße Überschriften in der Display-Schrift,
-z. B. „andere handys.", Spieler*innen-Namen, Logo): Text in `text-text-primary`, der
+z. B. „andere handys.", Dashboard-Überschriften, Spieler*innen-Namen, Logo): Text in `text-text-primary`, der
 Punkt immer orange als eigenes `<span className="text-accent">.</span>`. Bei
 Abschnitts-Überschriften, die ganz orange sind, ist der Punkt ohnehin orange.
 Alles andere ist Montserrat. Standard-Textgröße `0.875rem`, Bubbles/Buttons
@@ -493,7 +493,7 @@ Kästchen – „zuletzt aktive szenen." (letzte 24 Stunden), „jetzt online." 
 Supporting Characters stehen auch ohne Abo auf dem Dashboard: unter „du bist
 dran." bzw. als eigene Gruppe unter „wartet auf andere.". Chats stehen in den Listen links als Karte im
 Aufbau der Szenenkarte (`ChatRow card`), rechts als kompakte Zeile. Abschnitts-Überschriften wie überall in
-der Display-Schrift (`DashHeading`), links dahinter der Zähler, ebenfalls in der
+der Display-Schrift (`DashHeading`), aber wie die Seitentitel weiß mit orangem Punkt, links dahinter der Zähler, ebenfalls in der
 Display-Schrift. „Du bist dran" ist eine
 einzige Liste über alle Charaktere – Szenen und Chats gemischt, das Neueste
 zuerst; „Wartet auf andere" bleibt nach Charakter gruppiert.
