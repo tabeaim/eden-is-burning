@@ -7,6 +7,7 @@ import { RichEditor } from "@/components/RichEditor";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
+import { tierOf } from "@/lib/characters";
 import { Toggle } from "@/components/Toggle";
 import { LocationField, locationComplete } from "@/components/LocationField";
 import { PageHeader } from "@/components/PageHeader";
@@ -35,6 +36,7 @@ export default function NewScenePage() {
     scenes,
     currentPlayer,
     charactersOf,
+    myNpcs,
     appSettings,
   } = useStore();
   const { theme } = useTheme();
@@ -66,7 +68,11 @@ export default function NewScenePage() {
   const [firstLines, setFirstLines] = useState<ScriptLine[]>([]);
   const firstContent = script ? serializeScript(firstLines) : firstPost.trim();
 
-  const myChars = currentPlayer ? charactersOf(currentPlayer.id) : [];
+  // Eigene Charaktere: Main Characters und zugeordnete Supporting Characters –
+  // beide dürfen eine Szene eröffnen
+  const myChars = currentPlayer
+    ? [...charactersOf(currentPlayer.id), ...myNpcs.filter((c) => tierOf(c) === "supporting")]
+    : [];
   const myCharIds = new Set(myChars.map((c) => c.id));
   // Eigene Charaktere, die an dieser Szene teilnehmen (für den ersten Post)
   const eligibleFirst = myChars.filter((c) => selected.includes(c.id));
