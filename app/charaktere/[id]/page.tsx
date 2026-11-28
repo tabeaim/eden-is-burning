@@ -149,10 +149,11 @@ export default function CharacterPage({
   // Reiter „Scenes": gespielte Szenen, Anrufe und SMS-Szenen
   const profileScenes = [...inScenes, ...smsScenes.filter((s) => s.participant_ids.includes(c.id))];
 
-  // Mitspieler-Charaktere (für RELATIONS) aus gemeinsamen Szenen – auch Supporting
-  // Characters; Statist*innen und Charaktere im Papierkorb nicht
+  // Mitspieler-Charaktere (für RELATIONS) aus gemeinsamen Szenen – auch Anrufe und
+  // SMS-Szenen, auch Supporting Characters; Statist*innen und Charaktere im
+  // Papierkorb nicht
   const coCharIds = new Set<string>();
-  for (const s of inScenes)
+  for (const s of profileScenes)
     for (const pid of s.participant_ids) if (pid !== c.id) coCharIds.add(pid);
   // SCs posten oft, ohne fest in der Szene eingetragen zu sein
   const inSceneIds = new Set(inScenes.map((s) => s.id));
